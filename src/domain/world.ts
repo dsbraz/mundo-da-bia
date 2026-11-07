@@ -1,3 +1,6 @@
+import { validPoint } from './geometry';
+export { validPoint } from './geometry';
+import { initialLayout } from './layout';
 import { actorIds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
@@ -5,7 +8,7 @@ import { give, visibleItem } from './objects';
 
 export function initialWorld(): World {
   return {
-    room: 'sala', show: false, home: { lamp: true, fridge: true, drawer: false },
+    room: 'sala', show: false, layout: initialLayout(), home: { lamp: true, fridge: true, drawer: false },
     actors: actorIds.map((id, index) => ({
       id, kind: index < 4 ? 'human' : 'cat', room: 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol'] as const)[index]!,
       x: [520, 440, 755, 880, 600, 710, 835][index]!, y: index < 4 ? 530 : 540, fed: false, resting: false, seat: null,
@@ -13,11 +16,6 @@ export function initialWorld(): World {
     items: itemIds.map((id, index) => ({ id, room: 'sala', holder: null, spot: index < 2 ? 'fridge' : 'floor',
       x: [680, 680, 900, 350][index]!, y: [310, 360, 280, 410][index]! })),
   };
-}
-
-export function validPoint(point: Point): boolean {
-  return Number.isFinite(point.x) && Number.isFinite(point.y)
-    && point.x >= 60 && point.x <= 940 && point.y >= 280 && point.y <= 540;
 }
 
 function changeActor(state: World, actor: Actor, patch: Partial<Actor>, type: PresentationEvent['type']): Transition {
@@ -43,7 +41,7 @@ function release(state: World, actor: Actor, feeding: boolean): Transition {
   const result = feeding ? changeActor(state, actor, { fed: true, resting: false }, 'fed')
     : { state, events: [{ type: 'dropped' as const, actor: actor.id }] };
   return { ...result, state: { ...result.state, items: state.items.map(i => i.id === item.id
-    ? { ...i, ...foodHome(i, actor, feeding) } : i) } };
+    ? { ...i, ...foodHome(state, i, actor, feeding) } : i) } };
 }
 
 function actorAction(state: World, actor: Actor, action: Action): Transition {

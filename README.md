@@ -1,8 +1,8 @@
 # Mundo da Bia
 
-Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, seis looks e dois cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
+Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, oito looks e dois cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/dollhouse-svg.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
+**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/world-builder.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
 ## Executar
 
@@ -27,7 +27,13 @@ Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até u
 
 Arraste um personagem até o sofá para sentar ou até a cama para deitar. Toque na geladeira para abrir; arraste a comida até a mesa ou um personagem. Toque na gaveta para guardar e recuperar brinquedos, e no abajur para mudar a iluminação. O botão de som ativa efeitos locais.
 
-Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o selecionado; também é possível focar a casa e usar as setas. Troque de cômodo e use **Reunir todo mundo** para levar a turma. Cada personagem carrega um objeto por vez. Pegue lanche para humanos ou comidinha para gatos e toque em **Oferecer comida**. A comida retorna à brincadeira para poder ser oferecida novamente. Descansar alterna descanso; mover acorda. Humanos podem usar qualquer um dos seis looks. Começar show anima a turma; trocar de cômodo encerra o show. O navegador guarda a brincadeira automaticamente, inclusive roupas, posições, comida, descanso e show. Falha de armazenamento aparece na interface.
+Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o selecionado; também é possível focar a casa e usar as setas. Troque de cômodo e use **Reunir todo mundo** para levar a turma. Cada personagem carrega um objeto por vez. Pegue lanche para humanos ou comidinha para gatos e toque em **Oferecer comida**. A comida retorna à brincadeira para poder ser oferecida novamente. Descansar alterna descanso; mover acorda. Humanos podem usar qualquer um dos oito looks. Começar show anima a turma; trocar de cômodo encerra o show. O navegador guarda a brincadeira automaticamente, inclusive roupas, posições, comida, descanso e show. Falha de armazenamento aparece na interface.
+
+## Construir
+
+Toque em **Construir** para abrir o Ateliê. Escolha móveis e decoração no catálogo, arraste as peças pela casa, mude sua cor ou espelhe. **Paredes e piso** troca os acabamentos. **Desfazer/Refazer** permite experimentar; **Brincar** devolve os personagens à casa editada. Quem estiver sentado acompanha o sofá e os objetos acompanham seus móveis.
+
+Na casinha do canto, **Minhas casas** permite renomear, duplicar ou criar uma casa vazia. Cada projeto é salvo separadamente neste navegador. A coleção **Palco Neon** reúne palco, letreiro, caixas de som e espelho de camarim; os figurinos originais **Estrela Neon** e **Guardiã Aurora** estão no guarda-roupa. Móveis interativos têm uma unidade por casa nesta versão; decoração pode se repetir. Retire um móvel para adicioná-lo em outro cômodo.
 
 ## Arquitetura
 
@@ -37,7 +43,7 @@ Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o sele
 - `src/presentation`: arte, cena, controles e gestos. Controles recebem callbacks e não importam cenas.
 - `src/bootstrap`: conecta domínio, persistência e apresentação.
 
-Gestos cancelados preservam a última posição válida já aplicada e ignoram eventos tardios. Saves v1 migram para v2 preservando a brincadeira. Dados ausentes, inválidos, duplicados ou de versão desconhecida recuperam o estado inicial. A resolução lógica é 1000 × 600, ajustada ao espaço disponível. SVGs locais em camadas dispensam fontes e downloads de terceiros.
+Gestos cancelados preservam a última posição válida já aplicada e ignoram eventos tardios. Saves v1 e v2 migram para v3 preservando a brincadeira. A coleção de casas usa seu próprio envelope versionado; a chave antiga continua atualizada com a casa ativa. Dados ausentes, inválidos, duplicados ou de versão desconhecida recuperam o estado inicial. A resolução lógica é 1000 × 600, ajustada ao espaço disponível. SVGs locais em camadas dispensam fontes e downloads de terceiros.
 
 ## Qualidade
 

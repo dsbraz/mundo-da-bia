@@ -1,6 +1,6 @@
 import type { Action, ActorId, Point, RoomId, World } from '../domain/types';
-import { furnitureAt, seatAt, surfaceAt } from './furniture-targets';
-import { actorAt, sourceAt, wardrobeHit } from './targets';
+import { furnitureAt, seatAt, surfaceAt, wardrobeHit } from './furniture-targets';
+import { actorAt, sourceAt } from './targets';
 import type { DragPreview, DragToken } from './targets';
 export interface PlayInput {
   dispatch: (action: Action) => void;
@@ -53,7 +53,7 @@ function deliver(token: DragToken, point: Point, state: World, play: PlayInput) 
 }
 
 function wardrobeAvailable(state: World, point: Point) {
-  return state.room === 'sala' && wardrobeHit(point) && !actorAt(state, point);
+  return wardrobeHit(state, point) && !actorAt(state, point);
 }
 
 function tapFurniture(state: World, point: Point, token: DragToken | undefined, play: PlayInput): boolean {

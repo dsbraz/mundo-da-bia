@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import { itemIds } from '../domain/types';
 import type { ActorId, PresentationEvent, World } from '../domain/types';
-import { drawFurniture, drawLighting } from './furniture-art';
+import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
 import { animateActor, drawActor } from './art';
 import { drawRoom } from './room';
-import { drawWardrobe } from './wardrobe';
+import { drawPieces, pickPiece } from './piece-art';
 import { actorAt, itemPoint } from './targets';
 import type { DragPreview } from './targets';
 import { react } from './reactions';
@@ -16,6 +16,8 @@ export class PlayScene extends Phaser.Scene {
   private figures: Phaser.GameObjects.Container[] = [];
   private ready = false;
   private wardrobe = false;
+  private building = false;
+  private piece: number | null = null;
   private ghost: Phaser.GameObjects.Container | null = null;
   private objects: Phaser.GameObjects.Image[] = [];
   constructor(state: World) { super('play'); this.world = state; }
@@ -29,9 +31,10 @@ export class PlayScene extends Phaser.Scene {
     if (!this.ready) return;
     this.children.removeAll(true);
     this.ghost = null; this.objects = [];
-    drawRoom(this, state.room);
-    drawFurniture(this, state);
-    if (state.room === 'sala') drawWardrobe(this, this.wardrobe);
+    drawRoom(this, state);
+    drawPieces(this, state, this.wardrobe && !this.building, this.piece);
+    this.figures = [];
+    if (this.building) { this.game.canvas.dataset.ready = 'true'; return; }
     this.figures = state.actors.filter(a => a.room === state.room).sort((a, b) => a.y - b.y).map(a => drawActor(this, a, a.id === selected));
     state.items.forEach(item => {
       const point = itemPoint(state, item);
@@ -39,8 +42,10 @@ export class PlayScene extends Phaser.Scene {
     });
     drawLighting(this, state);
     this.game.canvas.dataset.ready = 'true';
-    if (state.show) this.add.text(900, 145, '♪ Nosso show! ♫', { fontSize: '20px', color: '#825c90', backgroundColor: '#fff2ce', padding: { x: 18, y: 10 } }).setOrigin(0.5);
+    if (state.show) this.add.text(865, 145, '♪ Nosso show! ♫', { fontSize: '20px', color: '#825c90', backgroundColor: '#fff2ce', padding: { x: 18, y: 10 } }).setOrigin(0.5);
   }
+  pickPiece(point: { x: number; y: number }) { return pickPiece(this, this.world, point); }
+  buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }
   react(events: PresentationEvent[]) { if (this.ready) react(this, this.world, events); }
   preview(drag: DragPreview | null) {

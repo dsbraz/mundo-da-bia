@@ -1,24 +1,30 @@
-import { seats } from '../domain/furniture';
+import { seatPoint } from '../domain/furniture';
+import { fixture, toPiece } from '../domain/layout';
 import { seatIds } from '../domain/types';
-import type { Home, Point, Spot, World } from '../domain/types';
+import type { Home, PieceKind, Point, Spot, World } from '../domain/types';
 
-function inside(p: Point, x: number, y: number, width: number, height: number) {
-  return p.x >= x && p.x <= x + width && p.y >= y && p.y <= y + height;
+function hit(state: World, kind: PieceKind, p: Point, x: number, y: number, width: number, height: number) {
+  const piece = fixture(state, kind);
+  if (!piece || piece.room !== state.room) return false;
+  const point = toPiece(piece, p);
+  return point.x >= x && point.x <= x + width && point.y >= y && point.y <= y + height;
 }
 export function furnitureAt(state: World, p: Point): keyof Home | undefined {
-  if (state.room !== 'sala') return;
-  if (inside(p, 10, 160, 95, 110)) return 'lamp';
-  if (inside(p, 625, 200, 120, 185)) return 'fridge';
-  if (inside(p, 315, 350, 182, 45)) return 'drawer';
+  if (hit(state, 'lamp', p, 10, 160, 95, 110)) return 'lamp';
+  if (hit(state, 'fridge', p, 625, 200, 120, 185)) return 'fridge';
+  if (hit(state, 'wardrobe', p, 315, 350, 182, 45)) return 'drawer';
   return undefined;
 }
 export function surfaceAt(state: World, p: Point): Exclude<Spot, 'floor'> | undefined {
-  if (state.room !== 'sala') return;
-  if (inside(p, 165, 435, 230, 52)) return 'table';
-  if (inside(p, 315, 350, 182, 45) && state.home.drawer) return 'drawer';
-  if (inside(p, 625, 270, 120, 115) && state.home.fridge) return 'fridge';
+  if (hit(state, 'table', p, 165, 435, 230, 52)) return 'table';
+  if (state.home.drawer && hit(state, 'wardrobe', p, 315, 350, 182, 45)) return 'drawer';
+  if (state.home.fridge && hit(state, 'fridge', p, 625, 270, 120, 115)) return 'fridge';
   return undefined;
 }
 export function seatAt(state: World, p: Point) {
-  return seatIds.find(id => seats[id].room === state.room && Math.abs(seats[id].x - p.x) <= 45 && Math.abs(seats[id].y - p.y) <= 55);
+  return seatIds.find(id => {
+    const seat = seatPoint(state, id);
+    return seat && seat.room === state.room && Math.abs(seat.x - p.x) <= 45 && Math.abs(seat.y - p.y) <= 55;
+  });
 }
+export function wardrobeHit(state: World, p: Point) { return hit(state, 'wardrobe', p, 305, 150, 195, 195); }

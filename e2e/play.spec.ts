@@ -76,7 +76,10 @@ test('arraste cancelado preserva posição e teclado move sem duplicar', async (
 
 test('salvamento inválido recupera a brincadeira inicial', async ({ page }) => {
   await ready(page);
-  await page.evaluate(() => localStorage.setItem('mundo-da-bia:v1', '{bad'));
+  await page.evaluate(() => {
+    localStorage.setItem('mundo-da-bia:v1', '{bad');
+    localStorage.setItem('mundo-da-bia:houses:v1', '{bad');
+  });
   await page.reload();
   await expect(page.locator('#selected')).toContainText('Bia');
   expect((await read(page)).actors).toHaveLength(7);
@@ -101,7 +104,7 @@ test('senta, usa mesa e geladeira, cuida do gato, guarda brinquedo, veste e faz 
   await tap(320, 390);
   expect((await read(page)).home.drawer).toBe(false);
   await tap(405, 165);
-  await drag([405, 305], [150, 300]);
+  await drag([335, 305], [150, 300]);
   expect((await read(page)).actors[0].look).toBe('festa');
   await drag([900, 252], [150, 300]);
   expect((await read(page)).show).toBe(true);
@@ -144,7 +147,7 @@ test('armário respeita o cômodo e veste por toque real em tablet', async ({ pa
   await page.touchscreen.tap(door.x, door.y);
   await expect(page.locator('#wardrobe-toggle')).toHaveAttribute('aria-expanded', 'true');
   const touch = await page.context().newCDPSession(page);
-  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [xy(465, 220)] });
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [xy(427, 220)] });
   await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [xy(520, 390)] });
   await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   expect((await read(page)).actors[0].look).toBe('estrela');

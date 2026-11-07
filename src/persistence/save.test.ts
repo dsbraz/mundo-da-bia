@@ -8,7 +8,7 @@ describe('salvamento versionado', () => {
     let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'lanche' }).state;
     state = transition(state, { type: 'feed', actor: 'bia' }).state;
     expect(decode(encode(state))).toEqual(state);
-    expect(JSON.parse(encode(state)).version).toBe(2);
+    expect(JSON.parse(encode(state)).version).toBe(3);
   });
   it.each([null, '', '{', 'null', '[]', '{}', '{"version":2,"state":{}}'])('recupera dados inválidos %s', raw => {
     expect(decode(raw)).toEqual(initialWorld());
@@ -23,7 +23,7 @@ describe('salvamento versionado', () => {
     (s: ReturnType<typeof initialWorld>) => { s.items.pop(); },
   ])('rejeita estado inconsistente', change => {
     const state = initialWorld(); change(state);
-    expect(decode(JSON.stringify({ version: 2, state }))).toEqual(initialWorld());
+    expect(decode(JSON.stringify({ version: 3, state }))).toEqual(initialWorld());
   });
   it('não interrompe a brincadeira quando o armazenamento falha', () => {
     const storage = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('quota'); } };
@@ -59,7 +59,7 @@ it.each([
   ['room', 'outside'], ['show', 1], ['actors', null], ['items', {}],
 ])('rejeita campo raiz inválido: %s', (key, value) => {
   const state = { ...initialWorld(), [key]: value };
-  expect(decode(JSON.stringify({ version: 2, state }))).toEqual(initialWorld());
+  expect(decode(JSON.stringify({ version: 3, state }))).toEqual(initialWorld());
 });
 
 it.each([
@@ -68,7 +68,7 @@ it.each([
 ])('rejeita personagem inválido: %s', (key, value) => {
   const state = initialWorld();
   const actors = state.actors.map((actor, index) => index === 0 ? { ...actor, [key]: value } : actor);
-  expect(decode(JSON.stringify({ version: 2, state: { ...state, actors } }))).toEqual(initialWorld());
+  expect(decode(JSON.stringify({ version: 3, state: { ...state, actors } }))).toEqual(initialWorld());
 });
 
 it.each([
@@ -76,5 +76,5 @@ it.each([
 ])('rejeita objeto inválido: %s', (key, value) => {
   const state = initialWorld();
   const items = state.items.map((item, index) => index === 0 ? { ...item, [key]: value } : item);
-  expect(decode(JSON.stringify({ version: 2, state: { ...state, items } }))).toEqual(initialWorld());
+  expect(decode(JSON.stringify({ version: 3, state: { ...state, items } }))).toEqual(initialWorld());
 });

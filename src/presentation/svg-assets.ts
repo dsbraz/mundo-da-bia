@@ -1,9 +1,9 @@
+import { loadPieces } from './piece-assets';
+import { svgFragment } from './svg-source';
 import type Phaser from 'phaser';
 import { actors, looks } from '../content/catalog';
 import { actorIds, lookIds } from '../domain/types';
 import type { ActorId } from '../domain/types';
-import sala from './assets/sala.svg?raw';
-import quarto from './assets/quarto.svg?raw';
 import human from './assets/human.svg?raw';
 import cat from './assets/cat.svg?raw';
 
@@ -12,16 +12,7 @@ export const humanLayers = ['hair-back', 'legs', 'hands', 'face', 'eyes', 'lids'
 export const catLayers = ['tail', 'body', 'eyes', 'lids'] as const;
 
 function color(value: number) { return `#${value.toString(16).padStart(6, '0')}`; }
-function layer(source: string, id: string): string {
-  const document = new DOMParser().parseFromString(source, 'image/svg+xml');
-  const part = document.getElementById(id);
-  if (!part) throw new Error(`Camada SVG ausente: ${id}`);
-  const svg = document.documentElement.cloneNode(false) as Element;
-  const definitions = document.querySelector('defs');
-  if (definitions) svg.append(definitions.cloneNode(true));
-  svg.append(part.cloneNode(true));
-  return `data:image/svg+xml;base64,${btoa(new XMLSerializer().serializeToString(svg))}`;
-}
+const layer = (source: string, id: string) => svgFragment(source, [id]);
 function loadActor(scene: Phaser.Scene, id: ActorId, index: number) {
   const palette = actors[id];
   if (index >= 4) {
@@ -34,17 +25,15 @@ function loadActor(scene: Phaser.Scene, id: ActorId, index: number) {
   scene.load.svg(`${id}-hair`, layer(source, `hair-${id}`));
   lookIds.forEach(look => {
     const outfit = source.replaceAll('#E889A1', color(looks[look].color)).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
-    scene.load.svg(`${id}-${look}`, layer(outfit, 'body'));
+    scene.load.svg(`${id}-${look}`, layer(outfit, look === 'neon' || look === 'aurora' ? `body-${look}` : 'body'));
   });
 }
 export function loadArt(scene: Phaser.Scene) {
-  scene.load.svg('sala', layer(sala, 'base'));
-  scene.load.svg('quarto', layer(quarto, 'base'));
-  roomLayers.forEach(part => scene.load.svg(part, layer(sala, part)));
+  loadPieces(scene);
   actorIds.forEach((id, index) => loadActor(scene, id, index));
   lookIds.forEach(look => {
     const source = human.replaceAll('#E889A1', color(looks[look].color)).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
     const garment = source.replace('viewBox="0 0 140 220"', 'viewBox="20 110 100 85"').replace('width="140" height="220"', 'width="100" height="85"');
-    scene.load.svg(`look-${look}`, layer(garment, 'body'));
+    scene.load.svg(`look-${look}`, layer(garment, look === 'neon' || look === 'aurora' ? `body-${look}` : 'body'));
   });
 }
