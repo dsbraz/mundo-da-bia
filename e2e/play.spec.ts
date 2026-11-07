@@ -48,6 +48,7 @@ test('os 11 looks da Bia e roupas arrastadas para outro humano funcionam', async
   await ready(page); await tray(page, 'Looks');
   const buttons = page.locator('#looks button');
   for (let index = 0; index < 11; index++) { await buttons.nth(index).click(); await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true'); }
+  await buttons.first().scrollIntoViewIfNeeded();
   const source = (await buttons.first().boundingBox())!; const target = await import('./helpers').then(h => h.point(page, 440, 420));
   await page.mouse.move(source.x + 25, source.y + 25); await page.mouse.down(); await page.mouse.move(target.x, target.y, { steps: 10 }); await page.mouse.up();
   expect((await read(page)).actors[1]!.look).toBe('sol');
