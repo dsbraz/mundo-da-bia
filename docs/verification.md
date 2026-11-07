@@ -35,3 +35,5 @@ Ferramentas de verificação copiadas de instalação local existente, em versõ
 - Não existem PR, ruleset aplicado, CI remota ou publicação Sites verificados. O JSON do ruleset é configuração preparada, não comprovação de aplicação.
 
 Os relatórios locais de `npm run quality` em `reports/ci.json` e `reports/mutation.json` são a evidência de execução mais recente. Devem reprovar enquanto esses bloqueios existirem. Não reduzir limites para contorná-los.
+
+O executor de qualidade usa subprocessos assíncronos: a execução síncrona retornou `EPERM` neste sandbox mesmo com saída do comando Git; a leitura assíncrona terminou com código zero. Stryker foi fixado em 10.1.1, cujo runner declara suporte ao Vitest >=2 e usa Vitest 4.1 em seus próprios testes ([manifesto oficial](https://github.com/stryker-mutator/stryker-js/blob/v10.1.1/packages/vitest-runner/package.json)). Isso não substitui a validação de instalação/mutação pendente.

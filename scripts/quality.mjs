@@ -1,10 +1,12 @@
-import { spawnSync, execFileSync } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+const execute = promisify(execFile);
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { coverageMetrics, mutationMetrics } from './metrics.mjs';
 const policy = JSON.parse(readFileSync('quality.policy.json'));
 const mode = process.argv[2];
 if (!['fast', 'ci', 'mutation', 'all'].includes(mode)) throw new Error('Modo inválido');
-const sha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const sha = (await execute('git', ['rev-parse', 'HEAD'])).stdout.trim();
 mkdirSync('reports', { recursive: true });
 const fast = [
   ['typecheck', 'npm', 'run', 'typecheck'], ['lint', 'npm', 'run', 'lint'],
@@ -13,16 +15,20 @@ const fast = [
 const ci = [...fast, ['gate-tests', 'npm', 'run', 'test:gates'], ['coverage', 'npm', 'run', 'coverage'],
   ['build', 'npm', 'run', 'build'], ['budget', 'npm', 'run', 'budget'], ['e2e', 'npm', 'run', 'e2e']];
 function read(path) { return JSON.parse(readFileSync(path)); }
-function run(kind, commands) {
+async function run(kind, commands) {
   const started = Date.now();
-  const report = { kind, sha, dirty: execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim().length > 0, policyVersion: policy.version, limits: policy.blocking, checks: [], metrics: {}, warnings: [], status: 'failed' };
+  const report = { kind, sha, dirty: (await execute('git', ['status', '--porcelain'])).stdout.trim().length > 0, policyVersion: policy.version, limits: policy.blocking, checks: [], metrics: {}, warnings: [], status: 'failed' };
   rmSync(`reports/${kind}.json`, { force: true });
   if (kind === 'ci') for (const path of ['coverage', 'dist', 'reports/e2e.json', 'reports/budget.json']) rmSync(path, { recursive: true, force: true });
   if (kind === 'mutation') rmSync('reports/mutation', { recursive: true, force: true });
   for (const [name, command, ...args] of commands) {
     const time = Date.now();
-    const result = spawnSync(command, args, { stdio: 'inherit' });
-    const check = { name, passed: result.status === 0, seconds: (Date.now() - time) / 1000, exitCode: result.status, error: result.error?.message };
+    const result = await new Promise(resolve => {
+      const child = spawn(command, args, { stdio: 'inherit' });
+      child.on('error', error => resolve({ status: null, error }));
+      child.on('close', status => resolve({ status }));
+    });
+    const check = { name, passed: result.status === 0 && !result.error, seconds: (Date.now() - time) / 1000, exitCode: result.status, error: result.error?.message };
     try {
       if (name === 'coverage') { report.metrics.coverage = coverageMetrics(read('coverage/coverage-summary.json'), policy); check.passed &&= report.metrics.coverage.passed; }
       if (name === 'budget') report.metrics.budget = read('reports/budget.json');
@@ -56,6 +62,6 @@ function compareBaseline(report) {
     if (report.metrics.buildGrowthPercent > policy.warnings.buildGrowthPercent) report.warnings.push('Crescimento do build acima da meta.');
   }
 }
-if (mode === 'fast') run('fast', fast);
-if (['ci', 'all'].includes(mode)) run('ci', ci);
-if (['mutation', 'all'].includes(mode)) run('mutation', [['mutation', 'npx', '--no-install', 'stryker', 'run']]);
+if (mode === 'fast') await run('fast', fast);
+if (['ci', 'all'].includes(mode)) await run('ci', ci);
+if (['mutation', 'all'].includes(mode)) await run('mutation', [['mutation', 'npx', '--no-install', 'stryker', 'run']]);
