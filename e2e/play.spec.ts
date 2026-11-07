@@ -14,7 +14,7 @@ test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar', async
 test('arraste cancelado preserva posição, teclado move e dados inválidos recuperam', async ({ page }) => {
   await ready(page); const before = await read(page); await drag(page, [520, 420], [550, 430], true); expect(await read(page)).toEqual(before);
   await page.locator('#world').focus(); await page.keyboard.press('ArrowRight'); expect((await read(page)).actors[0]!.x).toBe(540);
-  await page.evaluate(() => window.addEventListener('pagehide', () => { localStorage.setItem('mundo-da-bia:v1', '{bad'); localStorage.setItem('mundo-da-bia:houses:v1', '{bad'); }));
+  await page.evaluate(() => window.addEventListener('pagehide', () => { localStorage.setItem('mundo-da-bia:neighborhood:v1', '{bad'); localStorage.setItem('mundo-da-bia:v1', '{bad'); localStorage.setItem('mundo-da-bia:houses:v1', '{bad'); }));
   await page.reload(); expect((await read(page)).actors).toHaveLength(7); expect((await read(page)).actors[0]!.x).toBe(520);
 });
 test('móveis, alimentação, guardar objeto e show continuam respondendo na cena', async ({ page }) => {
@@ -31,7 +31,7 @@ test('móveis, alimentação, guardar objeto e show continuam respondendo na cen
 test('cancelar objeto e arrastar para o chão mantém identidade e quantidade', async ({ page }) => {
   await ready(page); const before = await read(page); await drag(page, [350, 382], [935, 430], true); expect(await read(page)).toEqual(before);
   await drag(page, [350, 382], [935, 430]); const state = await read(page); expect(state.items).toHaveLength(4);
-  expect(state.items[3]).toMatchObject({ id: 'ursinho', holder: null, spot: 'floor' }); expect(state.items[3]!.x).toBeCloseTo(935);
+  expect(state.items[3]).toMatchObject({ id: '1:ursinho', holder: null, spot: 'floor' }); expect(state.items[3]!.x).toBeCloseTo(935);
 });
 test('uma bandeja por vez, teclado, toque e orientações de tablet', async ({ page }) => {
   await ready(page);
@@ -44,10 +44,10 @@ test('uma bandeja por vez, teclado, toque e orientações de tablet', async ({ p
   }
   await page.setViewportSize({ width: 1024, height: 768 }); await page.screenshot({ path: 'reports/atelier-landscape.png' });
 });
-test('os 11 looks da Bia e roupas arrastadas para outro humano funcionam', async ({ page }) => {
+test('os 14 looks da Bia e roupas arrastadas para outro humano funcionam', async ({ page }) => {
   await ready(page); await tray(page, 'Looks');
   const buttons = page.locator('#looks button');
-  for (let index = 0; index < 11; index++) { await buttons.nth(index).click(); await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true'); }
+  for (let index = 0; index < 14; index++) { await buttons.nth(index).click(); await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true'); }
   await buttons.first().scrollIntoViewIfNeeded();
   const source = (await buttons.first().boundingBox())!; const target = await import('./helpers').then(h => h.point(page, 440, 420));
   await page.mouse.move(source.x + 25, source.y + 25); await page.mouse.down(); await page.mouse.move(target.x, target.y, { steps: 10 }); await page.mouse.up();

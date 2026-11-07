@@ -4,7 +4,7 @@ import { lookIds } from '../domain/types';
 import type { Actor, Item, ItemId, LookId, Point, World } from '../domain/types';
 export type DragToken = { kind: 'item'; id: ItemId } | { kind: 'look'; id: LookId };
 export type DragPreview = DragToken & { point: Point };
-export const wardrobeSlots = lookIds.map((id, index) => ({ id, x: 335 + index % 4 * 46, y: 200 + Math.floor(index / 4) * 60 }));
+export const wardrobeSlots = lookIds.map((id, index) => ({ id, x: 335 + index % 4 * 46, y: 180 + Math.floor(index / 4) * 44 }));
 export function slotsFor(state: World) {
   const wardrobe = fixture(state, 'wardrobe');
   return wardrobe?.room === state.room ? wardrobeSlots.map(slot => ({ ...slot, ...fromPiece(wardrobe, slot) })) : [];
@@ -37,6 +37,12 @@ function actorContains(actor: Actor, p: Point): boolean {
   return Math.abs(actor.x - p.x) < 43 && p.y <= actor.y + 20 && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175);
 }
 
-function handPoint(actor: Actor): Point {
+export function handPoint(actor: Actor): Point {
+  if (actor.seat && actor.seat !== 'bed') return { x: actor.x, y: actor.y - 38 };
   return actor.seat === 'bed' ? { x: actor.x - 55, y: actor.y - 28 } : { x: actor.x + 28, y: actor.y - 55 };
+}
+
+export function previewPoint(state: World, drag: DragPreview): Point {
+  const target = actorAt(state, drag.point);
+  return target && drag.kind === 'item' ? handPoint(target) : drag.point;
 }

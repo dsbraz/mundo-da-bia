@@ -1,3 +1,4 @@
+import { itemKind } from './item-kind';
 import { availableSpot, foodHome } from './furniture';
 import type { Actor, Item, ItemId, Transition, World } from './types';
 
@@ -11,13 +12,14 @@ export function give(state: World, actor: Actor, id: ItemId): Transition {
   const item = visibleItem(state, id);
   const occupied = state.items.some(i => i.holder === actor.id && i.id !== id);
   if (!item || occupied) return { state, events: [] };
-  const food = id === 'lanche' || id === 'peixe';
-  if (food && id !== (actor.kind === 'cat' ? 'peixe' : 'lanche')) return { state, events: [] };
+  const kind = itemKind(item);
+  const food = kind === 'lanche' || kind === 'peixe';
+  if (food && kind !== (actor.kind === 'cat' ? 'peixe' : 'lanche')) return { state, events: [] };
   return deliver(state, actor, item, food);
 }
 
 function deliver(state: World, actor: Actor, item: Item, food: boolean): Transition {
-  const show = item.id === 'microfone' && actor.kind === 'human';
+  const show = itemKind(item) === 'microfone' && actor.kind === 'human';
   return {
     state: {
       ...state, show: state.show || show,

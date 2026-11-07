@@ -1,3 +1,4 @@
+import { itemKind } from './item-kind';
 import { transferItem } from './transfer';
 import { crossDoor } from './doors';
 import { roomWidth, validPoint } from './geometry';
@@ -40,7 +41,7 @@ function release(state: World, actor: Actor, feeding: boolean): Transition {
   const item = state.items.find(i => i.holder === actor.id);
   if (!item) return { state, events: [] };
   const food = actor.kind === 'cat' ? 'peixe' : 'lanche';
-  if (feeding && item.id !== food) return { state, events: [] };
+  if (feeding && itemKind(item) !== food) return { state, events: [] };
   const result = feeding ? changeActor(state, actor, { fed: true, resting: false }, 'fed')
     : { state, events: [{ type: 'dropped' as const, actor: actor.id }] };
   return { ...result, state: { ...result.state, items: state.items.map(i => i.id === item.id
@@ -63,6 +64,9 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
 }
 
 export function transition(state: World, action: Action): Transition {
+  return action.type === 'name' ? nameActor(state, action.actor, action.name) : playTransition(state, action);
+}
+function playTransition(state: World, action: Exclude<Action, { type: 'name' }>): Transition {
   if (action.type === 'cross') return cross(state, action);
   if ('room' in action) return navigate(state, action);
   if (action.type === 'use') return usePiece(state, action.id);
@@ -104,4 +108,13 @@ function placeItem(state: World, action: Extract<Action, { type: 'place' }>): Tr
 function cross(state: World, action: Extract<Action, { type: 'cross' }>): Transition {
   const next = crossDoor(state, action.actor, action.direction);
   return { state: next, events: next === state ? [] : [{ type: 'room' }] };
+}
+
+function nameActor(state: World, id: import('./types').ActorId, value: string): Transition {
+  const name = Array.from(value.trim()).slice(0, 24).join('');
+  return { state: { ...state, actors: state.actors.map(a => {
+    if (a.id !== id) return a;
+    const next = { ...a }; delete next.name;
+    return name ? { ...next, name } : next;
+  }) }, events: [{ type: 'named', actor: id }] };
 }

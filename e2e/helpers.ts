@@ -1,6 +1,9 @@
 import { expect, type Page } from '@playwright/test';
+import { localWorld } from '../src/domain/neighborhood';
+import type { Neighborhood } from '../src/domain/neighborhood-types';
 import type { World } from '../src/domain/types';
-export const read = (page: Page): Promise<World> => page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:v1')!).state);
+export const readTown = (page: Page): Promise<Neighborhood> => page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v1')!).town);
+export const read = async (page: Page): Promise<World> => localWorld(await readTown(page));
 export async function ready(page: Page) { await page.goto('/'); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); }
 export async function tray(page: Page, tab?: string) {
   if (await page.locator('#tray-toggle').getAttribute('aria-expanded') !== 'true') await page.locator('#tray-toggle').click();
@@ -26,4 +29,13 @@ export async function clear(page: Page) {
   await page.locator('#map-toggle').click();
   if (!await page.locator('#room-options').evaluate(n => (n as HTMLDetailsElement).open)) await page.locator('#room-options summary').click();
   await page.locator('#clear-room').click(); await page.locator('#confirm-clear').click();
+}
+
+export async function swipe(page: Page, from: number, to: number) {
+  const session = await page.context().newCDPSession(page);
+  const a = await point(page, from, 40), b = await point(page, to, 40);
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: a.x, y: a.y, id: 1 }, { x: a.x + 50, y: a.y, id: 2 }] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: b.x, y: b.y, id: 1 }, { x: b.x + 50, y: b.y, id: 2 }] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await session.detach();
 }

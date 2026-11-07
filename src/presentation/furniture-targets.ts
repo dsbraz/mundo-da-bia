@@ -22,6 +22,7 @@ export function surfaceAt(state: World, p: Point): Exclude<Spot, 'floor'> | unde
   return undefined;
 }
 export function seatAt(state: World, p: Point) {
+  if (hit(state, 'bed', p, 565, 271, 404, 110)) return 'bed';
   return seatIds.find(id => {
     const seat = seatPoint(state, id);
     return seat && seat.room === state.room && Math.abs(seat.x - p.x) <= 45 && Math.abs(seat.y - p.y) <= 55;

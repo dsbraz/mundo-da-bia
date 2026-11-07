@@ -19,7 +19,7 @@ function editPiece(state: World, piece: Piece, action: Extract<EditAction, { id:
   const updated = { ...piece, ...patch };
   if (!validPlacement(updated, roomWidth(state))) return state;
   const next = relocate(state, piece, updated);
-  if (!next.actors.every(a => validPoint(a, roomWidth(state, a.room))) || !next.items.every(i => validPoint(i, roomWidth(state, i.room)))) return state;
+  if (![...next.actors, ...next.items].every(p => validLocalPosition(state, p))) return state;
   return { ...next, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === piece.id ? updated : p) } };
 }
 function addPiece(state: World, kind: PieceKind, point?: { x: number; y: number }): World {
@@ -61,4 +61,8 @@ export function undo(h: History): History {
 export function redo(h: History): History {
   const next = h.future[0];
   return next ? { past: [...h.past, h.present], present: next, future: h.future.slice(1) } : h;
+}
+
+function validLocalPosition(state: World, point: import('./types').Point & { room: import('./types').RoomId }) {
+  return !Object.hasOwn(state.layout.rooms, point.room) || validPoint(point, roomWidth(state, point.room));
 }

@@ -23,6 +23,6 @@ export function drawRoom(scene: Phaser.Scene, state: World) {
   g.fillStyle(0xffffff, .15).fillTriangle(99, 94, 174, 94, 99, 164);
   if (state.room === 'sala') {
     if (finish.wall === 'original' && finish.floor === 'original') scene.add.image(0, 0, 'atelier-background').setOrigin(0).setDisplaySize(width, 600);
-    scene.add.image(0, 0, 'atelier-details').setOrigin(0);
+    scene.add.image(0, 0, 'atelier-details').setOrigin(0).setDisplaySize(1000, 600);
   }
 }

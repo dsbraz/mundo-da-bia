@@ -20,7 +20,6 @@ export function createPlayGesture(getState: () => World, select: (id: ActorId) =
     start(pointer: number, point: Point): boolean {
       if (active) return false;
       const state = getState(); const token = play && sourceAt(state, point, play.wardrobe());
-      if (play && tapFurniture(state, point, token, play)) return false;
       const actor = token ? undefined : actorAt(state, point);
       active = startDrag(pointer, state, point, token, actor);
       if (token) play?.preview({ ...token, point });
@@ -48,6 +47,10 @@ function destination(active: Active, point: Point, state: World): Point {
   return validPoint(position, roomWidth(state)) ? position : active.last;
 }
 function finish(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
+  if (!active.actor && !active.token) {
+    if (play && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12) tapFurniture(state, point, undefined, play);
+    return;
+  }
   if (active.token) { deliver(active.token, point, state, play!); return; }
   finishActor(active, point, state, move, play);
 }
@@ -56,7 +59,7 @@ function finishActor(active: Active, point: Point, state: World, move: (p: Point
   if (active.actor && door && play?.cross) { play.cross(active.actor, door); return; }
   const seat = seatAt(state, point);
   if (active.actor && seat) { play?.dispatch({ type: 'sit', actor: active.actor, seat }); return; }
-  if (!active.actor || Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) move(destination(active, point, state));
+  if (active.actor && Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) move(destination(active, point, state));
 }
 function deliver(token: DragToken, point: Point, state: World, play: PlayInput) {
   const actor = actorAt(state, point); const surface = surfaceAt(state, point);

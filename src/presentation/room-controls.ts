@@ -2,7 +2,6 @@ import { quickRooms, roomPicture } from './quick-rooms';
 import type { RoomId, World } from '../domain/types';
 import type { NewRoom } from '../domain/rooms';
 import { projects } from '../content/projects';
-import { neighbor } from '../domain/doors';
 interface Actions {
   enter: (room: RoomId) => void; add: (room: NewRoom) => void; rename: (name: string) => void;
   reorder: (room: RoomId, target: RoomId) => void; snapshot: (name: string) => void; closeTray: () => void;
@@ -15,16 +14,11 @@ export function roomControls(root: HTMLElement, actions: Actions) {
   root.querySelector('#close-map')!.addEventListener('click', () => dialog.close());
   root.querySelector('#room-rename')!.addEventListener('click', () => actions.rename(root.querySelector<HTMLInputElement>('#current-room-name')!.value));
   root.querySelector('#add-room')!.addEventListener('click', () => choose(freeCell(state)));
-  for (const [id, direction] of [['previous-room', 'left'], ['next-room', 'right']] as const) {
-    root.querySelector(`#${id}`)!.addEventListener('click', () => { const room = neighbor(state, direction); if (room) actions.enter(room); });
-  }
   projectCards(root, actions.snapshot);
   return (next: World) => {
     state = next; renderCards(root, state, actions, () => dialog.close());
     root.querySelector<HTMLButtonElement>('#add-room')!.disabled = freeCell(state) < 0;
     root.querySelector('#room-name')!.textContent = state.layout.rooms[state.room]!.name;
-    root.querySelector<HTMLButtonElement>('#previous-room')!.disabled = !neighbor(state, 'left');
-    root.querySelector<HTMLButtonElement>('#next-room')!.disabled = !neighbor(state, 'right');
     const input = root.querySelector<HTMLInputElement>('#current-room-name')!;
     if (document.activeElement !== input) input.value = state.layout.rooms[state.room]!.name;
   };

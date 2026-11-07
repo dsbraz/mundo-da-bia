@@ -4,3 +4,13 @@
 button.illustrated{display:inline-flex;align-items:center;justify-content:center;gap:8px}button.illustrated::before{content:"";display:block;flex:0 0 27px;width:27px;height:27px;background:var(--button-icon) center/contain no-repeat}.tabs button.illustrated{flex-direction:column;gap:4px;font-size:13px}.tabs button.illustrated::before{width:34px;height:34px;flex-basis:34px}#redo::before{transform:scaleX(-1)}#actor-context button{font-size:12px}#actor-context .actions{display:flex}#cast img{height:88px;width:80px}#cast button{min-height:125px}.modes button[aria-pressed=true]{background:#e0e8f4;color:#304f7d}#tray-toggle{background:#eee5f3}#map-toggle{background:#f7e9da}
 #actor-context .actions{display:inline-flex}#actor-context{min-width:240px}#actor-context button.illustrated::before{width:23px;height:23px;flex-basis:23px}.room-card{user-select:none}.room-card img{pointer-events:none}
 #app:not(.actor-chosen) #actor-context,.tray-open #actor-context{display:none}
+/* O bairro usa a mesma bandeja e os mesmos alvos de toque dos interiores. */
+#neighborhood-list { display: flex; flex-wrap: wrap; gap: 12px; }
+#plot-dialog { max-width: min(640px, 92vw); }
+#plot-dialog button { display: inline-flex; margin: 6px; min-height: 48px; }
+.street #room-map, .street #room-options, .street #add-room, .street #quick-rooms, .street #build-catalog { display: none; }
+.street #room-name::after { content: ' · arraste com dois dedos'; }
+#cast { align-items: stretch; }
+.character-card { display: flex; flex-direction: column; gap: 6px; min-width: 96px; }
+.character-card > button { min-height: 44px; }
+#cast .character-card > button:last-child { min-height: 44px; }

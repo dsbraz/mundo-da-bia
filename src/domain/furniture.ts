@@ -1,3 +1,4 @@
+import { itemKind } from './item-kind';
 import { fixture, fromPiece } from './layout';
 import type { Actor, Home, Item, ItemId, SeatId, Spot, PieceKind, RoomId, Transition, World } from './types';
 
@@ -28,14 +29,14 @@ export function foodHome(state: World, item: Item, actor: Actor, feeding: boolea
   if (!feeding) return { holder: null, room: actor.room, spot: 'floor', x: actor.x, y: actor.y };
   const fridge = fixture(state, 'fridge');
   if (!fridge) return { holder: null, room: actor.room, spot: 'floor', x: actor.x, y: actor.y };
-  return { holder: null, room: fridge.room, spot: 'fridge', ...fromPiece(fridge, { x: 680, y: item.id === 'lanche' ? 310 : 360 }) };
+  return { holder: null, room: fridge.room, spot: 'fridge', ...fromPiece(fridge, { x: 680, y: itemKind(item) === 'lanche' ? 310 : 360 }) };
 }
 export function put(state: World, id: ItemId, spot: Exclude<Spot, 'floor'>): Transition {
   const item = state.items.find(i => i.id === id);
   if (!item || !availableSpot(state, spot)) return { state, events: [] };
   if (!reachable(state, item)) return { state, events: [] };
-  if (spot === 'fridge' && id !== 'lanche' && id !== 'peixe') return { state, events: [] };
-  const index = state.items.indexOf(item);
+  if (spot === 'fridge' && itemKind(item) !== 'lanche' && itemKind(item) !== 'peixe') return { state, events: [] };
+  const index = spot === 'fridge' ? Number(itemKind(item) === 'peixe') : state.items.indexOf(item) % 4;
   const point = fromPiece(fixture(state, spotKind(spot))!, destinations(spot, index));
   return {
     state: { ...state, items: state.items.map(i => i.id === id ? { ...i, ...point, room: state.room, holder: null, spot } : i) },

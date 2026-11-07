@@ -1,6 +1,7 @@
+import { rasterScale } from './rendering';
 import type Phaser from 'phaser';
 import { fixture, pieceBounds } from '../domain/layout';
-import type { Piece, World } from '../domain/types';
+import type { Actor, Piece, World } from '../domain/types';
 import { slotsFor } from './targets';
 export function orderedPieces(state: World) {
   return state.layout.pieces.filter(p => p.room === state.room).sort((a, b) => pieceDepth(a) - pieceDepth(b));
@@ -8,7 +9,7 @@ export function orderedPieces(state: World) {
 export function pieceDepth(piece: Piece) {
   if (piece.kind === 'rug') return 1;
   if (['picture', 'neon'].includes(piece.kind)) return 2;
-  return piece.y + pieceBounds[piece.kind].height - 35;
+  return Math.min(520, piece.y + pieceBounds[piece.kind].height - 35);
 }
 export function drawPieces(scene: Phaser.Scene, state: World, wardrobe: boolean, selected: number | null) {
   const pieces = new Map<number, Phaser.GameObjects.Container>();
@@ -27,8 +28,8 @@ export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardr
   const container = scene.add.container(piece.x, piece.y).setDepth(pieceDepth(piece));
   const parts = partsFor(piece, state, wardrobe);
   const box = pieceBounds[piece.kind];
-  parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped).setScale(state.room === 'sala' ? .94 : 1)));
-  if (piece.active) container.add(scene.add.text(box.width / 2, 6, effect(piece), { fontSize: '24px', color: '#3f8799' }).setOrigin(.5).setName('effect'));
+  parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped).setDisplaySize(box.width, box.height)));
+  if (piece.active) container.add(scene.add.text(box.width / 2, 6, effect(piece), { resolution: 2, fontSize: '24px', color: '#3f8799' }).setOrigin(.5).setName('effect'));
   return container;
 }
 function partsFor(piece: Piece, state: World, wardrobe: boolean): string[] {
@@ -54,6 +55,10 @@ export function pickPiece(scene: Phaser.Scene, state: World, point: { x: number;
     const x = piece.flipped ? box.width - 1 - dx : dx;
     const keys = [`piece-${piece.kind}-${piece.color}`];
     if (piece.kind === 'lamp') keys.push(`piece-lamp-on-${piece.color}`);
-    return keys.some(key => (scene.textures.getPixelAlpha(x, dy, key) ?? 0) > 16);
+    return keys.some(key => (scene.textures.getPixelAlpha(x * rasterScale, dy * rasterScale, key) ?? 0) > 16);
   });
+}
+
+export function actorDepth(state: World, actor: Actor) {
+  return actor.seat === 'bed' ? pieceDepth(fixture(state, 'bed')!) + 1 : actor.y;
 }

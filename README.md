@@ -1,6 +1,6 @@
 # Mundo da Bia
 
-Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, 11 looks e casas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
+Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, 14 looks e um bairro com casas, prédios e lojas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
 **Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração Ateliê Pop](docs/atelier-pop.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
@@ -25,13 +25,17 @@ Após as atualizações compatíveis, o audit registra nove entradas moderadas e
 
 A barra principal oferece **Minha casa**, **Brincar**, **Decorar** e uma única bandeja. Em Brincar, escolha **Turma**, **Looks** ou **Objetos**. Toque em um personagem e em **Trazer aqui**, ou arraste sua miniatura para a cena. Um look veste a seleção; arrastá-lo permite vestir outro humano. As ações de vestir, descansar e soltar aparecem junto ao personagem. Alimentação, assentos e efeitos dos móveis continuam na cena.
 
-Arraste uma área livre horizontalmente para visitar o vizinho. A cena acompanha o dedo; menos de 25% da largura retorna à origem. Os botões **Anterior / Próximo** e os cartões em Minha casa oferecem alternativas. Visitar não transporta personagens. Para transportar alguém ou um objeto solto, mantenha o arraste por 500 ms nos 48 px da borda e solte no destino. A barra lateral mostra a espera. Escape ou cancelamento restaura o mundo; cada arraste permite uma travessia.
+Arraste com dois dedos horizontalmente para visitar o cômodo vizinho. Um dedo continua selecionando e movendo pessoas, objetos e móveis; arrastar o fundo não move ninguém. A cena acompanha o dedo; menos de 25% da largura retorna à origem. Os cartões em Minha casa, acessíveis por teclado, oferecem uma alternativa. Visitar não transporta personagens. Para transportar alguém ou um objeto solto, mantenha o arraste por 500 ms nos 48 px da borda e solte no destino. A barra lateral mostra a espera. Escape ou cancelamento restaura o mundo; cada arraste permite uma travessia.
 
 Em **Decorar**, a bandeja reúne **Móveis**, **Decoração** e **Acabamentos**, com filtro de coleção. Toque para adicionar ou arraste a miniatura até o local desejado. Arrastar uma peça move; a seleção mostra cores, espelhar e guardar. Desfazer e refazer permitem experimentar. Nesse modo, personagens não recebem gestos e móveis não ativam brincadeiras. Esvaziar fica nas opções do cômodo, exige confirmação e pode ser desfeito.
 
-Em **Minha casa**, toque nos cartões para visitar, arraste para reordenar ou use Antes/Depois. **+ Cômodo** oferece modelos com nome sugerido e tamanho médio. Nome e tamanho ficam nas opções secundárias. O painel também reúne som, casas independentes, duplicação, reunir a turma e ideias opcionais. Não há moedas, níveis ou avaliação de projetos.
+Em **Minha casa**, toque nos cartões para visitar, arraste para reordenar ou use Antes/Depois. **+ Cômodo** oferece modelos com nome sugerido e tamanho médio. Nome e tamanho ficam nas opções secundárias. O painel também reúne o bairro, som, duplicação de ambientes e decoração, reunir a turma e ideias opcionais. A turma é única entre todas as construções. Não há moedas, níveis ou avaliação de projetos.
 
 Use Tab e Enter para os controles. Os alvos dos móveis aparecem ao receber foco: em Decorar, selecione e use as setas para mover. As setas na área da casa movem o personagem selecionado em Brincar. Escape cancela arrastes e recolhe a bandeja. A sala e toda a turma receberam a direção de ilustração com traço fino, aprovada pelo proprietário. Bia é loira e de pele clara; Rui e Léo têm versões dos looks com bermudas ou calças. Os botões usam ícones ilustrados e rótulos curtos.
+
+No cartão de cada personagem, **Nome** permite personalizar até 24 caracteres ou restaurar o original. Os looks Rumi, Mira e Zoey preservam rosto e cabelo; Rui e Léo mantêm bermudas/calças.
+
+Na rua, dois dedos deslocam a vista sem inércia. Em Decorar, toque no terreno ou abra **Construir** para escolher Casa, Prédio ou Loja. Fachadas têm nome e cor; terrenos crescem em pares. Desfazer/refazer vale para a sessão de edição do local e encerra ao visitar outro lugar ou voltar a Brincar. Tocar na porta visita sem levar ninguém. Arrastar uma pessoa ou objeto solto até a porta por 500 ms mostra uma prévia; soltar confirma. **Levar pela porta** oferece a alternativa de toque e teclado. Veja [a implementação do bairro](docs/neighborhood.md).
 
 ## Arquitetura
 
@@ -41,7 +45,7 @@ Use Tab e Enter para os controles. Os alvos dos móveis aparecem ao receber foco
 - `src/presentation`: arte, cena, controles e gestos. Controles recebem callbacks e não importam cenas.
 - `src/bootstrap`: conecta domínio, persistência e apresentação.
 
-Arrastar personagens e móveis exibe uma prévia e confirma a posição ao soltar; cancelar restaura a posição anterior ao gesto. Saves v1/v2/v3 migram para v4 preservando a brincadeira. A coleção de casas migra do envelope v1 para v2; a chave antiga continua atualizada com a casa ativa. Dados ausentes, inválidos, duplicados ou de versão desconhecida recuperam o estado inicial. A resolução lógica é 1000, 1200 ou 1400 × 600, conforme o tamanho do cômodo, ajustada ao espaço disponível sem distorção. SVGs locais em camadas dispensam fontes e downloads de terceiros.
+Arrastar personagens e móveis exibe uma prévia e confirma a posição ao soltar; cancelar restaura a posição anterior ao gesto. Saves v1/v2/v3 migram para v4 preservando a brincadeira. A coleção de casas legada migra para o envelope de bairro v1 na chave `mundo-da-bia:neighborhood:v1`. As chaves antigas ficam intactas para recuperação; os próximos carregamentos usam o bairro. Localizações incluem construção e cômodo, e cada objeto tem identidade de instância separada do tipo. Dados ausentes, inválidos, duplicados ou de versão desconhecida recuperam o estado inicial. A resolução lógica é 1000, 1200 ou 1400 × 600, conforme o tamanho do cômodo, ajustada ao espaço disponível sem distorção. SVGs locais em camadas dispensam fontes e downloads de terceiros.
 
 ## Qualidade
 

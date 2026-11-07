@@ -1,9 +1,14 @@
+import { rasterScale, logicalWidth } from './rendering';
+import { captureMotion } from './settle-motion';
+import { itemKind } from '../domain/item-kind';
+import { drawStreet, drawExit } from './street';
+import type { Neighborhood } from '../domain/neighborhood-types';
 import Phaser from 'phaser';
 import { roomPreview } from './room-preview';
 import { enterRoom } from '../domain/room-state';
 import type { RoomId, ItemId } from '../domain/types';
 import { itemIds } from '../domain/types';
-import type { ActorId, Point, PresentationEvent, World } from '../domain/types';
+import type { Actor, ActorId, Point, PresentationEvent, World } from '../domain/types';
 import { fixture } from '../domain/layout';
 import { roomWidth } from '../domain/geometry';
 import { spotKind } from '../domain/furniture';
@@ -11,12 +16,16 @@ import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
 import { animateActor, drawActor } from './art';
 import { drawRoom } from './room';
-import { drawPieces, pickPiece, pieceDepth } from './piece-art';
-import { actorAt, itemPoint } from './targets';
+import { drawPieces, pickPiece, pieceDepth, actorDepth } from './piece-art';
+import { actorAt, handPoint, previewPoint, itemPoint } from './targets';
 import type { DragPreview } from './targets';
 import { react } from './reactions';
 export class PlayScene extends Phaser.Scene {
   private world: World;
+  private town: Neighborhood | null = null;
+  private cameraX = 0;
+  neighborhood(town: Neighborhood) { this.town = town; }
+  camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x; this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private pieces = new Map<number, Phaser.GameObjects.Container>();
@@ -31,23 +40,31 @@ export class PlayScene extends Phaser.Scene {
   private hint: Phaser.GameObjects.Graphics | null = null;
   private objects: Phaser.GameObjects.Image[] = [];
   constructor(state: World) { super('play'); this.world = state; }
-  preload() { loadArt(this); itemIds.forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 40, height: 40 })); }
-  create() { this.ready = true; this.paint(this.world, this.selected); }
+  preload() { loadArt(this); itemIds.forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); }
+  create() { this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true; this.paint(this.world, this.selected); }
   paint(state: World, selected: ActorId) {
     this.world = state; this.selected = selected;
     if (!this.ready) return;
-    if (this.scale.width !== roomWidth(state)) this.scale.setGameSize(roomWidth(state), 600);
+    const width = state.streetWidth ? 1000 : roomWidth(state);
+    if (logicalWidth(this) !== width) this.scale.setGameSize(width * rasterScale, 600 * rasterScale);
+    this.cameras.main.scrollX = state.streetWidth ? this.cameraX : 0;
+    this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(this.cameras.main.scrollX);
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null;
-    drawRoom(this, state);
+    if (state.streetWidth && this.town) drawStreet(this, this.town);
+    else { drawRoom(this, state); this.exitDoor(); }
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
     this.game.canvas.dataset.ready = 'true';
   }
+  private exitDoor() {
+    const location = this.town?.location;
+    if (location?.kind === 'interior' && this.town!.buildings.find(b => b.id === location.building)?.entry === location.room) drawExit(this);
+  }
   private paintPlay(state: World, selected: ActorId) {
     this.figures = state.actors.filter(a => a.room === state.room).map(a => {
-      const depth = a.seat === 'bed' ? pieceDepth(fixture(state, 'bed')!) + 1 : a.y;
+      const depth = actorDepth(state, a);
       return drawActor(this, a, a.id === selected).setDepth(depth);
     });
     state.items.forEach(item => {
@@ -55,10 +72,10 @@ export class PlayScene extends Phaser.Scene {
       const holder = state.actors.find(a => a.id === item.holder);
       const support = item.spot === 'floor' ? undefined : fixture(state, spotKind(item.spot));
       const depth = holder ? this.figures.find(f => f.name === holder.id)!.depth + 2 : support ? pieceDepth(support) + 2 : item.y + 1;
-      this.objects.push(this.add.image(point.x, point.y, item.id).setName(item.id).setDepth(depth));
+      this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(40, 40).setName(item.id).setDepth(depth));
     });
     drawLighting(this, state);
-    if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', { fontSize: '18px', color: '#425b66', backgroundColor: '#f3efe4', padding: { x: 12, y: 8 } }).setOrigin(.5).setDepth(700);
+    if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', { resolution: 2, fontSize: '18px', color: '#425b66', backgroundColor: '#f3efe4', padding: { x: 12, y: 8 } }).setOrigin(.5).setDepth(700);
   }
   pan(room: RoomId | null, fraction: number) {
     if (!this.ready) return;
@@ -70,7 +87,7 @@ export class PlayScene extends Phaser.Scene {
       const next = roomPreview(this, enterRoom(this.world, room), this.selected, this.building);
       this.sliding = { room, current, next };
     }
-    const width = this.scale.width;
+    const width = logicalWidth(this);
     this.sliding.current.x = fraction * width;
     this.sliding.next.x = fraction * width + (fraction < 0 ? width : -width);
   }
@@ -83,10 +100,10 @@ export class PlayScene extends Phaser.Scene {
       if (actor) {
         const value = this.world.actors.find(a => a.id === actor)!;
         this.figures = [drawActor(this, { ...value, seat: null, resting: false }, true).setDepth(750)];
-        this.world.items.filter(i => i.holder === actor).forEach(i => this.objects.push(this.add.image(0, 0, i.id).setDepth(751)));
-      } else if (item) this.ghost = this.add.image(0, 0, item).setDepth(750);
+        this.world.items.filter(i => i.holder === actor).forEach(i => this.objects.push(this.add.image(0, 0, itemKind(i)).setDisplaySize(40, 40).setDepth(751)));
+      } else if (item) this.ghost = this.add.image(0, 0, itemKind(this.world.items.find(i => i.id === item)!)).setDisplaySize(40, 40).setDepth(750);
     }
-    const x = point.x * this.scale.width / roomWidth(this.world, room);
+    const x = point.x * logicalWidth(this) / roomWidth(this.world, room);
     this.figures[0]?.setPosition(x, point.y);
     this.objects.forEach(o => o.setPosition(x + 28, point.y - 55)); this.ghost?.setPosition(x, point.y - 28);
   }
@@ -97,12 +114,15 @@ export class PlayScene extends Phaser.Scene {
     const active = id ?? this.moving; if (!active) return;
     const actor = this.world.actors.find(a => a.id === active)!;
     const destination = point ?? actor;
-    const depth = actor.seat === 'bed' ? pieceDepth(fixture(this.world, 'bed')!) + 1 : actor.y;
-    this.figures.find(f => f.name === active)?.setPosition(destination.x, destination.y).setDepth(point ? 750 : depth);
+    const preview = point ? { ...actor, ...point, seat: null } : actor;
+    const depth = actorDepth(this.world, preview);
+    const figure = this.figures.find(f => f.name === active);
+    if (figure) this.tweens.killTweensOf(figure);
+    figure?.setPosition(destination.x, destination.y).setDepth(depth);
     this.moving = id;
     this.world.items.filter(i => i.holder === active).forEach(item => {
-      const p = itemPoint(this.world, item)!;
-      this.objects.find(o => o.name === item.id)?.setPosition(p.x + destination.x - actor.x, p.y + destination.y - actor.y).setDepth(point ? 751 : depth + 2);
+      const p = handPoint(preview);
+      this.objects.find(o => o.name === item.id)?.setPosition(p.x, p.y).setDepth(depth + 2);
     });
   }
   walkToDoor(id: ActorId, x: number, duration: number): Promise<void> {
@@ -110,6 +130,10 @@ export class PlayScene extends Phaser.Scene {
     const point = { x: actor.x, y: actor.y };
     return new Promise(resolve => this.tweens.add({ targets: point, x, y: 510, duration,
       onUpdate: () => this.previewActor(id, point), onComplete: () => resolve() }));
+  }
+  captureMotion() {
+    const settle = captureMotion(this, this.figures, [...this.objects, ...(this.ghost ? [this.ghost] : [])], this.world.room);
+    return () => settle(this.figures, this.objects, this.world.room);
   }
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
@@ -119,12 +143,27 @@ export class PlayScene extends Phaser.Scene {
     if (!this.ready) return;
     this.objects.forEach(o => o.setAlpha(drag?.kind === 'item' && o.name === drag.id ? .25 : 1));
     if (!drag) { this.clearPreview(); return; }
-    const key = drag.kind === 'look' ? `look-${drag.id}` : drag.id;
-    if (!this.ghost) this.ghost = this.add.image(0, 0, key).setDepth(1000);
-    this.ghost.setTexture(key).setPosition(drag.point.x, drag.point.y).setDisplaySize(drag.kind === 'look' ? 64 : 44, drag.kind === 'look' ? 56 : 44);
+    const key = drag.kind === 'look' ? `look-${drag.id}` : itemKind(this.world.items.find(i => i.id === drag.id)!);
+    if (!this.ghost) this.ghost = this.add.image(drag.point.x, drag.point.y, key).setDepth(1000);
+    const target = actorAt(this.world, drag.point);
+    const point = previewPoint(this.world, drag);
+    this.snapGhost(point, drag.kind === 'item' ? target?.id ?? null : null);
+    this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : 44, drag.kind === 'look' ? 56 : 44);
+    this.highlight(target);
+  }
+  private highlight(target: Actor | undefined) {
     if (!this.hint) this.hint = this.add.graphics().setDepth(999);
-    this.hint.clear(); const target = actorAt(this.world, drag.point);
+    this.hint.clear();
     if (target) this.hint.lineStyle(3, 0x477e86).strokeEllipse(target.x, target.y + 3, 76, 22);
+  }
+  private snapGhost(point: Point, target: ActorId | null) {
+    const ghost = this.ghost!;
+    if (ghost.getData('target') !== target) {
+      this.tweens.killTweensOf(ghost);
+      if (target && !matchMedia('(prefers-reduced-motion: reduce)').matches) this.tweens.add({ targets: ghost, ...point, duration: 100, ease: 'Sine.Out' });
+      else ghost.setPosition(point.x, point.y);
+    } else if (!target) ghost.setPosition(point.x, point.y);
+    ghost.setData('target', target);
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   update(time: number) {

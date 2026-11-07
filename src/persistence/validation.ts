@@ -10,14 +10,14 @@ import { roomWidth, validPoint } from '../domain/geometry';
 function position(value: RecordValue): boolean {
   return typeof value.x === 'number' && typeof value.y === 'number' && validPoint({ x: value.x, y: value.y }, 1400);
 }
-function actor(value: unknown): value is Actor {
+export function actor(value: unknown): value is Actor {
   if (!record(value) || !member(actorIds, value.id)) return false;
   const kind = actorIds.indexOf(value.id) < 4 ? 'human' : 'cat';
   return value.kind === kind && roomId(value.room) && member(lookIds, value.look)
-    && validSeat(value.seat)
+    && actorIdentity(value)
     && typeof value.fed === 'boolean' && typeof value.resting === 'boolean' && position(value);
 }
-function item(value: unknown): value is Item {
+export function item(value: unknown): value is Item {
   if (!record(value)) return false;
   return member(itemIds, value.id) && roomId(value.room)
     && itemSpot(value)
@@ -33,7 +33,7 @@ export function validWorld(value: unknown): value is World {
   if (!complete(value.actors, actorIds, actor) || !complete(value.items, itemIds, item)) return false;
   return consistentWorld(value as unknown as World);
 }
-function consistentWorld(value: World): boolean {
+export function consistentWorld(value: World): boolean {
   if (![...value.actors, ...value.items].every(p => Object.hasOwn(value.layout.rooms, p.room) && validPoint(p, roomWidth(value, p.room)))) return false;
   const holders = value.items.map(i => i.holder).filter(id => id !== null);
   const occupied = value.actors.flatMap(a => a.seat ? [`${a.room}:${a.seat}`] : []);
@@ -83,3 +83,7 @@ export function upgradeRooms(value: unknown): World | null {
   const state = { ...value, layout };
   return validWorld(state) ? state : null;
 }
+
+function validName(value: unknown): boolean { return value === undefined || (typeof value === 'string' && value.trim() === value && value.length > 0 && Array.from(value).length <= 24); }
+
+function actorIdentity(value: RecordValue): boolean { return validName(value.name) && validSeat(value.seat); }

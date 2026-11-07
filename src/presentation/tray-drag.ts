@@ -19,9 +19,9 @@ export function trayDrag(button: HTMLButtonElement, width: () => number, drop: (
   });
   button.addEventListener('pointerup', e => {
     if (pointer !== e.pointerId) return;
-    const bounds = document.querySelector('canvas')!.getBoundingClientRect();
+    const canvas = document.querySelector('canvas')!; const bounds = canvas.getBoundingClientRect();
     if (dragged && enabled() && e.clientX >= bounds.left && e.clientX <= bounds.right && e.clientY >= bounds.top && e.clientY <= bounds.bottom) {
-      drop({ x: (e.clientX - bounds.left) * width() / bounds.width, y: (e.clientY - bounds.top) * 600 / bounds.height });
+      drop({ x: (e.clientX - bounds.left) * (canvas.dataset.street === 'true' ? 1000 : width()) / bounds.width + Number(canvas.dataset.cameraX ?? 0), y: (e.clientY - bounds.top) * 600 / bounds.height });
     }
     pointer = null; cancel();
   });

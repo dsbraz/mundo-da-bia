@@ -72,3 +72,15 @@ it('soltar um objeto sobre o sofá não teletransporta quem o estava segurando',
   expect(state.actors[0]).toEqual(before);
   expect(state.items[3]).toMatchObject({ holder: null, x: 150, y: 433 });
 });
+
+it('aceita deitar em toda a área do colchão e ignora a cabeceira', () => {
+  const state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
+  expect(seatAt(state, { x: 620, y: 300 })).toBe('bed');
+  expect(seatAt(state, { x: 910, y: 370 })).toBe('bed');
+  expect(seatAt(state, { x: 620, y: 190 })).toBeUndefined();
+});
+it('encaixa um brinquedo no centro do colo quando sentado', () => {
+  let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
+  state = transition(state, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  expect(itemPoint(state, state.items[3]!)).toEqual({ x: 150, y: 367 });
+});

@@ -1,0 +1,27 @@
+import { expect, test } from '@playwright/test';
+import { ready, read, tray, closeTray, drag, tap, swipe } from './helpers';
+test('pega roupa no armário e brinquedo na gaveta, entrega no colo e deita com coberta', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await ready(page);
+  await expect(page.locator('canvas')).toHaveAttribute('width', '2000');
+  await tap(page, 400, 230); await drag(page, [473, 268], [520, 430]);
+  expect((await read(page)).actors[0]!.look).toBe('rumi');
+  await tap(page, 400, 230);
+  await tap(page, 320, 390); await drag(page, [350, 382], [355, 370]);
+  expect((await read(page)).items[3]!.spot).toBe('drawer');
+  await drag(page, [520, 420], [150, 405]);
+  await drag(page, [466, 364], [150, 350]);
+  expect((await read(page)).items[3]!.holder).toBe('bia');
+  await page.screenshot({ path: 'reports/care-lap.png' });
+  await swipe(page, 700, 300); await tray(page, 'Turma'); await page.locator('#bring-here').click(); await closeTray(page);
+  const bia = (await read(page)).actors[0]!;
+  await drag(page, [bia.x, bia.y - 110], [620, 300]);
+  expect((await read(page)).actors[0]).toMatchObject({ seat: 'bed', resting: true });
+  expect((await read(page)).items[3]!.holder).toBe('bia');
+  await page.screenshot({ path: 'reports/care-bed.png' });
+  await page.getByRole('button', { name: 'Acordar', exact: true }).click();
+  expect((await read(page)).actors[0]!.resting).toBe(false);
+  await page.getByRole('button', { name: 'Deitar na cama', exact: true }).click();
+  const state = await read(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
+  expect(await read(page)).toEqual(state);
+});

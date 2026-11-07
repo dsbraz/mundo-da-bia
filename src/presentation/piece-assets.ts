@@ -1,3 +1,4 @@
+import { loadSvg } from './rendering';
 import type Phaser from 'phaser';
 import { paletteIds, pieceKinds } from '../domain/types';
 import type { Palette, PieceKind } from '../domain/types';
@@ -33,12 +34,12 @@ export function pieceImage(kind: PieceKind, color: Palette = 'original', preview
   return svgFragment(recolor(source(kind), color), parts, pieceBounds[kind]);
 }
 export function loadPieces(scene: Phaser.Scene) {
-  scene.load.svg('atelier-background', svgFragment(atelier, ['architecture']));
-  scene.load.svg('atelier-details', svgFragment(atelier, ['window', 'posters']));
-  scene.load.svg('window-sala', svgFragment(sala, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
-  scene.load.svg('window-quarto', svgFragment(quarto, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
+  loadSvg(scene, 'atelier-background', svgFragment(atelier, ['architecture']));
+  loadSvg(scene, 'atelier-details', svgFragment(atelier, ['window', 'posters']));
+  loadSvg(scene, 'window-sala', svgFragment(sala, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
+  loadSvg(scene, 'window-quarto', svgFragment(quarto, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
   pieceKinds.forEach(kind => paletteIds.forEach(color => {
-    scene.load.svg(`piece-${kind}-${color}`, pieceImage(kind, color));
-    (extras[kind] ?? []).forEach(part => scene.load.svg(`piece-${part}-${color}`, svgFragment(recolor(source(kind), color), [part], pieceBounds[kind])));
+    loadSvg(scene, `piece-${kind}-${color}`, pieceImage(kind, color));
+    (extras[kind] ?? []).forEach(part => loadSvg(scene, `piece-${part}-${color}`, svgFragment(recolor(source(kind), color), [part], pieceBounds[kind])));
   }));
 }
