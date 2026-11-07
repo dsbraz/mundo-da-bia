@@ -69,6 +69,12 @@ export class PlayScene extends Phaser.Scene {
       this.objects.find(o => o.name === item.id)?.setPosition(p.x + destination.x - actor.x, p.y + destination.y - actor.y).setDepth(point ? 751 : depth + 2);
     });
   }
+  walkToDoor(id: ActorId, x: number, duration: number): Promise<void> {
+    const actor = this.world.actors.find(a => a.id === id)!;
+    const point = { x: actor.x, y: actor.y };
+    return new Promise(resolve => this.tweens.add({ targets: point, x, y: 510, duration,
+      onUpdate: () => this.previewActor(id, point), onComplete: () => resolve() }));
+  }
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }

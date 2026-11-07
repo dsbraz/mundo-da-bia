@@ -1,3 +1,7 @@
+import { doorControls, slideRoom } from '../presentation/door-controls';
+import { neighbor } from '../domain/doors';
+import type { Direction } from '../domain/doors';
+import { roomWidth } from '../domain/geometry';
 import { roomControls } from '../presentation/room-controls';
 import { addRoom, renameRoom, moveRoom } from '../domain/rooms';
 import { activeHouse, duplicateHouse, renameHouse, selectHouse, updateHouse } from '../domain/houses';
@@ -40,6 +44,7 @@ wardrobeButton.addEventListener('click', toggleWardrobe);
 const playSound = createSound(root.querySelector<HTMLButtonElement>('#sound-toggle')!);
 const furnitureControls = homeControls(root, dispatch);
 const controls = createControls(root, dispatch, select);
+const doors = doorControls(root, direction => { void walkThrough(selected, direction); });
 const rooms = roomControls(root, {
   enter: room => dispatch({ type: 'room', room }),
   add: options => {
@@ -92,7 +97,17 @@ function refresh() {
   scene.buildMode(building, selectedPiece);
   scene.paint(state, selected); furnitureControls(state); controls(state, selected, saved);
   wardrobeButton.disabled = fixture(state, 'wardrobe')?.room !== state.room;
-  editor(album, edits, building, selectedPiece); rooms(state, selected);
+  editor(album, edits, building, selectedPiece); rooms(state, selected); doors(state, selected);
+}
+async function walkThrough(actor: ActorId, direction: Direction) {
+  if (building || root.dataset.crossing === 'true' || !neighbor(state, direction)) return;
+  if (!state.actors.some(a => a.id === actor && a.room === state.room)) return;
+  cancelInput(); root.dataset.crossing = 'true'; root.inert = true;
+  const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 280;
+  try {
+    await scene.walkToDoor(actor, direction === 'left' ? 70 : roomWidth(state) - 70, duration);
+    await slideRoom(game.canvas, direction, () => dispatch({ type: 'cross', actor, direction }), duration);
+  } finally { root.inert = false; root.dataset.crossing = 'false'; }
 }
 function select(id: ActorId) { selected = id; refresh(); }
 function dispatch(action: Action) {
@@ -117,6 +132,7 @@ const game = new Phaser.Game({
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
     cancelInput = bindInput(current.canvas, () => state, select, point => dispatch({ type: 'move', actor: selected, point }), {
+      cross: (id, direction) => { void walkThrough(id, direction); },
       dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
     }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point)) });
   } },

@@ -9,6 +9,9 @@ export const actors: Record<ActorId, { name: string; skin: number; hair: number 
   pipoca: { name: 'Pipoca', skin: 0xfff6dc, hair: 0xb09d85 },
 };
 export const looks: Record<LookId, { name: string; color: number; icon: string }> = {
+  denim: { name: 'Jaqueta jeans', color: 0x668ca8, icon: '◇' },
+  rehearsal: { name: 'Ensaio pop', color: 0x9c83b6, icon: '♫' },
+  overalls: { name: 'Macacão criativo', color: 0xc39965, icon: '✎' },
   neon: { name: 'Estrela Neon', color: 0x9771cf, icon: 'ϟ' },
   aurora: { name: 'Guardiã Aurora', color: 0x47bcb2, icon: '✦' },
   sol: { name: 'Dia de sol', color: 0xf4bf54, icon: '☀' },

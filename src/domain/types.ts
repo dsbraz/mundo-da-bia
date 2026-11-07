@@ -1,5 +1,5 @@
 export const actorIds = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'] as const;
-export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora'] as const;
+export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora', 'denim', 'rehearsal', 'overalls'] as const;
 export const roomIds = ['sala', 'quarto'] as const;
 export const itemIds = ['lanche', 'peixe', 'microfone', 'ursinho'] as const;
 export type ActorId = typeof actorIds[number];
@@ -11,7 +11,7 @@ export type RoomTemplate = typeof roomTemplates[number];
 export type RoomSize = typeof roomSizes[number];
 export type ItemId = typeof itemIds[number];
 export interface Point { x: number; y: number }
-export const seatIds = ['sofa-left', 'sofa-right', 'bed'] as const;
+export const seatIds = ['sofa-left', 'sofa-right', 'bed', 'armchair'] as const;
 export const spots = ['floor', 'table', 'drawer', 'fridge'] as const;
 export type SeatId = typeof seatIds[number];
 export type Spot = typeof spots[number];
@@ -28,6 +28,7 @@ export interface Actor extends Point {
 export interface Item extends Point { id: ItemId; room: RoomId; holder: ActorId | null; spot: Spot }
 export interface World { layout: Layout; home: Home; room: RoomId; actors: Actor[]; items: Item[]; show: boolean }
 export type Action =
+  | { type: 'cross'; actor: ActorId; direction: 'left' | 'right' }
   | { type: 'use'; id: number }
   | { type: 'travel'; actor: ActorId; room: RoomId }
   | { type: 'interact'; target: keyof Home }
@@ -45,7 +46,7 @@ export type Action =
 export interface PresentationEvent { type: 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId }
 export interface Transition { state: World; events: PresentationEvent[] }
 
-export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium'] as const;
+export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table'] as const;
 export const paletteIds = ['original', 'mint', 'lilac', 'rose', 'sky', 'gold'] as const;
 export type PieceKind = typeof pieceKinds[number];
 export type Palette = typeof paletteIds[number];

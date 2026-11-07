@@ -4,6 +4,7 @@ import type { Actor, Home, Item, ItemId, SeatId, Spot, PieceKind, RoomId, Transi
 export const seats = {
   'sofa-left': { x: 150, y: 405, room: 'sala' },
   'sofa-right': { x: 245, y: 405, room: 'sala' },
+  armchair: { x: 90, y: 145, room: 'sala' },
   bed: { x: 790, y: 350, room: 'quarto' },
 } as const;
 export function availableSpot(state: World, spot: Spot): boolean {
@@ -52,7 +53,7 @@ function destinations(spot: Exclude<Spot, 'floor'>, index: number) {
 }
 
 export function spotKind(spot: Exclude<Spot, 'floor'>): PieceKind { return spot === 'drawer' ? 'wardrobe' : spot; }
-export function seatKind(seat: SeatId): PieceKind { return seat === 'bed' ? 'bed' : 'sofa'; }
+export function seatKind(seat: SeatId): PieceKind { return seat.startsWith('sofa') ? 'sofa' : seat as 'bed' | 'armchair'; }
 export function seatPoint(state: World, seat: SeatId, room: RoomId = state.room) {
   const piece = fixture(state, seatKind(seat), room);
   return piece ? { ...fromPiece(piece, seats[seat]), room: piece.room } : undefined;

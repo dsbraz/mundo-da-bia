@@ -104,7 +104,7 @@ test('senta, usa mesa e geladeira, cuida do gato, guarda brinquedo, veste e faz 
   await tap(320, 390);
   expect((await read(page)).home.drawer).toBe(false);
   await tap(405, 165);
-  await drag([335, 305], [150, 300]);
+  await drag([335, 260], [150, 300]);
   expect((await read(page)).actors[0].look).toBe('festa');
   await drag([900, 252], [150, 300]);
   expect((await read(page)).show).toBe(true);

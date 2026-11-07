@@ -39,6 +39,6 @@ export function loadArt(scene: Phaser.Scene) {
 }
 
 function outfitLayer(look: string) {
-  if (look === 'neon' || look === 'aurora') return `body-${look}`;
+  if (['neon', 'aurora', 'denim', 'rehearsal', 'overalls'].includes(look)) return `body-${look}`;
   return ['sol', 'mar', 'jardim'].includes(look) ? 'body-casual' : 'body';
 }

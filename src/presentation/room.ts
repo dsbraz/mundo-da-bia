@@ -21,9 +21,4 @@ export function drawRoom(scene: Phaser.Scene, state: World) {
   g.fillStyle(finish.template === 'studio' ? 0x718497 : 0xb6d2d2).fillRect(98, 93, 164, 139);
   g.fillStyle(0xf6f4ec).fillRect(177, 93, 5, 139).fillRect(98, 157, 164, 5).fillRect(85, 234, 190, 9);
   g.fillStyle(0xffffff, .15).fillTriangle(99, 94, 174, 94, 99, 164);
-  if (width > 1000) {
-    g.fillStyle(0x9a8b7a).fillRoundedRect(width - 170, 180, 105, 205, 3);
-    g.fillStyle(0xcdbda6).fillRect(width - 162, 188, 89, 195);
-    g.fillStyle(0x56636a).fillCircle(width - 90, 290, 4);
-  }
 }

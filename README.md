@@ -1,8 +1,8 @@
 # Mundo da Bia
 
-Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, oito looks e casas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
+Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, 11 looks e casas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/simple-play.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
+**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/connected-house.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
 ## Executar
 
@@ -23,11 +23,13 @@ Após as atualizações compatíveis, o audit registra nove entradas moderadas e
 
 ## Brincar
 
+Toque nas portas laterais para o personagem caminhar entre cômodos, ou arraste-o até a porta e solte. A roupa e o objeto na mão acompanham a travessia. A ordem da planta define os vizinhos.
+
 Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até um humano. Arraste o lanche até um humano ou a comidinha até um gato para alimentar. Entregar o microfone a um humano começa o show. Brinquedos podem passar de uma mão para outra ou ser soltos no chão. Cancelar um arraste não perde o objeto. Os controles ficam nas bandejas **Personagens** e **Brincar**. Toque na casinha para trocar de cômodo ou reunir a turma. Veja a [evidência e o mapa das camadas SVG](docs/dollhouse-svg.md).
 
 Arraste um personagem até o sofá para sentar ou até a cama para deitar. Toque na geladeira para abrir; arraste a comida até a mesa ou um personagem. Toque na gaveta para guardar e recuperar brinquedos, e no abajur para mudar a iluminação. O botão de som ativa efeitos locais.
 
-Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o selecionado; também é possível focar a casa e usar as setas. Troque de cômodo e use **Reunir todo mundo** para levar a turma. Cada personagem carrega um objeto por vez. Pegue lanche para humanos ou comidinha para gatos e toque em **Oferecer comida**. A comida retorna à brincadeira para poder ser oferecida novamente. Descansar alterna descanso; mover acorda. Humanos podem usar qualquer um dos oito looks. Começar show anima a turma; trocar de cômodo encerra o show. O navegador guarda a brincadeira automaticamente, inclusive roupas, posições, comida, descanso e show. Falha de armazenamento aparece na interface.
+Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o selecionado; também é possível focar a casa e usar as setas. Troque de cômodo e use **Reunir todo mundo** para levar a turma. Cada personagem carrega um objeto por vez. Pegue lanche para humanos ou comidinha para gatos e toque em **Oferecer comida**. A comida retorna à brincadeira para poder ser oferecida novamente. Descansar alterna descanso; mover acorda. Humanos podem usar qualquer um dos 11 looks. Começar show anima a turma; trocar de cômodo encerra o show. O navegador guarda a brincadeira automaticamente, inclusive roupas, posições, comida, descanso e show. Falha de armazenamento aparece na interface.
 
 ## Construir
 
@@ -35,7 +37,7 @@ Toque em **Construir** para abrir o Ateliê. Escolha móveis e decoração no ca
 
 Na casinha do canto, **Minhas casas** permite renomear, duplicar ou criar uma casa vazia. Cada projeto é salvo separadamente neste navegador. A coleção **Palco Neon** reúne palco, letreiro, caixas de som e espelho de camarim; os figurinos originais **Estrela Neon** e **Guardiã Aurora** estão no guarda-roupa. Sofá, cama, armário, geladeira, mesa, abajur e palco têm uma unidade por cômodo; os demais podem se repetir.
 
-Em **Planta da casa**, toque no **+** e escolha uma imagem: livre, quarto, cozinha, banheiro, estúdio ou jardim. O nome e o tamanho vêm prontos e o personagem selecionado acompanha a criação. Toque na imagem de um cômodo para entrar com ele. **Mais opções e ideias** reúne os ajustes de nome, tamanho, posição e projetos. A faixa inferior troca de cômodo. As ideias de projetos são opcionais e permitem guardar versões independentes. Arraste peças do catálogo diretamente para a casa. Fogão, banheira, mesa de criação, espelho e caixa de som alternam efeitos visuais por toque. O piano inicia/encerra o show, a televisão acende uma cena e o aquário liga bolhas.
+Em **Planta da casa**, toque no **+** e escolha uma imagem: livre, quarto, cozinha, banheiro, estúdio ou jardim. O nome e o tamanho vêm prontos e o personagem selecionado acompanha a criação. Toque na imagem de um cômodo para entrar com ele. **Mais opções e ideias** reúne os ajustes de nome, tamanho, posição e projetos. A faixa inferior troca de cômodo. As ideias de projetos são opcionais e permitem guardar versões independentes. Arraste peças do catálogo diretamente para a casa. Fogão, banheira, mesa de criação, espelho e caixa de som alternam efeitos visuais por toque. O piano inicia/encerra o show, a televisão acende uma cena e o aquário liga bolhas. No canto de leitura, a poltrona permite sentar e a luminária liga por toque. Os looks Jaqueta jeans, Ensaio pop e Macacão criativo estão disponíveis no armário e na bandeja de roupas.
 
 ## Arquitetura
 

@@ -1,5 +1,7 @@
 import type { Palette, PieceKind } from '../domain/types';
 export const furnishings: Record<PieceKind, { name: string; category: 'moveis' | 'decoracao' | 'neon' }> = {
+  armchair: { name: 'Poltrona de leitura', category: 'moveis' },
+  'reading-lamp': { name: 'Luminária de leitura', category: 'moveis' }, 'side-table': { name: 'Mesinha com livros', category: 'decoracao' },
   piano: { name: 'Piano', category: 'neon' }, tv: { name: 'Televisão', category: 'moveis' }, aquarium: { name: 'Aquário', category: 'decoracao' },
   counter: { name: 'Bancada de cozinha', category: 'moveis' }, stove: { name: 'Fogão', category: 'moveis' },
   bath: { name: 'Banheira', category: 'moveis' }, desk: { name: 'Mesa de criação', category: 'moveis' }, shelf: { name: 'Estante', category: 'moveis' },

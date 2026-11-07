@@ -2,6 +2,9 @@ import { validPoint } from './geometry';
 import type { Layout, Piece, PieceKind, Point, RoomId, World } from './types';
 
 export const pieceBounds: Record<PieceKind, Point & { width: number; height: number }> = {
+  armchair: { x: 0, y: 0, width: 180, height: 180 },
+  'reading-lamp': { x: 0, y: 0, width: 100, height: 220 },
+  'side-table': { x: 0, y: 0, width: 130, height: 110 },
   piano: { x: 0, y: 0, width: 220, height: 170 }, tv: { x: 0, y: 0, width: 200, height: 180 },
   aquarium: { x: 0, y: 0, width: 180, height: 160 },
   counter: { x: 0, y: 0, width: 220, height: 130 },
@@ -26,7 +29,7 @@ export const pieceBounds: Record<PieceKind, Point & { width: number; height: num
   speaker: { x: 0, y: 0, width: 65, height: 95 },
   mirror: { x: 0, y: 0, width: 100, height: 150 },
 };
-export const fixtures: readonly PieceKind[] = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed'];
+export const fixtures: readonly PieceKind[] = ['armchair', 'sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed'];
 export function initialLayout(): Layout {
   const kinds: PieceKind[] = ['rug', 'sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed'];
   return {
@@ -58,6 +61,7 @@ export function validPlacement(piece: Piece, width = 1000): boolean {
 }
 
 const anchors: Partial<Record<PieceKind, Point[]>> = {
+  armchair: [{ x: 90, y: 145 }],
   sofa: [{ x: 150, y: 405 }, { x: 245, y: 405 }], bed: [{ x: 790, y: 350 }],
   table: [0, 1, 2, 3].map(i => ({ x: 260 + i * 30, y: 475 })),
   wardrobe: [0, 1, 2, 3].map(i => ({ x: 340 + i * 42, y: 392 })),

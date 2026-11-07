@@ -36,7 +36,7 @@ function partsFor(piece: Piece, state: World, wardrobe: boolean): string[] {
   if (piece.kind === 'wardrobe') parts.push(wardrobe ? 'wardrobe-open' : 'wardrobe-closed', state.home.drawer ? 'drawer-open' : 'drawer-closed');
   if (piece.kind === 'fridge') parts.push(state.home.fridge ? 'fridge-open' : 'fridge-closed');
   if (piece.kind === 'lamp') parts.push(state.home.lamp ? 'lamp-on' : 'lamp-off');
-  if (piece.active && ['piano', 'tv', 'aquarium'].includes(piece.kind)) parts.push(`${piece.kind}-on`);
+  if (piece.active && ['piano', 'tv', 'aquarium', 'reading-lamp'].includes(piece.kind)) parts.push(`${piece.kind}-on`);
   return parts;
 }
 function effect(piece: Piece): string {

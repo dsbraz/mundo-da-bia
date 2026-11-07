@@ -1,9 +1,12 @@
+import { doorAt } from './door-controls';
+import type { Direction } from '../domain/doors';
 import type { Action, ActorId, Point, RoomId, World } from '../domain/types';
 import { roomWidth, validPoint } from '../domain/geometry';
 import { furnitureAt, seatAt, surfaceAt, usableAt, wardrobeHit } from './furniture-targets';
 import { actorAt, sourceAt } from './targets';
 import type { DragPreview, DragToken } from './targets';
 export interface PlayInput {
+  cross?: (actor: ActorId, direction: Direction) => void;
   dispatch: (action: Action) => void;
   wardrobe: () => boolean; toggleWardrobe: () => void;
   preview: (preview: DragPreview | null) => void;
@@ -46,6 +49,11 @@ function destination(active: Active, point: Point, state: World): Point {
 }
 function finish(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
   if (active.token) { deliver(active.token, point, state, play!); return; }
+  finishActor(active, point, state, move, play);
+}
+function finishActor(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
+  const door = doorAt(state, point);
+  if (active.actor && door && play?.cross) { play.cross(active.actor, door); return; }
   const seat = seatAt(state, point);
   if (active.actor && seat) { play?.dispatch({ type: 'sit', actor: active.actor, seat }); return; }
   if (!active.actor || Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) move(destination(active, point, state));

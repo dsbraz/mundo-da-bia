@@ -1,3 +1,4 @@
+import { crossDoor } from './doors';
 import { roomWidth, validPoint } from './geometry';
 export { validPoint } from './geometry';
 import { enterRoom, travel } from './room-state';
@@ -61,6 +62,7 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
 }
 
 export function transition(state: World, action: Action): Transition {
+  if (action.type === 'cross') return cross(state, action);
   if ('room' in action) return navigate(state, action);
   if (action.type === 'use') return usePiece(state, action.id);
   if (action.type === 'interact') return interact(state, action.target);
@@ -82,7 +84,7 @@ function moveActor(state: World, actor: Actor, point: Point): Transition {
 
 function usePiece(state: World, id: number): Transition {
   const piece = state.layout.pieces.find(p => p.id === id && p.room === state.room);
-  if (!piece || !['stove', 'bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium'].includes(piece.kind)) return { state, events: [] };
+  if (!piece || !['stove', 'bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium', 'reading-lamp'].includes(piece.kind)) return { state, events: [] };
   return { state: { ...state, show: piece.kind === 'piano' ? !piece.active : state.show, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === id ? { ...p, active: !p.active } : p) } }, events: [{ type: 'furniture' }] };
 }
 
@@ -95,4 +97,9 @@ function placeItem(state: World, action: Extract<Action, { type: 'place' }>): Tr
     if (!visibleItem(state, action.item) || !validPoint(action.point, roomWidth(state))) return { state, events: [] };
     return { state: { ...state, items: state.items.map(i => i.id === action.item
       ? { ...i, ...action.point, room: state.room, holder: null, spot: 'floor' } : i) }, events: [{ type: 'dropped' }] };
+}
+
+function cross(state: World, action: Extract<Action, { type: 'cross' }>): Transition {
+  const next = crossDoor(state, action.actor, action.direction);
+  return { state: next, events: next === state ? [] : [{ type: 'room' }] };
 }
