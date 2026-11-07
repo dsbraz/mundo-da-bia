@@ -4,6 +4,7 @@ const read = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem
 async function ready(page: Page) { await page.goto('/'); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); }
 async function create(page: Page, name: string, template: string, size = 'medium') {
   await page.locator('#map-toggle').click();
+  await page.locator('#room-options > summary').click();
   await page.locator('#new-room-name').fill(name);
   await page.locator('#room-template').selectOption(template);
   await page.locator('#room-size').selectOption(size);
@@ -21,6 +22,7 @@ test('cria e reorganiza cômodos, viaja com Bia e salva uma versão do projeto',
   expect(state.layout.pieces.some((p: { room: string; kind: string }) => p.room === 'room-3' && p.kind === 'desk')).toBe(true);
   await page.locator('#build-toggle').click();
   await page.locator('#map-toggle').click();
+  await page.locator('#room-options > summary').click();
   await page.locator('#bring-selected').click();
   await page.locator('#current-room-name').fill('Estúdio da banda');
   await page.locator('#room-rename').click();
@@ -36,6 +38,7 @@ test('cria e reorganiza cômodos, viaja com Bia e salva uma versão do projeto',
   expect(await read(page)).toEqual(state);
   await create(page, 'Cozinha do café', 'kitchen');
   await page.locator('#map-toggle').click();
+  await page.locator('#room-options > summary').click();
   await page.locator('#project-choice').selectOption('cafe');
   await expect(page.locator('#project-description')).toContainText('cardápio');
   await page.locator('#save-project').click();

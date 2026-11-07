@@ -2,6 +2,8 @@ import { validPoint } from './geometry';
 import type { Layout, Piece, PieceKind, Point, RoomId, World } from './types';
 
 export const pieceBounds: Record<PieceKind, Point & { width: number; height: number }> = {
+  piano: { x: 0, y: 0, width: 220, height: 170 }, tv: { x: 0, y: 0, width: 200, height: 180 },
+  aquarium: { x: 0, y: 0, width: 180, height: 160 },
   counter: { x: 0, y: 0, width: 220, height: 130 },
   stove: { x: 0, y: 0, width: 110, height: 140 },
   bath: { x: 0, y: 0, width: 240, height: 150 },

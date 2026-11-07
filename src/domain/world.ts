@@ -82,8 +82,8 @@ function moveActor(state: World, actor: Actor, point: Point): Transition {
 
 function usePiece(state: World, id: number): Transition {
   const piece = state.layout.pieces.find(p => p.id === id && p.room === state.room);
-  if (!piece || !['stove', 'bath', 'desk', 'speaker', 'mirror'].includes(piece.kind)) return { state, events: [] };
-  return { state: { ...state, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === id ? { ...p, active: !p.active } : p) } }, events: [{ type: 'furniture' }] };
+  if (!piece || !['stove', 'bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium'].includes(piece.kind)) return { state, events: [] };
+  return { state: { ...state, show: piece.kind === 'piano' ? !piece.active : state.show, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === id ? { ...p, active: !p.active } : p) } }, events: [{ type: 'furniture' }] };
 }
 
 function navigate(state: World, action: Extract<Action, { room: RoomId }>): Transition {

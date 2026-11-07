@@ -25,18 +25,24 @@ export function drawPieces(scene: Phaser.Scene, state: World, wardrobe: boolean,
 }
 export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardrobe: boolean) {
   const container = scene.add.container(piece.x, piece.y).setDepth(pieceDepth(piece));
-  const parts = [piece.kind as string];
-  if (piece.kind === 'wardrobe') parts.push(wardrobe ? 'wardrobe-open' : 'wardrobe-closed', state.home.drawer ? 'drawer-open' : 'drawer-closed');
-  if (piece.kind === 'fridge') parts.push(state.home.fridge ? 'fridge-open' : 'fridge-closed');
-  if (piece.kind === 'lamp') parts.push(state.home.lamp ? 'lamp-on' : 'lamp-off');
+  const parts = partsFor(piece, state, wardrobe);
   const box = pieceBounds[piece.kind];
   parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped)));
   if (piece.active) container.add(scene.add.text(box.width / 2, 6, effect(piece), { fontSize: '24px', color: '#3f8799' }).setOrigin(.5).setName('effect'));
   return container;
 }
+function partsFor(piece: Piece, state: World, wardrobe: boolean): string[] {
+  const parts = [piece.kind as string];
+  if (piece.kind === 'wardrobe') parts.push(wardrobe ? 'wardrobe-open' : 'wardrobe-closed', state.home.drawer ? 'drawer-open' : 'drawer-closed');
+  if (piece.kind === 'fridge') parts.push(state.home.fridge ? 'fridge-open' : 'fridge-closed');
+  if (piece.kind === 'lamp') parts.push(state.home.lamp ? 'lamp-on' : 'lamp-off');
+  if (piece.active && ['piano', 'tv', 'aquarium'].includes(piece.kind)) parts.push(`${piece.kind}-on`);
+  return parts;
+}
 function effect(piece: Piece): string {
-  if (piece.kind === 'speaker') return '♫ ♪';
+  if (['speaker', 'piano'].includes(piece.kind)) return '♫ ♪';
   if (piece.kind === 'stove') return '♨';
+  if (piece.kind === 'aquarium') return '◦ ○';
   if (piece.kind === 'bath') return '◦ ○ ◦';
   return '✦';
 }

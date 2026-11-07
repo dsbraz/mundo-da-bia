@@ -1,3 +1,4 @@
+import { quickRooms, roomPicture } from './quick-rooms';
 import type { ActorId, RoomId, World } from '../domain/types';
 import { roomSizes, roomTemplates } from '../domain/types';
 import type { NewRoom } from '../domain/rooms';
@@ -12,7 +13,11 @@ export function roomControls(root: HTMLElement, actions: Actions) {
   const size = root.querySelector<HTMLSelectElement>('#room-size')!;
   const cell = root.querySelector<HTMLSelectElement>('#new-room-cell')!;
   roomTemplates.forEach(id => template.add(new Option(templates[id].name, id)));
-  root.querySelector('#map-toggle')!.addEventListener('click', () => dialog.showModal());
+  const choose = quickRooms(root, actions.add, () => dialog.close());
+  root.querySelector('#map-toggle')!.addEventListener('click', () => {
+    root.querySelector<HTMLElement>('#quick-rooms')!.hidden = true;
+    root.querySelector<HTMLDetailsElement>('#room-options')!.open = false; dialog.showModal();
+  });
   root.querySelector('#close-map')!.addEventListener('click', () => dialog.close());
   root.querySelector('#room-rename')!.addEventListener('click', () => actions.rename(root.querySelector<HTMLInputElement>('#current-room-name')!.value));
   root.querySelector('#room-move')!.addEventListener('click', () => actions.move(Number(root.querySelector<HTMLSelectElement>('#room-position')!.value)));
@@ -26,7 +31,7 @@ export function roomControls(root: HTMLElement, actions: Actions) {
   return (state: World, selected: ActorId) => {
     const entries = Object.entries(state.layout.rooms) as [RoomId, NonNullable<typeof state.layout.rooms[RoomId]>][];
     renderNav(root, state, entries, actions.enter);
-    renderMap(root, state, entries, actions.enter, value => { cell.value = String(value); name.focus(); });
+    renderMap(root, state, entries, id => { actions.travel(id); dialog.close(); }, choose);
     const free = Array.from({ length: 12 }, (_, index) => index).filter(index => !entries.some(([, r]) => r.cell === index));
     cell.replaceChildren(...free.map(i => new Option(`Espaço ${i + 1}`, String(i))));
     root.querySelector<HTMLButtonElement>('#create-room')!.disabled = !free.length;
@@ -55,7 +60,8 @@ function renderMap(root: HTMLElement, state: World, entries: Entries, enter: Act
   const cells = Array.from({ length: 12 }, (_, cell) => {
     const entry = entries.find(([, r]) => r.cell === cell);
     const button = document.createElement('button'); button.type = 'button'; button.className = 'map-cell';
-    button.textContent = entry ? `${templates[entry[1].template].icon} ${entry[1].name}` : '+ Criar';
+    if (entry) button.append(roomPicture(entry[1].template), document.createTextNode(entry[1].name));
+    else button.textContent = '+ Criar';
     button.setAttribute('aria-label', entry ? `Abrir ${entry[1].name}` : `Construir no espaço ${cell + 1}`);
     button.setAttribute('aria-pressed', String(entry?.[0] === state.room));
     button.addEventListener('click', () => entry ? enter(entry[0]) : choose(cell)); return button;

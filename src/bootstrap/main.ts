@@ -42,7 +42,10 @@ const furnitureControls = homeControls(root, dispatch);
 const controls = createControls(root, dispatch, select);
 const rooms = roomControls(root, {
   enter: room => dispatch({ type: 'room', room }),
-  add: options => { cancelInput(); building = true; restoreEdit(recordEdit(edits, addRoom(state, options))); },
+  add: options => {
+    cancelInput(); building = true; const next = addRoom(state, options);
+    restoreEdit(recordEdit(edits, transition(next, { type: 'travel', actor: selected, room: next.room }).state));
+  },
   rename: name => restoreEdit(recordEdit(edits, renameRoom(state, name))),
   move: cell => restoreEdit(recordEdit(edits, moveRoom(state, cell))),
   travel: room => dispatch({ type: 'travel', actor: selected, room }),

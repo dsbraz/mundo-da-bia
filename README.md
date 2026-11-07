@@ -2,7 +2,7 @@
 
 Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, oito looks e casas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/creative-rooms.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
+**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/simple-play.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
 ## Executar
 
@@ -35,7 +35,7 @@ Toque em **Construir** para abrir o Ateliê. Escolha móveis e decoração no ca
 
 Na casinha do canto, **Minhas casas** permite renomear, duplicar ou criar uma casa vazia. Cada projeto é salvo separadamente neste navegador. A coleção **Palco Neon** reúne palco, letreiro, caixas de som e espelho de camarim; os figurinos originais **Estrela Neon** e **Guardiã Aurora** estão no guarda-roupa. Sofá, cama, armário, geladeira, mesa, abajur e palco têm uma unidade por cômodo; os demais podem se repetir.
 
-Em **Planta da casa**, crie cômodos livres ou use modelos de quarto, cozinha, banheiro, estúdio e jardim. Escolha tamanho, nome e posição na planta; leve o personagem selecionado pelo painel. A faixa inferior troca de cômodo. As ideias de projetos são opcionais e permitem guardar versões independentes. Arraste peças do catálogo diretamente para a casa. Fogão, banheira, mesa de criação, espelho e caixa de som alternam efeitos visuais por toque.
+Em **Planta da casa**, toque no **+** e escolha uma imagem: livre, quarto, cozinha, banheiro, estúdio ou jardim. O nome e o tamanho vêm prontos e o personagem selecionado acompanha a criação. Toque na imagem de um cômodo para entrar com ele. **Mais opções e ideias** reúne os ajustes de nome, tamanho, posição e projetos. A faixa inferior troca de cômodo. As ideias de projetos são opcionais e permitem guardar versões independentes. Arraste peças do catálogo diretamente para a casa. Fogão, banheira, mesa de criação, espelho e caixa de som alternam efeitos visuais por toque. O piano inicia/encerra o show, a televisão acende uma cena e o aquário liga bolhas.
 
 ## Arquitetura
 

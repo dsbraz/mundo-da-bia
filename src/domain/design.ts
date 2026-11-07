@@ -28,7 +28,10 @@ function addPiece(state: World, kind: PieceKind, point?: { x: number; y: number 
   const x = box.width > 400 ? box.x : Math.min(450, 1000 - box.width);
   const y = Math.min(300, 580 - box.height);
   const piece: Piece = { id: state.layout.nextId, kind, room: state.room, color: 'original', flipped: false, x, y };
-  if (point) { piece.x = Math.round(point.x - box.width / 2); piece.y = Math.round(point.y - box.height / 2); }
+  if (point) {
+    const placed = { ...piece, x: Math.round(point.x - box.width / 2), y: Math.round(point.y - box.height / 2) };
+    if (validPlacement(placed, roomWidth(state))) Object.assign(piece, placed);
+  }
   if (!validPlacement(piece, roomWidth(state))) { piece.x = box.x; piece.y = box.y; }
   return { ...state, layout: { ...state.layout, nextId: piece.id + 1, pieces: [...state.layout.pieces, piece] } };
 }
