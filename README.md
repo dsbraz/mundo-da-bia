@@ -2,7 +2,7 @@
 
 Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, seis looks e dois cômodos. Arte vetorial procedural no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** o commit `9805d4e` passou todos os gates no terminal do proprietário, incluindo E2E e mutação. A revisão da captura encontrou emojis sem glifos; a correção usa SVGs locais e aguarda nova verificação de navegador. O [repositório público](https://github.com/dsbraz/mundo-da-bia) foi criado, mas ainda não recebeu código. Consulte [a evidência](docs/verification.md) e [a triagem de dependências](docs/dependency-audit.md). Não há publicação Sites.
+**Estado da entrega:** todos os checks locais passaram após a atualização das dependências e a correção dos ícones; a captura revisada mostra os SVGs corretamente. Restam nove alertas moderados de desenvolvimento, sem altas/críticas. A CI ainda precisa validar o commit final: a execução local ocorreu antes do commit do novo lockfile. O [repositório público](https://github.com/dsbraz/mundo-da-bia) existe, mas aguarda envio, PR e proteção de main. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
 ## Executar
 
@@ -19,7 +19,7 @@ O `package-lock.json` foi gerado pela instalação realizada no terminal do prop
 
 No Ubuntu 26.04 local, o instalador desta versão do Playwright recusou o download. O cache existente já contém Chromium e headless shell revisão 1223, a mesma exigida pelo Playwright 1.60.0, portanto não é necessário reinstalar esses navegadores para testar nesta máquina. Isso não comprova sucesso dos testes: no sandbox do agente, a inicialização do navegador falha com `Operation not permitted`. Execute `npm run quality` no terminal normal para validar E2E e mutação.
 
-O audit reportou 17 entradas, todas em dependências de desenvolvimento. A triagem identifica atualizações compatíveis para Vite e dependency-cruiser e atualizações transitivas sem `--force`. Minimatch requer mudança de versão principal em ferramentas dependentes; esse risco permanece acompanhado separadamente. Consulte [a triagem](docs/dependency-audit.md).
+Após as atualizações compatíveis, o audit registra nove entradas moderadas em dependências de desenvolvimento, zero altas e zero críticas. Todas decorrem de minimatch, cuja correção exige mudança de versão principal nas ferramentas dependentes. Esse risco está acompanhado na [triagem](docs/dependency-audit.md).
 
 ## Brincar
 

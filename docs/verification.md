@@ -2,6 +2,14 @@
 
 Esta é uma entrega local parcial, não uma aprovação do MVP ou publicação.
 
+## Verificação das correções visuais e de dependências
+
+A nova execução do proprietário passou todos os checks: CI em 49,476 s e mutação em 27,273 s. As três jornadas E2E passaram sem retries ou flakiness. A captura foi revisada e os 11 ícones/retratos SVG aparecem corretamente, inclusive os objetos na cena Phaser. O build contém 338.045 bytes de JavaScript gzip e 10.485 bytes de assets não JavaScript.
+
+Vite foi atualizado para 7.3.7 e dependency-cruiser para 17.4.3. O audit atualizado registra zero altas/críticas e nove entradas moderadas, restritas à cadeia de minimatch nas ferramentas de desenvolvimento. O manifesto e o lockfile estavam modificados na execução, por isso os relatórios têm `dirty: true` e não aprovam formalmente o próximo commit. Não é necessário repetir testes só por essa documentação; a CI deverá verificar o SHA final após push/PR.
+
+A conexão do checkout com o remoto ainda precisa ser configurada. `but config forge list-users` informou que não há conta de forge autenticada no GitButler; essa autenticação é independente do `gh`, já funcional. O repositório público existe, mas ainda não contém commits, ruleset ou PR. Nenhuma publicação ocorreu.
+
 ## Execução completa no terminal do proprietário
 
 Os relatórios de CI e mutação apontam para o commit limpo `9805d4e1039ee3ec6fd96f7ae5bdf3511d82cca9`, política 1. Todos os checks passaram: CI em 52,193 s; mutação em 23,456 s. As três jornadas E2E passaram, sem retry, flaky ou teste pulado. Score de mutação por área: domínio 82,69% (172/208), persistência 86,39% (127/147).
