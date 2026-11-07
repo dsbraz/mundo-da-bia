@@ -23,6 +23,8 @@ Após as atualizações compatíveis, o audit registra nove entradas moderadas e
 
 ## Brincar
 
+Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até um humano. Arraste o lanche até um humano ou a comidinha até um gato para alimentar. Entregar o microfone a um humano começa o show. Brinquedos podem passar de uma mão para outra ou ser soltos no chão. Cancelar um arraste não perde o objeto. Os botões abaixo da cena continuam funcionando como alternativa. Veja a [evidência deste incremento](docs/direct-play.md).
+
 Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o selecionado; também é possível focar a casa e usar as setas. Troque de cômodo e use **Reunir todo mundo** para levar a turma. Cada personagem carrega um objeto por vez. Pegue lanche para humanos ou comidinha para gatos e toque em **Oferecer comida**. A comida retorna à brincadeira para poder ser oferecida novamente. Descansar alterna descanso; mover acorda. Humanos podem usar qualquer um dos seis looks. Começar show anima a turma; trocar de cômodo encerra o show. O navegador guarda a brincadeira automaticamente, inclusive roupas, posições, comida, descanso e show. Falha de armazenamento aparece na interface.
 
 ## Arquitetura

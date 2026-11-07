@@ -21,6 +21,8 @@ export type Action =
   | { type: 'move'; actor: ActorId; point: Point }
   | { type: 'dress'; actor: ActorId; look: LookId }
   | { type: 'pick'; actor: ActorId; item: ItemId }
+  | { type: 'give'; actor: ActorId; item: ItemId }
+  | { type: 'place'; item: ItemId; point: Point }
   | { type: 'drop' | 'feed' | 'rest'; actor: ActorId }
   | { type: 'room'; room: RoomId }
   | { type: 'summon' }

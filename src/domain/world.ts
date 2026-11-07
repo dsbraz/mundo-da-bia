@@ -1,5 +1,6 @@
 import { actorIds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, Transition, World } from './types';
+import { give, visibleItem } from './objects';
 
 export function initialWorld(): World {
   return {
@@ -53,11 +54,17 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
     case 'pick': return pick(state, actor, action.item);
     case 'drop': return release(state, actor, false);
     case 'feed': return release(state, actor, true);
+    case 'give': return give(state, actor, action.item);
     default: return { state, events: [] };
   }
 }
 
 export function transition(state: World, action: Action): Transition {
+  if (action.type === 'place') {
+    if (!visibleItem(state, action.item) || !validPoint(action.point)) return { state, events: [] };
+    return { state: { ...state, items: state.items.map(i => i.id === action.item
+      ? { ...i, ...action.point, room: state.room, holder: null } : i) }, events: [{ type: 'dropped' }] };
+  }
   if (action.type === 'room') return { state: { ...state, room: action.room, show: false }, events: [{ type: 'room' }] };
   if (action.type === 'show') return { state: { ...state, show: !state.show }, events: [{ type: 'show' }] };
   if (action.type === 'summon') {

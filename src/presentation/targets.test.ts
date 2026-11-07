@@ -1,0 +1,26 @@
+import { expect, it } from 'vitest';
+import { initialWorld, transition } from '../domain/world';
+import { sourceAt } from './targets';
+import { createPlayGesture } from './play-gesture';
+
+it('um objeto na mão aparece sobre a roupa do armário e deve receber o toque', () => {
+  let state = transition(initialWorld(), { type: 'move', actor: 'bia', point: { x: 392, y: 280 } }).state;
+  state = transition(state, { type: 'pick', actor: 'bia', item: 'microfone' }).state;
+  expect(sourceAt(state, { x: 420, y: 225 }, true)).toEqual({ kind: 'item', id: 'microfone' });
+});
+
+it('um personagem na frente do armário não deixa pegar uma roupa atrás dele', () => {
+  const state = transition(initialWorld(), { type: 'move', actor: 'bia', point: { x: 340, y: 280 } }).state;
+  expect(sourceAt(state, { x: 340, y: 155 }, true)).toBeUndefined();
+});
+
+it('tocar no personagem na frente da porta o seleciona em vez de abrir o armário', () => {
+  const state = transition(initialWorld(), { type: 'move', actor: 'bia', point: { x: 340, y: 280 } }).state;
+  let selected = ''; let toggled = false;
+  const gesture = createPlayGesture(() => state, id => { selected = id; }, () => {}, {
+    dispatch: () => {}, wardrobe: () => false, preview: () => {}, toggleWardrobe: () => { toggled = true; },
+  });
+  gesture.start(1, { x: 340, y: 170 });
+  expect(selected).toBe('bia');
+  expect(toggled).toBe(false);
+});

@@ -64,3 +64,82 @@ test('salvamento inválido recupera a brincadeira inicial', async ({ page }) => 
   await page.getByRole('button', { name: 'Reunir todo mundo' }).click();
   await expect(page.locator('#save-status')).toHaveText('✓ Brincadeira salva');
 });
+
+test('brinca diretamente com armário, comida e microfone e preserva ao recarregar', async ({ page }) => {
+  await page.goto('/');
+  const canvas = page.locator('canvas');
+  await expect(canvas).toBeVisible();
+  const box = (await canvas.boundingBox())!;
+  const xy = (x: number, y: number) => ({ x: box.x + x * box.width / 1000, y: box.y + y * box.height / 600 });
+  const drag = async (from: [number, number], to: [number, number]) => {
+    const start = xy(...from); const end = xy(...to);
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(end.x, end.y, { steps: 8 });
+    await page.mouse.up();
+  };
+  const read = () => page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:v1')!).state);
+  await expect(page.getByRole('button', { name: 'Abrir armário' })).toBeVisible();
+  const door = xy(435, 110);
+  await page.mouse.click(door.x, door.y);
+  await expect(page.getByRole('button', { name: 'Fechar armário' })).toHaveAttribute('aria-expanded', 'true');
+  await drag([420, 225], [160, 350]);
+  expect((await read()).actors[0].look).toBe('festa');
+  await drag([260, 272], [160, 310]);
+  expect((await read()).actors[0].fed).toBe(true);
+  await drag([410, 272], [600, 445]);
+  expect((await read()).actors[4].fed).toBe(true);
+  await drag([560, 272], [160, 350]);
+  expect((await read()).show).toBe(true);
+  expect((await read()).items[2].holder).toBe('bia');
+  const saved = await read();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Encerrar show' })).toBeVisible();
+  expect(await read()).toEqual(saved);
+  await page.screenshot({ path: 'reports/direct-play.png', fullPage: true });
+});
+
+test('arraste cancelado não perde o brinquedo e soltar no chão salva a posição', async ({ page }) => {
+  await page.goto('/');
+  const canvas = page.locator('canvas');
+  await expect(canvas).toBeVisible();
+  const box = (await canvas.boundingBox())!;
+  const xy = (x: number, y: number) => ({ x: box.x + x * box.width / 1000, y: box.y + y * box.height / 600 });
+  const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:v1')!).state);
+  const before = await saved();
+  const from = xy(710, 272); const to = xy(850, 350);
+  await page.mouse.move(from.x, from.y); await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 5 });
+  await canvas.dispatchEvent('pointercancel', { pointerId: 1 });
+  await page.mouse.up();
+  expect(await saved()).toEqual(before);
+  await page.mouse.move(from.x, from.y); await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 5 }); await page.mouse.up();
+  const after = await saved();
+  expect(after.items[3].holder).toBeNull();
+  expect(after.items[3].x).toBeCloseTo(850, 0);
+  expect(after.items[3].y).toBeCloseTo(378, 0);
+  await page.reload();
+  expect(await saved()).toEqual(after);
+});
+
+test('armário respeita o cômodo após recarregar e roupas respondem ao toque', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Quarto dos sonhos' }).click();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Abrir armário' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Sala & palco' }).click();
+  const canvas = page.locator('canvas');
+  const box = (await canvas.boundingBox())!;
+  const xy = (x: number, y: number) => ({ x: box.x + x * box.width / 1000, y: box.y + y * box.height / 600 });
+  const door = xy(435, 110);
+  await page.touchscreen.tap(door.x, door.y);
+  await expect(page.getByRole('button', { name: 'Fechar armário' })).toBeVisible();
+  const touch = await page.context().newCDPSession(page);
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [xy(500, 155)] });
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [xy(160, 350)] });
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:v1')!).state);
+  expect(saved.actors[0].look).toBe('estrela');
+  await page.screenshot({ path: 'reports/wardrobe-touch.png', fullPage: true });
+});

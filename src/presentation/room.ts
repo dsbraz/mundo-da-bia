@@ -25,9 +25,7 @@ function drawStage(g: Phaser.GameObjects.Graphics) {
   g.fillStyle(0x9c729d).fillRoundedRect(660, 90, 290, 185, 12);
   g.fillStyle(0xc795ad).fillRoundedRect(660, 90, 75, 180, 12).fillRoundedRect(875, 90, 75, 180, 12);
   g.fillStyle(0xd0a167).fillRoundedRect(642, 265, 320, 30, 8);
-  g.fillStyle(0x8eaf9e).fillRoundedRect(292, 188, 268, 100, 25);
-  g.fillStyle(0xb5cebc).fillRoundedRect(313, 205, 106, 60, 14).fillRoundedRect(433, 205, 106, 60, 14);
-  g.fillStyle(0x8eaf9e).fillRoundedRect(280, 227, 30, 70, 12).fillRoundedRect(543, 227, 30, 70, 12);
+
 }
 function drawBed(g: Phaser.GameObjects.Graphics) {
   g.fillStyle(0xaf88a1).fillRoundedRect(600, 170, 340, 120, 25);

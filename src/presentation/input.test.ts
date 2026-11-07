@@ -31,3 +31,44 @@ it.each([
   expect(move).not.toHaveBeenCalled();
   expect(state).toEqual(before);
 });
+
+it('cancelar arraste de objeto não altera a brincadeira; ponteiro secundário não pode soltá-lo', () => {
+  const state = initialWorld();
+  const canvas = Object.assign(new EventTarget(), {
+    setPointerCapture: vi.fn(),
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 600 }),
+  });
+  vi.stubGlobal('window', new EventTarget());
+  const dispatch = vi.fn(); const preview = vi.fn();
+  bindInput(canvas as unknown as HTMLCanvasElement, () => state, vi.fn(), vi.fn(), {
+    dispatch, preview, wardrobe: () => false, toggleWardrobe: vi.fn(),
+  });
+  const send = (type: string, x: number, y: number, pointerId = 1) => canvas.dispatchEvent(Object.assign(new Event(type), { pointerId, clientX: x, clientY: y }));
+  send('pointerdown', 560, 272);
+  send('pointermove', 160, 350);
+  send('pointerup', 160, 350, 2);
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(preview).toHaveBeenLastCalledWith({ kind: 'item', id: 'microfone', point: { x: 160, y: 350 } });
+  send('pointercancel', 160, 350);
+  send('pointerup', 160, 350);
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(preview).toHaveBeenLastCalledWith(null);
+});
+
+it('trocar de cômodo durante arraste descarta a entrega e limpa a prévia', () => {
+  const state = initialWorld();
+  const canvas = Object.assign(new EventTarget(), {
+    setPointerCapture: vi.fn(),
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 600 }),
+  });
+  vi.stubGlobal('window', new EventTarget());
+  const dispatch = vi.fn(); const preview = vi.fn();
+  bindInput(canvas as unknown as HTMLCanvasElement, () => state, vi.fn(), vi.fn(), {
+    dispatch, preview, wardrobe: () => false, toggleWardrobe: vi.fn(),
+  });
+  canvas.dispatchEvent(Object.assign(new Event('pointerdown'), { pointerId: 1, clientX: 560, clientY: 272 }));
+  state.room = 'quarto';
+  canvas.dispatchEvent(Object.assign(new Event('pointerup'), { pointerId: 1, clientX: 160, clientY: 350 }));
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(preview).toHaveBeenLastCalledWith(null);
+});

@@ -13,14 +13,29 @@ let selected: ActorId = 'bia';
 let saved = save(state);
 const root = document.querySelector<HTMLElement>('#app')!;
 const scene = new PlayScene(state);
+let wardrobeOpen = false;
+let cancelInput = () => {};
+const wardrobeButton = root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!;
+function toggleWardrobe() {
+  wardrobeOpen = !wardrobeOpen;
+  wardrobeButton.textContent = wardrobeOpen ? 'Fechar armário' : 'Abrir armário';
+  wardrobeButton.setAttribute('aria-expanded', String(wardrobeOpen));
+  scene.openWardrobe(wardrobeOpen);
+}
+wardrobeButton.addEventListener('click', toggleWardrobe);
 const controls = createControls(root, dispatch, select);
-function refresh() { scene.paint(state, selected); controls(state, selected, saved); }
+function refresh() {
+  scene.paint(state, selected); controls(state, selected, saved);
+  wardrobeButton.disabled = state.room !== 'sala';
+}
 function select(id: ActorId) { selected = id; refresh(); }
 function dispatch(action: Action) {
+  if (action.type === 'room') cancelInput();
   const result = transition(state, action);
   state = result.state;
   if (result.events.length) saved = save(state);
   refresh();
+  scene.react(result.events);
   const event = result.events[0];
   if (event) root.querySelector('#announcement')!.textContent = messages[event.type];
 }
@@ -33,8 +48,10 @@ const game = new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene, audio: { noAudio: true }, render: { antialias: true },
   callbacks: { postBoot: current => {
-    current.canvas.setAttribute('aria-label', 'Casa de brincar. Arraste personagens ou selecione um e toque no chão.');
-    bindInput(current.canvas, () => state, select, point => dispatch({ type: 'move', actor: selected, point }));
+    current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
+    cancelInput = bindInput(current.canvas, () => state, select, point => dispatch({ type: 'move', actor: selected, point }), {
+      dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag),
+    });
   } },
 });
 root.querySelector('#world')!.addEventListener('keydown', event => {
