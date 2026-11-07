@@ -1,8 +1,8 @@
 # Mundo da Bia
 
-Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, seis looks e dois cômodos. Arte vetorial procedural no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
+Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, seis looks e dois cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** o MVP e a correção da seleção de personagens sobrepostos estão enviados ao GitHub. A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
+**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/dollhouse-svg.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
 ## Executar
 
@@ -23,7 +23,9 @@ Após as atualizações compatíveis, o audit registra nove entradas moderadas e
 
 ## Brincar
 
-Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até um humano. Arraste o lanche até um humano ou a comidinha até um gato para alimentar. Entregar o microfone a um humano começa o show. Brinquedos podem passar de uma mão para outra ou ser soltos no chão. Cancelar um arraste não perde o objeto. Os botões abaixo da cena continuam funcionando como alternativa. Veja a [evidência deste incremento](docs/direct-play.md).
+Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até um humano. Arraste o lanche até um humano ou a comidinha até um gato para alimentar. Entregar o microfone a um humano começa o show. Brinquedos podem passar de uma mão para outra ou ser soltos no chão. Cancelar um arraste não perde o objeto. Os controles ficam nas bandejas **Turminha** e **Brincar**. Toque na casinha para trocar de cômodo ou reunir a turma. Veja a [evidência e o mapa das camadas SVG](docs/dollhouse-svg.md).
+
+Arraste um personagem até o sofá para sentar ou até a cama para deitar. Toque na geladeira para abrir; arraste a comida até a mesa ou um personagem. Toque na gaveta para guardar e recuperar brinquedos, e no abajur para mudar a iluminação. O botão de som ativa efeitos locais.
 
 Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o selecionado; também é possível focar a casa e usar as setas. Troque de cômodo e use **Reunir todo mundo** para levar a turma. Cada personagem carrega um objeto por vez. Pegue lanche para humanos ou comidinha para gatos e toque em **Oferecer comida**. A comida retorna à brincadeira para poder ser oferecida novamente. Descansar alterna descanso; mover acorda. Humanos podem usar qualquer um dos seis looks. Começar show anima a turma; trocar de cômodo encerra o show. O navegador guarda a brincadeira automaticamente, inclusive roupas, posições, comida, descanso e show. Falha de armazenamento aparece na interface.
 
@@ -35,7 +37,7 @@ Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o sele
 - `src/presentation`: arte, cena, controles e gestos. Controles recebem callbacks e não importam cenas.
 - `src/bootstrap`: conecta domínio, persistência e apresentação.
 
-Gestos cancelados preservam a última posição válida já aplicada e ignoram eventos tardios. Dados ausentes, inválidos, duplicados ou de outra versão recuperam o estado inicial. A resolução lógica é 1000 × 600, ajustada ao espaço disponível. Arte local em código dispensa fontes, imagens e outros downloads de terceiros.
+Gestos cancelados preservam a última posição válida já aplicada e ignoram eventos tardios. Saves v1 migram para v2 preservando a brincadeira. Dados ausentes, inválidos, duplicados ou de versão desconhecida recuperam o estado inicial. A resolução lógica é 1000 × 600, ajustada ao espaço disponível. SVGs locais em camadas dispensam fontes e downloads de terceiros.
 
 ## Qualidade
 

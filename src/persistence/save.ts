@@ -3,7 +3,7 @@ import { initialWorld } from '../domain/world';
 import { savedWorld } from './validation';
 
 export function encode(state: World): string {
-  return JSON.stringify({ version: 1, state });
+  return JSON.stringify({ version: 2, state });
 }
 export function decode(raw: string | null): World {
   try {

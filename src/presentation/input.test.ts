@@ -44,7 +44,7 @@ it('cancelar arraste de objeto não altera a brincadeira; ponteiro secundário n
     dispatch, preview, wardrobe: () => false, toggleWardrobe: vi.fn(),
   });
   const send = (type: string, x: number, y: number, pointerId = 1) => canvas.dispatchEvent(Object.assign(new Event(type), { pointerId, clientX: x, clientY: y }));
-  send('pointerdown', 560, 272);
+  send('pointerdown', 900, 252);
   send('pointermove', 160, 350);
   send('pointerup', 160, 350, 2);
   expect(dispatch).not.toHaveBeenCalled();
@@ -66,7 +66,7 @@ it('trocar de cômodo durante arraste descarta a entrega e limpa a prévia', () 
   bindInput(canvas as unknown as HTMLCanvasElement, () => state, vi.fn(), vi.fn(), {
     dispatch, preview, wardrobe: () => false, toggleWardrobe: vi.fn(),
   });
-  canvas.dispatchEvent(Object.assign(new Event('pointerdown'), { pointerId: 1, clientX: 560, clientY: 272 }));
+  canvas.dispatchEvent(Object.assign(new Event('pointerdown'), { pointerId: 1, clientX: 900, clientY: 252 }));
   state.room = 'quarto';
   canvas.dispatchEvent(Object.assign(new Event('pointerup'), { pointerId: 1, clientX: 160, clientY: 350 }));
   expect(dispatch).not.toHaveBeenCalled();

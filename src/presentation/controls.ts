@@ -1,3 +1,4 @@
+import { visibleItem } from '../domain/objects';
 import { actors, items, looks, rooms } from '../content/catalog';
 import { actorIds, itemIds, lookIds, roomIds } from '../domain/types';
 import type { Action, Actor, ActorId, Item, World } from '../domain/types';
@@ -40,7 +41,7 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
     cast.forEach((b, i) => b.setAttribute('aria-pressed', String(actorIds[i] === id)));
     roomButtons.forEach((b, i) => b.setAttribute('aria-pressed', String(roomIds[i] === state.room)));
     wardrobe.forEach((b, i) => { b.disabled = !present || actor.kind === 'cat'; b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
-    objects.forEach((b, i) => { b.disabled = !present || state.items.some(item => item.holder === id) || !state.items.some(item => item.id === itemIds[i] && item.room === state.room && item.holder === null); });
+    objects.forEach((b, i) => { b.disabled = !present || state.items.some(item => item.holder === id) || visibleItem(state, itemIds[i]!)?.holder !== null; });
     const held = state.items.find(item => item.holder === id);
     actions[0]!.disabled = !present || held?.id !== (actor.kind === 'cat' ? 'peixe' : 'lanche');
     actions[1]!.disabled = !present;

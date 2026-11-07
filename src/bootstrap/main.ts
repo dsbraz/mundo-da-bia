@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { createSound } from '../presentation/sound';
+import { homeControls } from '../presentation/home-controls';
 import { actors } from '../content/catalog';
 import type { Action, ActorId } from '../domain/types';
 import { transition } from '../domain/world';
@@ -23,9 +25,11 @@ function toggleWardrobe() {
   scene.openWardrobe(wardrobeOpen);
 }
 wardrobeButton.addEventListener('click', toggleWardrobe);
+const playSound = createSound(root.querySelector<HTMLButtonElement>('#sound-toggle')!);
+const furnitureControls = homeControls(root, dispatch);
 const controls = createControls(root, dispatch, select);
 function refresh() {
-  scene.paint(state, selected); controls(state, selected, saved);
+  scene.paint(state, selected); furnitureControls(state); controls(state, selected, saved);
   wardrobeButton.disabled = state.room !== 'sala';
 }
 function select(id: ActorId) { selected = id; refresh(); }
@@ -35,16 +39,16 @@ function dispatch(action: Action) {
   state = result.state;
   if (result.events.length) saved = save(state);
   refresh();
-  scene.react(result.events);
+  scene.react(result.events); playSound(result.events);
   const event = result.events[0];
   if (event) root.querySelector('#announcement')!.textContent = messages[event.type];
 }
 const messages = {
-  moved: 'Novo lugar para brincar!', dressed: 'Look novo!', picked: 'Objeto na mão!', dropped: 'Objeto solto.',
+  furniture: 'A casa também brinca com você!', moved: 'Novo lugar para brincar!', dressed: 'Look novo!', picked: 'Objeto na mão!', dropped: 'Objeto solto.',
   fed: 'Nhac! Que delícia!', rested: 'Hora de cuidar.', room: 'Vamos explorar!', summoned: 'Todo mundo juntinho!', show: 'A música é por sua conta! Vamos dançar!',
 };
 const game = new Phaser.Game({
-  type: Phaser.AUTO, parent: 'world', width: 1000, height: 600, backgroundColor: '#f6dfd4',
+  type: Phaser.CANVAS, parent: 'world', width: 1000, height: 600, backgroundColor: '#f6dfd4',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene, audio: { noAudio: true }, render: { antialias: true },
   callbacks: { postBoot: current => {

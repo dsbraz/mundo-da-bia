@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600">
+  <defs>
+    <linearGradient id="wall" x2="0" y2="1">
+      <stop stop-color="#dcc3e7" />
+      <stop offset="1" stop-color="#c6a1d8" />
+    </linearGradient>
+    <linearGradient id="wood" x2="0" y2="1">
+      <stop stop-color="#f8c387" />
+      <stop offset="1" stop-color="#eaa068" />
+    </linearGradient>
+    <linearGradient id="mint" x2="0" y2="1">
+      <stop stop-color="#bbd99e" />
+      <stop offset="1" stop-color="#7fb68a" />
+    </linearGradient>
+    <linearGradient id="purple" x2="0" y2="1">
+      <stop stop-color="#e7b4d8" />
+      <stop offset="1" stop-color="#bd7eb5" />
+    </linearGradient>
+    <linearGradient id="cream" x2="0" y2="1">
+      <stop stop-color="#fff4c9" />
+      <stop offset="1" stop-color="#f7c389" />
+    </linearGradient>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#665b9b" />
+      <stop offset="1" stop-color="#a99ac6" />
+    </linearGradient>
+    <pattern id="boards" width="220" height="62" patternUnits="userSpaceOnUse">
+      <rect width="220" height="62" fill="url(#wood)" />
+      <path d="M0 1H220M0 60H220M110 0V62" fill="none" stroke="#cc8555" stroke-width="1.5" opacity=".3" />
+      <path d="M8 12h78m42 29h74M18 49h70" stroke="#ffe0a9" opacity=".55" stroke-width="2" />
+    </pattern>
+    <pattern id="wallpaper" width="62" height="80" patternUnits="userSpaceOnUse">
+      <path d="M1 0V80" stroke="#db8d75" stroke-width="2" opacity=".2" />
+    </pattern>
+    <pattern id="gingham" width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect width="24" height="24" fill="#ffebaa" />
+      <path d="M0 6h24M6 0v24" stroke="#efbd56" stroke-width="9" opacity=".55" />
+    </pattern>
+    <clipPath id="window-clip">
+      <path d="M88 234V144a89 89 0 0 1 178 0v90Z" />
+    </clipPath>
+  </defs>
+  <g id="base" stroke="#8a5134" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <g id="walls">
+      <path d="M0 0H1000V398H0Z" fill="url(#wall)" stroke="none" />
+      <path d="M0 0H1000V394H0Z" fill="url(#wallpaper)" stroke="none" />
+      <path d="M0 16Q500 40 1000 16" fill="none" stroke="#dd8a72" stroke-width="4" />
+      <rect y="389" width="1000" height="211" fill="url(#boards)" stroke="none" />
+      <path d="M0 380H1000V395H0" fill="#f9b590" stroke="#cb8062" stroke-width="2" />
+    </g>
+    <g id="window">
+      <path d="M77 244V144a100 100 0 0 1 200 0v100Z" fill="#c98142" />
+      <path d="M88 234V144a89 89 0 0 1 178 0v90Z" fill="url(#sky)" />
+      <g clip-path="url(#window-clip)" stroke="none">
+        <path d="M85 228q20-72 70-35q5-65 48-41q25-59 73-15v110H85" fill="#8eb782" />
+        <path d="M108 108h38q8-20 20-9q16-6 22 9h19v10H108Z" fill="#fff4df" />
+        <circle cx="232" cy="100" r="19" fill="#ffe098" />
+      </g>
+      <path d="M176 57V235M89 153H264" stroke="#a96a37" stroke-width="9" />
+      <path d="M176 59V234M89 153H264" stroke="#edb768" stroke-width="3" />
+      <rect x="70" y="239" width="213" height="17" rx="5" fill="#d99851" />
+    </g>
+    <g id="rug">
+      <ellipse cx="493" cy="522" rx="398" ry="70" fill="#c67d66" opacity=".17" stroke="none" />
+      <ellipse cx="493" cy="514" rx="397" ry="72" fill="#efb2ad" stroke="#c78779" stroke-width="2" />
+      <ellipse cx="493" cy="514" rx="375" ry="61" fill="#ffe1aa" stroke="none" />
+      <ellipse cx="493" cy="514" rx="348" ry="48" fill="none" stroke="#f8c1a0" stroke-width="8" />
+    </g>
+    <g id="wall-decor">
+      <path d="M618 122l29-24l29 24" fill="none" stroke-width="2" />
+      <rect x="614" y="122" width="66" height="70" rx="4" fill="#c98b50" />
+      <rect x="621" y="129" width="52" height="56" rx="2" fill="#fff0cb" stroke-width="2" />
+      <path d="M648 177v-30m0 24q-17-15-20-7q2 12 20 7m0-4q19-14 20-5q-3 9-20 5" fill="#93b978" stroke="#729254" stroke-width="2" />
+      <g fill="#f7a1ad" stroke="#c67c7c" stroke-width="1.5">
+        <circle cx="648" cy="143" r="9" />
+        <circle cx="639" cy="151" r="9" />
+        <circle cx="657" cy="151" r="9" />
+        <circle cx="648" cy="158" r="8" />
+      </g>
+      <circle cx="648" cy="150" r="6" fill="#ffd57e" stroke="none" />
+      <rect x="735" y="139" width="125" height="13" rx="4" fill="#c78c50" />
+      <path d="M749 153v16l13-16m76 0v16l-13-16" fill="#c78c50" />
+      <path d="M761 136l-6-31h43l-5 31Z" fill="#edaa84" />
+      <path d="M777 110q-20-39-33-17q4 13 31 12q-1-43 21-33q13 9-18 29q40-24 40-3q-9 19-37 7" fill="#8fa85c" stroke="#668044" stroke-width="2" />
+      <rect x="818" y="105" width="13" height="33" rx="2" fill="#b88bbd" />
+      <rect x="835" y="110" width="12" height="28" rx="2" fill="#f4c454" />
+    </g>
+    <g id="bedroom-furniture" stroke="#865442" stroke-width="3" stroke-linejoin="round">
+      <g id="bed">
+        <ellipse cx="774" cy="404" rx="202" ry="20" opacity=".15" fill="#674a50" stroke="none" />
+        <path d="M590 376l-5 29q7 12 19 2l8-30m320 0 6 29q10 9 18-3l-5-32" fill="#ce9562" />
+        <path d="M590 293V214q8-28 34-29q40-48 79-26q43-27 81 0q45-21 79 25q49-5 76 33v85Z" fill="#dba7d5" />
+        <path d="M605 282v-62q12-25 34-23q29-38 65-24q42-23 78 0q40-16 72 24q46-3 69 29v55Z" fill="#eec6df" stroke="#fff0c5" stroke-width="5" />
+        <path d="M744 201q-26-19-18-31q10-10 18 3q10-13 20-3q9 13-20 31Z" fill="#ed98ad" />
+        <rect x="628" y="217" width="133" height="61" rx="22" fill="url(#gingham)" />
+        <rect x="781" y="217" width="133" height="61" rx="22" fill="url(#gingham)" />
+        <path d="M612 265h306q28 4 42 40l15 58q-25 40-82 26q-58 15-118 0q-59 16-122 0q-57 16-92-17l20-67q8-30 31-40Z" fill="#f196b1" />
+        <path d="M612 275q154-18 309 0" fill="none" stroke="#ffedca" stroke-width="20" />
+        <path d="M579 326q191-19 380 0M568 357q195-16 401 0m-309-76-20 103m94-105-6 108m81-108 8 108m73-105 25 100" fill="none" stroke="#df819e" stroke-width="3" />
+        <path d="M566 371q25 24 86 9q62 15 123 0q62 15 118 0q49 16 77-15" fill="none" stroke="#ffe9bf" stroke-width="8" />
+      </g>
+      <g id="dresser">
+        <rect x="306" y="249" width="165" height="139" rx="15" fill="#c491bc" />
+        <path d="M315 385v13h13l5-13m112 0 5 13h13v-15" fill="#b784ae" />
+        <rect x="313" y="258" width="151" height="35" rx="6" fill="#edbddb" />
+        <rect x="313" y="300" width="151" height="35" rx="6" fill="#edbddb" />
+        <rect x="313" y="342" width="151" height="35" rx="6" fill="#edbddb" />
+        <g fill="#fbd78e">
+          <circle cx="388" cy="275" r="6" />
+          <circle cx="388" cy="317" r="6" />
+          <circle cx="388" cy="359" r="6" />
+        </g>
+        <rect x="299" y="239" width="178" height="18" rx="8" fill="#e4b3d3" />
+        <path d="M332 237v-26q0-24 25-24q26 0 26 24v26Z" fill="#ffe09a" />
+        <path d="m357 197 5 10 11 2-8 7 2 11-10-5-10 5 2-11-8-7 11-2Z" fill="#fff1c0" stroke="#e6ba68" stroke-width="2" />
+      </g>
+      <g id="cat-bed">
+        <path d="M79 389q0-50 30-63l8-20 25 13q34-10 60 0l24-15 9 24q26 8 28 59Z" fill="#ffe4ad" />
+        <ellipse cx="172" cy="390" rx="98" ry="34" fill="#ffe4ad" />
+        <ellipse cx="172" cy="383" rx="79" ry="23" fill="#f3b6bc" stroke="#d99198" />
+        <path d="M110 381q24-16 48 0q26-15 51 0q23-14 38 0" fill="none" stroke="#e29da8" stroke-width="2" />
+      </g>
+    </g>
+  </g>
+</svg>

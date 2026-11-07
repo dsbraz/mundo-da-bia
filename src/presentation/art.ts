@@ -1,47 +1,38 @@
 import Phaser from 'phaser';
-import { drawPattern } from './wardrobe';
-import { actors, looks } from '../content/catalog';
+import { actors } from '../content/catalog';
 import type { Actor } from '../domain/types';
 
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean): Phaser.GameObjects.Container {
-  const container = scene.add.container(actor.x, actor.y);
-  const g = scene.add.graphics();
-  const style = actors[actor.id];
-  g.fillStyle(0x4b395d, 0.12).fillEllipse(0, 3, 86, 18);
-  if (selected) g.lineStyle(3, 0x8e67b4).strokeEllipse(0, 3, 93, 24);
-  if (actor.kind === 'cat') drawCat(g, style.skin, actor.resting);
-  else drawHuman(g, actor);
-  const label = scene.add.text(0, 25, style.name, { fontFamily: 'sans-serif', fontSize: '18px', color: '#4b395d', backgroundColor: '#fff9ef', padding: { x: 10, y: 5 } }).setOrigin(0.5);
-  container.add([g, label]);
-  if (actor.resting) container.add(scene.add.text(22, -110, 'z z Z', { fontSize: '22px', color: '#765790' }));
-  if (actor.fed) container.add(scene.add.text(-40, -100, '♥', { fontSize: '20px', color: '#c46480' }));
+  const container = scene.add.container(actor.x, actor.y).setName(actor.id);
+  const labelX = actor.seat === 'bed' ? -80 : 0;
+  const shadow = scene.add.ellipse(labelX, 2, actor.seat === 'bed' ? 180 : 86, 18, 0x654236, 0.16);
+  if (selected) shadow.setStrokeStyle(3, 0xffefb7);
+  container.add(shadow);
+  const pose = scene.add.container(0, 0).setName('pose');
+  container.add(pose);
+  const parts = actor.kind === 'human'
+    ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', 'eyes', 'lids', 'mouth', 'mouth-happy']
+    : ['tail', 'body', 'eyes', 'lids'];
+  parts.forEach(part => {
+    const image = scene.add.image(0, 0, `${actor.id}-${part}`).setOrigin(0.5, 1).setName(part);
+    pose.add(image);
+  });
+  animateActor(container, actor, 500, 0, false);
+  if (selected) container.add(scene.add.text(labelX, 22, actors[actor.id].name, { fontFamily: 'Trebuchet MS', fontSize: '15px', color: '#71452e', backgroundColor: '#fff1d1', padding: { x: 10, y: 4 } }).setOrigin(0.5));
+  if (actor.resting) container.add(scene.add.text(actor.seat === 'bed' ? -175 : 24, actor.seat === 'bed' ? -60 : -185, 'z z Z', { fontSize: '21px', color: '#77558b' }));
+  if (actor.fed) container.add(scene.add.text(-48, -100, '♥', { fontSize: '20px', color: '#d75c78' }));
   return container;
 }
-function drawHuman(g: Phaser.GameObjects.Graphics, actor: Actor) {
-  const style = actors[actor.id];
-  g.fillStyle(style.hair).fillRoundedRect(-33, -139, 66, 75, 26);
-  g.fillStyle(style.skin).fillRoundedRect(-39, -68, 13, 49, 7).fillRoundedRect(26, -68, 13, 49, 7);
-  g.fillStyle(0x665270).fillRoundedRect(-24, -30, 18, 30, 6).fillRoundedRect(6, -30, 18, 30, 6);
-  g.fillStyle(looks[actor.look].color).fillRoundedRect(-29, -79, 58, 60, 15);
-  g.fillStyle(style.skin).fillCircle(0, -104, 28);
-  g.fillStyle(style.hair).fillEllipse(-7, -126, 48, 25);
-  drawEyes(g, -104, actor.resting);
-  g.fillStyle(0xe28d87, 0.4).fillEllipse(-18, -95, 10, 6).fillEllipse(18, -95, 10, 6);
-  g.lineStyle(2, 0x9a544f).beginPath().arc(0, -97, 8, 0, Math.PI).strokePath();
-  drawPattern(g, actor.look, 0, -53, 0.85);
-  g.fillStyle(0xffffff).fillRoundedRect(-29, -8, 25, 12, 5).fillRoundedRect(4, -8, 25, 12, 5);
+export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean) {
+  const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
+  const blink = actor.resting || (time + index * 530) % 3900 < 130;
+  pose.getByName<Phaser.GameObjects.Image>('eyes').setVisible(!blink);
+  pose.getByName<Phaser.GameObjects.Image>('lids').setVisible(blink);
+  if (actor.kind === 'human') {
+    pose.getByName<Phaser.GameObjects.Image>('mouth').setVisible(!actor.fed);
+    pose.getByName<Phaser.GameObjects.Image>('mouth-happy').setVisible(actor.fed);
+    pose.getByName<Phaser.GameObjects.Image>('legs').setScale(1, actor.seat ? 0.82 : 1).setY(actor.seat ? -12 : 0);
+  } else pose.getByName<Phaser.GameObjects.Image>('tail').rotation = actor.resting ? 0 : Math.sin(time / 700 + index) * 0.04;
+  pose.rotation = actor.seat === 'bed' ? -Math.PI / 2 : danceAngle(time, index, show && !actor.resting);
 }
-function drawCat(g: Phaser.GameObjects.Graphics, color: number, resting: boolean) {
-  g.lineStyle(12, color).beginPath().moveTo(25, -15).lineTo(48, -28).lineTo(48, -44).strokePath();
-  g.fillStyle(color).fillEllipse(0, -23, 63, 45).fillCircle(0, -58, 29);
-  g.fillTriangle(-28, -65, -28, -97, -7, -79).fillTriangle(28, -65, 28, -97, 7, -79);
-  g.fillStyle(0xdda2a3).fillTriangle(-23, -73, -23, -89, -13, -79).fillTriangle(23, -73, 23, -89, 13, -79);
-  drawEyes(g, -60, resting);
-  g.fillStyle(0xd18491).fillTriangle(-4, -51, 4, -51, 0, -46);
-  g.lineStyle(1, 0x6b5a66).lineBetween(-30, -50, -13, -47).lineBetween(30, -50, 13, -47);
-}
-
-function drawEyes(g: Phaser.GameObjects.Graphics, y: number, closed: boolean) {
-  if (closed) g.lineStyle(2, 0x382d3f).lineBetween(-14, y, -6, y).lineBetween(6, y, 14, y);
-  else g.fillStyle(0x382d3f).fillCircle(-10, y, 3).fillCircle(10, y, 3);
-}
+function danceAngle(time: number, index: number, dancing: boolean) { return dancing ? Math.sin(time / 220 + index) * 0.06 : 0; }

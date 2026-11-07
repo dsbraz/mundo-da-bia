@@ -66,7 +66,7 @@ it('solta objetos no lugar escolhido, inclusive depois de carregar para outro c√
   state = transition(state, { type: 'summon' }).state;
   for (const point of [{ x: 60, y: 280 }, { x: 940, y: 540 }]) {
     const result = transition(state, { type: 'place', item: 'ursinho', point });
-    expect(result.state.items[3]).toEqual({ id: 'ursinho', holder: null, room: 'quarto', ...point });
+    expect(result.state.items[3]).toEqual({ id: 'ursinho', holder: null, room: 'quarto', spot: 'floor', ...point });
     expect(result.events).toEqual([{ type: 'dropped' }]);
     expect(decode(encode(result.state))).toEqual(result.state);
   }

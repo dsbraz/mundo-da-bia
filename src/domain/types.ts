@@ -7,7 +7,13 @@ export type LookId = typeof lookIds[number];
 export type RoomId = typeof roomIds[number];
 export type ItemId = typeof itemIds[number];
 export interface Point { x: number; y: number }
+export const seatIds = ['sofa-left', 'sofa-right', 'bed'] as const;
+export const spots = ['floor', 'table', 'drawer', 'fridge'] as const;
+export type SeatId = typeof seatIds[number];
+export type Spot = typeof spots[number];
+export interface Home { lamp: boolean; fridge: boolean; drawer: boolean }
 export interface Actor extends Point {
+  seat: SeatId | null;
   id: ActorId;
   kind: 'human' | 'cat';
   room: RoomId;
@@ -15,9 +21,12 @@ export interface Actor extends Point {
   fed: boolean;
   resting: boolean;
 }
-export interface Item extends Point { id: ItemId; room: RoomId; holder: ActorId | null }
-export interface World { room: RoomId; actors: Actor[]; items: Item[]; show: boolean }
+export interface Item extends Point { id: ItemId; room: RoomId; holder: ActorId | null; spot: Spot }
+export interface World { home: Home; room: RoomId; actors: Actor[]; items: Item[]; show: boolean }
 export type Action =
+  | { type: 'interact'; target: keyof Home }
+  | { type: 'sit'; actor: ActorId; seat: SeatId }
+  | { type: 'put'; item: ItemId; spot: Exclude<Spot, 'floor'> }
   | { type: 'move'; actor: ActorId; point: Point }
   | { type: 'dress'; actor: ActorId; look: LookId }
   | { type: 'pick'; actor: ActorId; item: ItemId }
@@ -27,5 +36,5 @@ export type Action =
   | { type: 'room'; room: RoomId }
   | { type: 'summon' }
   | { type: 'show' };
-export interface PresentationEvent { type: 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId }
+export interface PresentationEvent { type: 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId }
 export interface Transition { state: World; events: PresentationEvent[] }
