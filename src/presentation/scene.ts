@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { items } from '../content/catalog';
+import { itemIds } from '../domain/types';
 import type { ActorId, World } from '../domain/types';
 import { drawActor } from './art';
 import { drawRoom } from './room';
@@ -10,6 +10,7 @@ export class PlayScene extends Phaser.Scene {
   private figures: Phaser.GameObjects.Container[] = [];
   private ready = false;
   constructor(state: World) { super('play'); this.world = state; }
+  preload() { itemIds.forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 40, height: 40 })); }
   create() { this.ready = true; this.paint(this.world, this.selected); }
   paint(state: World, selected: ActorId) {
     this.world = state; this.selected = selected;
@@ -21,7 +22,7 @@ export class PlayScene extends Phaser.Scene {
       const holder = state.actors.find(a => a.id === item.holder);
       const room = holder ? holder.room : item.room;
       if (room !== state.room) return;
-      this.add.text(holder ? holder.x + 28 : item.x, holder ? holder.y - 55 : item.y - 28, items[item.id].icon, { fontSize: '30px' }).setOrigin(0.5);
+      this.add.image(holder ? holder.x + 28 : item.x, holder ? holder.y - 55 : item.y - 28, item.id);
     });
     if (state.show) this.add.text(500, 110, '♪  ♫  Nosso grande show!  ♫  ♪', { fontSize: '28px', color: '#825c90', backgroundColor: '#fff2ce', padding: { x: 18, y: 10 } }).setOrigin(0.5);
   }

@@ -1,12 +1,12 @@
 import type { ActorId, ItemId, LookId, RoomId } from '../domain/types';
-export const actors: Record<ActorId, { name: string; emoji: string; skin: number; hair: number }> = {
-  bia: { name: 'Bia', emoji: '👧🏽', skin: 0xd79b70, hair: 0x51382e },
-  luna: { name: 'Luna', emoji: '👩🏾', skin: 0x9e6047, hair: 0x302531 },
-  leo: { name: 'Léo', emoji: '👦🏻', skin: 0xf3c9a3, hair: 0xa16539 },
-  rui: { name: 'Rui', emoji: '👨🏽', skin: 0xc88961, hair: 0x3d302c },
-  mimi: { name: 'Mimi', emoji: '🐈', skin: 0xe9a35e, hair: 0x925833 },
-  nino: { name: 'Nino', emoji: '🐈‍⬛', skin: 0x59536e, hair: 0x29253c },
-  pipoca: { name: 'Pipoca', emoji: '🐱', skin: 0xfff6dc, hair: 0xb09d85 },
+export const actors: Record<ActorId, { name: string; skin: number; hair: number }> = {
+  bia: { name: 'Bia', skin: 0xd79b70, hair: 0x51382e },
+  luna: { name: 'Luna', skin: 0x9e6047, hair: 0x302531 },
+  leo: { name: 'Léo', skin: 0xf3c9a3, hair: 0xa16539 },
+  rui: { name: 'Rui', skin: 0xc88961, hair: 0x3d302c },
+  mimi: { name: 'Mimi', skin: 0xe9a35e, hair: 0x925833 },
+  nino: { name: 'Nino', skin: 0x59536e, hair: 0x29253c },
+  pipoca: { name: 'Pipoca', skin: 0xfff6dc, hair: 0xb09d85 },
 };
 export const looks: Record<LookId, { name: string; color: number; icon: string }> = {
   sol: { name: 'Dia de sol', color: 0xf4bf54, icon: '☀' },
@@ -19,7 +19,7 @@ export const looks: Record<LookId, { name: string; color: number; icon: string }
 export const rooms: Record<RoomId, { name: string; icon: string }> = {
   sala: { name: 'Sala & palco', icon: '♫' }, quarto: { name: 'Quarto dos sonhos', icon: '☾' },
 };
-export const items: Record<ItemId, { name: string; icon: string }> = {
-  lanche: { name: 'Lanche', icon: '🍎' }, peixe: { name: 'Comidinha de gato', icon: '🐟' },
-  microfone: { name: 'Microfone', icon: '🎤' }, ursinho: { name: 'Ursinho', icon: '🧸' },
+export const items: Record<ItemId, { name: string }> = {
+  lanche: { name: 'Lanche' }, peixe: { name: 'Comidinha de gato' },
+  microfone: { name: 'Microfone' }, ursinho: { name: 'Ursinho' },
 };

@@ -8,15 +8,22 @@ function button(label: string, run: () => void, className = ''): HTMLButtonEleme
   element.addEventListener('click', run);
   return element;
 }
+function illustratedButton(id: string, label: string, run: () => void, className = ''): HTMLButtonElement {
+  const element = button(label, run, className);
+  const icon = document.createElement('img');
+  icon.src = `/icons/${id}.svg`; icon.alt = ''; icon.width = 26; icon.height = 26;
+  element.prepend(icon);
+  return element;
+}
 export function createControls(root: HTMLElement, dispatch: (action: Action) => void, select: (id: ActorId) => void) {
   let selected: ActorId = 'bia';
   const roomButtons = roomIds.map(room => button(`${rooms[room].icon}  ${rooms[room].name}`, () => dispatch({ type: 'room', room })));
   root.querySelector('#rooms')!.append(...roomButtons);
-  const cast = actorIds.map(id => button(`${actors[id].emoji} ${actors[id].name}`, () => select(id), 'character'));
+  const cast = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id), 'character'));
   root.querySelector('#cast')!.append(...cast);
   const wardrobe = lookIds.map(look => button(`${looks[look].icon} ${looks[look].name}`, () => dispatch({ type: 'dress', actor: selected, look })));
   root.querySelector('#looks')!.append(...wardrobe);
-  const objects = itemIds.map(item => button(`${items[item].icon} ${items[item].name}`, () => dispatch({ type: 'pick', actor: selected, item })));
+  const objects = itemIds.map(item => illustratedButton(item, items[item].name, () => dispatch({ type: 'pick', actor: selected, item })));
   root.querySelector('#objects')!.append(...objects);
   const actions = [
     button('♡ Oferecer comida', () => dispatch({ type: 'feed', actor: selected })),

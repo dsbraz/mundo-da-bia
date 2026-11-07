@@ -5,6 +5,8 @@ test('Beatriz reúne a turma, cuida, troca roupa e monta um show que continua ao
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.locator('#cast img, #objects img')).toHaveCount(11);
+  await expect.poll(() => page.locator('#cast img, #objects img').evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
   await page.getByRole('button', { name: 'Lanche', exact: false }).click();
   await page.getByRole('button', { name: 'Oferecer comida' }).click();
   await expect(page.locator('#actor-status')).toContainText('Barriguinha feliz');

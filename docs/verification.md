@@ -2,6 +2,14 @@
 
 Esta é uma entrega local parcial, não uma aprovação do MVP ou publicação.
 
+## Execução completa no terminal do proprietário
+
+Os relatórios de CI e mutação apontam para o commit limpo `9805d4e1039ee3ec6fd96f7ae5bdf3511d82cca9`, política 1. Todos os checks passaram: CI em 52,193 s; mutação em 23,456 s. As três jornadas E2E passaram, sem retry, flaky ou teste pulado. Score de mutação por área: domínio 82,69% (172/208), persistência 86,39% (127/147).
+
+A captura `reports/tablet.png` foi inspecionada. O layout e os personagens aparecem, porém emojis de personagens e objetos foram renderizados como quadrados por falta de glifos. Essa revisão visual detectou um defeito que as jornadas funcionais não detectavam. A correção posterior usa 11 SVGs locais (retratos e objetos), carregados também pelo Phaser. Foi acrescentada à jornada uma verificação de carregamento das imagens HTML. Tipagem, lint, arquitetura, testes e build da correção passaram localmente; a nova revisão visual/E2E deve ser executada fora do sandbox. O PNG anterior foi preservado em `reports/tablet-before-icons.png` para comparação.
+
+O audit detalhado foi recebido. Todas as entradas apontam para pacotes `dev: true` no lockfile; não há entrada reportada para as dependências de produção. Isso não elimina o risco de ferramentas de desenvolvimento. Veja [a triagem](dependency-audit.md).
+
 ## Atualização após instalação no terminal do proprietário
 
 - `npm install` concluiu e gerou `package-lock.json`; a ausência de dependências foi resolvida.

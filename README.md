@@ -2,7 +2,7 @@
 
 Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, seis looks e dois cômodos. Arte vetorial procedural no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** dependências e lockfile instalados; tipagem completa, lint, arquitetura, 56 testes unitários, cobertura, build, orçamento e sete testes da automação passam. E2E e mutação ainda bloqueados pelas restrições de processos/sockets do ambiente do agente. O [repositório público](https://github.com/dsbraz/mundo-da-bia) foi criado, mas ainda não recebeu código. Consulte [a evidência](docs/verification.md). O MVP ainda não está aprovado nem publicado.
+**Estado da entrega:** o commit `9805d4e` passou todos os gates no terminal do proprietário, incluindo E2E e mutação. A revisão da captura encontrou emojis sem glifos; a correção usa SVGs locais e aguarda nova verificação de navegador. O [repositório público](https://github.com/dsbraz/mundo-da-bia) foi criado, mas ainda não recebeu código. Consulte [a evidência](docs/verification.md) e [a triagem de dependências](docs/dependency-audit.md). Não há publicação Sites.
 
 ## Executar
 
@@ -19,7 +19,7 @@ O `package-lock.json` foi gerado pela instalação realizada no terminal do prop
 
 No Ubuntu 26.04 local, o instalador desta versão do Playwright recusou o download. O cache existente já contém Chromium e headless shell revisão 1223, a mesma exigida pelo Playwright 1.60.0, portanto não é necessário reinstalar esses navegadores para testar nesta máquina. Isso não comprova sucesso dos testes: no sandbox do agente, a inicialização do navegador falha com `Operation not permitted`. Execute `npm run quality` no terminal normal para validar E2E e mutação.
 
-A instalação informou 17 vulnerabilidades (12 moderadas e cinco altas). A consulta detalhada do audit ainda está pendente porque o executor não acessa registry.npmjs.org. Não foi aplicado `npm audit fix --force`; o impacto e as correções precisam ser avaliados a partir do relatório.
+O audit reportou 17 entradas, todas em dependências de desenvolvimento. A triagem identifica atualizações compatíveis para Vite e dependency-cruiser e atualizações transitivas sem `--force`. Minimatch requer mudança de versão principal em ferramentas dependentes; esse risco permanece acompanhado separadamente. Consulte [a triagem](docs/dependency-audit.md).
 
 ## Brincar
 
