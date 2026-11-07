@@ -12,7 +12,7 @@ export function bindInput(canvas: HTMLCanvasElement, getState: () => World, sele
     canvas.setPointerCapture(event.pointerId);
     const p = point(event);
     const state = getState();
-    const hit = [...state.actors].reverse().find(a => a.room === state.room && Math.abs(a.x - p.x) < 45 && p.y <= a.y + 20 && p.y >= a.y - 140);
+    const hit = [...state.actors].sort((a, b) => a.y - b.y).reverse().find(a => a.room === state.room && Math.abs(a.x - p.x) < 45 && p.y <= a.y + 20 && p.y >= a.y - 140);
     if (hit) select(hit.id);
     else move(p);
   });
