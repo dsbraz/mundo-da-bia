@@ -4,7 +4,7 @@ As portas laterais ligam os cômodos na ordem da planta: da esquerda para a dire
 
 Toque numa porta para o personagem selecionado caminhar até ela e atravessar, ou arraste um personagem e solte sobre a porta. A travessia mantém roupa, identidade e objeto carregado, libera o assento e encerra o descanso. O personagem entra pelo lado oposto. Outros personagens ficam onde estavam. As portas requerem o selecionado presente no ambiente; o mapa continua disponível para viajar até ele ou reunir a turma.
 
-A confirmação do estado acontece entre a caminhada e o deslizamento das vistas. Durante a animação, os controles ficam temporariamente indisponíveis para impedir travessias duplicadas. Movimento reduzido segue a preferência do sistema. Cancelar um arraste antes de soltar não atravessa; soltar fora da tela também não é uma porta. A janela decorativa dos cômodos permanece; a porta antiga sem ação foi retirada.
+A confirmação do estado acontece antes do deslizamento das vistas. Por toque, o personagem caminha até a porta; por arraste, atravessa diretamente ao soltar, sem repetir a caminhada. Durante a animação, os controles ficam temporariamente indisponíveis para impedir travessias duplicadas. Movimento reduzido segue a preferência do sistema. Cancelar um arraste antes de soltar não atravessa; soltar fora da tela também não é uma porta. A janela decorativa dos cômodos permanece; a porta antiga sem ação foi retirada.
 
 ## Conteúdo
 
