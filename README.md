@@ -1,8 +1,8 @@
 # Mundo da Bia
 
-Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, oito looks e dois cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
+Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, oito looks e casas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/world-builder.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
+**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/creative-rooms.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
 ## Executar
 
@@ -23,7 +23,7 @@ Após as atualizações compatíveis, o audit registra nove entradas moderadas e
 
 ## Brincar
 
-Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até um humano. Arraste o lanche até um humano ou a comidinha até um gato para alimentar. Entregar o microfone a um humano começa o show. Brinquedos podem passar de uma mão para outra ou ser soltos no chão. Cancelar um arraste não perde o objeto. Os controles ficam nas bandejas **Turminha** e **Brincar**. Toque na casinha para trocar de cômodo ou reunir a turma. Veja a [evidência e o mapa das camadas SVG](docs/dollhouse-svg.md).
+Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até um humano. Arraste o lanche até um humano ou a comidinha até um gato para alimentar. Entregar o microfone a um humano começa o show. Brinquedos podem passar de uma mão para outra ou ser soltos no chão. Cancelar um arraste não perde o objeto. Os controles ficam nas bandejas **Personagens** e **Brincar**. Toque na casinha para trocar de cômodo ou reunir a turma. Veja a [evidência e o mapa das camadas SVG](docs/dollhouse-svg.md).
 
 Arraste um personagem até o sofá para sentar ou até a cama para deitar. Toque na geladeira para abrir; arraste a comida até a mesa ou um personagem. Toque na gaveta para guardar e recuperar brinquedos, e no abajur para mudar a iluminação. O botão de som ativa efeitos locais.
 
@@ -33,7 +33,9 @@ Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o sele
 
 Toque em **Construir** para abrir o Ateliê. Escolha móveis e decoração no catálogo, arraste as peças pela casa, mude sua cor ou espelhe. **Paredes e piso** troca os acabamentos. **Desfazer/Refazer** permite experimentar; **Brincar** devolve os personagens à casa editada. Quem estiver sentado acompanha o sofá e os objetos acompanham seus móveis.
 
-Na casinha do canto, **Minhas casas** permite renomear, duplicar ou criar uma casa vazia. Cada projeto é salvo separadamente neste navegador. A coleção **Palco Neon** reúne palco, letreiro, caixas de som e espelho de camarim; os figurinos originais **Estrela Neon** e **Guardiã Aurora** estão no guarda-roupa. Móveis interativos têm uma unidade por casa nesta versão; decoração pode se repetir. Retire um móvel para adicioná-lo em outro cômodo.
+Na casinha do canto, **Minhas casas** permite renomear, duplicar ou criar uma casa vazia. Cada projeto é salvo separadamente neste navegador. A coleção **Palco Neon** reúne palco, letreiro, caixas de som e espelho de camarim; os figurinos originais **Estrela Neon** e **Guardiã Aurora** estão no guarda-roupa. Sofá, cama, armário, geladeira, mesa, abajur e palco têm uma unidade por cômodo; os demais podem se repetir.
+
+Em **Planta da casa**, crie cômodos livres ou use modelos de quarto, cozinha, banheiro, estúdio e jardim. Escolha tamanho, nome e posição na planta; leve o personagem selecionado pelo painel. A faixa inferior troca de cômodo. As ideias de projetos são opcionais e permitem guardar versões independentes. Arraste peças do catálogo diretamente para a casa. Fogão, banheira, mesa de criação, espelho e caixa de som alternam efeitos visuais por toque.
 
 ## Arquitetura
 
@@ -43,7 +45,7 @@ Na casinha do canto, **Minhas casas** permite renomear, duplicar ou criar uma ca
 - `src/presentation`: arte, cena, controles e gestos. Controles recebem callbacks e não importam cenas.
 - `src/bootstrap`: conecta domínio, persistência e apresentação.
 
-Gestos cancelados preservam a última posição válida já aplicada e ignoram eventos tardios. Saves v1 e v2 migram para v3 preservando a brincadeira. A coleção de casas usa seu próprio envelope versionado; a chave antiga continua atualizada com a casa ativa. Dados ausentes, inválidos, duplicados ou de versão desconhecida recuperam o estado inicial. A resolução lógica é 1000 × 600, ajustada ao espaço disponível. SVGs locais em camadas dispensam fontes e downloads de terceiros.
+Arrastar personagens e móveis exibe uma prévia e confirma a posição ao soltar; cancelar restaura a posição anterior ao gesto. Saves v1/v2/v3 migram para v4 preservando a brincadeira. A coleção de casas migra do envelope v1 para v2; a chave antiga continua atualizada com a casa ativa. Dados ausentes, inválidos, duplicados ou de versão desconhecida recuperam o estado inicial. A resolução lógica é 1000, 1200 ou 1400 × 600, conforme o tamanho do cômodo, ajustada ao espaço disponível sem distorção. SVGs locais em camadas dispensam fontes e downloads de terceiros.
 
 ## Qualidade
 

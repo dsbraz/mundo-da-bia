@@ -8,7 +8,7 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean):
   const shadow = scene.add.ellipse(labelX, 2, actor.seat === 'bed' ? 180 : 86, 18, 0x654236, 0.16);
   if (selected) shadow.setStrokeStyle(3, 0xffefb7);
   container.add(shadow);
-  const pose = scene.add.container(0, 0).setName('pose');
+  const pose = scene.add.container(0, 0).setName('pose').setScale(0.85);
   container.add(pose);
   const parts = actor.kind === 'human'
     ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', 'eyes', 'lids', 'mouth', 'mouth-happy']

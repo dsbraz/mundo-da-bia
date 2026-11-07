@@ -9,7 +9,7 @@ it('migra v2 sem mudar móveis ou a brincadeira', () => {
   const current = initialWorld();
   const old = Object.fromEntries(Object.entries(current).filter(([key]) => key !== 'layout'));
   expect(decode(JSON.stringify({ version: 2, state: old }))).toEqual(current);
-  expect(JSON.parse(encode(current)).version).toBe(3);
+  expect(JSON.parse(encode(current)).version).toBe(4);
 });
 it('salva casas diferentes e a casa escolhida', () => {
   let album = duplicateHouse(initialAlbum(initialWorld()), true);

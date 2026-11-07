@@ -1,11 +1,11 @@
 import type { EditAction, Piece, PieceKind, World } from './types';
 import { fixtures, fromPiece, pieceBounds, toPiece, validPlacement } from './layout';
 import { seatKind, spotKind } from './furniture';
-import { validPoint } from './geometry';
+import { roomWidth, validPoint } from './geometry';
 
 export interface History { past: World[]; present: World; future: World[] }
 export function editWorld(state: World, action: EditAction): World {
-  if (action.type === 'add') return addPiece(state, action.kind);
+  if (action.type === 'add') return addPiece(state, action.kind, action.point);
   if (action.type === 'finish') return { ...state, layout: { ...state.layout, rooms: { ...state.layout.rooms,
     [state.room]: { ...state.layout.rooms[state.room], [action.surface]: action.value } } } };
   if (action.type === 'clear') return state.layout.pieces.filter(p => p.room === state.room)
@@ -17,32 +17,33 @@ function editPiece(state: World, piece: Piece, action: Extract<EditAction, { id:
   if (action.type === 'remove') return removePiece(state, piece);
   const patch = action.type === 'move' ? action.point : action.type === 'flip' ? { flipped: !piece.flipped } : { color: action.color };
   const updated = { ...piece, ...patch };
-  if (!validPlacement(updated)) return state;
+  if (!validPlacement(updated, roomWidth(state))) return state;
   const next = relocate(state, piece, updated);
-  if (!next.actors.every(validPoint) || !next.items.every(validPoint)) return state;
+  if (!next.actors.every(a => validPoint(a, roomWidth(state, a.room))) || !next.items.every(i => validPoint(i, roomWidth(state, i.room)))) return state;
   return { ...next, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === piece.id ? updated : p) } };
 }
-function addPiece(state: World, kind: PieceKind): World {
-  if (fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind)) return state;
+function addPiece(state: World, kind: PieceKind, point?: { x: number; y: number }): World {
+  if (fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room)) return state;
   const box = pieceBounds[kind];
   const x = box.width > 400 ? box.x : Math.min(450, 1000 - box.width);
   const y = Math.min(300, 580 - box.height);
   const piece: Piece = { id: state.layout.nextId, kind, room: state.room, color: 'original', flipped: false, x, y };
-  if (!validPlacement(piece)) { piece.x = box.x; piece.y = box.y; }
+  if (point) { piece.x = Math.round(point.x - box.width / 2); piece.y = Math.round(point.y - box.height / 2); }
+  if (!validPlacement(piece, roomWidth(state))) { piece.x = box.x; piece.y = box.y; }
   return { ...state, layout: { ...state.layout, nextId: piece.id + 1, pieces: [...state.layout.pieces, piece] } };
 }
 function removePiece(state: World, piece: Piece): World {
   return {
     ...state, layout: { ...state.layout, pieces: state.layout.pieces.filter(p => p.id !== piece.id) },
-    actors: state.actors.map(a => a.seat && seatKind(a.seat) === piece.kind ? { ...a, seat: null, resting: false } : a),
-    items: state.items.map(i => i.spot !== 'floor' && spotKind(i.spot) === piece.kind ? { ...i, spot: 'floor' } : i),
+    actors: state.actors.map(a => a.room === piece.room && a.seat && seatKind(a.seat) === piece.kind ? { ...a, seat: null, resting: false } : a),
+    items: state.items.map(i => i.room === piece.room && i.spot !== 'floor' && spotKind(i.spot) === piece.kind ? { ...i, spot: 'floor' } : i),
   };
 }
 function relocate(state: World, before: Piece, after: Piece): World {
   const point = (p: { x: number; y: number }) => fromPiece(after, toPiece(before, p));
   return { ...state,
-    actors: state.actors.map(a => a.seat && seatKind(a.seat) === before.kind ? { ...a, ...point(a) } : a),
-    items: state.items.map(i => i.spot !== 'floor' && spotKind(i.spot) === before.kind ? { ...i, ...point(i) } : i),
+    actors: state.actors.map(a => a.room === before.room && a.seat && seatKind(a.seat) === before.kind ? { ...a, ...point(a) } : a),
+    items: state.items.map(i => i.room === before.room && i.spot !== 'floor' && spotKind(i.spot) === before.kind ? { ...i, ...point(i) } : i),
   };
 }
 export function history(present: World): History { return { past: [], present, future: [] }; }

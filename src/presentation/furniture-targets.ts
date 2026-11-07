@@ -1,5 +1,5 @@
 import { seatPoint } from '../domain/furniture';
-import { fixture, toPiece } from '../domain/layout';
+import { fixture, pieceBounds, toPiece } from '../domain/layout';
 import { seatIds } from '../domain/types';
 import type { Home, PieceKind, Point, Spot, World } from '../domain/types';
 
@@ -28,3 +28,11 @@ export function seatAt(state: World, p: Point) {
   });
 }
 export function wardrobeHit(state: World, p: Point) { return hit(state, 'wardrobe', p, 305, 150, 195, 195); }
+
+export function usableAt(state: World, point: Point) {
+  return [...state.layout.pieces].reverse().find(piece => {
+    const box = pieceBounds[piece.kind];
+    return piece.room === state.room && ['stove', 'bath', 'desk', 'speaker', 'mirror'].includes(piece.kind)
+      && point.x >= piece.x && point.x <= piece.x + box.width && point.y >= piece.y && point.y <= piece.y + box.height;
+  });
+}

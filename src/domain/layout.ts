@@ -1,7 +1,12 @@
 import { validPoint } from './geometry';
-import type { Layout, Piece, PieceKind, Point, World } from './types';
+import type { Layout, Piece, PieceKind, Point, RoomId, World } from './types';
 
 export const pieceBounds: Record<PieceKind, Point & { width: number; height: number }> = {
+  counter: { x: 0, y: 0, width: 220, height: 130 },
+  stove: { x: 0, y: 0, width: 110, height: 140 },
+  bath: { x: 0, y: 0, width: 240, height: 150 },
+  desk: { x: 0, y: 0, width: 200, height: 145 },
+  shelf: { x: 0, y: 0, width: 120, height: 220 },
   sofa: { x: 60, y: 270, width: 270, height: 170 },
   wardrobe: { x: 292, y: 90, width: 226, height: 320 },
   fridge: { x: 620, y: 195, width: 145, height: 195 },
@@ -23,13 +28,16 @@ export const fixtures: readonly PieceKind[] = ['sofa', 'wardrobe', 'fridge', 'la
 export function initialLayout(): Layout {
   const kinds: PieceKind[] = ['rug', 'sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed'];
   return {
-    nextId: kinds.length + 1,
-    rooms: { sala: { wall: 'original', floor: 'original' }, quarto: { wall: 'lilac', floor: 'original' } },
+    nextId: kinds.length + 1, nextRoomId: 3,
+    rooms: {
+      sala: { name: 'Sala & palco', template: 'empty', size: 'small', cell: 0, home: { lamp: true, fridge: true, drawer: false }, wall: 'original', floor: 'original' },
+      quarto: { name: 'Quarto dos sonhos', template: 'bedroom', size: 'small', cell: 1, home: { lamp: true, fridge: true, drawer: false }, wall: 'lilac', floor: 'original' },
+    },
     pieces: kinds.map((kind, index) => ({ id: index + 1, kind, room: index < 7 ? 'sala' : 'quarto',
       x: pieceBounds[kind].x, y: pieceBounds[kind].y, color: 'original', flipped: false })),
   };
 }
-export function fixture(state: World, kind: PieceKind) { return state.layout.pieces.find(p => p.kind === kind); }
+export function fixture(state: World, kind: PieceKind, room: RoomId = state.room) { return state.layout.pieces.find(p => p.kind === kind && p.room === room); }
 export function fromPiece(piece: Piece, point: Point): Point {
   const box = pieceBounds[piece.kind];
   const dx = point.x - box.x;
@@ -40,11 +48,11 @@ export function toPiece(piece: Piece, point: Point): Point {
   const dx = point.x - piece.x;
   return { x: box.x + (piece.flipped ? box.width - dx : dx), y: box.y + point.y - piece.y };
 }
-export function validPlacement(piece: Piece): boolean {
+export function validPlacement(piece: Piece, width = 1000): boolean {
   const box = pieceBounds[piece.kind];
   return Number.isFinite(piece.x) && Number.isFinite(piece.y) && piece.x >= 0 && piece.y >= 65
-    && piece.x + box.width <= 1000 && piece.y + box.height <= 600
-    && (anchors[piece.kind] ?? []).every(p => validPoint(fromPiece(piece, p))); 
+    && piece.x + box.width <= width && piece.y + box.height <= 600
+    && (anchors[piece.kind] ?? []).every(p => validPoint(fromPiece(piece, p), width));
 }
 
 const anchors: Partial<Record<PieceKind, Point[]>> = {

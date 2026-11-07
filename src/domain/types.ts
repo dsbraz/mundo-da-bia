@@ -4,7 +4,11 @@ export const roomIds = ['sala', 'quarto'] as const;
 export const itemIds = ['lanche', 'peixe', 'microfone', 'ursinho'] as const;
 export type ActorId = typeof actorIds[number];
 export type LookId = typeof lookIds[number];
-export type RoomId = typeof roomIds[number];
+export type RoomId = typeof roomIds[number] | `room-${number}`;
+export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden'] as const;
+export const roomSizes = ['small', 'medium', 'large'] as const;
+export type RoomTemplate = typeof roomTemplates[number];
+export type RoomSize = typeof roomSizes[number];
 export type ItemId = typeof itemIds[number];
 export interface Point { x: number; y: number }
 export const seatIds = ['sofa-left', 'sofa-right', 'bed'] as const;
@@ -24,6 +28,8 @@ export interface Actor extends Point {
 export interface Item extends Point { id: ItemId; room: RoomId; holder: ActorId | null; spot: Spot }
 export interface World { layout: Layout; home: Home; room: RoomId; actors: Actor[]; items: Item[]; show: boolean }
 export type Action =
+  | { type: 'use'; id: number }
+  | { type: 'travel'; actor: ActorId; room: RoomId }
   | { type: 'interact'; target: keyof Home }
   | { type: 'sit'; actor: ActorId; seat: SeatId }
   | { type: 'put'; item: ItemId; spot: Exclude<Spot, 'floor'> }
@@ -39,15 +45,16 @@ export type Action =
 export interface PresentationEvent { type: 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId }
 export interface Transition { state: World; events: PresentationEvent[] }
 
-export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror'] as const;
+export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf'] as const;
 export const paletteIds = ['original', 'mint', 'lilac', 'rose', 'sky', 'gold'] as const;
 export type PieceKind = typeof pieceKinds[number];
 export type Palette = typeof paletteIds[number];
-export interface Piece extends Point { id: number; kind: PieceKind; room: RoomId; color: Palette; flipped: boolean }
+export interface Piece extends Point { id: number; kind: PieceKind; room: RoomId; color: Palette; flipped: boolean; active?: boolean }
 export interface Finish { wall: Palette; floor: Palette }
-export interface Layout { pieces: Piece[]; rooms: Record<RoomId, Finish>; nextId: number }
+export interface Room extends Finish { name: string; template: RoomTemplate; size: RoomSize; cell: number; home: Home }
+export interface Layout { pieces: Piece[]; rooms: Record<RoomId, Room>; nextId: number; nextRoomId: number }
 export type EditAction =
-  | { type: 'add'; kind: PieceKind }
+  | { type: 'add'; kind: PieceKind; point?: Point }
   | { type: 'move'; id: number; point: Point }
   | { type: 'remove'; id: number }
   | { type: 'flip'; id: number }

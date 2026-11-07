@@ -34,7 +34,7 @@ test('brincadeira completa por controles acessíveis, com salvamento', async ({ 
   await tray(page, 'tools');
   await page.getByRole('button', { name: 'Lanche', exact: true }).click();
   await page.getByRole('button', { name: 'Oferecer comida' }).click();
-  await expect(page.locator('#actor-status')).toContainText('Barriguinha feliz');
+  await expect(page.locator('#actor-status')).toContainText('Já comeu');
   await page.getByRole('button', { name: 'Festa', exact: false }).click();
   await tray(page, 'cast');
   await page.getByRole('button', { name: 'Mimi', exact: true }).click();
@@ -43,9 +43,9 @@ test('brincadeira completa por controles acessíveis, com salvamento', async ({ 
   await page.getByRole('button', { name: 'Oferecer comida' }).click();
   await page.getByRole('button', { name: 'Descansar' }).click();
   await tray(page, 'home');
-  await page.getByRole('button', { name: 'Quarto dos sonhos' }).click();
+  await page.locator('#rooms').getByRole('button', { name: 'Quarto dos sonhos' }).click();
   await page.getByRole('button', { name: 'Reunir todo mundo' }).click();
-  await page.getByRole('button', { name: 'Sala & palco' }).click();
+  await page.locator('#rooms').getByRole('button', { name: 'Sala & palco' }).click();
   await page.getByRole('button', { name: 'Reunir todo mundo' }).click();
   await tray(page, 'cast');
   await page.getByRole('button', { name: 'Bia', exact: true }).click();
@@ -69,7 +69,7 @@ test('arraste cancelado preserva posição e teclado move sem duplicar', async (
   await page.keyboard.press('ArrowRight');
   const saved = await read(page);
   expect(saved.actors).toHaveLength(7);
-  expect(saved.actors[0].x).toBeCloseTo(570, 0);
+  expect(saved.actors[0].x).toBeCloseTo(540, 0);
   await page.reload();
   expect(await read(page)).toEqual(saved);
 });
@@ -135,12 +135,12 @@ test('cancelar o arraste não perde o brinquedo e soltar no chão salva posiçã
 test('armário respeita o cômodo e veste por toque real em tablet', async ({ page }) => {
   await ready(page);
   await tray(page, 'home');
-  await page.getByRole('button', { name: 'Quarto dos sonhos' }).click();
+  await page.locator('#rooms').getByRole('button', { name: 'Quarto dos sonhos' }).click();
   await page.reload();
   await tray(page, 'tools');
   await expect(page.getByRole('button', { name: 'Abrir armário' })).toBeDisabled();
   await tray(page, 'home');
-  await page.getByRole('button', { name: 'Sala & palco' }).click();
+  await page.locator('#rooms').getByRole('button', { name: 'Sala & palco' }).click();
   await tray(page, 'home', false);
   const { xy } = await gestures(page);
   const door = xy(405, 165);
@@ -171,7 +171,7 @@ test('casa ocupa a tela sem rolagem e bandejas se recolhem em ambas orientaçõe
 test('quarto permite deitar na cama e preserva a posição', async ({ page }) => {
   await ready(page);
   await tray(page, 'home');
-  await page.getByRole('button', { name: 'Quarto dos sonhos' }).click();
+  await page.locator('#rooms').getByRole('button', { name: 'Quarto dos sonhos' }).click();
   await page.getByRole('button', { name: 'Reunir todo mundo' }).click();
   await tray(page, 'home', false);
   const { drag } = await gestures(page);

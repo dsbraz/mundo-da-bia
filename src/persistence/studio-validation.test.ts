@@ -31,14 +31,14 @@ it('valida identificadores, acabamentos e unicidade dos móveis interativos', ()
   expect(validLayout({ ...layout, nextId: 12, pieces: [...layout.pieces, { ...layout.pieces[1], id: 11 }] })).toBe(false);
   expect(validLayout({ ...layout, nextId: 12, pieces: [...layout.pieces, { ...layout.pieces[0], id: 11 }] })).toBe(true);
 });
-it.each([null, 'null', '{}', '{"version":2}', '{"version":1,"album":null}'])('rejeita envelope %s', raw => {
+it.each([null, 'null', '{}', '{"version":3}', '{"version":1,"album":null}'])('rejeita envelope %s', raw => {
   expect(decodeAlbum(raw)).toBeNull();
 });
 it.each([
   { active: 0 }, { active: 1.5 }, { houses: null }, { houses: [] }, { houses: [null] },
 ])('rejeita coleção corrompida %j', patch => {
   const album = { ...initialAlbum(initialWorld()), ...patch };
-  expect(decodeAlbum(JSON.stringify({ version: 1, album }))).toBeNull();
+  expect(decodeAlbum(JSON.stringify({ version: 2, album }))).toBeNull();
 });
 it.each([{ id: 0 }, { name: '' }, { name: '  ' }, { name: 9 }, { name: 'x'.repeat(49) }, { state: {} }])('rejeita casa corrompida %j', patch => {
   const album = initialAlbum(initialWorld());

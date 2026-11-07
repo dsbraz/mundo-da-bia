@@ -1,8 +1,9 @@
-import { validPoint } from './geometry';
+import { roomWidth, validPoint } from './geometry';
 export { validPoint } from './geometry';
+import { enterRoom, travel } from './room-state';
 import { initialLayout } from './layout';
 import { actorIds, itemIds } from './types';
-import type { Action, Actor, Point, PresentationEvent, Transition, World } from './types';
+import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
 
@@ -60,18 +61,15 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
 }
 
 export function transition(state: World, action: Action): Transition {
+  if ('room' in action) return navigate(state, action);
+  if (action.type === 'use') return usePiece(state, action.id);
   if (action.type === 'interact') return interact(state, action.target);
   if (action.type === 'put') return put(state, action.item, action.spot);
-  if (action.type === 'place') {
-    if (!visibleItem(state, action.item) || !validPoint(action.point)) return { state, events: [] };
-    return { state: { ...state, items: state.items.map(i => i.id === action.item
-      ? { ...i, ...action.point, room: state.room, holder: null, spot: 'floor' } : i) }, events: [{ type: 'dropped' }] };
-  }
-  if (action.type === 'room') return { state: { ...state, room: action.room, show: false }, events: [{ type: 'room' }] };
+  if (action.type === 'place') return placeItem(state, action);
   if (action.type === 'show') return { state: { ...state, show: !state.show }, events: [{ type: 'show' }] };
   if (action.type === 'summon') {
     return {
-      state: { ...state, actors: state.actors.map(a => ({ ...a, room: state.room, seat: null })) }, events: [{ type: 'summoned' }],
+      state: { ...state, actors: state.actors.map(a => ({ ...a, x: Math.min(a.x, roomWidth(state) - 60), room: state.room, seat: null })) }, events: [{ type: 'summoned' }],
     };
   }
   const actor = state.actors.find(a => a.id === action.actor && a.room === state.room);
@@ -79,5 +77,22 @@ export function transition(state: World, action: Action): Transition {
 }
 
 function moveActor(state: World, actor: Actor, point: Point): Transition {
-  return validPoint(point) ? changeActor(state, actor, { ...point, resting: false, seat: null }, 'moved') : { state, events: [] };
+  return validPoint(point, roomWidth(state)) ? changeActor(state, actor, { ...point, resting: false, seat: null }, 'moved') : { state, events: [] };
+}
+
+function usePiece(state: World, id: number): Transition {
+  const piece = state.layout.pieces.find(p => p.id === id && p.room === state.room);
+  if (!piece || !['stove', 'bath', 'desk', 'speaker', 'mirror'].includes(piece.kind)) return { state, events: [] };
+  return { state: { ...state, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === id ? { ...p, active: !p.active } : p) } }, events: [{ type: 'furniture' }] };
+}
+
+function navigate(state: World, action: Extract<Action, { room: RoomId }>): Transition {
+  const next = action.type === 'travel' ? travel(state, action.actor, action.room) : enterRoom(state, action.room);
+  return { state: next, events: next === state ? [] : [{ type: 'room' }] };
+}
+
+function placeItem(state: World, action: Extract<Action, { type: 'place' }>): Transition {
+    if (!visibleItem(state, action.item) || !validPoint(action.point, roomWidth(state))) return { state, events: [] };
+    return { state: { ...state, items: state.items.map(i => i.id === action.item
+      ? { ...i, ...action.point, room: state.room, holder: null, spot: 'floor' } : i) }, events: [{ type: 'dropped' }] };
 }

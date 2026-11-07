@@ -5,6 +5,7 @@ import { pieceBounds } from '../domain/layout';
 import { recolor, svgFragment } from './svg-source';
 import sala from './assets/sala.svg?raw';
 import quarto from './assets/quarto.svg?raw';
+import workshop from './assets/workshop.svg?raw';
 import decor from './assets/decor.svg?raw';
 
 const layers: Partial<Record<PieceKind, string[]>> = {
@@ -15,6 +16,7 @@ const extras: Partial<Record<PieceKind, string[]>> = {
   fridge: ['fridge-closed', 'fridge-open'], lamp: ['lamp-on', 'lamp-off'],
 };
 function source(kind: PieceKind) {
+  if (['counter', 'stove', 'bath', 'desk', 'shelf'].includes(kind)) return workshop;
   if (['bed', 'dresser', 'cat-bed'].includes(kind)) return quarto;
   return ['plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror'].includes(kind) ? decor : sala;
 }

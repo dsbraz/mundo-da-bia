@@ -1,4 +1,4 @@
-import type { Album, World } from './types';
+import type { Album, RoomId, World } from './types';
 import { editWorld } from './design';
 export function initialAlbum(state: World): Album { return { active: 1, houses: [{ id: 1, name: 'Minha casa', state }] }; }
 export function activeHouse(album: Album) { return album.houses.find(h => h.id === album.active)!; }
@@ -6,8 +6,7 @@ export function duplicateHouse(album: Album, empty: boolean): Album {
   const id = Math.max(...album.houses.map(h => h.id)) + 1;
   let state = JSON.parse(JSON.stringify(activeHouse(album).state)) as World;
   if (empty) {
-    state = editWorld({ ...state, room: 'sala' }, { type: 'clear' });
-    state = editWorld({ ...state, room: 'quarto' }, { type: 'clear' });
+    for (const room of Object.keys(state.layout.rooms) as RoomId[]) state = editWorld({ ...state, room }, { type: 'clear' });
     state = { ...state, room: 'sala', show: false };
   }
   const house = { id, name: empty ? `Casa nova ${id}` : `${activeHouse(album).name.slice(0, 40)} · cópia`, state };

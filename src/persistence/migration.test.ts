@@ -12,7 +12,7 @@ it('migra a brincadeira v1 preservando roupa, posições e objetos nas mãos', (
   };
   const migrated = decode(JSON.stringify({ version: 1, state: legacy }));
   expect(migrated).toEqual({ ...state, show: true, items: state.items.map(item => ({ ...item, spot: 'floor' })) });
-  expect(JSON.parse(encode(migrated)).version).toBe(3);
+  expect(JSON.parse(encode(migrated)).version).toBe(4);
 });
 
 it('preserva luz, gaveta, conteúdo e assentos na versão nova', () => {
@@ -27,7 +27,7 @@ it.each([
   { home: null }, { home: { lamp: 'sim', drawer: false, fridge: true } },
   { home: { lamp: true, drawer: 1, fridge: true } }, { home: { lamp: true, drawer: false, fridge: null } },
 ])('rejeita estado inválido dos móveis %j', patch => {
-  expect(decode(JSON.stringify({ version: 3, state: { ...initialWorld(), show: true, ...patch } }))).toEqual(initialWorld());
+  expect(decode(JSON.stringify({ version: 4, state: { ...initialWorld(), show: true, ...patch } }))).toEqual(initialWorld());
 });
 
 it.each([
@@ -35,7 +35,7 @@ it.each([
 ])('rejeita assento incoerente %s %s', (key, value) => {
   const state = initialWorld(); state.show = true;
   const actors = state.actors.map((actor, index) => index === 0 ? { ...actor, [key]: value } : actor);
-  expect(decode(JSON.stringify({ version: 3, state: { ...state, actors } }))).toEqual(initialWorld());
+  expect(decode(JSON.stringify({ version: 4, state: { ...state, actors } }))).toEqual(initialWorld());
 });
 
 it.each([
@@ -43,14 +43,14 @@ it.each([
 ])('rejeita localização inconsistente %j', patch => {
   const state = initialWorld(); state.show = true;
   const items = state.items.map((item, index) => index === 3 ? { ...item, ...patch } : item);
-  expect(decode(JSON.stringify({ version: 3, state: { ...state, items } }))).toEqual(initialWorld());
+  expect(decode(JSON.stringify({ version: 4, state: { ...state, items } }))).toEqual(initialWorld());
 });
 
 it('rejeita assentos duplicados ou com posição e cômodo incompatíveis', () => {
   const state = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
   for (const patch of [{ x: 151 }, { y: 406 }, { room: 'quarto' }]) {
     const actors = state.actors.map((a, index) => index === 0 ? { ...a, ...patch } : a);
-    expect(decode(JSON.stringify({ version: 3, state: { ...state, actors } }))).toEqual(initialWorld());
+    expect(decode(JSON.stringify({ version: 4, state: { ...state, actors } }))).toEqual(initialWorld());
   }
   state.actors[1] = { ...state.actors[1]!, seat: 'sofa-left', x: 150, y: 405 };
   expect(decode(encode(state))).toEqual(initialWorld());

@@ -25,7 +25,7 @@ function loadActor(scene: Phaser.Scene, id: ActorId, index: number) {
   scene.load.svg(`${id}-hair`, layer(source, `hair-${id}`));
   lookIds.forEach(look => {
     const outfit = source.replaceAll('#E889A1', color(looks[look].color)).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
-    scene.load.svg(`${id}-${look}`, layer(outfit, look === 'neon' || look === 'aurora' ? `body-${look}` : 'body'));
+    scene.load.svg(`${id}-${look}`, layer(outfit, outfitLayer(look)));
   });
 }
 export function loadArt(scene: Phaser.Scene) {
@@ -34,6 +34,11 @@ export function loadArt(scene: Phaser.Scene) {
   lookIds.forEach(look => {
     const source = human.replaceAll('#E889A1', color(looks[look].color)).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
     const garment = source.replace('viewBox="0 0 140 220"', 'viewBox="20 110 100 85"').replace('width="140" height="220"', 'width="100" height="85"');
-    scene.load.svg(`look-${look}`, layer(garment, look === 'neon' || look === 'aurora' ? `body-${look}` : 'body'));
+    scene.load.svg(`look-${look}`, layer(garment, outfitLayer(look)));
   });
+}
+
+function outfitLayer(look: string) {
+  if (look === 'neon' || look === 'aurora') return `body-${look}`;
+  return ['sol', 'mar', 'jardim'].includes(look) ? 'body-casual' : 'body';
 }

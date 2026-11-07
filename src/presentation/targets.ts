@@ -34,7 +34,7 @@ export function sourceAt(state: World, p: Point, wardrobe: boolean): DragToken |
 
 function actorContains(actor: Actor, p: Point): boolean {
   if (actor.seat === 'bed') return p.x >= actor.x - 185 && p.x <= actor.x + 20 && Math.abs(p.y - actor.y) < 45;
-  return Math.abs(actor.x - p.x) < 50 && p.y <= actor.y + 20 && p.y >= actor.y - (actor.kind === 'cat' ? 115 : 205);
+  return Math.abs(actor.x - p.x) < 43 && p.y <= actor.y + 20 && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175);
 }
 
 function handPoint(actor: Actor): Point {

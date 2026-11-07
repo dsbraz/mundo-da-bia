@@ -1,17 +1,29 @@
 import type Phaser from 'phaser';
 import type { World } from '../domain/types';
+import { roomWidth } from '../domain/geometry';
 import { palettes } from '../content/furnishings';
-
 export function drawRoom(scene: Phaser.Scene, state: World) {
-  const finish = state.layout.rooms[state.room];
+  const finish = state.layout.rooms[state.room]!; const width = roomWidth(state);
   const wall = palettes[finish.wall]; const floor = palettes[finish.floor];
   const g = scene.add.graphics();
-  g.fillStyle(Number(wall.light.replace('#', '0x'))).fillRect(0, 0, 1000, 600);
-  g.lineStyle(1, Number(wall.base.replace('#', '0x')), 0.4);
-  for (let x = 0; x < 1000; x += 65) g.lineBetween(x, 0, x, 390);
-  g.fillStyle(Number(floor.base.replace('#', '0x'))).fillRect(0, 390, 1000, 210);
-  g.lineStyle(2, Number(floor.dark.replace('#', '0x')), 0.25);
-  for (let y = 400; y < 600; y += 40) g.lineBetween(0, y, 1000, y);
-  g.fillStyle(0xfff1d6).fillRect(0, 382, 1000, 10);
-  scene.add.image(70, 50, `window-${state.room}`).setOrigin(0);
+  const wallColor = finish.wall === 'original' ? 0xe8e6dd : Number(wall.light.replace('#', '0x'));
+  const floorColor = finish.floor === 'original' ? 0xc3a284 : Number(floor.base.replace('#', '0x'));
+  g.fillStyle(wallColor).fillRect(0, 0, width, 600);
+  g.fillStyle(0xffffff, .17).fillRect(0, 0, width, 200);
+  g.fillStyle(floorColor).fillRect(0, 390, width, 210);
+  g.lineStyle(1, 0x6e655a, .22);
+  for (let y = 400; y < 600; y += 35) {
+    g.lineBetween(0, y, width, y);
+    for (let x = (y % 2) * 120; x < width; x += 240) g.lineBetween(x, y, x, y + 35);
+  }
+  g.fillStyle(0xf6f4ec).fillRect(0, 382, width, 10);
+  g.fillStyle(0xadbdbb).fillRoundedRect(90, 85, 180, 155, 3);
+  g.fillStyle(finish.template === 'studio' ? 0x718497 : 0xb6d2d2).fillRect(98, 93, 164, 139);
+  g.fillStyle(0xf6f4ec).fillRect(177, 93, 5, 139).fillRect(98, 157, 164, 5).fillRect(85, 234, 190, 9);
+  g.fillStyle(0xffffff, .15).fillTriangle(99, 94, 174, 94, 99, 164);
+  if (width > 1000) {
+    g.fillStyle(0x9a8b7a).fillRoundedRect(width - 170, 180, 105, 205, 3);
+    g.fillStyle(0xcdbda6).fillRect(width - 162, 188, 89, 195);
+    g.fillStyle(0x56636a).fillCircle(width - 90, 290, 4);
+  }
 }

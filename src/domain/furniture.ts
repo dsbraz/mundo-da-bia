@@ -1,5 +1,5 @@
 import { fixture, fromPiece } from './layout';
-import type { Actor, Home, Item, ItemId, SeatId, Spot, PieceKind, Transition, World } from './types';
+import type { Actor, Home, Item, ItemId, SeatId, Spot, PieceKind, RoomId, Transition, World } from './types';
 
 export const seats = {
   'sofa-left': { x: 150, y: 405, room: 'sala' },
@@ -17,7 +17,7 @@ export function interact(state: World, target: keyof Home): Transition {
 }
 export function sit(state: World, actor: Actor, seat: SeatId): Transition {
   const place = seatPoint(state, seat);
-  if (!place || place.room !== state.room || state.actors.some(a => a.id !== actor.id && a.seat === seat)) return { state, events: [] };
+  if (!place || place.room !== state.room || state.actors.some(a => a.id !== actor.id && a.room === state.room && a.seat === seat)) return { state, events: [] };
   return {
     state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, ...place, seat, resting: seat === 'bed' } : a) },
     events: [{ type: 'rested', actor: actor.id }],
@@ -53,7 +53,7 @@ function destinations(spot: Exclude<Spot, 'floor'>, index: number) {
 
 export function spotKind(spot: Exclude<Spot, 'floor'>): PieceKind { return spot === 'drawer' ? 'wardrobe' : spot; }
 export function seatKind(seat: SeatId): PieceKind { return seat === 'bed' ? 'bed' : 'sofa'; }
-export function seatPoint(state: World, seat: SeatId) {
-  const piece = fixture(state, seatKind(seat));
+export function seatPoint(state: World, seat: SeatId, room: RoomId = state.room) {
+  const piece = fixture(state, seatKind(seat), room);
   return piece ? { ...fromPiece(piece, seats[seat]), room: piece.room } : undefined;
 }

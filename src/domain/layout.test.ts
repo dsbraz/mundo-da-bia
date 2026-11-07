@@ -18,7 +18,7 @@ it('espelha sofá, ocupante e coordenadas sem perder identidade', () => {
 it('impede mover peças de outro cômodo e duplicar móveis interativos', () => {
   const state = initialWorld();
   expect(editWorld(state, { type: 'remove', id: 999 })).toBe(state);
-  expect(editWorld(state, { type: 'remove', id: fixture(state, 'bed')!.id })).toBe(state);
+  expect(editWorld(state, { type: 'remove', id: fixture(state, 'bed', 'quarto')!.id })).toBe(state);
   expect(editWorld(state, { type: 'add', kind: 'sofa' })).toBe(state);
 });
 it.each(pieceKinds)('adiciona %s com posição válida numa casa vazia', kind => {

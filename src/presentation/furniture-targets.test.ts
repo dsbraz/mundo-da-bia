@@ -38,7 +38,8 @@ it('gestos entregam à mesa e sentam apenas ao concluir, sem sentar no cancelame
   expect(state.items[0]?.spot).toBe('table');
   gesture.start(1, { x: 520, y: 390 }); gesture.update(1, { x: 150, y: 405 }); gesture.cancel();
   expect(state.actors[0]?.seat).toBeNull();
-  gesture.start(1, { x: 150, y: 300 }); gesture.end(1, { x: 150, y: 405 });
+  expect(state.actors[0]).toMatchObject({ x: 520, y: 530 });
+  gesture.start(1, { x: 520, y: 390 }); gesture.end(1, { x: 150, y: 405 });
   expect(state.actors[0]?.seat).toBe('sofa-left');
 });
 

@@ -1,3 +1,5 @@
+import { roomWidth } from '../domain/geometry';
+import { catalogDrag } from './catalog-drag';
 import type { Album, EditAction, PieceKind } from '../domain/types';
 import type { History } from '../domain/design';
 import { paletteIds, pieceKinds } from '../domain/types';
@@ -13,7 +15,7 @@ export interface EditorActions {
 }
 function on(root: HTMLElement, id: string, action: () => void) { root.querySelector(id)!.addEventListener('click', action); }
 export function createEditorControls(root: HTMLElement, actions: EditorActions) {
-  let selected: number | null = null;
+  let selected: number | null = null; let width = 1000;
   on(root, '#build-toggle', actions.toggle);
   on(root, '#undo', actions.undo); on(root, '#redo', actions.redo);
   on(root, '#flip-piece', () => { if (selected !== null) actions.edit({ type: 'flip', id: selected }); });
@@ -25,7 +27,7 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
   houseList.addEventListener('change', () => actions.house(Number(houseList.value)));
   const pieceList = root.querySelector<HTMLSelectElement>('#piece-list')!;
   pieceList.addEventListener('change', () => actions.select(pieceList.value ? Number(pieceList.value) : null));
-  const catalog = createCatalog(root, actions.edit);
+  const catalog = createCatalog(root, actions.edit, () => width);
   const colors = paletteIds.map(color => {
     const button = document.createElement('button'); button.type = 'button';
     button.title = palettes[color].name; button.setAttribute('aria-label', `Cor ${palettes[color].name}`);
@@ -35,7 +37,7 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
   });
   bindFinishes(root, actions.edit);
   return (album: Album, h: History, building: boolean, id: number | null) => {
-    selected = id; const state = h.present; const piece = state.layout.pieces.find(p => p.id === id);
+    selected = id; const state = h.present; width = roomWidth(state); const piece = state.layout.pieces.find(p => p.id === id);
     root.classList.toggle('building', building);
     root.querySelector('#build-toggle')!.textContent = building ? '▶ Brincar' : '✎ Construir';
     root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building));
@@ -45,14 +47,14 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
     root.querySelector<HTMLButtonElement>('#remove-piece')!.disabled = !piece;
     root.querySelector('#piece-name')!.textContent = piece ? furnishings[piece.kind].name : 'Escolha uma peça na casa';
     colors.forEach((button, index) => { button.disabled = !piece; button.setAttribute('aria-pressed', String(piece?.color === paletteIds[index])); });
-    catalog.forEach((button, kind) => { button.disabled = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind); button.title = button.disabled ? 'Já está na casa. Retire para colocar em outro cômodo.' : '';  });
+    catalog.forEach((button, kind) => { button.disabled = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room); button.title = button.disabled ? 'Já existe neste cômodo. Você pode usar outro em um novo cômodo.' : '';  });
     updateHouseList(root, album);
     pieceList.replaceChildren(new Option('Selecionar peça…', ''), ...state.layout.pieces.filter(p => p.room === state.room).map(p => new Option(`${furnishings[p.kind].name} · ${p.id}`, String(p.id))));
     pieceList.value = id === null ? '' : String(id);
-    for (const surface of ['wall', 'floor'] as const) root.querySelector<HTMLSelectElement>(`#finish-${surface}`)!.value = state.layout.rooms[state.room][surface];
+    for (const surface of ['wall', 'floor'] as const) root.querySelector<HTMLSelectElement>(`#finish-${surface}`)!.value = state.layout.rooms[state.room]![surface];
   };
 }
-function createCatalog(root: HTMLElement, edit: (action: EditAction) => void) {
+function createCatalog(root: HTMLElement, edit: (action: EditAction) => void, width: () => number) {
   const buttons = new Map<PieceKind, HTMLButtonElement>();
   pieceKinds.forEach(kind => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'catalog-piece';
@@ -60,6 +62,7 @@ function createCatalog(root: HTMLElement, edit: (action: EditAction) => void) {
     const label = document.createElement('span'); label.textContent = furnishings[kind].name;
     button.append(img, label); button.setAttribute('aria-label', `Adicionar ${furnishings[kind].name}`);
     button.dataset.category = furnishings[kind].category;
+    catalogDrag(button, kind, edit, width);
     button.addEventListener('click', () => edit({ type: 'add', kind }));
     root.querySelector('#piece-catalog')!.append(button); buttons.set(kind, button);
   });

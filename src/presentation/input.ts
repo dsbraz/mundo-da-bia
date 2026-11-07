@@ -1,3 +1,4 @@
+import { roomWidth } from '../domain/geometry';
 import type { ActorId, Point, World } from '../domain/types';
 import { createPlayGesture } from './play-gesture';
 import type { PlayInput } from './play-gesture';
@@ -9,7 +10,7 @@ export function bindInput(canvas: HTMLCanvasElement, getState: () => World, sele
   const cancel = () => { gesture.cancel(); build?.gesture.cancel(); };
   const point = (event: PointerEvent): Point => {
     const bounds = canvas.getBoundingClientRect();
-    return { x: (event.clientX - bounds.left) * 1000 / bounds.width, y: (event.clientY - bounds.top) * 600 / bounds.height };
+    return { x: (event.clientX - bounds.left) * roomWidth(getState()) / bounds.width, y: (event.clientY - bounds.top) * 600 / bounds.height };
   };
   canvas.addEventListener('pointerdown', event => {
     if (current().start(event.pointerId, point(event))) canvas.setPointerCapture(event.pointerId);

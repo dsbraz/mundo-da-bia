@@ -1,6 +1,6 @@
 import { visibleItem } from '../domain/objects';
-import { actors, items, looks, rooms } from '../content/catalog';
-import { actorIds, itemIds, lookIds, roomIds } from '../domain/types';
+import { actors, items, looks } from '../content/catalog';
+import { actorIds, itemIds, lookIds } from '../domain/types';
 import type { Action, Actor, ActorId, Item, World } from '../domain/types';
 
 function button(label: string, run: () => void, className = ''): HTMLButtonElement {
@@ -18,8 +18,6 @@ function illustratedButton(id: string, label: string, run: () => void, className
 }
 export function createControls(root: HTMLElement, dispatch: (action: Action) => void, select: (id: ActorId) => void) {
   let selected: ActorId = 'bia';
-  const roomButtons = roomIds.map(room => button(`${rooms[room].icon}  ${rooms[room].name}`, () => dispatch({ type: 'room', room })));
-  root.querySelector('#rooms')!.append(...roomButtons);
   const cast = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id), 'character'));
   root.querySelector('#cast')!.append(...cast);
   const wardrobe = lookIds.map(look => button(`${looks[look].icon} ${looks[look].name}`, () => dispatch({ type: 'dress', actor: selected, look })));
@@ -39,7 +37,6 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
     const actor = state.actors.find(a => a.id === id)!;
     const present = actor.room === state.room;
     cast.forEach((b, i) => b.setAttribute('aria-pressed', String(actorIds[i] === id)));
-    roomButtons.forEach((b, i) => b.setAttribute('aria-pressed', String(roomIds[i] === state.room)));
     wardrobe.forEach((b, i) => { b.disabled = !present || actor.kind === 'cat'; b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
     objects.forEach((b, i) => { b.disabled = !present || state.items.some(item => item.holder === id) || visibleItem(state, itemIds[i]!)?.holder !== null; });
     const held = state.items.find(item => item.holder === id);
@@ -55,5 +52,5 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
 }
 
 function actorStatus(actor: Actor, held: Item | undefined): string {
-  return `${actor.fed ? 'Barriguinha feliz' : 'Que tal um lanchinho?'} · ${actor.resting ? 'Descansando' : 'Pronto para brincar'}${held ? ` · Com ${items[held.id].name}` : ''}`;
+  return `${actor.fed ? 'Já comeu' : 'Pronto para explorar'} · ${actor.resting ? 'Descansando' : 'Pronto para brincar'}${held ? ` · Com ${items[held.id].name}` : ''}`;
 }

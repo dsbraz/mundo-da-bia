@@ -86,19 +86,7 @@
       <rect x="835" y="110" width="12" height="28" rx="2" fill="#f4c454" />
     </g>
     <g id="bedroom-furniture" stroke="#865442" stroke-width="3" stroke-linejoin="round">
-      <g id="bed">
-        <ellipse cx="774" cy="404" rx="202" ry="20" opacity=".15" fill="#674a50" stroke="none" />
-        <path d="M590 376l-5 29q7 12 19 2l8-30m320 0 6 29q10 9 18-3l-5-32" fill="#ce9562" />
-        <path d="M590 293V214q8-28 34-29q40-48 79-26q43-27 81 0q45-21 79 25q49-5 76 33v85Z" fill="#dba7d5" />
-        <path d="M605 282v-62q12-25 34-23q29-38 65-24q42-23 78 0q40-16 72 24q46-3 69 29v55Z" fill="#eec6df" stroke="#fff0c5" stroke-width="5" />
-        <path d="M744 201q-26-19-18-31q10-10 18 3q10-13 20-3q9 13-20 31Z" fill="#ed98ad" />
-        <rect x="628" y="217" width="133" height="61" rx="22" fill="url(#gingham)" />
-        <rect x="781" y="217" width="133" height="61" rx="22" fill="url(#gingham)" />
-        <path d="M612 265h306q28 4 42 40l15 58q-25 40-82 26q-58 15-118 0q-59 16-122 0q-57 16-92-17l20-67q8-30 31-40Z" fill="#f196b1" />
-        <path d="M612 275q154-18 309 0" fill="none" stroke="#ffedca" stroke-width="20" />
-        <path d="M579 326q191-19 380 0M568 357q195-16 401 0m-309-76-20 103m94-105-6 108m81-108 8 108m73-105 25 100" fill="none" stroke="#df819e" stroke-width="3" />
-        <path d="M566 371q25 24 86 9q62 15 123 0q62 15 118 0q49 16 77-15" fill="none" stroke="#ffe9bf" stroke-width="8" />
-      </g>
+      <g id="bed"><ellipse cx="774" cy="404" rx="202" ry="12" fill="#33434a" opacity=".12"/><path d="M590 376v29h15v-29m330 0v29h15v-29" fill="#46515b"/><rect x="585" y="170" width="360" height="160" rx="10" fill="#bf9671" stroke="#75634e" stroke-width="2"/><path d="M598 185v90m334-90v90" stroke="#dfc5a6" stroke-width="2"/><rect x="616" y="220" width="143" height="65" rx="12" fill="#e8e8df"/><rect x="778" y="220" width="143" height="65" rx="12" fill="#e8e8df"/><path d="M609 271h310l50 104H565Z" fill="#a8c9b8"/><path d="M565 375h404v20H565Z" fill="#789f8b"/><path d="M606 280h315M587 320h352" stroke="#dce9d1" stroke-width="9"/><path d="M638 291h85v77h-85Z" fill="#667a88"/><path d="M648 303h65m-65 13h65m-65 13h65m-65 13h65m-65 13h65" stroke="#bdc7cb" stroke-width="2"/></g>
       <g id="dresser">
         <rect x="306" y="249" width="165" height="139" rx="15" fill="#c491bc" />
         <path d="M315 385v13h13l5-13m112 0 5 13h13v-15" fill="#b784ae" />

@@ -1,4 +1,4 @@
-import type { ActorId, ItemId, LookId, RoomId } from '../domain/types';
+import type { ActorId, ItemId, LookId } from '../domain/types';
 export const actors: Record<ActorId, { name: string; skin: number; hair: number }> = {
   bia: { name: 'Bia', skin: 0xd79b70, hair: 0xf5bf38 },
   luna: { name: 'Luna', skin: 0x9e6047, hair: 0x302531 },
@@ -18,7 +18,7 @@ export const looks: Record<LookId, { name: string; color: number; icon: string }
   festa: { name: 'Festa', color: 0xe889a1, icon: '♥' },
   pijama: { name: 'Pijama', color: 0xa9b5db, icon: '☾' },
 };
-export const rooms: Record<RoomId, { name: string; icon: string }> = {
+export const rooms: Record<'sala' | 'quarto', { name: string; icon: string }> = {
   sala: { name: 'Sala & palco', icon: '♫' }, quarto: { name: 'Quarto dos sonhos', icon: '☾' },
 };
 export const items: Record<ItemId, { name: string }> = {

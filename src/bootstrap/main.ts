@@ -1,3 +1,5 @@
+import { roomControls } from '../presentation/room-controls';
+import { addRoom, renameRoom, moveRoom } from '../domain/rooms';
 import { activeHouse, duplicateHouse, renameHouse, selectHouse, updateHouse } from '../domain/houses';
 import { editWorld, history, recordEdit, redo, undo } from '../domain/design';
 import { fixture } from '../domain/layout';
@@ -38,6 +40,14 @@ wardrobeButton.addEventListener('click', toggleWardrobe);
 const playSound = createSound(root.querySelector<HTMLButtonElement>('#sound-toggle')!);
 const furnitureControls = homeControls(root, dispatch);
 const controls = createControls(root, dispatch, select);
+const rooms = roomControls(root, {
+  enter: room => dispatch({ type: 'room', room }),
+  add: options => { cancelInput(); building = true; restoreEdit(recordEdit(edits, addRoom(state, options))); },
+  rename: name => restoreEdit(recordEdit(edits, renameRoom(state, name))),
+  move: cell => restoreEdit(recordEdit(edits, moveRoom(state, cell))),
+  travel: room => dispatch({ type: 'travel', actor: selected, room }),
+  snapshot: name => changeAlbum(renameHouse(duplicateHouse(album, false), name)),
+});
 const editor = createEditorControls(root, {
   toggle: toggleBuild, edit: applyEdit,
   undo: () => restoreEdit(undo(edits)), redo: () => restoreEdit(redo(edits)),
@@ -73,17 +83,17 @@ function changeAlbum(next: typeof album) {
 }
 function previewBuild(action: EditAction | null) {
   const preview: World = action ? editWorld(state, action) : state;
-  scene.paint(preview, selected);
+  scene.previewLayout(preview);
 }
 function refresh() {
   scene.buildMode(building, selectedPiece);
   scene.paint(state, selected); furnitureControls(state); controls(state, selected, saved);
   wardrobeButton.disabled = fixture(state, 'wardrobe')?.room !== state.room;
-  editor(album, edits, building, selectedPiece);
+  editor(album, edits, building, selectedPiece); rooms(state, selected);
 }
 function select(id: ActorId) { selected = id; refresh(); }
 function dispatch(action: Action) {
-  if (action.type === 'room') cancelInput();
+  if (action.type === 'room' || action.type === 'travel') cancelInput();
   const result = transition(state, action);
   state = result.state;
   edits = history(state); selectedPiece = null;
@@ -95,7 +105,7 @@ function dispatch(action: Action) {
 }
 const messages = {
   furniture: 'A casa também brinca com você!', moved: 'Novo lugar para brincar!', dressed: 'Look novo!', picked: 'Objeto na mão!', dropped: 'Objeto solto.',
-  fed: 'Nhac! Que delícia!', rested: 'Hora de cuidar.', room: 'Vamos explorar!', summoned: 'Todo mundo juntinho!', show: 'A música é por sua conta! Vamos dançar!',
+  fed: 'Lanche servido.', rested: 'Hora de cuidar.', room: 'Vamos explorar!', summoned: 'A turma chegou.', show: 'A música é por sua conta! Vamos dançar!',
 };
 const game = new Phaser.Game({
   type: Phaser.CANVAS, parent: 'world', width: 1000, height: 600, backgroundColor: '#f6dfd4',
@@ -104,7 +114,7 @@ const game = new Phaser.Game({
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
     cancelInput = bindInput(current.canvas, () => state, select, point => dispatch({ type: 'move', actor: selected, point }), {
-      dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag),
+      dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
     }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point)) });
   } },
 });
@@ -118,7 +128,7 @@ root.querySelector('#world')!.addEventListener('keydown', event => {
   const actor = state.actors.find(a => a.id === selected)!;
   dispatch({ type: 'move', actor: selected, point: { x: actor.x + offset[0], y: actor.y + offset[1] } });
 });
-root.querySelector('#announcement')!.textContent = `Oi! ${actors[selected].name} está pronta para brincar.`;
+root.querySelector('#announcement')!.textContent = `${actors[selected].name} · crie um lugar, invente uma história.`;
 refresh();
 window.addEventListener('pagehide', () => { persist(); game.loop.sleep(); });
 window.addEventListener('pageshow', () => game.loop.wake());
