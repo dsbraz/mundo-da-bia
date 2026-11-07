@@ -1,0 +1,80 @@
+name: Quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Require dedicated policy PR
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/policy-change.mjs
+      - run: npx playwright install --with-deps chromium
+      - name: Retrieve last successful main baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/baseline.mjs
+      - run: npm run quality:ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-ci
+          path: reports/
+          if-no-files-found: error
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run quality:mutation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-mutation
+          path: reports/
+          if-no-files-found: error
+  quality-gate:
+    if: always()
+    needs: [ci, mutation]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Mandatory jobs must succeed
+        env:
+          CI_RESULT: ${{ needs.ci.result }}
+          MUTATION_RESULT: ${{ needs.mutation.result }}
+        run: test "$CI_RESULT" = success && test "$MUTATION_RESULT" = success
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: quality-*
+          path: reports
+          merge-multiple: true
+      - run: node scripts/quality-gate.mjs
+      - name: Publish summaries
+        if: always()
+        run: cat reports/ci.md reports/mutation.md >> "$GITHUB_STEP_SUMMARY"

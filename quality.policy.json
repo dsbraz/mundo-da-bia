@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "blocking": {
+    "complexity": 10,
+    "depth": 3,
+    "functionLines": 60,
+    "fileLines": 300,
+    "coverage": {
+      "lines": 90,
+      "branches": 90
+    },
+    "mutation": 80,
+    "javascriptGzipBytes": 1048576,
+    "initialAssetBytes": 5242880,
+    "retries": 0
+  },
+  "warnings": {
+    "ciSeconds": 300,
+    "buildGrowthPercent": 10,
+    "targetFps": 60,
+    "investigateBelowFps": 30
+  }
+}

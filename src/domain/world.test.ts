@@ -1,0 +1,85 @@
+import { describe, expect, it } from 'vitest';
+import { initialWorld, transition } from './world';
+import type { Action } from './types';
+
+describe('brincadeira', () => {
+  it('tem quatro humanos e três gatos, sem estado compartilhado', () => {
+    const a = initialWorld();
+    expect(a.actors.filter(x => x.kind === 'human')).toHaveLength(4);
+    expect(a.actors.filter(x => x.kind === 'cat')).toHaveLength(3);
+    a.actors[0]!.fed = true;
+    expect(initialWorld().actors[0]!.fed).toBe(false);
+  });
+  it('move sem duplicar nem modificar a entrada', () => {
+    const before = initialWorld();
+    const result = transition(before, { type: 'move', actor: 'bia', point: { x: 550, y: 420 } });
+    expect(result.state.actors[0]).toEqual({ ...before.actors[0], x: 550, y: 420 });
+    expect(before.actors[0]!.x).not.toBe(550);
+    expect(result.state.actors.map(x => x.id)).toEqual(before.actors.map(x => x.id));
+    expect(result.events).toEqual([{ type: 'moved', actor: 'bia' }]);
+  });
+  it.each([{ x: -1, y: 400 }, { x: 1001, y: 400 }, { x: NaN, y: 400 }, { x: 300, y: Infinity }, { x: 300, y: 279 }, { x: 300, y: 541 }])('preserva posição válida em movimento inválido %j', point => {
+    const before = initialWorld();
+    expect(transition(before, { type: 'move', actor: 'bia', point })).toEqual({ state: before, events: [] });
+  });
+  it('aceita os limites de movimento', () => {
+    for (const point of [{ x: 60, y: 280 }, { x: 940, y: 540 }]) {
+      expect(transition(initialWorld(), { type: 'move', actor: 'bia', point }).state.actors[0]).toMatchObject(point);
+    }
+  });
+  it('troca cada look humano preservando identidade e não veste gatos', () => {
+    for (const look of ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama'] as const) {
+      const before = initialWorld();
+      expect(transition(before, { type: 'dress', actor: 'bia', look }).state.actors[0]).toEqual({ ...before.actors[0], look });
+      expect(transition(before, { type: 'dress', actor: 'mimi', look }).state).toEqual(before);
+    }
+  });
+  it('pega uma única vez, carrega para outro cômodo e solta junto ao personagem', () => {
+    let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
+    expect(state.items.find(x => x.id === 'ursinho')!.holder).toBe('bia');
+    expect(transition(state, { type: 'pick', actor: 'leo', item: 'ursinho' }).state).toEqual(state);
+    expect(transition(state, { type: 'pick', actor: 'bia', item: 'microfone' }).state).toEqual(state);
+    state = transition(state, { type: 'room', room: 'quarto' }).state;
+    state = transition(state, { type: 'summon' }).state;
+    state = transition(state, { type: 'drop', actor: 'bia' }).state;
+    expect(state.items.find(x => x.id === 'ursinho')).toMatchObject({ holder: null, room: 'quarto', x: state.actors[0]!.x, y: state.actors[0]!.y });
+    expect(state.items).toHaveLength(4);
+  });
+  it.each([['bia', 'lanche'], ['mimi', 'peixe']] as const)('alimenta %s com %s', (actor, item) => {
+    const held = transition(initialWorld(), { type: 'pick', actor, item }).state;
+    const result = transition(held, { type: 'feed', actor });
+    expect(result.state.actors.find(x => x.id === actor)!.fed).toBe(true);
+    expect(result.state.items.find(x => x.id === item)!.holder).toBeNull();
+    expect(result.events).toEqual([{ type: 'fed', actor }]);
+  });
+  it('não alimenta sem comida ou com comida errada', () => {
+    const before = initialWorld();
+    expect(transition(before, { type: 'feed', actor: 'bia' }).state).toEqual(before);
+    for (const item of ['peixe', 'microfone'] as const) {
+      const held = transition(before, { type: 'pick', actor: 'bia', item }).state;
+      expect(transition(held, { type: 'feed', actor: 'bia' }).state).toEqual(held);
+    }
+  });
+  it('descansa, acorda e desperta ao mover', () => {
+    const resting = transition(initialWorld(), { type: 'rest', actor: 'mimi' }).state;
+    expect(resting.actors[4]!.resting).toBe(true);
+    expect(transition(resting, { type: 'rest', actor: 'mimi' }).state.actors[4]!.resting).toBe(false);
+    expect(transition(resting, { type: 'move', actor: 'mimi', point: { x: 300, y: 400 } }).state.actors[4]!.resting).toBe(false);
+  });
+  it('reúne todos, inicia e encerra o show; trocar de cômodo encerra o show', () => {
+    let state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
+    state = transition(state, { type: 'summon' }).state;
+    expect(state.actors.every(x => x.room === 'quarto')).toBe(true);
+    state = transition(state, { type: 'show' }).state;
+    expect(state.show).toBe(true);
+    expect(transition(state, { type: 'show' }).state.show).toBe(false);
+    expect(transition(state, { type: 'room', room: 'sala' }).state.show).toBe(false);
+  });
+  it('ignora ações sobre personagens e objetos em outro cômodo', () => {
+    const state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
+    const actions: Action[] = [{ type: 'rest', actor: 'bia' }, { type: 'drop', actor: 'bia' }, { type: 'pick', actor: 'bia', item: 'lanche' }];
+    for (const action of actions) expect(transition(state, action).state).toEqual(state);
+    const gathered = transition(state, { type: 'summon' }).state;
+    expect(transition(gathered, { type: 'pick', actor: 'bia', item: 'lanche' }).state).toEqual(gathered);
+  });
+});

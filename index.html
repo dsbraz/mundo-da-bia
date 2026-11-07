@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#faf5ec"><meta name="description" content="Uma casinha de faz de conta: amigos, gatinhos e mil histórias para inventar."><title>Mundo da Bia</title></head>
+<body>
+<main id="app">
+  <header><div class="brand"><span class="brand-flower">✿</span><div><h1>Mundo da Bia<span>um mundo para inventar</span></h1></div></div><span id="save-status" role="status"></span></header>
+  <section class="playroom" aria-label="Nossa casa">
+    <div class="room-bar"><nav id="rooms" aria-label="Cômodos"></nav><button id="gather" type="button">♡ Reunir todo mundo</button></div>
+    <div id="world" tabindex="0" role="group" aria-label="Área de brincar. Use as setas para mover o personagem selecionado."></div>
+    <div class="hint"><span>✧ Arraste, cuide e invente uma história</span><span id="announcement" role="status" aria-live="polite"></span></div>
+  </section>
+  <section class="cast-row" aria-label="Personagens"><span class="eyebrow">NOSSA TURMINHA</span><div id="cast"></div></section>
+  <section class="play-tools" aria-label="Brincadeiras">
+    <div class="selection"><h2 id="selected"></h2><p id="actor-status"></p></div>
+    <div id="actions" class="actions"></div>
+    <div class="shelves"><div><h3>✿ Guarda-roupa</h3><div id="looks" class="choices"></div></div><div><h3>♡ Coisinhas para brincar</h3><div id="objects" class="choices"></div></div></div>
+  </section>
+  <footer>Feito para brincar sem pressa. <span>Sem anúncios. Sem coleta de dados.</span></footer>
+</main>
+<script type="module" src="/src/bootstrap/main.ts"></script>
+</body></html>
