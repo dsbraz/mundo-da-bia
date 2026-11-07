@@ -18,4 +18,8 @@ Define success criteria. Loop until verified. Don't tell the Agent what steps to
 
 ## Project skills
 
-Use `.agents/skills/bia-tdd/SKILL.md` for behavior changes and bug fixes. Use `.agents/skills/bia-quality/SKILL.md` for validation and delivery. Limits live only in `quality.policy.json`. Policy reductions require a dedicated, justified PR.
+Use `.agents/skills/bia-tdd/SKILL.md` for behavior changes and bug fixes. Use `.agents/skills/bia-quality/SKILL.md` for validation and delivery. Limits live only in `quality.policy.json`. Policy reductions require a dedicated, justified change, separate from functionality and automation.
+
+## Delivery workflow
+
+The owner has authorized delivery without PRs. Use GitButler for local commits and branches, native `git push` for transport, and `gh` for GitHub operations. Push a working branch for CI, then fast-forward `main` to the same SHA only after `quality-gate` passes. Keep required checks, no bypass, no force-push and no deletion on `main`. PRs are optional.

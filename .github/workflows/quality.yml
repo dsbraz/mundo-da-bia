@@ -1,8 +1,7 @@
 name: Quality
 on:
-  pull_request:
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,11 +21,10 @@ jobs:
           node-version: '22'
       - name: Install pinned dependencies
         run: npm ci --no-audit --no-fund
-      - name: Require dedicated policy PR
-        if: github.event_name == 'pull_request'
+      - name: Require isolated policy changes
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.ref == 'refs/heads/main' && github.event.before || 'origin/main' }}
+          HEAD_SHA: ${{ github.sha }}
         run: node scripts/policy-change.mjs
       - run: npx playwright install --with-deps chromium
       - name: Retrieve last successful main baseline
