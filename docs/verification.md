@@ -2,6 +2,19 @@
 
 Esta é uma entrega local parcial, não uma aprovação do MVP ou publicação.
 
+## Atualização após instalação no terminal do proprietário
+
+- `npm install` concluiu e gerou `package-lock.json`; a ausência de dependências foi resolvida.
+- Passam tipagem completa, lint, arquitetura e os 56 testes unitários. Cobertura permanece acima dos limites nas duas áreas.
+- Build de produção passou: JavaScript gzip **338.049 bytes**, assets não JavaScript **5.153 bytes**.
+- Os sete testes da automação agora passam, inclusive import proibido e ciclo via alias. A execução original falhou com `spawnSync ... EPERM`; foi alterada para execução assíncrona e relatório em arquivo. A tentativa intermediária de capturar stdout produziu saída vazia no sandbox; `--output-to` permitiu verificar o relatório real, sem ignorar erros ou fixtures.
+- O instalador do Playwright 1.60.0 recusou Ubuntu 26.04. O cache contém a revisão Chromium 1223 requerida. A tentativa de iniciar esse binário falhou com `sandbox_host_linux.cc:41 ... Operation not permitted`, não por navegador ausente. A CI foi fixada em Ubuntu 24.04, removendo a dependência da mudança futura de `ubuntu-latest`.
+- E2E local continua bloqueado: o servidor do Playwright não inicia neste executor. Stryker também falha ao criar o servidor de logging com `listen EPERM`.
+- `npm audit` foi tentado, mas o endpoint permanece inacessível (`EAI_AGAIN`). A instalação no terminal normal informou 17 vulnerabilidades, sendo 12 moderadas e cinco altas; não houve triagem detalhada nem correção automática.
+- Repositório público criado via API: https://github.com/dsbraz/mundo-da-bia. Ainda está sem código enviado, PR, ruleset aplicado ou CI executada. Nenhuma publicação Sites foi feita.
+
+As seções abaixo preservam a evidência histórica da primeira implementação. Os bloqueios de dependências e de criação do repositório descritos nelas foram superados como indicado acima.
+
 ## TDD executado
 
 1. Domínio e persistência: 34 exemplos escritos com funções lançando `not implemented`. Vitest executado: 34 falhas pelo comportamento ausente. Após implementação: 34 aprovados.

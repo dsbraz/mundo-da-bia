@@ -2,22 +2,24 @@
 
 Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, seis looks e dois cômodos. Arte vetorial procedural no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** implementação local e testes do núcleo disponíveis. A aplicação completa ainda não foi compilada nem validada visualmente: Phaser, dependency-cruiser e Stryker não estão disponíveis neste ambiente sem rede. Repositório remoto, proteção de main e publicação privada não foram criados. Consulte [a evidência](docs/verification.md). Não considerar este MVP aprovado até todos os gates passarem.
+**Estado da entrega:** dependências e lockfile instalados; tipagem completa, lint, arquitetura, 56 testes unitários, cobertura, build, orçamento e sete testes da automação passam. E2E e mutação ainda bloqueados pelas restrições de processos/sockets do ambiente do agente. O [repositório público](https://github.com/dsbraz/mundo-da-bia) foi criado, mas ainda não recebeu código. Consulte [a evidência](docs/verification.md). O MVP ainda não está aprovado nem publicado.
 
 ## Executar
 
-Requer Node 22.12+ e acesso ao npm. No primeiro ambiente conectado:
+Requer Node 22.12+. Instalação reproduzível:
 
 ```sh
-npm install
+npm ci
 npx playwright install chromium
 npm run quality
 npm run dev
 ```
 
-O primeiro `npm install` precisa resolver e gerar `package-lock.json`. Revise e versione o lockfile antes da integração; a CI usa `npm ci` e reprova enquanto ele estiver ausente. Não houve instalação completa nem lockfile fabricado neste ambiente. Após essa primeira resolução, use `npm ci` em todas as instalações.
+O `package-lock.json` foi gerado pela instalação realizada no terminal do proprietário. A CI usa `npm ci` e Ubuntu 24.04 explicitamente, compatível com o instalador do Playwright fixado no projeto.
 
-Os `node_modules` locais foram copiados de ferramentas já instaladas apenas para executar as verificações disponíveis; não fazem parte da entrega nem substituem a instalação acima.
+No Ubuntu 26.04 local, o instalador desta versão do Playwright recusou o download. O cache existente já contém Chromium e headless shell revisão 1223, a mesma exigida pelo Playwright 1.60.0, portanto não é necessário reinstalar esses navegadores para testar nesta máquina. Isso não comprova sucesso dos testes: no sandbox do agente, a inicialização do navegador falha com `Operation not permitted`. Execute `npm run quality` no terminal normal para validar E2E e mutação.
+
+A instalação informou 17 vulnerabilidades (12 moderadas e cinco altas). A consulta detalhada do audit ainda está pendente porque o executor não acessa registry.npmjs.org. Não foi aplicado `npm audit fix --force`; o impacto e as correções precisam ser avaliados a partir do relatório.
 
 ## Brincar
 
@@ -55,7 +57,7 @@ Referências: [Vitest coverage](https://vitest.dev/config/coverage), [Stryker co
 
 ## Integração e publicação pendentes
 
-O destino autorizado é `dsbraz/mundo-da-bia`, público. A criação local usou `but init --commit`, preservando a `.git` e o `AGENTS.md` do diretório pai. Use GitButler para commits, branches, push e PR. Após criar o remoto, aplique `docs/main-ruleset.json` via API de rulesets e confira que exige PR, branch atualizada e `quality-gate`, sem bypass, force-push ou exclusão.
+O destino autorizado é `dsbraz/mundo-da-bia`, público. A criação local usou `but init --commit`, preservando a `.git` e o `AGENTS.md` do diretório pai. Use GitButler para commits, branches, push e PR. O repositório remoto foi criado via API; ainda falta configurar a conexão local, enviar o código e abrir PR. Após enviar a base inicial, aplique `docs/main-ruleset.json` via API de rulesets e confira que exige PR, branch atualizada e `quality-gate`, sem bypass, force-push ou exclusão.
 
 A publicação privada no Sites precisa apontar ao mesmo SHA aprovado, limpo e enviado. Registre o `project_id` real em `.openai/hosting.json` com `static.directory: dist`; não invente ID. Só crie o Site quando a cadeia de origem puder ser concluída. O fluxo padrão do Sites pode criar um commit de sincronização diferente: se não preservar ou permitir verificar o SHA aprovado, registre bloqueio e não publique como entrega verificada. Nenhuma publicação foi tentada aqui porque os gates ainda não passaram.
 
