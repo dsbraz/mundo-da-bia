@@ -29,3 +29,13 @@ export function moveRoom(state: World, cell: number): World { return freeCell(st
 function patchRoom(state: World, patch: Partial<Room>): World {
   return { ...state, layout: { ...state.layout, rooms: { ...state.layout.rooms, [state.room]: { ...state.layout.rooms[state.room], ...patch } } } };
 }
+export function reorderRoom(state: World, room: RoomId, target: RoomId): World {
+  const ids = (Object.keys(state.layout.rooms) as RoomId[]).sort((a, b) => state.layout.rooms[a]!.cell - state.layout.rooms[b]!.cell);
+  const from = ids.indexOf(room); const to = ids.indexOf(target);
+  if (from < 0 || to < 0 || from === to) return state;
+  const cells = ids.map(id => state.layout.rooms[id]!.cell);
+  ids.splice(from, 1); ids.splice(to, 0, room);
+  const rooms = { ...state.layout.rooms };
+  ids.forEach((id, index) => { rooms[id] = { ...rooms[id]!, cell: cells[index]! }; });
+  return { ...state, layout: { ...state.layout, rooms } };
+}

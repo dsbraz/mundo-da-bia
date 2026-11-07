@@ -1,18 +1,16 @@
-import { doorControls, slideRoom } from '../presentation/door-controls';
-import { neighbor } from '../domain/doors';
-import type { Direction } from '../domain/doors';
-import { roomWidth } from '../domain/geometry';
+import { buttonArt } from '../presentation/button-art';
+import { cancelTrayDrag } from '../presentation/tray-drag';
+import { sceneControls } from '../presentation/scene-controls';
+import { createShell } from '../presentation/shell';
 import { roomControls } from '../presentation/room-controls';
-import { addRoom, renameRoom, moveRoom } from '../domain/rooms';
+import { addRoom, renameRoom, reorderRoom } from '../domain/rooms';
 import { activeHouse, duplicateHouse, renameHouse, selectHouse, updateHouse } from '../domain/houses';
 import { editWorld, history, recordEdit, redo, undo } from '../domain/design';
-import { fixture } from '../domain/layout';
 import type { EditAction, World } from '../domain/types';
 import { createEditorControls } from '../presentation/editor-controls';
 import { createBuildGesture } from '../presentation/build-gesture';
 import Phaser from 'phaser';
 import { createSound } from '../presentation/sound';
-import { homeControls } from '../presentation/home-controls';
 import { actors } from '../content/catalog';
 import type { Action, ActorId } from '../domain/types';
 import { transition } from '../domain/world';
@@ -34,26 +32,20 @@ const scene = new PlayScene(state);
 let wardrobeOpen = false;
 let cancelInput = () => {};
 const wardrobeButton = root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!;
-function toggleWardrobe() {
-  wardrobeOpen = !wardrobeOpen;
-  wardrobeButton.textContent = wardrobeOpen ? 'Fechar armário' : 'Abrir armário';
-  wardrobeButton.setAttribute('aria-expanded', String(wardrobeOpen));
-  scene.openWardrobe(wardrobeOpen);
-}
+const shell = createShell(root, () => cancelInput());
+function toggleWardrobe() { wardrobeOpen = false; shell.looks(); }
 wardrobeButton.addEventListener('click', toggleWardrobe);
 const playSound = createSound(root.querySelector<HTMLButtonElement>('#sound-toggle')!);
-const furnitureControls = homeControls(root, dispatch);
-const controls = createControls(root, dispatch, select);
-const doors = doorControls(root, direction => { void walkThrough(selected, direction); });
+const controls = createControls(root, dispatch, select, () => state, () => building);
+const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(); }, dispatch, toggleWardrobe);
 const rooms = roomControls(root, {
   enter: room => dispatch({ type: 'room', room }),
   add: options => {
-    cancelInput(); building = true; const next = addRoom(state, options);
-    restoreEdit(recordEdit(edits, transition(next, { type: 'travel', actor: selected, room: next.room }).state));
+    cancelInput(); restoreEdit(recordEdit(edits, addRoom(state, options)));
   },
   rename: name => restoreEdit(recordEdit(edits, renameRoom(state, name))),
-  move: cell => restoreEdit(recordEdit(edits, moveRoom(state, cell))),
-  travel: room => dispatch({ type: 'travel', actor: selected, room }),
+  reorder: (room, target) => restoreEdit(recordEdit(edits, reorderRoom(state, room, target))),
+  closeTray: () => { cancelInput(); shell.close(); },
   snapshot: name => changeAlbum(renameHouse(duplicateHouse(album, false), name)),
 });
 const editor = createEditorControls(root, {
@@ -64,15 +56,11 @@ const editor = createEditorControls(root, {
   duplicate: empty => { changeAlbum(duplicateHouse(album, empty)); if (!building) toggleBuild(); },
   rename: name => changeAlbum(renameHouse(album, name)),
 });
-root.querySelector('#catalog-toggle')!.addEventListener('click', () => {
-  const hidden = root.classList.toggle('catalog-hidden');
-  root.querySelector('#catalog-toggle')!.textContent = hidden ? 'Mostrar catálogo' : 'Ocultar catálogo';
-  root.querySelector('#catalog-toggle')!.setAttribute('aria-expanded', String(!hidden));
-});
+root.querySelector('#play-mode')!.addEventListener('click', () => { if (building) toggleBuild(); });
 function persist() { album = updateHouse(album, state); saved = saveAlbum(album); }
 function toggleBuild() {
-  cancelInput(); building = !building; selectedPiece = null;
-  root.querySelectorAll('details.tray').forEach(tray => { (tray as HTMLDetailsElement).open = false; });
+  cancelTrayDrag(); cancelInput(); building = !building; selectedPiece = null;
+  shell.close();
   refresh();
   root.querySelector('#announcement')!.textContent = building ? 'Escolha uma peça. Arraste para mudar de lugar. Experimente sem medo: dá para desfazer!' : 'Sua casa está pronta para brincar!';
 }
@@ -86,7 +74,7 @@ function applyEdit(action: EditAction) {
 }
 function restoreEdit(next: typeof edits) { cancelInput(); edits = next; state = edits.present; selectedPiece = null; persist(); refresh(); }
 function changeAlbum(next: typeof album) {
-  cancelInput(); album = next; state = activeHouse(album).state; edits = history(state); selectedPiece = null;
+  cancelTrayDrag(); cancelInput(); album = next; state = activeHouse(album).state; edits = history(state); selectedPiece = null;
   saved = saveAlbum(album); refresh();
 }
 function previewBuild(action: EditAction | null) {
@@ -95,28 +83,16 @@ function previewBuild(action: EditAction | null) {
 }
 function refresh() {
   scene.buildMode(building, selectedPiece);
-  scene.paint(state, selected); furnitureControls(state); controls(state, selected, saved);
-  wardrobeButton.disabled = fixture(state, 'wardrobe')?.room !== state.room;
-  editor(album, edits, building, selectedPiece); rooms(state, selected); doors(state, selected);
+  scene.paint(state, selected); controls(state, selected, saved); shell.mode(building);
+  editor(album, edits, building, selectedPiece); rooms(state); accessibleScene(state, selected, building);
 }
-async function walkThrough(actor: ActorId, direction: Direction, walk = true) {
-  if (building || root.dataset.crossing === 'true' || !neighbor(state, direction)) return;
-  if (!state.actors.some(a => a.id === actor && a.room === state.room)) return;
-  cancelInput(); root.dataset.crossing = 'true'; root.inert = true;
-  const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 280;
-  try {
-    const x = direction === 'left' ? 70 : roomWidth(state) - 70;
-    if (walk) await scene.walkToDoor(actor, x, duration);
-    else scene.previewActor(actor, { x, y: 510 });
-    await slideRoom(game.canvas, direction, () => dispatch({ type: 'cross', actor, direction }), duration);
-  } finally { root.inert = false; root.dataset.crossing = 'false'; }
-}
-function select(id: ActorId) { selected = id; refresh(); }
+function select(id: ActorId) { root.classList.add('actor-chosen'); selected = id; refresh(); }
 function dispatch(action: Action) {
+  if ('actor' in action) root.classList.add('actor-chosen');
   if (action.type === 'room' || action.type === 'travel') cancelInput();
   const result = transition(state, action);
   state = result.state;
-  edits = history(state); selectedPiece = null;
+  edits = building && action.type === 'room' ? { ...edits, present: state } : history(state); selectedPiece = null;
   if (result.events.length) persist();
   refresh();
   scene.react(result.events); playSound(result.events);
@@ -133,23 +109,44 @@ const game = new Phaser.Game({
   scene, audio: { noAudio: true }, render: { antialias: true },
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
+    new ResizeObserver(() => { controls(state, selected, saved); editor(album, edits, building, selectedPiece); accessibleScene(state, selected, building); }).observe(current.canvas);
     cancelInput = bindInput(current.canvas, () => state, select, point => dispatch({ type: 'move', actor: selected, point }), {
-      cross: (id, direction) => { void walkThrough(id, direction, false); },
       dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
-    }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point)) });
+    }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point)) }, {
+      building: () => building, wardrobe: () => wardrobeOpen, dispatch,
+      pan: (room, fraction) => scene.pan(room, fraction),
+      transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
+      progress: (value, side) => {
+        const indicator = root.querySelector<HTMLElement>('#edge-progress')!;
+        indicator.hidden = value === 0; indicator.dataset.side = side;
+        indicator.style.setProperty('--progress', `${value * 100}%`); indicator.setAttribute('aria-valuenow', String(Math.round(value * 100)));
+      },
+    });
   } },
 });
-root.querySelector('#world')!.addEventListener('keydown', event => {
+root.addEventListener('keydown', event => {
+  const target = event.target as HTMLElement;
+  if (target.closest('input,select,button') && !target.matches('.scene-target')) return;
   const key = (event as KeyboardEvent).key;
   const offsets: Record<string, [number, number]> = { ArrowLeft: [-20, 0], ArrowRight: [20, 0], ArrowUp: [0, -20], ArrowDown: [0, 20] };
   const offset = offsets[key];
-  if (building) return;
+  if (building) {
+    if (offset && selectedPiece !== null) {
+      event.preventDefault(); const piece = state.layout.pieces.find(p => p.id === selectedPiece)!;
+      applyEdit({ type: 'move', id: piece.id, point: { x: piece.x + offset[0], y: piece.y + offset[1] } });
+    }
+    return;
+  }
   if (!offset) return;
   event.preventDefault();
   const actor = state.actors.find(a => a.id === selected)!;
   dispatch({ type: 'move', actor: selected, point: { x: actor.x + offset[0], y: actor.y + offset[1] } });
 });
+buttonArt(root);
 root.querySelector('#announcement')!.textContent = `${actors[selected].name} · crie um lugar, invente uma história.`;
 refresh();
+window.addEventListener('resize', () => requestAnimationFrame(() => {
+  controls(state, selected, saved); editor(album, edits, building, selectedPiece); accessibleScene(state, selected, building);
+}));
 window.addEventListener('pagehide', () => { persist(); game.loop.sleep(); });
 window.addEventListener('pageshow', () => game.loop.wake());

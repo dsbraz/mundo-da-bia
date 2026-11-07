@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+import { roomPreview } from './room-preview';
+import { enterRoom } from '../domain/room-state';
+import type { RoomId, ItemId } from '../domain/types';
 import { itemIds } from '../domain/types';
 import type { ActorId, Point, PresentationEvent, World } from '../domain/types';
 import { fixture } from '../domain/layout';
@@ -17,6 +20,8 @@ export class PlayScene extends Phaser.Scene {
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private pieces = new Map<number, Phaser.GameObjects.Container>();
+  private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
+  private transferRoom: RoomId | null = null;
   private moving: ActorId | null = null;
   private ready = false;
   private wardrobe = false;
@@ -32,6 +37,7 @@ export class PlayScene extends Phaser.Scene {
     this.world = state; this.selected = selected;
     if (!this.ready) return;
     if (this.scale.width !== roomWidth(state)) this.scale.setGameSize(roomWidth(state), 600);
+    this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null;
     drawRoom(this, state);
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
@@ -53,6 +59,36 @@ export class PlayScene extends Phaser.Scene {
     });
     drawLighting(this, state);
     if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', { fontSize: '18px', color: '#425b66', backgroundColor: '#f3efe4', padding: { x: 12, y: 8 } }).setOrigin(.5).setDepth(700);
+  }
+  pan(room: RoomId | null, fraction: number) {
+    if (!this.ready) return;
+    if (!room) { if (this.sliding) this.paint(this.world, this.selected); return; }
+    if (this.sliding?.room !== room) {
+      this.paint(this.world, this.selected);
+      const objects = [...this.children.list].sort((a, b) => (a as Phaser.GameObjects.Container).depth - (b as Phaser.GameObjects.Container).depth);
+      const current = this.add.container(0, 0, objects);
+      const next = roomPreview(this, enterRoom(this.world, room), this.selected, this.building);
+      this.sliding = { room, current, next };
+    }
+    const width = this.scale.width;
+    this.sliding.current.x = fraction * width;
+    this.sliding.next.x = fraction * width + (fraction < 0 ? width : -width);
+  }
+  previewTransfer(room: RoomId | null, actor: ActorId | null, item: ItemId | null, point: Point | null) {
+    if (!this.ready) return;
+    if (!room || !point) { if (this.transferRoom) this.paint(this.world, this.selected); return; }
+    if (this.transferRoom !== room) {
+      this.children.removeAll(true); this.figures = []; this.pieces.clear(); this.objects = []; this.ghost = null;
+      roomPreview(this, enterRoom(this.world, room), this.selected, this.building); this.transferRoom = room;
+      if (actor) {
+        const value = this.world.actors.find(a => a.id === actor)!;
+        this.figures = [drawActor(this, { ...value, seat: null, resting: false }, true).setDepth(750)];
+        this.world.items.filter(i => i.holder === actor).forEach(i => this.objects.push(this.add.image(0, 0, i.id).setDepth(751)));
+      } else if (item) this.ghost = this.add.image(0, 0, item).setDepth(750);
+    }
+    const x = point.x * this.scale.width / roomWidth(this.world, room);
+    this.figures[0]?.setPosition(x, point.y);
+    this.objects.forEach(o => o.setPosition(x + 28, point.y - 55)); this.ghost?.setPosition(x, point.y - 28);
   }
   previewLayout(state: World) {
     state.layout.pieces.forEach(piece => this.pieces.get(piece.id)?.setPosition(piece.x, piece.y).setDepth(pieceDepth(piece)));

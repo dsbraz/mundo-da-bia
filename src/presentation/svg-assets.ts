@@ -1,3 +1,4 @@
+import { outfitLayer } from './outfit';
 import { loadPieces } from './piece-assets';
 import { svgFragment } from './svg-source';
 import type Phaser from 'phaser';
@@ -25,7 +26,7 @@ function loadActor(scene: Phaser.Scene, id: ActorId, index: number) {
   scene.load.svg(`${id}-hair`, layer(source, `hair-${id}`));
   lookIds.forEach(look => {
     const outfit = source.replaceAll('#E889A1', color(looks[look].color)).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
-    scene.load.svg(`${id}-${look}`, layer(outfit, outfitLayer(look)));
+    scene.load.svg(`${id}-${look}`, layer(outfit, outfitLayer(look, index > 1)));
   });
 }
 export function loadArt(scene: Phaser.Scene) {
@@ -36,9 +37,4 @@ export function loadArt(scene: Phaser.Scene) {
     const garment = source.replace('viewBox="0 0 140 220"', 'viewBox="20 110 100 85"').replace('width="140" height="220"', 'width="100" height="85"');
     scene.load.svg(`look-${look}`, layer(garment, outfitLayer(look)));
   });
-}
-
-function outfitLayer(look: string) {
-  if (['neon', 'aurora', 'denim', 'rehearsal', 'overalls'].includes(look)) return `body-${look}`;
-  return ['sol', 'mar', 'jardim'].includes(look) ? 'body-casual' : 'body';
 }

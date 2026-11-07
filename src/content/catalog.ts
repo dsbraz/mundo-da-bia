@@ -1,6 +1,6 @@
 import type { ActorId, ItemId, LookId } from '../domain/types';
 export const actors: Record<ActorId, { name: string; skin: number; hair: number }> = {
-  bia: { name: 'Bia', skin: 0xd79b70, hair: 0xf5bf38 },
+  bia: { name: 'Bia', skin: 0xf3d5bf, hair: 0xe8c56c },
   luna: { name: 'Luna', skin: 0x9e6047, hair: 0x302531 },
   leo: { name: 'Léo', skin: 0xf3c9a3, hair: 0xa16539 },
   rui: { name: 'Rui', skin: 0xc88961, hair: 0x3d302c },

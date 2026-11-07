@@ -21,7 +21,7 @@ export function svgFragment(source: string, ids: readonly string[], crop?: Crop)
 export function recolor(source: string, color: Palette): string {
   if (color === 'original') return source;
   const palette = palettes[color];
-  return source.replace(/#(a8c9b8|e7b4d8|dca2cb|91bf8e|8fbc89|aed09b|a5ca95|8ebd8c|c08abb|bc84b4|dba7d5|f196b1|c491bc)/gi, palette.base)
-    .replace(/#(dce9d1|bbd99e|fff4c9|f8c387|edbddb|eec6df|ffe4ad)/gi, palette.light)
-    .replace(/#(789f8b|7fb68a|bd7eb5|f7c389|eaa068|b784ae)/gi, palette.dark);
+  return source.replace(/#(8fa9cb|a8c9b8|e7b4d8|dca2cb|91bf8e|8fbc89|aed09b|a5ca95|8ebd8c|c08abb|bc84b4|dba7d5|f196b1|c491bc)/gi, palette.base)
+    .replace(/#(d9e2f1|dce9d1|bbd99e|fff4c9|f8c387|edbddb|eec6df|ffe4ad)/gi, palette.light)
+    .replace(/#(677fa7|789f8b|7fb68a|bd7eb5|f7c389|eaa068|b784ae)/gi, palette.dark);
 }

@@ -14,7 +14,7 @@ function pictureSource(kind: PieceKind): string {
 }
 export function roomPicture(template: RoomTemplate): HTMLElement {
   const picture = document.createElement('span'); picture.className = 'room-picture'; picture.setAttribute('aria-hidden', 'true');
-  pictures[template].forEach(kind => { const img = document.createElement('img'); img.src = pictureSource(kind); img.alt = ''; picture.append(img); });
+  pictures[template].forEach(kind => { const img = document.createElement('img'); img.src = pictureSource(kind); img.alt = ''; img.draggable = false; picture.append(img); });
   return picture;
 }
 export function quickRooms(root: HTMLElement, add: (room: NewRoom) => void, close: () => void) {
@@ -23,7 +23,7 @@ export function quickRooms(root: HTMLElement, add: (room: NewRoom) => void, clos
   roomTemplates.forEach(template => {
     const button = document.createElement('button'); button.type = 'button'; button.setAttribute('aria-label', `Criar ${templates[template].name}`);
     button.append(roomPicture(template), document.createTextNode(templates[template].name));
-    button.addEventListener('click', () => { add({ name: templates[template].name, template, size: 'medium', cell }); panel.hidden = true; close(); });
+    button.addEventListener('click', () => { add({ name: templates[template].name, template, size: (root.querySelector<HTMLSelectElement>('#room-size')!.value as import('../domain/types').RoomSize), cell }); panel.hidden = true; close(); });
     root.querySelector('#room-cards')!.append(button);
   });
   root.querySelector('#cancel-room-choice')!.addEventListener('click', () => { panel.hidden = true; root.querySelector<HTMLButtonElement>(`[aria-label="Construir no espaço ${cell + 1}"]`)?.focus(); });

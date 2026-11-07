@@ -1,3 +1,4 @@
+import { positionInspector } from './inspector-position';
 import { roomWidth } from '../domain/geometry';
 import { catalogDrag } from './catalog-drag';
 import type { Album, EditAction, PieceKind } from '../domain/types';
@@ -16,17 +17,15 @@ export interface EditorActions {
 function on(root: HTMLElement, id: string, action: () => void) { root.querySelector(id)!.addEventListener('click', action); }
 export function createEditorControls(root: HTMLElement, actions: EditorActions) {
   let selected: number | null = null; let width = 1000;
-  on(root, '#build-toggle', actions.toggle);
+  on(root, '#build-toggle', () => { if (!root.classList.contains('building')) actions.toggle(); });
   on(root, '#undo', actions.undo); on(root, '#redo', actions.redo);
   on(root, '#flip-piece', () => { if (selected !== null) actions.edit({ type: 'flip', id: selected }); });
   on(root, '#remove-piece', () => { if (selected !== null) actions.edit({ type: 'remove', id: selected }); });
-  on(root, '#clear-room', () => actions.edit({ type: 'clear' }));
+  bindClear(root, actions);
   on(root, '#copy-house', () => actions.duplicate(false)); on(root, '#new-house', () => actions.duplicate(true));
   on(root, '#rename-house', () => actions.rename(root.querySelector<HTMLInputElement>('#house-name')!.value));
   const houseList = root.querySelector<HTMLSelectElement>('#house-list')!;
   houseList.addEventListener('change', () => actions.house(Number(houseList.value)));
-  const pieceList = root.querySelector<HTMLSelectElement>('#piece-list')!;
-  pieceList.addEventListener('change', () => actions.select(pieceList.value ? Number(pieceList.value) : null));
   const catalog = createCatalog(root, actions.edit, () => width);
   const colors = paletteIds.map(color => {
     const button = document.createElement('button'); button.type = 'button';
@@ -39,18 +38,20 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
   return (album: Album, h: History, building: boolean, id: number | null) => {
     selected = id; const state = h.present; width = roomWidth(state); const piece = state.layout.pieces.find(p => p.id === id);
     root.classList.toggle('building', building);
-    root.querySelector('#build-toggle')!.textContent = building ? '▶ Brincar' : '✎ Construir';
+    root.querySelector('#play-mode')!.setAttribute('aria-pressed', String(!building));
+    root.querySelector<HTMLElement>('#build-history')!.hidden = !building;
+    root.querySelector<HTMLElement>('#actor-context')!.hidden = building;
+    root.querySelector<HTMLElement>('#build-inspector')!.hidden = !building || !piece;
     root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building));
     root.querySelector<HTMLButtonElement>('#undo')!.disabled = !h.past.length;
     root.querySelector<HTMLButtonElement>('#redo')!.disabled = !h.future.length;
     root.querySelector<HTMLButtonElement>('#flip-piece')!.disabled = !piece;
     root.querySelector<HTMLButtonElement>('#remove-piece')!.disabled = !piece;
     root.querySelector('#piece-name')!.textContent = piece ? furnishings[piece.kind].name : 'Escolha uma peça na casa';
+    positionInspector(root, piece, width);
     colors.forEach((button, index) => { button.disabled = !piece; button.setAttribute('aria-pressed', String(piece?.color === paletteIds[index])); });
     catalog.forEach((button, kind) => { button.disabled = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room); button.title = button.disabled ? 'Já existe neste cômodo. Você pode usar outro em um novo cômodo.' : '';  });
     updateHouseList(root, album);
-    pieceList.replaceChildren(new Option('Selecionar peça…', ''), ...state.layout.pieces.filter(p => p.room === state.room).map(p => new Option(`${furnishings[p.kind].name} · ${p.id}`, String(p.id))));
-    pieceList.value = id === null ? '' : String(id);
     for (const surface of ['wall', 'floor'] as const) root.querySelector<HTMLSelectElement>(`#finish-${surface}`)!.value = state.layout.rooms[state.room]![surface];
   };
 }
@@ -63,13 +64,22 @@ function createCatalog(root: HTMLElement, edit: (action: EditAction) => void, wi
     button.append(img, label); button.setAttribute('aria-label', `Adicionar ${furnishings[kind].name}`);
     button.dataset.category = furnishings[kind].category;
     catalogDrag(button, kind, edit, width);
-    button.addEventListener('click', () => edit({ type: 'add', kind }));
+    button.addEventListener('click', () => edit({ type: 'add', kind, point: { x: width() / 2, y: 360 } }));
     root.querySelector('#piece-catalog')!.append(button); buttons.set(kind, button);
   });
-  root.querySelectorAll<HTMLButtonElement>('[data-category-filter]').forEach(button => button.addEventListener('click', () => {
-    root.querySelectorAll('[data-category-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
-    buttons.forEach(b => { b.hidden = button.dataset.categoryFilter !== 'todos' && b.dataset.category !== button.dataset.categoryFilter; });
-  }));
+  let category = 'moveis';
+  const collection = root.querySelector<HTMLSelectElement>('#collection-filter')!;
+  const filter = () => {
+    root.querySelectorAll<HTMLButtonElement>('[data-category-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.categoryFilter === category)));
+    root.querySelector<HTMLElement>('#finishes')!.hidden = category !== 'finishes';
+    root.querySelector<HTMLElement>('#piece-catalog')!.hidden = category === 'finishes';
+    buttons.forEach((b, kind) => {
+      const decor = ['rug', 'plant', 'picture', 'cushion', 'neon'].includes(kind);
+      b.hidden = (category === 'decoracao' ? !decor : decor) || (collection.value === 'neon' && b.dataset.category !== 'neon');
+    });
+  };
+  root.querySelectorAll<HTMLButtonElement>('[data-category-filter]').forEach(b => b.addEventListener('click', () => { category = b.dataset.categoryFilter!; filter(); }));
+  collection.addEventListener('change', filter); filter();
   return buttons;
 }
 function bindFinishes(root: HTMLElement, edit: (action: EditAction) => void) {
@@ -86,4 +96,11 @@ function updateHouseList(root: HTMLElement, album: Album) {
   select.replaceChildren(...album.houses.map(h => new Option(h.name, String(h.id)))); select.value = String(album.active);
   const input = root.querySelector<HTMLInputElement>('#house-name')!;
   if (document.activeElement !== input) input.value = activeHouse(album).name;
+}
+
+function bindClear(root: HTMLElement, actions: EditorActions) {
+  const dialog = root.querySelector<HTMLDialogElement>('#clear-dialog')!;
+  on(root, '#clear-room', () => { root.querySelector<HTMLDialogElement>('#room-dialog')!.close(); dialog.showModal(); });
+  on(root, '#cancel-clear', () => dialog.close());
+  on(root, '#confirm-clear', () => { if (!root.classList.contains('building')) actions.toggle(); actions.edit({ type: 'clear' }); dialog.close(); });
 }

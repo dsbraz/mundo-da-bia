@@ -5,8 +5,8 @@
       <stop offset="1" stop-color="#f5a585" />
     </linearGradient>
     <linearGradient id="wood" x2="0" y2="1">
-      <stop stop-color="#f8c387" />
-      <stop offset="1" stop-color="#eaa068" />
+      <stop stop-color="#d4b18b" />
+      <stop offset="1" stop-color="#b68a68" />
     </linearGradient>
     <linearGradient id="mint" x2="0" y2="1">
       <stop stop-color="#bbd99e" />
@@ -40,7 +40,7 @@
       <path d="M88 234V144a89 89 0 0 1 178 0v90Z" />
     </clipPath>
   </defs>
-  <g id="base" stroke="#8a5134" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+  <g id="base" stroke="#6d625b" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
     <g id="walls">
       <path d="M0 0H1000V398H0Z" fill="url(#wall)" stroke="none" />
       <path d="M0 0H1000V394H0Z" fill="url(#wallpaper)" stroke="none" />
@@ -57,7 +57,7 @@
         <circle cx="232" cy="100" r="19" fill="#ffe098" />
       </g>
       <path d="M176 57V235M89 153H264" stroke="#a96a37" stroke-width="9" />
-      <path d="M176 59V234M89 153H264" stroke="#edb768" stroke-width="3" />
+      <path d="M176 59V234M89 153H264" stroke="#edb768" stroke-width="1.5" />
       <rect x="70" y="239" width="213" height="17" rx="5" fill="#d99851" />
     </g>
     <g id="rug">
@@ -66,7 +66,7 @@
       <ellipse cx="493" cy="514" rx="375" ry="61" fill="#ffe1aa" stroke="none" />
       <ellipse cx="493" cy="514" rx="348" ry="48" fill="none" stroke="#f8c1a0" stroke-width="8" />
     </g>
-    <g id="sofa"><ellipse cx="194" cy="428" rx="128" ry="10" fill="#33434a" opacity=".12"/><path d="M83 402v27h12v-27m196 0v27h12v-27" fill="#596568"/><rect x="72" y="276" width="244" height="125" rx="13" fill="#a8c9b8" stroke="#657e75" stroke-width="2"/><path d="M193 283v77" stroke="#789f8b" stroke-width="2"/><rect x="78" y="350" width="232" height="62" rx="9" fill="#789f8b"/><rect x="84" y="351" width="106" height="40" rx="8" fill="#dce9d1"/><rect x="196" y="351" width="106" height="40" rx="8" fill="#dce9d1"/><rect x="64" y="324" width="25" height="84" rx="8" fill="#a8c9b8"/><rect x="302" y="324" width="25" height="84" rx="8" fill="#a8c9b8"/><path d="m111 309 40-5 5 43-42 3Z" fill="#d7b17a"/><path d="m241 303 39 5-6 42-39-6Z" fill="#667a88"/><path d="m120 318 26-3m-25 12 26-3" stroke="#efe2cc" stroke-width="3"/></g>
+    <g id="sofa"><ellipse cx="194" cy="428" rx="128" ry="10" fill="#33434a" opacity=".12"/><path d="M83 402v27h12v-27m196 0v27h12v-27" fill="#596568"/><rect x="72" y="276" width="244" height="125" rx="13" fill="#8fa9cb" stroke="#657e75" stroke-width="2"/><path d="M193 283v77" stroke="#677fa7" stroke-width="2"/><rect x="78" y="350" width="232" height="62" rx="9" fill="#677fa7"/><rect x="84" y="351" width="106" height="40" rx="8" fill="#d9e2f1"/><rect x="196" y="351" width="106" height="40" rx="8" fill="#d9e2f1"/><rect x="64" y="324" width="25" height="84" rx="8" fill="#8fa9cb"/><rect x="302" y="324" width="25" height="84" rx="8" fill="#8fa9cb"/><path d="m111 309 40-5 5 43-42 3Z" fill="#df8c76"/><path d="m241 303 39 5-6 42-39-6Z" fill="#b2a0c8"/><path d="m120 318 26-3m-25 12 26-3" stroke="#efe2cc" stroke-width="1.5"/></g>
     <g id="wardrobe-frame"><rect x="305" y="112" width="202" height="282" rx="5" fill="#bf9671" stroke="#75634e" stroke-width="2"/><path d="M311 394v10m188-10v10" stroke="#46515b" stroke-width="7"/><rect x="314" y="151" width="184" height="196" fill="#52545c"/><rect x="315" y="351" width="182" height="35" fill="#52545c"/><path d="M316 129h178" stroke="#e8d5b8" stroke-width="2"/></g>
     <g id="fridge-frame">
       <path d="M622 371V241q-1-42 56-43q62 0 66 40v132q0 16-15 16h-91q-16 0-16-15Z" fill="#edab79" />
@@ -89,12 +89,12 @@
       <rect x="839" y="94" width="153" height="267" rx="5" fill="#35434a"/>
       <path d="M850 108h130v235H850Z" fill="#61747d"/>
       <path d="M857 116v218m15-218v218m15-218v218m15-218v218m15-218v218m15-218v218m15-218v218m15-218v218" stroke="#71878d" stroke-width="4"/>
-      <path d="M850 106h130m-130 240h130" stroke="#a8c9b8" stroke-width="5"/>
+      <path d="M850 106h130m-130 240h130" stroke="#8fa9cb" stroke-width="5"/>
       <rect x="875" y="146" width="84" height="48" rx="4" fill="#35434a"/>
-      <path d="m888 170 10-10 10 20 10-20 10 20 10-10" fill="none" stroke="#dce9d1" stroke-width="3"/>
+      <path d="m888 170 10-10 10 20 10-20 10 20 10-10" fill="none" stroke="#d9e2f1" stroke-width="1.5"/>
       <path d="m835 365 19-17h125l17 17v42H835Z" fill="#46515b"/>
-      <path d="M836 365h159v12H836Z" fill="#789f8b"/>
-      <path d="M846 391h139" stroke="#a8c9b8" stroke-width="4"/>
+      <path d="M836 365h159v12H836Z" fill="#677fa7"/>
+      <path d="M846 391h139" stroke="#8fa9cb" stroke-width="4"/>
       <ellipse cx="917" cy="357" rx="19" ry="5" fill="#26333b"/>
       <path d="M917 356V257l15-14" fill="none" stroke="#26333b" stroke-width="4"/>
       <rect x="925" y="234" width="23" height="10" rx="5" fill="#b5c6c8" transform="rotate(-35 936 239)"/>
@@ -110,7 +110,7 @@
       <path d="M189 476l-17 53q9 10 22 2l25-51m125-5 13 55q13 6 23-4l-14-52" fill="#c48a4c" />
       <path d="M164 455v16q5 26 113 27q110-1 119-28v-17Z" fill="#cf8b4c" />
       <ellipse cx="280" cy="454" rx="116" ry="26" fill="url(#wood)" />
-      <path d="M187 447q80-17 181 2" fill="none" stroke="#ffe0a7" stroke-width="3" />
+      <path d="M187 447q80-17 181 2" fill="none" stroke="#ffe0a7" stroke-width="1.5" />
     </g>
     <g id="wall-decor">
       <path d="M618 122l29-24l29 24" fill="none" stroke-width="2" />
@@ -132,42 +132,42 @@
       <rect x="835" y="110" width="12" height="28" rx="2" fill="#f4c454" />
     </g>
   </g>
-  <g id="wardrobe-closed" stroke="#657e75" stroke-width="3">
-    <rect x="317" y="153" width="88" height="194" rx="5" fill="#a8c9b8" />
-    <rect x="407" y="153" width="88" height="194" rx="5" fill="#a8c9b8" />
-    <path d="M330 170v157m151-157v157" stroke="#dce9d1" stroke-width="2"/>
+  <g id="wardrobe-closed" stroke="#657e75" stroke-width="1.5">
+    <rect x="317" y="153" width="88" height="194" rx="5" fill="#8fa9cb" />
+    <rect x="407" y="153" width="88" height="194" rx="5" fill="#8fa9cb" />
+    <path d="M330 170v157m151-157v157" stroke="#d9e2f1" stroke-width="2"/>
     <circle cx="392" cy="263" r="7" fill="#ffd88b" stroke="#9d6445" />
     <circle cx="421" cy="263" r="7" fill="#ffd88b" stroke="#9d6445" />
   </g>
-  <g id="wardrobe-open" stroke="#925776" stroke-width="3">
+  <g id="wardrobe-open" stroke="#925776" stroke-width="1.5">
     <path d="M315 155l-20-7v199l20-2m181-190 19-7v199l-19-2" fill="#e3acd0" />
     <path d="M320 185h173m-173 85h173" stroke="#ebc087" stroke-width="4" />
   </g>
-  <g id="drawer-closed" stroke="#9c6085" stroke-width="3">
-    <rect x="316" y="351" width="180" height="34" rx="4" fill="#a8c9b8" />
+  <g id="drawer-closed" stroke="#9c6085" stroke-width="1.5">
+    <rect x="316" y="351" width="180" height="34" rx="4" fill="#8fa9cb" />
     <circle cx="405" cy="366" r="6" fill="#ffd698" stroke="#a36b47" />
   </g>
-  <g id="drawer-open" stroke="#a56b4c" stroke-width="3">
+  <g id="drawer-open" stroke="#a56b4c" stroke-width="1.5">
     <path d="M315 351l-5 28h192l-6-28" fill="#936a66" />
     <rect x="310" y="379" width="192" height="28" rx="5" fill="url(#cream)" />
     <circle cx="405" cy="392" r="6" fill="#c38eb7" />
   </g>
-  <g id="fridge-closed" stroke="#9e6441" stroke-width="3">
+  <g id="fridge-closed" stroke="#9e6441" stroke-width="1.5">
     <rect x="629" y="270" width="106" height="104" rx="5" fill="url(#cream)" />
     <rect x="712" y="283" width="7" height="43" rx="3" fill="#d99967" stroke-width="2" />
   </g>
-  <g id="fridge-open" stroke="#a9734d" stroke-width="3">
+  <g id="fridge-open" stroke="#a9734d" stroke-width="1.5">
     <path d="M734 271l27 8v97l-27-3Z" fill="url(#cream)" />
     <path d="M744 292v60" stroke="#e7b27b" stroke-width="4" />
   </g>
   <g id="lamp-on">
     <path d="M38 212L0 426H149L70 212Z" fill="#fff1b3" opacity=".12" />
-    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="#ffdf85" stroke="#a56730" stroke-width="3" />
-    <ellipse cx="55" cy="171" rx="26" ry="6" fill="#fff1b9" stroke="#a56730" stroke-width="3" />
-    <path d="M39 182l-9 38m27-38v40m14-40 14 38" stroke="#fff1b3" stroke-width="3" />
+    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="#ffdf85" stroke="#a56730" stroke-width="1.5" />
+    <ellipse cx="55" cy="171" rx="26" ry="6" fill="#fff1b9" stroke="#a56730" stroke-width="1.5" />
+    <path d="M39 182l-9 38m27-38v40m14-40 14 38" stroke="#fff1b3" stroke-width="1.5" />
   </g>
   <g id="lamp-off">
-    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="#d6ba83" stroke="#a56730" stroke-width="3" />
-    <ellipse cx="55" cy="171" rx="26" ry="6" fill="#ead3a5" stroke="#a56730" stroke-width="3" />
+    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="#d6ba83" stroke="#a56730" stroke-width="1.5" />
+    <ellipse cx="55" cy="171" rx="26" ry="6" fill="#ead3a5" stroke="#a56730" stroke-width="1.5" />
   </g>
 </svg>

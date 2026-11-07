@@ -4,7 +4,8 @@ import { actors, looks } from './catalog';
 import { initialWorld, transition } from '../domain/world';
 import { decode, encode } from '../persistence/save';
 it('oferece dois figurinos originais de palco e preserva a Bia loira e sua identidade', () => {
-  expect(actors.bia.hair).toBe(0xf5bf38);
+  expect(actors.bia.hair).toBe(0xe8c56c);
+  expect(actors.bia.skin).toBe(0xf3d5bf);
   expect(lookIds).toContain('neon');
   expect(lookIds).toContain('aurora');
   expect(Object.values(looks).map(l => l.name)).toContain('Guardiã Aurora');

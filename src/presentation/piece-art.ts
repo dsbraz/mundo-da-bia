@@ -27,7 +27,7 @@ export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardr
   const container = scene.add.container(piece.x, piece.y).setDepth(pieceDepth(piece));
   const parts = partsFor(piece, state, wardrobe);
   const box = pieceBounds[piece.kind];
-  parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped)));
+  parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped).setScale(state.room === 'sala' ? .94 : 1)));
   if (piece.active) container.add(scene.add.text(box.width / 2, 6, effect(piece), { fontSize: '24px', color: '#3f8799' }).setOrigin(.5).setName('effect'));
   return container;
 }

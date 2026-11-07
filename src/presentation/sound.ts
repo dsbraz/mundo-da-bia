@@ -7,7 +7,7 @@ export function createSound(button: HTMLButtonElement) {
     enabled = !enabled;
     button.setAttribute('aria-pressed', String(enabled));
     button.setAttribute('aria-label', enabled ? 'Desativar sons' : 'Ativar sons');
-    button.textContent = enabled ? '♫' : '♪';
+    button.textContent = enabled ? 'Som ligado' : 'Som desligado';
     if (enabled) { context ??= new AudioContext(); void context.resume().catch(() => {}); }
   });
   return (events: PresentationEvent[]) => {

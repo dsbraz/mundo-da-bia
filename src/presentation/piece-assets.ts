@@ -3,6 +3,7 @@ import { paletteIds, pieceKinds } from '../domain/types';
 import type { Palette, PieceKind } from '../domain/types';
 import { pieceBounds } from '../domain/layout';
 import { recolor, svgFragment } from './svg-source';
+import atelier from './assets/atelier.svg?raw';
 import sala from './assets/sala.svg?raw';
 import quarto from './assets/quarto.svg?raw';
 import workshop from './assets/workshop.svg?raw';
@@ -32,6 +33,8 @@ export function pieceImage(kind: PieceKind, color: Palette = 'original', preview
   return svgFragment(recolor(source(kind), color), parts, pieceBounds[kind]);
 }
 export function loadPieces(scene: Phaser.Scene) {
+  scene.load.svg('atelier-background', svgFragment(atelier, ['architecture']));
+  scene.load.svg('atelier-details', svgFragment(atelier, ['window', 'posters']));
   scene.load.svg('window-sala', svgFragment(sala, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
   scene.load.svg('window-quarto', svgFragment(quarto, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
   pieceKinds.forEach(kind => paletteIds.forEach(color => {

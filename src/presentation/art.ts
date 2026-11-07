@@ -5,10 +5,10 @@ import type { Actor } from '../domain/types';
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean): Phaser.GameObjects.Container {
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
   const labelX = actor.seat === 'bed' ? -80 : 0;
-  const shadow = scene.add.ellipse(labelX, 2, actor.seat === 'bed' ? 180 : 86, 18, 0x654236, 0.16);
+  const shadow = scene.add.ellipse(labelX, 2, actor.seat === 'bed' ? 140 : 56, 7, 0x716858, 0.08);
   if (selected) shadow.setStrokeStyle(3, 0xffefb7);
   container.add(shadow);
-  const pose = scene.add.container(0, 0).setName('pose').setScale(0.85);
+  const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor));
   container.add(pose);
   const parts = actor.kind === 'human'
     ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', 'eyes', 'lids', 'mouth', 'mouth-happy']
@@ -36,3 +36,5 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   pose.rotation = actor.seat === 'bed' ? -Math.PI / 2 : danceAngle(time, index, show && !actor.resting);
 }
 function danceAngle(time: number, index: number, dancing: boolean) { return dancing ? Math.sin(time / 220 + index) * 0.06 : 0; }
+
+function actorScale(actor: Actor) { return actor.kind === 'cat' ? 0.78 : 0.86; }

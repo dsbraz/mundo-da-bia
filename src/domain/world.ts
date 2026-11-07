@@ -1,3 +1,4 @@
+import { transferItem } from './transfer';
 import { crossDoor } from './doors';
 import { roomWidth, validPoint } from './geometry';
 export { validPoint } from './geometry';
@@ -89,6 +90,7 @@ function usePiece(state: World, id: number): Transition {
 }
 
 function navigate(state: World, action: Extract<Action, { room: RoomId }>): Transition {
+  if (action.type === 'transfer') return transferItem(state, action);
   const next = action.type === 'travel' ? travel(state, action.actor, action.room) : enterRoom(state, action.room);
   return { state: next, events: next === state ? [] : [{ type: 'room' }] };
 }

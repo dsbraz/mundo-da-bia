@@ -2,7 +2,7 @@
 
 Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, 11 looks e casas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
-**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração atual](docs/connected-house.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
+**Estado da entrega:** protótipo jogável com casa interativa e arte SVG em camadas; veja a [iteração Ateliê Pop](docs/atelier-pop.md). A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
 ## Executar
 
@@ -21,23 +21,17 @@ No Ubuntu 26.04 local, o instalador desta versão do Playwright recusou o downlo
 
 Após as atualizações compatíveis, o audit registra nove entradas moderadas em dependências de desenvolvimento, zero altas e zero críticas. Todas decorrem de minimatch, cuja correção exige mudança de versão principal nas ferramentas dependentes. Esse risco está acompanhado na [triagem](docs/dependency-audit.md).
 
-## Brincar
+## Brincar e decorar
 
-Toque nas portas laterais para o personagem caminhar entre cômodos, ou arraste-o até a porta e solte. A roupa e o objeto na mão acompanham a travessia. A ordem da planta define os vizinhos.
+A barra principal oferece **Minha casa**, **Brincar**, **Decorar** e uma única bandeja. Em Brincar, escolha **Turma**, **Looks** ou **Objetos**. Toque em um personagem e em **Trazer aqui**, ou arraste sua miniatura para a cena. Um look veste a seleção; arrastá-lo permite vestir outro humano. As ações de vestir, descansar e soltar aparecem junto ao personagem. Alimentação, assentos e efeitos dos móveis continuam na cena.
 
-Na sala, toque no armário (ou em **Abrir armário**) e arraste uma roupa até um humano. Arraste o lanche até um humano ou a comidinha até um gato para alimentar. Entregar o microfone a um humano começa o show. Brinquedos podem passar de uma mão para outra ou ser soltos no chão. Cancelar um arraste não perde o objeto. Os controles ficam nas bandejas **Personagens** e **Brincar**. Toque na casinha para trocar de cômodo ou reunir a turma. Veja a [evidência e o mapa das camadas SVG](docs/dollhouse-svg.md).
+Arraste uma área livre horizontalmente para visitar o vizinho. A cena acompanha o dedo; menos de 25% da largura retorna à origem. Os botões **Anterior / Próximo** e os cartões em Minha casa oferecem alternativas. Visitar não transporta personagens. Para transportar alguém ou um objeto solto, mantenha o arraste por 500 ms nos 48 px da borda e solte no destino. A barra lateral mostra a espera. Escape ou cancelamento restaura o mundo; cada arraste permite uma travessia.
 
-Arraste um personagem até o sofá para sentar ou até a cama para deitar. Toque na geladeira para abrir; arraste a comida até a mesa ou um personagem. Toque na gaveta para guardar e recuperar brinquedos, e no abajur para mudar a iluminação. O botão de som ativa efeitos locais.
+Em **Decorar**, a bandeja reúne **Móveis**, **Decoração** e **Acabamentos**, com filtro de coleção. Toque para adicionar ou arraste a miniatura até o local desejado. Arrastar uma peça move; a seleção mostra cores, espelhar e guardar. Desfazer e refazer permitem experimentar. Nesse modo, personagens não recebem gestos e móveis não ativam brincadeiras. Esvaziar fica nas opções do cômodo, exige confirmação e pode ser desfeito.
 
-Selecione um personagem ou arraste-o pela casa. Toque no chão para mover o selecionado; também é possível focar a casa e usar as setas. Troque de cômodo e use **Reunir todo mundo** para levar a turma. Cada personagem carrega um objeto por vez. Pegue lanche para humanos ou comidinha para gatos e toque em **Oferecer comida**. A comida retorna à brincadeira para poder ser oferecida novamente. Descansar alterna descanso; mover acorda. Humanos podem usar qualquer um dos 11 looks. Começar show anima a turma; trocar de cômodo encerra o show. O navegador guarda a brincadeira automaticamente, inclusive roupas, posições, comida, descanso e show. Falha de armazenamento aparece na interface.
+Em **Minha casa**, toque nos cartões para visitar, arraste para reordenar ou use Antes/Depois. **+ Cômodo** oferece modelos com nome sugerido e tamanho médio. Nome e tamanho ficam nas opções secundárias. O painel também reúne som, casas independentes, duplicação, reunir a turma e ideias opcionais. Não há moedas, níveis ou avaliação de projetos.
 
-## Construir
-
-Toque em **Construir** para abrir o Ateliê. Escolha móveis e decoração no catálogo, arraste as peças pela casa, mude sua cor ou espelhe. **Paredes e piso** troca os acabamentos. **Desfazer/Refazer** permite experimentar; **Brincar** devolve os personagens à casa editada. Quem estiver sentado acompanha o sofá e os objetos acompanham seus móveis.
-
-Na casinha do canto, **Minhas casas** permite renomear, duplicar ou criar uma casa vazia. Cada projeto é salvo separadamente neste navegador. A coleção **Palco Neon** reúne palco, letreiro, caixas de som e espelho de camarim; os figurinos originais **Estrela Neon** e **Guardiã Aurora** estão no guarda-roupa. Sofá, cama, armário, geladeira, mesa, abajur e palco têm uma unidade por cômodo; os demais podem se repetir.
-
-Em **Planta da casa**, toque no **+** e escolha uma imagem: livre, quarto, cozinha, banheiro, estúdio ou jardim. O nome e o tamanho vêm prontos e o personagem selecionado acompanha a criação. Toque na imagem de um cômodo para entrar com ele. **Mais opções e ideias** reúne os ajustes de nome, tamanho, posição e projetos. A faixa inferior troca de cômodo. As ideias de projetos são opcionais e permitem guardar versões independentes. Arraste peças do catálogo diretamente para a casa. Fogão, banheira, mesa de criação, espelho e caixa de som alternam efeitos visuais por toque. O piano inicia/encerra o show, a televisão acende uma cena e o aquário liga bolhas. No canto de leitura, a poltrona permite sentar e a luminária liga por toque. Os looks Jaqueta jeans, Ensaio pop e Macacão criativo estão disponíveis no armário e na bandeja de roupas.
+Use Tab e Enter para os controles. Os alvos dos móveis aparecem ao receber foco: em Decorar, selecione e use as setas para mover. As setas na área da casa movem o personagem selecionado em Brincar. Escape cancela arrastes e recolhe a bandeja. A sala e toda a turma receberam a direção de ilustração com traço fino, aprovada pelo proprietário. Bia é loira e de pele clara; Rui e Léo têm versões dos looks com bermudas ou calças. Os botões usam ícones ilustrados e rótulos curtos.
 
 ## Arquitetura
 

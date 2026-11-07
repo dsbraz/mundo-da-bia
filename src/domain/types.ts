@@ -28,6 +28,7 @@ export interface Actor extends Point {
 export interface Item extends Point { id: ItemId; room: RoomId; holder: ActorId | null; spot: Spot }
 export interface World { layout: Layout; home: Home; room: RoomId; actors: Actor[]; items: Item[]; show: boolean }
 export type Action =
+  | { type: 'transfer'; item: ItemId; room: RoomId; point: Point }
   | { type: 'cross'; actor: ActorId; direction: 'left' | 'right' }
   | { type: 'use'; id: number }
   | { type: 'travel'; actor: ActorId; room: RoomId }
