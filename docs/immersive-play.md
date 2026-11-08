@@ -21,6 +21,7 @@ Esta revisão mantém o envelope de bairro v2, as identidades da turma e o hist�
 | Mudar destino durante a caminhada | Continuar a partir da posição visível e conservar velocidade | `walking.test.ts`, retarget vermelho antes de conservar velocidade |
 | Mudar cor do abajur | Material muda na cena, miniatura e recarga | `material.test.ts` vermelho antes dos materiais explícitos; teste de pixel em `immersive.spec.ts` |
 | Escolher Homem-Aranha ou Superman | Vestir qualquer humano, com máscara/capa e persistência | `outfit.test.ts`, catálogo e carregamento; vermelho antes de acrescentar os dois looks |
+| Entrar em Construir e voltar a Decorar | Rótulos e dicas acompanham o modo: Casas e cômodos / Móveis e cores | `reliable-play.spec.ts`, vermelho com o rótulo herdado antes da correção |
 | Ampliar uma casa | Cartão → prévia → confirmar; nenhuma alteração antes de confirmar | `immersive.spec.ts`; jornadas de construção e desfazer/refazer |
 | Painel sobre o microfone | Recolher ações e continuar a manipulação direta | `play.spec.ts`, vermelho sem o controle de recolher |
 

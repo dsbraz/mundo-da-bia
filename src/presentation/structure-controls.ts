@@ -77,5 +77,5 @@ function guidedRooms(dialog: HTMLDialogElement, building: Building, choosePrevie
     });
     const floor = button('Mais um andar', addFloor);
     floor.disabled = floorCount(building.layout) === 3;
-    dialog.append(choices, floor, button('Organizar cômodos e fachada', advanced));
+    dialog.append(choices, floor, button('Organizar cômodos', advanced));
   }

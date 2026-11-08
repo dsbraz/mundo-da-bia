@@ -16,7 +16,7 @@ export function createShell(root: HTMLElement, cancel: () => void) {
     play.hidden = building || !opened; catalog.hidden = !building || !opened || street || constructing;
     root.querySelector<HTMLElement>('#construction-tray')!.hidden = !constructing || !opened;
     streetTray.hidden = !building || !opened || !street || constructing;
-    toggle.textContent = trayLabel(building, street);
+    toggle.textContent = trayLabel(building, street, constructing);
     toggle.setAttribute('aria-expanded', String(opened));
   }
   window.addEventListener('keydown', e => { if (e.key === 'Escape') { opened = false; render(); } });
@@ -39,4 +39,7 @@ export function createShell(root: HTMLElement, cancel: () => void) {
   };
 }
 
-function trayLabel(building: boolean, street: boolean) { return building ? (street ? 'Construir' : 'Móveis e cores') : 'Turma e objetos'; }
+function trayLabel(building: boolean, street: boolean, constructing: boolean) {
+  if (constructing) return 'Casas e cômodos';
+  return building ? (street ? 'Construir' : 'Móveis e cores') : 'Turma e objetos';
+}

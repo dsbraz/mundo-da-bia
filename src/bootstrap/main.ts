@@ -73,7 +73,7 @@ const rooms = roomControls(root, {
   snapshot: () => townDispatch({ type: 'duplicate', building: albumView().active }),
 });
 const editor = createEditorControls(root, {
-  toggle: () => { if (!building) toggleBuild(); constructing = false; refresh(); }, edit: applyEdit,
+  toggle: () => { if (!building) toggleBuild(); constructing = false; refresh(); announceMode(); }, edit: applyEdit,
   undo: () => streetUndo(false), redo: () => streetUndo(true),
   select: id => { selectedPiece = id; refresh(); },
   house: id => townDispatch({ type: 'visit', location: { kind: 'interior', building: id, room: town.buildings.find(b => b.id === id)!.entry } }),
@@ -98,7 +98,7 @@ const outside = outdoorControls(root, useOutdoor, () => townDispatch({ type: 'ou
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
 const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close());
-root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!building) toggleBuild(); constructing = true; walker.cancel(); cancelInput(); refresh(); });
+root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!building) toggleBuild(); constructing = true; walker.cancel(); cancelInput(); refresh(); announceMode(); });
 root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
 root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());
 root.querySelector('#play-mode')!.addEventListener('click', () => { if (building) toggleBuild(); });
@@ -109,7 +109,11 @@ function toggleBuild() {
   shell.close();
   if (!building) { streetPast = []; streetFuture = []; }
   refresh();
-  root.querySelector('#announcement')!.textContent = building ? 'Escolha uma peça. Arraste para mudar de lugar. Experimente sem medo: dá para desfazer!' : 'Sua casa está pronta para brincar!';
+  announceMode();
+}
+function announceMode() {
+  const editing = constructing ? 'Escolha uma casa pronta ou amplie com cartões de cômodos.' : 'Escolha uma peça. Arraste para mudar de lugar. Experimente sem medo: dá para desfazer!';
+  root.querySelector('#announcement')!.textContent = building ? editing : 'Sua casa está pronta para brincar!';
 }
 function applyEdit(action: EditAction) {
   if (!building || town.location.kind === 'street') return;
