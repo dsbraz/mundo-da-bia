@@ -25,6 +25,6 @@ it('lets a seated actor leave its own furniture footprint', () => {
 });
 it('exits the nearest edge of a seat before routing, instead of walking through it', () => {
   const w = empty(); w.layout.pieces = [{ id: 1, kind: 'table', room: 'sala', x: 250, y: 350, flipped: false, color: 'original' }];
-  const path = walkingPath(w, { x: 270, y: 440 }, { x: 700, y: 440 });
+  const path = walkingPath(w, { x: 240, y: 465 }, { x: 700, y: 465 });
   expect(path).not.toBeNull(); expect(path![0]!.x).toBeLessThan(250);
 });

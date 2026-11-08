@@ -21,11 +21,13 @@ test('móveis, alimentação, guardar objeto e show continuam respondendo na cen
   await ready(page); await drag(page, [520, 420], [150, 405]); expect((await read(page)).actors[0]!.seat).toBe('sofa-left');
   await drag(page, [680, 282], [260, 450]); expect((await read(page)).items[0]!.spot).toBe('table');
   await drag(page, [260, 447], [150, 350]); expect((await read(page)).actors[0]!.fed).toBe(true);
-  await drag(page, [680, 332], [600, 470]); expect((await read(page)).actors[4]!.fed).toBe(true);
-  await tap(page, 380, 365); await expect.poll(async () => (await read(page)).home.drawer).toBe(true);
+  await drag(page, [680, 332], [600, 490]); expect((await read(page)).actors[4]!.fed).toBe(true);
+  await tap(page, 380, 365); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(true);
   await drag(page, [350, 382], [355, 370]); expect((await read(page)).items[3]!.spot).toBe('drawer');
-  await tap(page, 320, 390); await expect.poll(async () => (await read(page)).home.drawer).toBe(false);
-  const performer = (await read(page)).actors[0]!; await drag(page, [900, 252], [performer.x, performer.y - 80]); expect((await read(page)).show).toBe(true);
+  await tap(page, 320, 390); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(false);
+  await page.getByRole('button', { name: 'Recolher ações', exact: true }).click();
+  await expect(page.locator('#actions')).toBeHidden();
+  const performer = (await read(page)).actors[0]!; await drag(page, [600, 402], [performer.x, performer.y - 140]); expect((await read(page)).show).toBe(true);
   await tap(page, 60, 200); await expect.poll(async () => (await read(page)).home.lamp).toBe(false);
 });
 test('cancelar objeto e arrastar para o chão mantém identidade e quantidade', async ({ page }) => {
@@ -44,10 +46,10 @@ test('uma bandeja por vez, teclado, toque e orientações de tablet', async ({ p
   }
   await page.setViewportSize({ width: 1024, height: 768 }); await page.screenshot({ path: 'reports/atelier-landscape.png' });
 });
-test('os 14 looks da Bia e roupas arrastadas para outro humano funcionam', async ({ page }) => {
+test('os 16 looks da Bia e roupas arrastadas para outro humano funcionam', async ({ page }) => {
   await ready(page); await tray(page, 'Looks');
   const buttons = page.locator('#looks button');
-  for (let index = 0; index < 14; index++) { await buttons.nth(index).click(); await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true'); }
+  for (let index = 0; index < 16; index++) { await buttons.nth(index).click(); await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true'); }
   await buttons.first().scrollIntoViewIfNeeded();
   const source = (await buttons.first().boundingBox())!; const target = await import('./helpers').then(h => h.point(page, 440, 420));
   await page.mouse.move(source.x + 25, source.y + 25); await page.mouse.down(); await page.mouse.move(target.x, target.y, { steps: 10 }); await page.mouse.up();

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, read, create, tray, closeTray, drag, swipe } from './helpers';
+import { ready, read, create, tray, closeTray, drag, visitNeighbor } from './helpers';
 test('cria por cartão, renomeia e reordena sem transportar personagens', async ({ page }) => {
   await ready(page); await create(page, 'Cozinha'); let state = await read(page);
   expect(state.layout.rooms['room-3']).toMatchObject({ name: 'Cozinha', size: 'medium', cell: 2 }); expect(state.actors[0]!.room).toBe('sala');
@@ -8,7 +8,7 @@ test('cria por cartão, renomeia e reordena sem transportar personagens', async 
   await page.locator('#current-room-name').fill('Café'); await page.locator('#room-rename').click();
   await page.getByRole('button', { name: 'Mover Café antes' }).click(); expect((await read(page)).layout.rooms['room-3']!.cell).toBe(1);
   await page.getByRole('button', { name: 'Visitar Sala & palco' }).click(); expect((await read(page)).actors[0]!.room).toBe('room-3');
-  await swipe(page, 700, 300); expect((await read(page)).room).toBe('room-3'); state = await read(page);
+  await visitNeighbor(page); expect((await read(page)).room).toBe('room-3'); state = await read(page);
   await page.reload(); expect(await read(page)).toEqual(state);
 });
 test('arraste não salva a cada movimento; cancelamento não altera o mundo', async ({ page }) => {
@@ -25,7 +25,7 @@ test('arrastar cartões muda a ordem; segundo toque e cancelamento não duplicam
   const to = (await page.locator('[data-room="quarto"] > button').first().boundingBox())!;
   await page.mouse.move(from.x + 40, from.y + 40); await page.mouse.down(); await page.mouse.move(to.x + 40, to.y + 40, { steps: 8 }); await page.mouse.up();
   expect((await read(page)).layout.rooms['room-3']!.cell).toBe(1); await page.locator('#close-map').click();
-  await swipe(page, 700, 300); const before = await read(page);
+  await visitNeighbor(page); const before = await read(page);
   const canvas = page.locator('canvas');
   await canvas.dispatchEvent('pointerdown', { pointerId: 11, clientX: 500, clientY: 450 });
   await canvas.dispatchEvent('pointerdown', { pointerId: 12, clientX: 510, clientY: 450 });

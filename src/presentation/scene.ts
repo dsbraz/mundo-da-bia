@@ -1,3 +1,4 @@
+import { visibleHit } from './visible-hit';
 import { doorEffect } from './door-effect';
 import type { Location } from '../domain/neighborhood-types';
 import { outdoorEffect } from './outdoor-effects';
@@ -14,14 +15,12 @@ import { enterRoom } from '../domain/room-state';
 import type { RoomId, ItemId } from '../domain/types';
 import { itemIds } from '../domain/types';
 import type { Actor, ActorId, Point, PresentationEvent, World } from '../domain/types';
-import { fixture } from '../domain/layout';
 import { roomWidth } from '../domain/geometry';
-import { spotKind } from '../domain/furniture';
 import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
-import { animateActor, drawActor } from './art';
+import { animateActor, drawActor, walkPose } from './art';
 import { drawRoom } from './room';
-import { drawPieces, pickPiece, pieceDepth, actorDepth } from './piece-art';
+import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
 import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
@@ -83,9 +82,7 @@ export class PlayScene extends Phaser.Scene {
     });
     state.items.forEach(item => {
       const point = itemPoint(state, item); if (!point) return;
-      const holder = state.actors.find(a => a.id === item.holder);
-      const support = item.spot === 'floor' ? undefined : fixture(state, spotKind(item.spot));
-      const depth = holder ? this.figures.find(f => f.name === holder.id)!.depth + 2 : support ? pieceDepth(support) + 2 : item.y + 1;
+      const depth = objectDepth(state, item);
       this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(40, 40).setName(item.id).setDepth(depth));
     });
     drawLighting(this, state);
@@ -124,6 +121,13 @@ export class PlayScene extends Phaser.Scene {
   previewLayout(state: World) {
     state.layout.pieces.forEach(piece => this.pieces.get(piece.id)?.setPosition(piece.x, piece.y).setDepth(pieceDepth(piece)));
   }
+  placementHint(point: Point | null, invalid: boolean) {
+    this.hint?.clear();
+    if (!point || !invalid) return;
+    if (!this.hint) this.hint = this.add.graphics().setDepth(999);
+    this.hint.lineStyle(3, 0xac665d).strokeCircle(point.x + 20, point.y + 20, 15);
+    this.hint.lineBetween(point.x + 10, point.y + 10, point.x + 30, point.y + 30);
+  }
   previewActor(id: ActorId | null, point: Point | null) {
     const active = id ?? this.moving; if (!active) return;
     const actor = this.world.actors.find(a => a.id === active)!;
@@ -132,6 +136,7 @@ export class PlayScene extends Phaser.Scene {
     const depth = actorDepth(this.world, preview);
     const figure = this.figures.find(f => f.name === active);
     if (figure) this.tweens.killTweensOf(figure);
+    this.trackSteps(figure, point);
     figure?.setPosition(destination.x, destination.y).setDepth(depth);
     this.moving = id; this.game.canvas.dataset.walking = id ?? '';
     this.game.canvas.dataset.walkX = String(destination.x); this.game.canvas.dataset.walkY = String(destination.y);
@@ -139,6 +144,11 @@ export class PlayScene extends Phaser.Scene {
       const p = handPoint(preview);
       this.objects.find(o => o.name === item.id)?.setPosition(p.x, p.y).setDepth(depth + 2);
     });
+  }
+  private trackSteps(figure: Phaser.GameObjects.Container | undefined, point: Point | null) {
+    if (!figure || !point) return;
+    figure.setData('direction', Math.sign(point.x - figure.x));
+    figure.setData('distance', (figure.getData('distance') ?? 0) + Math.hypot(point.x - figure.x, point.y - figure.y));
   }
   walkToDoor(id: ActorId, x: number, duration: number): Promise<void> {
     const actor = this.world.actors.find(a => a.id === id)!;
@@ -151,7 +161,7 @@ export class PlayScene extends Phaser.Scene {
     return () => settle(this.figures, this.objects, this.world.room);
   }
   visibleWorld(): VisibleWorld {
-    return { ...this.world, actorHit: (actor, point) => this.actorHit(actor, point), visibleDepth: new Map(this.figures.map(f => [f.name, f.depth])), visibleItems: new Map(this.objects.map(o => [o.name as ItemId, { x: o.x, y: o.y }])), actors: this.world.actors.map(actor => {
+    return { ...this.world, occludingDepth: p => { const piece = this.pickPiece(p); return piece ? pieceDepth(piece) : 0; }, itemDepth: new Map(this.objects.map(o => [o.name as ItemId, o.depth])), actorHit: (actor, point) => this.actorHit(actor, point), visibleDepth: new Map(this.figures.map(f => [f.name, f.depth])), visibleItems: new Map(this.objects.map(o => [o.name as ItemId, { x: o.x, y: o.y }])), actors: this.world.actors.map(actor => {
       const figure = this.figures.find(f => f.name === actor.id);
       if (!figure) return actor;
       return { ...actor, x: figure.x, y: figure.y, seat: this.moving === actor.id ? null : actor.seat };
@@ -160,8 +170,7 @@ export class PlayScene extends Phaser.Scene {
   private actorHit(actor: Actor, point: Point) {
     const pose = this.figures.find(f => f.name === actor.id)?.getByName<Phaser.GameObjects.Container>('pose');
     if (!pose) return false;
-    const local = pose.getWorldTransformMatrix().applyInverse(point.x, point.y);
-    return Math.abs(local.x) <= 50 && local.y <= 20 && local.y >= (actor.kind === 'cat' ? -120 : -210);
+    return visibleHit(this, pose, point);
   }
   hover(point: Point | null) {
     this.hint?.clear();
@@ -224,10 +233,7 @@ export class PlayScene extends Phaser.Scene {
     const posed = this.moving === actor.id ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' as const } : actor;
     animateActor(figure, posed, reduced ? 500 : time, index, !reduced && this.world.show, reduced);
     const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
-    if (this.moving === actor.id && !reduced) {
-      pose.y -= Math.abs(Math.sin(time / 120)) * 3;
-      pose.getByName<Phaser.GameObjects.Container>('knees')?.setRotation(Math.sin(time / 160) * .12).setScale(1, .96 + Math.abs(Math.sin(time / 160)) * .04);
-    }
+    if (this.moving === actor.id) walkPose(figure, figure.getData('distance') ?? 0, reduced, figure.getData('direction'));
     this.animateSwing(pose, actor, time, reduced);
     const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
     this.world.items.filter(i => i.holder === actor.id).forEach(i => this.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));

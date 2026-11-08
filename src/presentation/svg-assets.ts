@@ -29,6 +29,7 @@ function loadActor(scene: Phaser.Scene, id: ActorId, index: number, current: Loo
   }
   const source = human.replaceAll('#D79B70', color(palette.skin)).replaceAll('#F5BF38', color(palette.hair));
   humanLayers.forEach(part => loadSvg(scene, `${id}-${part}`, layer(source, part === 'hair-back' && index > 1 ? 'hair-back-short' : part)));
+  for (const part of ['mask-spiderman', 'cape-superman']) loadSvg(scene, `${id}-${part}`, layer(source, part));
   loadSvg(scene, `${id}-hair`, layer(source, `hair-${id}`));
   [current].forEach(look => {
     const outfit = source.replaceAll('#E889A1', color(looks[look].color)).replace('href="#pattern-sol"', `href="#pattern-${look}"`);

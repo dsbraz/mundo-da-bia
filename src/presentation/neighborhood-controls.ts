@@ -46,7 +46,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     root.querySelector('#street-plots')!.replaceChildren(...Array.from({ length: town.plots }, (_, i) => button(town.buildings.find(b => b.plot === i)?.name ?? `✦ Terreno ${i + 1}`, () => plot(i))));
     const options = doors(town); carry.hidden = !options.length || building;
     accessible.replaceChildren(...options.map(d => {
-      const b = button(`Visitar ${d.name}`, () => dispatch({ type: 'visit', location: d.location })); b.className = 'scene-target';
+      const b = button(`Visitar ${d.name}`, () => dispatch({ type: 'visit', location: d.location })); b.className = 'scene-target'; b.dataset.worldX = String(d.point.x); b.dataset.worldY = String(d.point.y);
       const rect = root.querySelector('canvas')?.getBoundingClientRect();
       if (rect) { b.style.left = `${rect.left + (d.point.x - camera) / (where.kind === 'street' ? 1000 : roomWidth(town)) * rect.width}px`; b.style.top = `${rect.top + d.point.y / 600 * rect.height}px`; }
       return b;
@@ -54,8 +54,10 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     if (where.kind === 'street' && building) for (let i = 0; i < town.plots; i++) list.append(button(`✦ Terreno ${i + 1}`, () => plot(i)));
   }
   function choosePlot() {
-    plotDialog.replaceChildren(...Array.from({ length: get().plots }, (_, i) => i).filter(i => !get().buildings.some(b => b.plot === i)).map(i => button(`Terreno ${i + 1}`, () => { plotDialog.close(); plot(i); })), button('Cancelar', () => plotDialog.close()));
-    plotDialog.showModal();
+    const town = get();
+    const free = Array.from({ length: town.plots }, (_, i) => i).find(i => !town.buildings.some(b => b.plot === i));
+    if (free !== undefined) { plot(free); return; }
+    plotDialog.replaceChildren(button('Todos os terrenos estão ocupados. Voltar', () => plotDialog.close())); plotDialog.showModal();
   }
   return { refresh, plot, choosePlot, carryItem: (item: ItemId) => carryDialog(root, get(), { item }, dispatch) };
 }

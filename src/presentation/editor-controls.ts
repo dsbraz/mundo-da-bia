@@ -50,6 +50,7 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
     colors.forEach((button, index) => { button.disabled = !piece; button.setAttribute('aria-pressed', String(piece?.color === paletteIds[index])); });
     catalog.forEach((button, kind) => { button.disabled = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room); button.title = button.disabled ? 'Já existe neste cômodo. Você pode usar outro em um novo cômodo.' : '';  });
     updateHouseList(root, album);
+    presentPieces(root, state, actions.select, selected);
     for (const surface of ['wall', 'floor'] as const) root.querySelector<HTMLSelectElement>(`#finish-${surface}`)!.value = state.layout.rooms[state.room]![surface];
   };
 }
@@ -62,7 +63,7 @@ function createCatalog(root: HTMLElement, edit: (action: EditAction) => void, wi
     button.append(img, label); button.setAttribute('aria-label', `Adicionar ${furnishings[kind].name}`);
     button.dataset.category = furnishings[kind].category;
     catalogDrag(button, kind, edit, width);
-    button.addEventListener('click', () => edit({ type: 'add', kind, point: { x: width() / 2, y: 360 } }));
+    button.addEventListener('click', () => edit({ type: 'add', kind }));
     root.querySelector('#piece-catalog')!.append(button); buttons.set(kind, button);
   });
   let category = 'moveis';
@@ -101,4 +102,17 @@ function bindClear(root: HTMLElement, actions: EditorActions) {
   on(root, '#clear-room', () => { root.querySelector<HTMLDialogElement>('#room-dialog')!.close(); dialog.showModal(); });
   on(root, '#cancel-clear', () => dialog.close());
   on(root, '#confirm-clear', () => { if (!root.classList.contains('building')) actions.toggle(); actions.edit({ type: 'clear' }); dialog.close(); });
+}
+
+function presentPieces(root: HTMLElement, state: import('../domain/types').World, select: (id: number) => void, selected: number | null) {
+  let section = root.querySelector<HTMLElement>('#present-pieces');
+  if (!section) { section = document.createElement('details'); section.id = 'present-pieces'; root.querySelector('#build-catalog')!.append(section); }
+  const summary = document.createElement('summary'); summary.textContent = 'Peças neste cômodo';
+  const list = document.createElement('div'); list.className = 'choices';
+  state.layout.pieces.filter(p => p.room === state.room).forEach(piece => {
+    const button = document.createElement('button'); button.setAttribute('aria-pressed', String(piece.id === selected));
+    const image = document.createElement('img'); image.src = pieceImage(piece.kind, piece.color, true); image.alt = '';
+    button.append(image, document.createTextNode(furnishings[piece.kind].name)); button.onclick = () => select(piece.id); list.append(button);
+  });
+  section.replaceChildren(summary, list);
 }

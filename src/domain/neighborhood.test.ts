@@ -78,6 +78,7 @@ it('moradores distantes na rua não impedem decorar outro ambiente', async () =>
   town = neighborhoodAction(town, { type: 'transport', actor: 'bia', location: { kind: 'street' }, point: { x: 1600, y: 520 } });
   town = neighborhoodAction(town, { type: 'visit', location: { kind: 'interior', building: 1, room: 'sala' } });
   const world = localWorld(town), sofa = world.layout.pieces.find(p => p.kind === 'sofa')!;
+  world.layout.pieces = world.layout.pieces.filter(p => p.id === sofa.id);
   const next = storeWorld(town, editWorld(world, { type: 'move', id: sofa.id, point: { x: sofa.x + 20, y: sofa.y } }));
   expect(next.buildings[0]!.layout.pieces.find(p => p.id === sofa.id)!.x).toBe(sofa.x + 20);
   expect(next.actors[0]!.x).toBe(1600);

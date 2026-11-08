@@ -11,10 +11,10 @@ it('monta um cômodo vazio, colore e move peças sem modificar a casa original',
   const added = editWorld(empty, { type: 'add', kind: 'plant' });
   const piece = added.layout.pieces.at(-1)!;
   expect(piece).toMatchObject({ kind: 'plant', room: 'sala', color: 'original', flipped: false });
-  const moved = editWorld(added, { type: 'move', id: piece.id, point: { x: 520, y: 380 } });
+  const moved = editWorld(added, { type: 'move', id: piece.id, point: { x: 700, y: 380 } });
   const colored = editWorld(moved, { type: 'color', id: piece.id, color: 'mint' });
   const flipped = editWorld(colored, { type: 'flip', id: piece.id });
-  expect(flipped.layout.pieces.at(-1)).toMatchObject({ x: 520, y: 380, color: 'mint', flipped: true });
+  expect(flipped.layout.pieces.at(-1)).toMatchObject({ x: 700, y: 380, color: 'mint', flipped: true });
   expect(added.layout.pieces.at(-1)).toEqual(piece);
   expect(original).toEqual(initialWorld());
 });
@@ -35,6 +35,7 @@ it('edita acabamentos, duplica decoração e rejeita gestos fora da casa', () =>
 
 it('mover sofá leva quem está sentado, e remover devolve ao chão', () => {
   const seated = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  seated.layout.pieces = seated.layout.pieces.filter(p => p.kind === 'sofa');
   const sofa = seated.layout.pieces.find(p => p.kind === 'sofa')!;
   const moved = editWorld(seated, { type: 'move', id: sofa.id, point: { x: sofa.x + 100, y: sofa.y } });
   expect(moved.actors[0]).toMatchObject({ x: 250, y: 405, seat: 'sofa-left' });
@@ -44,8 +45,8 @@ it('mover sofá leva quem está sentado, e remover devolve ao chão', () => {
 it('mesa carrega seu conteúdo e desfazer/refazer recuperam toda a edição', () => {
   const state = transition(initialWorld(), { type: 'put', item: 'lanche', spot: 'table' }).state;
   const table = state.layout.pieces.find(p => p.kind === 'table')!;
-  const moved = editWorld(state, { type: 'move', id: table.id, point: { x: table.x + 100, y: table.y } });
-  expect(moved.items[0]?.x).toBe(360);
+  const moved = editWorld(state, { type: 'move', id: table.id, point: { x: table.x - 100, y: table.y } });
+  expect(moved.items[0]?.x).toBe(160);
   let h = recordEdit(history(state), moved);
   expect(undo(h).present).toEqual(state);
   h = redo(undo(h));

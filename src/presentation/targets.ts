@@ -5,6 +5,7 @@ import { lookIds } from '../domain/types';
 import type { Actor, Item, ItemId, LookId, Point, World } from '../domain/types';
 export type VisibleWorld = World & {
   visibleItems?: ReadonlyMap<ItemId, Point>; visibleDepth?: ReadonlyMap<string, number>;
+  occludingDepth?: (point: Point) => number; itemDepth?: ReadonlyMap<ItemId, number>;
   actorHit?: (actor: Actor, point: Point) => boolean;
 };
 export type DragToken = { kind: 'item'; id: ItemId } | { kind: 'look'; id: LookId };
@@ -16,6 +17,7 @@ export function slotsFor(state: World) {
 }
 export function actorAt(state: VisibleWorld, p: Point) {
   return [...state.actors].sort((a, b) => (state.visibleDepth?.get(a.id) ?? a.y) - (state.visibleDepth?.get(b.id) ?? b.y)).reverse().find(a => a.room === state.room
+    && (state.visibleDepth?.get(a.id) ?? a.y) >= (state.occludingDepth?.(p) ?? 0)
     && (state.actorHit ? state.actorHit(a, p) : actorContains(a, p)));
 }
 export function itemPoint(state: VisibleWorld, item: Item): Point | null {
@@ -24,10 +26,11 @@ export function itemPoint(state: VisibleWorld, item: Item): Point | null {
   if (holder) return holder.room === state.room ? handPoint(holder) : null;
   return item.room === state.room && availableSpot(state, item.spot) ? { x: item.x, y: item.y - 28 } : null;
 }
-export function sourceAt(state: World, p: Point, wardrobe: boolean): DragToken | undefined {
-  const item = [...state.items].reverse().find(i => {
+export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): DragToken | undefined {
+  const foreground = foregroundDepth(state, p);
+  const item = [...state.items].reverse().sort((a, b) => (state.itemDepth?.get(b.id) ?? b.y) - (state.itemDepth?.get(a.id) ?? a.y)).find(i => {
     const position = itemPoint(state, i);
-    return position && Math.abs(position.x - p.x) <= 20 && Math.abs(position.y - p.y) <= 20;
+    return position && (state.itemDepth?.get(i.id) ?? Infinity) >= foreground && Math.abs(position.x - p.x) <= 20 && Math.abs(position.y - p.y) <= 20;
   });
   if (item) return { kind: 'item', id: item.id };
   if (actorAt(state, p)) return undefined;
@@ -50,4 +53,8 @@ export function handPoint(actor: Actor): Point {
 export function previewPoint(state: World, drag: DragPreview): Point {
   const target = actorAt(state, drag.point);
   return target && drag.kind === 'item' ? handPoint(target) : drag.point;
+}
+
+function foregroundDepth(state: VisibleWorld, point: Point) {
+  return Math.max(state.occludingDepth?.(point) ?? 0, state.visibleDepth?.get(actorAt(state, point)?.id ?? '') ?? 0);
 }

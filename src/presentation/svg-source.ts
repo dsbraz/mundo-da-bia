@@ -19,6 +19,7 @@ export function svgFragment(source: string, ids: readonly string[], crop?: Crop)
   return `data:image/svg+xml;base64,${btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''))}`;
 }
 export function recolor(source: string, color: Palette): string {
+  source = source.replace(/var\(--piece-(base|light|dark),\s*(#[0-9a-f]+)\)/gi, (_, tone: 'base' | 'light' | 'dark', fallback: string) => color === 'original' ? fallback : palettes[color][tone]);
   if (color === 'original') return source;
   const palette = palettes[color];
   return source.replace(/#(8fa9cb|a8c9b8|e7b4d8|dca2cb|91bf8e|8fbc89|aed09b|a5ca95|8ebd8c|c08abb|bc84b4|dba7d5|f196b1|c491bc)/gi, palette.base)

@@ -18,7 +18,7 @@ export interface PlayInput {
 interface Active { dragged: boolean; scale: Point; pointer: number; room: RoomId; token: DragToken | undefined; actor: ActorId | undefined; offset: Point; start: Point; last: Point }
 export function createPlayGesture(getState: () => World, select: (id: ActorId) => void, move: (p: Point) => void, play?: PlayInput) {
   let active: Active | null = null;
-  function cancel() { active = null; play?.preview(null); play?.previewActor?.(null, null); }
+  function cancel() { const actor = active?.actor; active = null; play?.preview(null); if (actor) play?.previewActor?.(null, null); }
   return {
     start(pointer: number, point: Point): boolean {
       if (active) return false;

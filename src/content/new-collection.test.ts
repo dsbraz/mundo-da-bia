@@ -19,7 +19,8 @@ it('senta na poltrona e liga a luminária sem alterar os móveis vizinhos', () =
   state = editWorld(state, { type: 'add', kind: 'reading-lamp' });
   const lamp = state.layout.pieces.at(-1)!;
   state = transition(state, { type: 'sit', actor: 'bia', seat: 'armchair' }).state;
-  expect(state.actors[0]).toMatchObject({ seat: 'armchair', x: 540, y: 445 });
+  const chair = state.layout.pieces.find(p => p.kind === 'armchair')!;
+  expect(state.actors[0]).toMatchObject({ seat: 'armchair', x: chair.x + 90, y: chair.y + 145 });
   state = transition(state, { type: 'use', id: lamp.id }).state;
   expect(state.layout.pieces.at(-1)?.active).toBe(true);
   expect(decode(encode(state))).toEqual(state);

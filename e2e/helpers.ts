@@ -20,7 +20,12 @@ export async function point(page: Page, x: number, y: number) {
 }
 async function points(page: Page, positions: [number, number][]) {
   const state = await read(page); const width = { small: 1000, medium: 1200, large: 1400 }[state.layout.rooms[state.room]!.size];
-  const box = (await page.locator('canvas').boundingBox())!;
+  let box = (await page.locator('canvas').boundingBox())!;
+  const viewport = page.viewportSize()!;
+  const xs = positions.map(([x]) => box.x + x * box.width / width);
+  const left = Math.min(...xs), right = Math.max(...xs);
+  const shift = left < 24 ? left - 24 : right > viewport.width - 24 ? right - viewport.width + 24 : 0;
+  if (shift) { await page.locator('canvas').dispatchEvent('wheel', { deltaX: shift, deltaY: 0 }); box = (await page.locator('canvas').boundingBox())!; }
   return positions.map(([x, y]) => ({ x: box.x + x * box.width / width, y: box.y + y * box.height / 600 }));
 }
 export async function drag(page: Page, from: [number, number], to: [number, number], cancel = false) {
@@ -37,9 +42,21 @@ export async function clear(page: Page) {
 
 export async function swipe(page: Page, from: number, to: number) {
   const session = await page.context().newCDPSession(page);
-  const a = await point(page, from, 40), b = await point(page, to, 40);
-  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: a.x, y: a.y, id: 1 }, { x: a.x + 50, y: a.y, id: 2 }] });
-  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: b.x, y: b.y, id: 1 }, { x: b.x + 50, y: b.y, id: 2 }] });
+  const a = { x: from, y: 115 }, b = { x: to, y: 115 };
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: a.x, y: a.y, id: 1 }] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: b.x, y: b.y, id: 1 }] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await session.detach();
+}
+
+export async function explore(page: Page) {
+  if (await page.locator('#navigation-toggle').getAttribute('aria-expanded') !== 'true') await page.locator('#navigation-toggle').click();
+}
+export async function visitNeighbor(page: Page, direction: 'next' | 'previous' = 'next') {
+  await explore(page); await page.getByRole('button', { name: direction === 'next' ? 'Próximo →' : '← Anterior', exact: true }).click();
+  await page.locator('#navigation-toggle').click();
+}
+export async function choice(page: Page, id: string, value: string) {
+  const label = await page.locator(`${id} option[value="${value}"]`).textContent();
+  await page.locator(`${id} + .choice-cards`).getByRole('button', { name: label!, exact: true }).click();
 }

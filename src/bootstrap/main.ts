@@ -1,3 +1,7 @@
+import { roomWidth } from '../domain/geometry';
+import { illustratedChoices } from '../presentation/illustrated-choices';
+import { viewport, positionTargets } from '../presentation/viewport';
+import { actorAt, sourceAt } from '../presentation/targets';
 import { pickupItem } from '../presentation/item-pickup';
 import { approach, equipmentAction } from '../presentation/equipment-interaction';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
@@ -32,6 +36,7 @@ import { createControls, positionContext } from '../presentation/controls';
 import { bindInput } from '../presentation/input';
 import { PlayScene } from '../presentation/scene';
 import '../presentation/style.css';
+import '../presentation/immersive.css';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -47,6 +52,7 @@ const root = document.querySelector<HTMLElement>('#app')!;
 const scene = new PlayScene(state);
 let wardrobeOpen = false;
 let cancelInput = () => {};
+let view: ReturnType<typeof viewport> | undefined;
 const wardrobeButton = root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!;
 const shell = createShell(root, () => cancelInput());
 function toggleWardrobe() { wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
@@ -74,7 +80,7 @@ const editor = createEditorControls(root, {
   duplicate: empty => { if (empty) newBuilding(); else townDispatch({ type: 'duplicate', building: albumView().active }); },
   rename: name => townDispatch({ type: 'facade', building: albumView().active, name }),
 });
-const walker = walking({ reject: point => scene.reject(point), state: () => state, selected: () => selected, preview: (id, point) => scene.previewActor(id, point),
+const walker = walking({ reject: point => scene.reject(point), state: () => state, selected: () => selected, preview: (id, point) => { scene.previewActor(id, point); if (point) view?.follow({ ...point, x: point.x - camera }); },
   commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), hint: text => { root.querySelector('#announcement')!.textContent = text; } });
 function dropOutside(actor: ActorId, point: import('../domain/types').Point) {
   const target = outdoorAt(town, point); if (!target) return false;
@@ -108,7 +114,7 @@ function toggleBuild() {
 function applyEdit(action: EditAction) {
   if (!building || town.location.kind === 'street') return;
   const next = editWorld(state, action);
-  if (next === state) return;
+  if (next === state) { root.querySelector('#announcement')!.textContent = 'Escolha um espaço livre. Móveis precisam de chão e a porta precisa de passagem.'; return; }
   remember();
   edits = recordEdit(edits, next); state = next;
   if (action.type === 'add') selectedPiece = state.layout.pieces.at(-1)?.id ?? null;
@@ -152,21 +158,26 @@ function previewTown(action: NeighborhoodAction | null) {
 function previewBuild(action: EditAction | null) {
   const preview: World = action ? editWorld(state, action) : state;
   scene.previewLayout(preview);
+  if (action?.type === 'move') scene.placementHint(action.point, preview === state);
+  else scene.placementHint(null, false);
 }
 function refresh() {
   camera = Math.min(camera, streetWidth(town.plots) - 1000);
   scene.neighborhood(town); scene.camera(camera);
   scene.buildMode(building, selectedPiece);
   scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street', constructing);
+  view?.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state));
   renderControls();
   root.querySelector<HTMLButtonElement>('#construct-structure')!.disabled = town.location.kind === 'street';
   root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
   root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building && !constructing));
 }
 function renderControls() {
+  const focus = state.layout.pieces.find(p => p.id === selectedPiece) ?? state.actors.find(a => a.id === selected)!;
+  root.classList.toggle('selection-on-right', focus.x > 500);
   controls(state, selected, saved);
   editor(albumView(), edits, building, selectedPiece); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building, camera);
-  navigationBar(); outside(town, selected, camera, building);
+  navigationBar(); illustratedChoices(root); outside(town, selected, camera, building);
   root.querySelector<HTMLButtonElement>('#undo')!.disabled = !streetPast.length; root.querySelector<HTMLButtonElement>('#redo')!.disabled = !streetFuture.length;
 }
 function select(id: ActorId) { walker.cancel(); root.classList.add('actor-chosen'); selected = id; refresh(); }
@@ -214,11 +225,16 @@ const game = new Phaser.Game({
   scene, audio: { noAudio: true }, render: { antialias: true },
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
-    new ResizeObserver(renderControls).observe(current.canvas);
-    new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); }).observe(root.querySelector('#world')!);
+    view = viewport(current.canvas, () => positionTargets(root));
+    view.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state));
+    new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); view?.render(); }).observe(root.querySelector('#world')!);
     cancelInput = bindInput(current.canvas, () => scene.visibleWorld(), select, point => dispatch({ type: 'move', actor: selected, point }), {
-      walk: point => { const target = outdoorAt(town, point); if (target) useOutdoor(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup, interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
-    }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point)) }, {
+      walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) useOutdoor(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup, interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
+    }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point), () => current.canvas.getBoundingClientRect().height / 600) }, {
+      view: { background: p => { const world = scene.visibleWorld(); return building ? !scene.pickPiece(p) : !sourceAt(world, p, wardrobeOpen) && !actorAt(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
+        if (state.streetWidth) { camera = Math.max(0, Math.min(state.streetWidth - 1000, camera - dx * 600 / current.canvas.getBoundingClientRect().height)); scene.camera(camera); }
+        view?.pan(state.streetWidth ? 0 : dx, dy);
+      } },
       camera: () => camera, setCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building, camera); outside(town, selected, camera, building); navigationBar(); },
       building: () => building, wardrobe: () => wardrobeOpen, dispatch,
       pan: (room, fraction) => scene.pan(room, fraction),
@@ -249,6 +265,8 @@ root.addEventListener('keydown', event => {
   const actor = state.actors.find(a => a.id === selected)!;
   dispatch({ type: 'move', actor: selected, point: { x: actor.x + offset[0], y: actor.y + offset[1] } });
 });
+const explore = document.createElement('button'); explore.id = 'navigation-toggle'; explore.textContent = '⌂ Explorar'; explore.setAttribute('aria-expanded', 'false');
+explore.onclick = () => { const open = root.classList.toggle('navigation-open'); explore.setAttribute('aria-expanded', String(open)); }; root.append(explore);
 buttonArt(root);
 root.querySelector('#announcement')!.textContent = `${actors[selected].name} · crie um lugar, invente uma história.`;
 refresh();

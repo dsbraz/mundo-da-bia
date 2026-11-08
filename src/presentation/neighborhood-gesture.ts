@@ -1,6 +1,7 @@
 import { plotAt } from '../domain/neighborhood-geometry';
 import type { Neighborhood, NeighborhoodAction, Location } from '../domain/neighborhood-types';
 import type { ActorId, ItemId, Point, World } from '../domain/types';
+import type { VisibleWorld } from './targets';
 import { actorAt, sourceAt } from './targets';
 import { doorAt, destinationPoint } from './neighborhood-doors';
 type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, p: Point) => void; end: (id: number, p: Point) => void; cancel: () => void; transferring?: () => boolean };
@@ -10,7 +11,7 @@ interface Actions {
   dispatch: (action: NeighborhoodAction) => void; plot: (plot: number) => void;
   preview: (action: NeighborhoodAction | null) => void; progress: (value: number) => void;
 }
-interface Active { id: number; start: Point; actor?: ActorId | undefined; item?: ItemId | undefined; destination?: Location | undefined; ready: boolean }
+interface Active { id: number; start: Point; actor?: ActorId | undefined; item?: ItemId | undefined; destination?: Location | undefined; ready: boolean; claimed: boolean }
 export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
   let active: Active | null = null, timer: ReturnType<typeof setInterval> | undefined;
   function stop() { clearInterval(timer); timer = undefined; actions.progress(0); }
@@ -38,8 +39,8 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
       if (active) return false;
       const world = actions.world(), token = sourceAt(world, point, false);
       const actor = token ? undefined : actorAt(world, point)?.id;
-      active = { id, start: point, ready: false, ...(actions.building() ? {} : { actor, item: loose(world, token) }) };
-      if (!doorAt(actions.town(), point) || actor || token) base.start(id, point);
+      active = { id, start: point, ready: false, claimed: claimed(world, point, token), ...(actions.building() ? {} : { actor, item: loose(world, token) }) };
+      if (startBase(active, point, actions)) base.start(id, point);
       return true;
     }, update,
     end(id, point) {
@@ -49,7 +50,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
       if (dropActor(a, point, actions)) { cancel(); return; }
       if (backgroundTap(a, point)) {
         const door = doorAt(actions.town(), point);
-        if (door) { cancel(); actions.dispatch({ type: 'visit', location: door.location }); return; }
+        if (door && !actions.building()) { cancel(); actions.dispatch({ type: 'visit', location: door.location }); return; }
         if (actions.building() && actions.town().location.kind === 'street') { cancel(); actions.plot(plotAt(point.x)); return; }
       }
       base.end(id, point); cancel();
@@ -62,4 +63,12 @@ function loose(world: World, token: ReturnType<typeof sourceAt>): ItemId | undef
 
 function dropActor(active: Active, point: Point, actions: Actions) { return !!active.actor && Math.hypot(point.x - active.start.x, point.y - active.start.y) >= 12 && !!actions.drop?.(active.actor, point); }
 
-function backgroundTap(active: Active, point: Point) { return !active.actor && !active.item && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12; }
+function backgroundTap(active: Active, point: Point) { return !active.claimed && !active.actor && !active.item && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12; }
+
+function startBase(active: Active, point: Point, actions: Actions) {
+  return actions.building() || active.claimed || !doorAt(actions.town(), point) || active.actor || active.item;
+}
+
+function claimed(world: VisibleWorld, point: Point, token: ReturnType<typeof sourceAt>) {
+  return !!token || (world.occludingDepth?.(point) ?? 0) > 150;
+}

@@ -18,7 +18,7 @@ export function initialWorld(): World {
       x: [520, 440, 755, 880, 600, 710, 835][index]!, y: index < 4 ? 530 : 540, fed: false, resting: false, seat: null,
     })),
     items: itemIds.map((id, index) => ({ id, room: 'sala', holder: null, spot: index < 2 ? 'fridge' : 'floor',
-      x: [680, 680, 900, 350][index]!, y: [310, 360, 280, 410][index]! })),
+      x: [680, 680, 600, 350][index]!, y: [310, 360, 430, 410][index]! })),
   };
 }
 

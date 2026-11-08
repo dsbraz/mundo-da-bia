@@ -9,6 +9,7 @@ export function sceneControls(root: HTMLElement, select: (id: number) => void, d
     layer.replaceChildren(...world.layout.pieces.filter(p => p.room === world.room).map(piece => {
       const button = document.createElement('button'); button.className = 'scene-target'; button.dataset.piece = String(piece.id);
       button.textContent = `${building ? 'Selecionar' : 'Usar'} ${furnishings[piece.kind].name}`;
+      button.dataset.worldX = String(piece.x + pieceBounds[piece.kind].width / 2); button.dataset.worldY = String(piece.y + pieceBounds[piece.kind].height / 2);
       const box = root.querySelector('canvas')?.getBoundingClientRect();
       if (box) {
         button.style.left = `${box.left + (piece.x + pieceBounds[piece.kind].width / 2) / roomWidth(world) * box.width}px`;

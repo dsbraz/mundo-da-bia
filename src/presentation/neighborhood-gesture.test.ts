@@ -6,12 +6,12 @@ import { localWorld, migrateNeighborhood } from '../domain/neighborhood';
 import { createPlayGesture } from './play-gesture';
 import { houseInput } from './house-input';
 afterEach(() => vi.useRealTimers());
-function setup() {
+function setup(building = false) {
   vi.useFakeTimers();
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
   const world = localWorld(town), dispatch = vi.fn(), preview = vi.fn(), progress = vi.fn();
   const base = { start: vi.fn(() => true), update: vi.fn(), end: vi.fn(), cancel: vi.fn() };
-  const gesture = neighborhoodGesture(base, { town: () => town, world: () => world, building: () => false, dispatch, preview, progress, plot: vi.fn() });
+  const gesture = neighborhoodGesture(base, { town: () => town, world: () => world, building: () => building, dispatch, preview, progress, plot: vi.fn() });
   return { town, world, dispatch, preview, progress, base, gesture };
 }
 it('porta visita apenas ao soltar e cancela sem visitar', () => {
@@ -60,4 +60,20 @@ it('um arraste comum não repinta a cena ao terminar e preserva sua animação d
   const { gesture, preview, base } = setup();
   gesture.start(1, { x: 520, y: 450 }); gesture.update(1, { x: 600, y: 440 }); gesture.end(1, { x: 600, y: 440 });
   expect(base.end).toHaveBeenCalledOnce(); expect(preview).not.toHaveBeenCalled();
+});
+
+it('em Decorar a porta não captura o gesto da peça à sua frente', () => {
+  const { gesture, base, dispatch } = setup(true);
+  const point = { x: 550, y: 300 };
+  gesture.start(1, point); gesture.end(1, point);
+  expect(base.start).toHaveBeenCalledExactlyOnceWith(1, point);
+  expect(base.end).toHaveBeenCalledExactlyOnceWith(1, point);
+  expect(dispatch).not.toHaveBeenCalled();
+});
+it('um equipamento visível diante da porta recebe o clique em Brincar', () => {
+  const { gesture, world, base, dispatch } = setup();
+  Object.assign(world, { occludingDepth: () => 400 });
+  const point = { x: 550, y: 300 }; gesture.start(1, point); gesture.end(1, point);
+  expect(base.start).toHaveBeenCalledExactlyOnceWith(1, point);
+  expect(base.end).toHaveBeenCalledExactlyOnceWith(1, point); expect(dispatch).not.toHaveBeenCalled();
 });

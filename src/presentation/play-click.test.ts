@@ -20,6 +20,10 @@ it('a background drag returning to its origin never walks', () => {
   expect(s.walk).not.toHaveBeenCalled();
 });
 it('clicking a loose object requests pickup without placing it', () => {
-  const s = setup(); s.gesture.start(1, { x: 900, y: 252 }); s.gesture.end(1, { x: 900, y: 252 });
+  const s = setup(); s.gesture.start(1, { x: 600, y: 402 }); s.gesture.end(1, { x: 600, y: 402 });
   expect(s.pickup).toHaveBeenCalledExactlyOnceWith('microfone'); expect(s.dispatch).not.toHaveBeenCalled();
+});
+it('cancelling a background gesture does not reset an independently walking actor', () => {
+  const s = setup(); s.gesture.start(1, { x: 950, y: 530 }); s.gesture.cancel();
+  expect(s.previewActor).not.toHaveBeenCalled();
 });

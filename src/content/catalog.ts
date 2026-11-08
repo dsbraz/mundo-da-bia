@@ -9,6 +9,8 @@ export const actors: Record<ActorId, { name: string; skin: number; hair: number 
   pipoca: { name: 'Pipoca', skin: 0xfff6dc, hair: 0xb09d85 },
 };
 export const looks: Record<LookId, { name: string; color: number; icon: string }> = {
+  spiderman: { name: 'Homem-Aranha', color: 0xcf514d, icon: '✳' },
+  superman: { name: 'Superman', color: 0x538fbb, icon: 'S' },
   rumi: { name: 'Rumi', color: 0xf7cd42, icon: '✦' },
   mira: { name: 'Mira', color: 0xf3d044, icon: '★' },
   zoey: { name: 'Zoey', color: 0x73bbd7, icon: '♫' },

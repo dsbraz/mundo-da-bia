@@ -1,6 +1,12 @@
+import { initialWorld } from '../src/domain/world';
+import { initialAlbum } from '../src/domain/houses';
+import { migrateNeighborhood } from '../src/domain/neighborhood';
+import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { expect, test } from '@playwright/test';
-import { ready, read, tray, closeTray, drag, tap, swipe } from './helpers';
+import { ready, read, tray, closeTray, drag, tap, visitNeighbor } from './helpers';
 test('pega roupa no armário e brinquedo na gaveta, entrega no colo e deita com coberta', async ({ page }) => {
+  const world = initialWorld(); world.actors[1]!.room = 'quarto';
+  await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await ready(page);
   await expect(page.locator('canvas')).toHaveAttribute('width', '2000');
@@ -14,7 +20,7 @@ test('pega roupa no armário e brinquedo na gaveta, entrega no colo e deita com 
   await drag(page, [466, 364], [150, 350]);
   expect((await read(page)).items[3]!.holder).toBe('bia');
   await page.screenshot({ path: 'reports/care-lap.png' });
-  await swipe(page, 700, 300); await tray(page, 'Turma'); await page.locator('#bring-here').click(); await closeTray(page);
+  await visitNeighbor(page); await tray(page, 'Turma'); await page.locator('#bring-here').click(); await closeTray(page);
   const bia = (await read(page)).actors[0]!;
   await drag(page, [bia.x, bia.y - 110], [620, 300]);
   expect((await read(page)).actors[0]).toMatchObject({ seat: 'bed', resting: true });

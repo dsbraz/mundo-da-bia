@@ -23,6 +23,7 @@ function cast(look: LookId): World {
   return { ...world, show: false };
 }
 for (const look of lookIds) test(`visual: ${look}, corpo, roupa e objeto em poses e caminhada`, async ({ page }) => {
+  await page.setViewportSize({ width: 1792, height: 768 });
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   const saved = encodeNeighborhood(migrateNeighborhood(initialAlbum(cast(look))));
   await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v2', value), saved);

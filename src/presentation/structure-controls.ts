@@ -1,3 +1,4 @@
+import { illustratedChoices } from './illustrated-choices';
 import type { Building, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import type { RoomId, RoomTemplate } from '../domain/types';
 import { roomTemplates } from '../domain/types';
@@ -10,10 +11,10 @@ export function structureControls(root: HTMLElement, get: () => Neighborhood, di
   let id = 1;
   function current() { return get().buildings.find(b => b.id === id)!; }
   function commit(action: NeighborhoodAction) { dispatch(action); render(); }
-  function render() {
+  function advanced() {
     const building = current();
     const title = document.createElement('h2'); title.textContent = `${building.name} · estrutura`;
-    dialog.replaceChildren(title, button('Fechar estrutura', () => dialog.close()));
+    dialog.replaceChildren(title, button('Voltar', render), button('Fechar estrutura', () => dialog.close()));
     for (let floor = floorCount(building.layout) - 1; floor >= 0; floor--) {
       const heading = document.createElement('h3'); heading.textContent = floor ? `${floor}º andar` : 'Térreo';
       const row = document.createElement('div'); row.className = 'module-row';
@@ -22,6 +23,10 @@ export function structureControls(root: HTMLElement, get: () => Neighborhood, di
     }
     const add = button('+ Andar', () => preview({ type: 'add-floor', building: id }, 'Novo andar com uma sala', 'empty'));
     add.disabled = floorCount(building.layout) === 3; dialog.append(add);
+  }
+  function render() { guidedRooms(dialog, current(), choosePreview, () => preview({ type: 'add-floor', building: id }, 'Novo andar com uma sala', 'empty'), advanced); }
+  function choosePreview(cell: number, template: RoomTemplate) {
+    preview({ type: 'add-module', building: id, cell, template }, templates[template].name, template);
   }
   function cell(building: Building, cell: number) {
     const entry = (Object.entries(building.layout.rooms) as [RoomId, typeof building.layout.rooms.sala][]).find(([, r]) => r.cell === cell);
@@ -43,7 +48,7 @@ export function structureControls(root: HTMLElement, get: () => Neighborhood, di
   }
   function preview(action: NeighborhoodAction, name: string, template: RoomTemplate) {
     const heading = document.createElement('h3'); heading.textContent = `Prévia · ${name}`;
-    dialog.replaceChildren(heading, roomPicture(template), button('Confirmar módulo', () => commit(action)), button('Cancelar', render));
+    dialog.replaceChildren(heading, roomPicture(template), button('Confirmar módulo', () => { commit(action); }), button('Cancelar', render));
   }
   function edit(room: RoomId) {
     const b = current(), value = b.layout.rooms[room]!;
@@ -54,7 +59,23 @@ export function structureControls(root: HTMLElement, get: () => Neighborhood, di
       for (let cell = 1; cell < floorCount(b.layout) * 4; cell++) { const option = document.createElement('option'); option.value = String(cell); option.textContent = `${Math.floor(cell / 4)}º nível · espaço ${cell % 4 + 1}`; option.selected = value.cell === cell; destination.append(option); }
       dialog.append(destination, button('Mover ou trocar posição', () => commit({ type: 'move-module', building: id, room, cell: Number(destination.value) })));
     }
-    dialog.append(button('Voltar aos módulos', render));
+    dialog.append(button('Voltar aos módulos', render)); illustratedChoices(dialog);
   }
   return { open(building?: number) { prepare(); const where = get().location; id = building ?? (where.kind === 'interior' ? where.building : get().buildings[0]!.id); render(); if (!dialog.open) dialog.showModal(); }, refresh() { if (dialog.open) render(); } };
 }
+
+function guidedRooms(dialog: HTMLDialogElement, building: Building, choosePreview: (cell: number, template: RoomTemplate) => void, addFloor: () => void, advanced: () => void) {
+    const heading = document.createElement('h2'); heading.textContent = `Vamos ampliar ${building.name}?`;
+    const hint = document.createElement('p'); hint.textContent = 'Escolha um cômodo pronto. Você poderá decorar depois.';
+    dialog.replaceChildren(heading, hint, button('Fechar estrutura', () => dialog.close()));
+    const occupied = new Set(Object.values(building.layout.rooms).map(room => room.cell));
+    const free = Array.from({ length: floorCount(building.layout) * 4 }, (_, cell) => cell).find(cell => !occupied.has(cell));
+    const choices = document.createElement('div'); choices.className = 'choices';
+    roomTemplates.forEach(template => {
+      const choice = button(`Adicionar ${templates[template].name}`, () => choosePreview(free!, template));
+      choice.prepend(roomPicture(template)); choice.disabled = free === undefined; choices.append(choice);
+    });
+    const floor = button('Mais um andar', addFloor);
+    floor.disabled = floorCount(building.layout) === 3;
+    dialog.append(choices, floor, button('Organizar cômodos e fachada', advanced));
+  }

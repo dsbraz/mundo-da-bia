@@ -1,5 +1,5 @@
 export const actorIds = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'] as const;
-export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora', 'denim', 'rehearsal', 'overalls', 'rumi', 'mira', 'zoey'] as const;
+export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora', 'denim', 'rehearsal', 'overalls', 'rumi', 'mira', 'zoey', 'spiderman', 'superman'] as const;
 export const roomIds = ['sala', 'quarto'] as const;
 export const itemIds = ['lanche', 'peixe', 'microfone', 'ursinho'] as const;
 export type ActorId = typeof actorIds[number];

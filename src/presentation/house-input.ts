@@ -7,6 +7,7 @@ import { actorAt, sourceAt } from './targets';
 import { navigation } from './navigation';
 import { edgeTransfer } from './edge-transfer';
 export interface HouseInput {
+  view?: { background: (p: Point) => boolean; pan: (dx: number, dy: number) => void };
   camera?: () => number; setCamera?: (x: number) => void;
   building: () => boolean; wardrobe: () => boolean; dispatch: (action: Action) => void;
   pan: (room: RoomId | null, fraction: number) => void;
@@ -16,7 +17,7 @@ export interface HouseInput {
 type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, p: Point) => void; end: (id: number, p: Point) => void; cancel: () => void; transferring?: () => boolean };
 export function houseInput(canvas: HTMLCanvasElement, state: () => World, current: () => Gesture, actions: HouseInput) {
   let active: { id: number; gesture: Gesture; actor: ActorId | null; item: ItemId | null } | null = null;
-  const width = () => canvas.getBoundingClientRect().width;
+  const width = () => canvas.parentElement?.getBoundingClientRect().width ?? canvas.getBoundingClientRect().width;
   const nav = navigation({ width, neighbor: d => state().streetWidth ? undefined : neighbor(state(), d), preview: actions.pan, visit: room => actions.dispatch({ type: 'room', room }) });
   const street = streetPan(() => actions.camera?.() ?? 0, x => actions.setCamera?.(x), () => (state().streetWidth ?? 1000) - 1000, width);
   const navigationGesture = { start: (id: number, p: Point) => (state().streetWidth ? street : nav).start(id, p), update: (id: number, p: Point) => (state().streetWidth ? street : nav).update(id, p), end: (id: number, p: Point) => (state().streetWidth ? street : nav).end(id, p), cancel: () => { street.cancel(); nav.cancel(); } };

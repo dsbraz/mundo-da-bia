@@ -42,3 +42,11 @@ it('completes an interaction at the current position without an endless walk', (
   s.walk.start({ x: actor.x, y: actor.y }, complete); s.advance();
   expect(complete).toHaveBeenCalledOnce(); expect(s.commit).toHaveBeenCalledOnce();
 });
+it('um novo destino durante a caminhada preserva a velocidade já adquirida', () => {
+  const s = setup(); s.walk.start({ x: 900, y: 530 });
+  for (let n = 0; n < 5; n++) s.advance();
+  const before = s.preview.mock.calls.at(-1)![1];
+  s.walk.start({ x: 850, y: 530 }); s.advance();
+  const after = s.preview.mock.calls.at(-1)![1];
+  expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeGreaterThan(10);
+});

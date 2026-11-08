@@ -1,3 +1,4 @@
+import { canPlace, freePlacement } from './placement';
 import type { EditAction, Piece, PieceKind, World } from './types';
 import { fixtures, fromPiece, pieceBounds, toPiece, validPlacement } from './layout';
 import { seatKind, spotKind } from './furniture';
@@ -18,6 +19,7 @@ function editPiece(state: World, piece: Piece, action: Extract<EditAction, { id:
   const patch = action.type === 'move' ? action.point : action.type === 'flip' ? { flipped: !piece.flipped } : { color: action.color };
   const updated = { ...piece, ...patch };
   if (!validPlacement(updated, roomWidth(state))) return state;
+  if (action.type === 'move' && !canPlace(state, updated)) return state;
   const next = relocate(state, piece, updated);
   if (![...next.actors, ...next.items].every(p => validLocalPosition(state, p))) return state;
   return { ...next, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === piece.id ? updated : p) } };
@@ -33,7 +35,9 @@ function addPiece(state: World, kind: PieceKind, point?: { x: number; y: number 
     if (validPlacement(placed, roomWidth(state))) Object.assign(piece, placed);
   }
   if (!validPlacement(piece, roomWidth(state))) { piece.x = box.x; piece.y = box.y; }
-  return { ...state, layout: { ...state.layout, nextId: piece.id + 1, pieces: [...state.layout.pieces, piece] } };
+  const placed = point ? (canPlace(state, piece) ? piece : undefined) : freePlacement(state, piece);
+  if (!placed) return state;
+  return { ...state, layout: { ...state.layout, nextId: piece.id + 1, pieces: [...state.layout.pieces, placed] } };
 }
 function removePiece(state: World, piece: Piece): World {
   return {

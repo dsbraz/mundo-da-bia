@@ -4,6 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { ready, point, read, tap } from './helpers';
+import { explore } from './helpers';
 test.use({ video: 'on' });
 test.beforeEach(async ({ page }) => {
   const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
@@ -42,6 +43,7 @@ test('walk, pick up, sit, leave, travel, drop and reload preserve the object', a
   await tap(page, 450, 530);
   await expect.poll(async () => (await read(page)).actors[0]!.seat).toBeNull();
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
+  await explore(page);
   await page.getByRole('button', { name: 'Levar Bia', exact: true }).click();
   await page.getByRole('button', { name: 'Quarto dos sonhos · Térreo', exact: true }).click();
   await page.getByRole('button', { name: 'Soltar objeto', exact: true }).click();

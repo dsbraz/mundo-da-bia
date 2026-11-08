@@ -1,3 +1,4 @@
+import { seatKind } from '../domain/furniture';
 import { rasterScale } from './rendering';
 import type Phaser from 'phaser';
 import { fixture, pieceBounds } from '../domain/layout';
@@ -9,12 +10,13 @@ export function orderedPieces(state: World) {
 export function pieceDepth(piece: Piece) {
   if (piece.kind === 'rug') return 1;
   if (['picture', 'neon'].includes(piece.kind)) return 2;
-  return Math.min(520, piece.y + pieceBounds[piece.kind].height - 35);
+  return piece.y + pieceBounds[piece.kind].height - 20;
 }
 export function drawPieces(scene: Phaser.Scene, state: World, wardrobe: boolean, selected: number | null) {
   const pieces = new Map<number, Phaser.GameObjects.Container>();
   orderedPieces(state).forEach(piece => {
     const container = drawPiece(scene, piece, state, wardrobe); pieces.set(piece.id, container);
+    seatFront(scene, piece, state);
     if (selected === piece.id) {
       const box = pieceBounds[piece.kind];
       container.add(scene.add.rectangle(box.width / 2, box.height / 2, box.width + 6, box.height + 6)
@@ -56,10 +58,25 @@ export function pickPiece(scene: Phaser.Scene, state: World, point: { x: number;
     const x = piece.flipped ? box.width - 1 - dx : dx;
     const keys = [`piece-${piece.kind}-${piece.color}`];
     if (piece.kind === 'lamp') keys.push(`piece-lamp-on-${piece.color}`);
-    return keys.some(key => (scene.textures.getPixelAlpha(x * rasterScale, dy * rasterScale, key) ?? 0) > 16);
+    return keys.some(key => (scene.textures.getPixelAlpha(x * rasterScale, dy * rasterScale, key) ?? 0) > (piece.kind === 'lamp' ? 64 : 16));
   });
 }
 
 export function actorDepth(state: World, actor: Actor) {
-  return actor.seat === 'bed' ? pieceDepth(fixture(state, 'bed')!) + 1 : actor.y;
+  const support = actor.seat && fixture(state, seatKind(actor.seat));
+  return support ? pieceDepth(support) + 1 : actor.y;
+}
+
+export function objectDepth(state: World, item: import('../domain/types').Item) {
+  const holder = state.actors.find(a => a.id === item.holder);
+  if (holder) return actorDepth(state, holder) + 2;
+  const support = item.spot === 'floor' ? undefined : fixture(state, item.spot === 'drawer' ? 'wardrobe' : item.spot);
+  return support ? pieceDepth(support) + 2 : item.y + 1;
+}
+
+function seatFront(scene: Phaser.Scene, piece: Piece, state: World) {
+  if (!state.actors.some(a => a.room === piece.room && a.seat && seatKind(a.seat) === piece.kind)) return;
+  const box = pieceBounds[piece.kind], top = Math.round(box.height * .82);
+  scene.add.image(piece.x + box.width / 2, piece.y + box.height / 2, `piece-${piece.kind}-${piece.color}`)
+    .setDisplaySize(box.width, box.height).setFlipX(piece.flipped).setCrop(0, top * rasterScale, box.width * rasterScale, (box.height - top) * rasterScale).setDepth(pieceDepth(piece) + 2);
 }

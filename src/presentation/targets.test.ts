@@ -36,3 +36,8 @@ it('a carried object does not cover the rest of the body', () => {
   expect(sourceAt(state, { x: 520, y: 475 }, false)).toBeUndefined();
   expect(sourceAt(state, { x: 548, y: 475 }, false)?.id).toBe('microfone');
 });
+it('objetos na mesma profundidade seguem a ordem de desenho, do último para o primeiro', () => {
+  const state = initialWorld();
+  state.items = state.items.slice(0, 2).map(item => ({ ...item, spot: 'floor', x: 500, y: 500 }));
+  expect(sourceAt(state, { x: 500, y: 472 }, false)?.id).toBe('peixe');
+});
