@@ -25,6 +25,7 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean):
 export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
   figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(actor.seat === 'bed' && actor.resting);
+  pose.x = 0; pose.y = 0;
   const blink = actor.resting || (time + index * 530) % 3900 < 130;
   pose.getByName<Phaser.GameObjects.Image>('eyes').setVisible(!blink);
   pose.getByName<Phaser.GameObjects.Image>('lids').setVisible(blink);

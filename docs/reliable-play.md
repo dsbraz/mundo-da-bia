@@ -22,7 +22,7 @@ Brincar, Construir e Decorar têm controles próprios. Construir oferece terreno
 | Sair de dentro do móvel para o lado oposto | Sair primeiro pela borda próxima e contornar | `walking-path.test.ts`: primeiro ponto era o destino, atravessando o móvel inteiro | Obstáculo não é removido da rota |
 | Selecionar ator e abrir controles no desktop | Painel fora da cena | E2E: painel em y=262 enquanto a cena terminava em y=690 | `reliable-play.spec.ts` |
 | Procurar modo Construir | Acesso próprio e distinto de Decorar | E2E: controle ausente | `reliable-play.spec.ts` |
-| Alternar para pose de cama | Aproximação gradual, imediata sob redução de movimento | `pose-transition.test.ts`: ângulo saltava diretamente ao final | Corpo, roupa e objeto acompanham a pose |
+| Alternar para pose de cama | Aproximação gradual, imediata sob redução de movimento | `pose-transition.test.ts`: ângulo saltava diretamente ao final | Corpo, roupa e objeto acompanham posição e rotação da pose |
 | Pedir interação no ponto onde o ator já está | Concluir sem caminhada infinita | `walking.test.ts`: conclusão nunca chamada | Rota de comprimento zero |
 | Mover oito pixels e acrescentar segundo dedo | Manter o arraste já iniciado | `two-finger.test.ts`: segundo dedo roubava o gesto | Mesmo limiar no roteador de toque |
 | Selecionar na pose visual transformada | Usar transformação e profundidade exibidas | `targets.test.ts`: nenhum ator encontrado | Alvos seguem a pose e a ordem de desenho |
@@ -41,3 +41,5 @@ Evidência reproduzível: `catalog-review.spec.ts` cobre as 28 peças e nove fac
 ## Limites práticos
 
 Mouse, teclado, toque/multitoque e eventos de roda/trackpad são exercitados no Chromium. Isso não verifica trackpad físico, FPS em Android nem a experiência com Bia. Não há coleta de dados da criança. Publicação Sites não faz parte desta entrega; a correspondência de origem exigida pelo projeto permanece uma etapa separada.
+
+A primeira execução completa encontrou um timeout na jornada longa de cuidado durante a recarga, depois das ações e verificações de domínio. O helper de arraste passou a calcular ambos os pontos a partir de uma única leitura do estado e do canvas; timeout, retries e política permaneceram intactos. A sequência é verificada novamente na execução final.

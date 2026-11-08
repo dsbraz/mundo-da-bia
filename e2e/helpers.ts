@@ -16,12 +16,15 @@ export async function create(page: Page, name = 'Livre') {
   await page.getByRole('button', { name: 'Construir cômodo', exact: true }).click();
 }
 export async function point(page: Page, x: number, y: number) {
+  return (await points(page, [[x, y]]))[0]!;
+}
+async function points(page: Page, positions: [number, number][]) {
   const state = await read(page); const width = { small: 1000, medium: 1200, large: 1400 }[state.layout.rooms[state.room]!.size];
   const box = (await page.locator('canvas').boundingBox())!;
-  return { x: box.x + x * box.width / width, y: box.y + y * box.height / 600 };
+  return positions.map(([x, y]) => ({ x: box.x + x * box.width / width, y: box.y + y * box.height / 600 }));
 }
 export async function drag(page: Page, from: [number, number], to: [number, number], cancel = false) {
-  const a = await point(page, ...from), b = await point(page, ...to);
+  const [a, b] = (await points(page, [from, to])) as [{ x: number; y: number }, { x: number; y: number }];
   await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 8 });
   if (cancel) await page.keyboard.press('Escape'); await page.mouse.up();
 }

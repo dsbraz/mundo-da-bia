@@ -128,6 +128,7 @@ function townDispatch(action: NeighborhoodAction) {
   const next = neighborhoodAction(town, action);
   if (next === town) return;
   if (!['visit', 'transport', 'outdoor'].includes(action.type)) remember();
+  const settle = scene.captureMotion();
   const previous = town.location;
   town = next; state = localWorld(town); edits = history(state); selectedPiece = null;
   if (town.location.kind === 'street' && previous.kind === 'interior') camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, plotStart(town.buildings.find(b => b.id === previous.building)!.plot) - 280));
@@ -135,7 +136,7 @@ function townDispatch(action: NeighborhoodAction) {
   saved = saveNeighborhood(town); refresh();
   if (action.type === 'visit' || action.type === 'transport') scene.arrive(previous);
   if (action.type === 'construct') structure.open(town.nextBuilding - 1);
-  if (action.type === 'outdoor') scene.outdoorReaction(action);
+  if (action.type === 'outdoor') { settle(); scene.outdoorReaction(action); }
 }
 function remember() { streetPast = [...streetPast.slice(-49), town]; streetFuture = []; }
 function streetUndo(forward: boolean) {

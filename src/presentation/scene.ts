@@ -2,7 +2,7 @@ import { doorEffect } from './door-effect';
 import type { Location } from '../domain/neighborhood-types';
 import { outdoorEffect } from './outdoor-effects';
 import type { OutdoorAction } from '../domain/neighborhood-types';
-import { handAnchor } from './pose';
+import { handAnchor, actorScale } from './pose';
 import { rasterScale, logicalWidth } from './rendering';
 import { captureMotion } from './settle-motion';
 import { itemKind } from '../domain/item-kind';
@@ -228,15 +228,16 @@ export class PlayScene extends Phaser.Scene {
       pose.y -= Math.abs(Math.sin(time / 120)) * 3;
       pose.getByName<Phaser.GameObjects.Container>('knees')?.setRotation(Math.sin(time / 160) * .12).setScale(1, .96 + Math.abs(Math.sin(time / 160)) * .04);
     }
-    this.animateSwing(figure, pose, actor, time, reduced);
+    this.animateSwing(pose, actor, time, reduced);
     const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
-    this.world.items.filter(i => i.holder === actor.id).forEach(i => this.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y));
+    this.world.items.filter(i => i.holder === actor.id).forEach(i => this.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));
   }
-  private animateSwing(figure: Phaser.GameObjects.Container, pose: Phaser.GameObjects.Container, actor: Actor, time: number, reduced: boolean) {
+  private animateSwing(pose: Phaser.GameObjects.Container, actor: Actor, time: number, reduced: boolean) {
     if (this.town?.outdoor.swing !== actor.id || this.moving === actor.id) return;
     const angle = reduced ? 0 : Math.sin(time / 600) * .08;
     (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(angle);
-    figure.setPosition(actor.x - Math.sin(angle) * 210, actor.y + (Math.cos(angle) - 1) * 210);
+    pose.x = -Math.sin(angle) * 210 / actorScale(actor);
+    pose.y += (Math.cos(angle) - 1) * 210 / actorScale(actor);
     pose.rotation = angle;
   }
 
