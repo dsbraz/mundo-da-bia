@@ -4,7 +4,7 @@ test('cria por cartão, renomeia e reordena sem transportar personagens', async 
   await ready(page); await create(page, 'Cozinha'); let state = await read(page);
   expect(state.layout.rooms['room-3']).toMatchObject({ name: 'Cozinha', size: 'medium', cell: 2 }); expect(state.actors[0]!.room).toBe('sala');
   await tray(page, 'Turma'); await page.locator('#bring-here').click(); expect((await read(page)).actors[0]!.room).toBe('room-3'); await closeTray(page);
-  await page.locator('#map-toggle').click(); await page.locator('#room-options summary').click();
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#room-options summary').click();
   await page.locator('#current-room-name').fill('Café'); await page.locator('#room-rename').click();
   await page.getByRole('button', { name: 'Mover Café antes' }).click(); expect((await read(page)).layout.rooms['room-3']!.cell).toBe(1);
   await page.getByRole('button', { name: 'Visitar Sala & palco' }).click(); expect((await read(page)).actors[0]!.room).toBe('room-3');
@@ -19,7 +19,7 @@ test('arraste não salva a cada movimento; cancelamento não altera o mundo', as
   await drag(page, [520, 420], [600, 410]); expect(await page.evaluate(() => (window as unknown as { writes: number }).writes)).toBe(1);
 });
 test('arrastar cartões muda a ordem; segundo toque e cancelamento não duplicam', async ({ page }) => {
-  await ready(page); await create(page); await page.locator('#map-toggle').click();
+  await ready(page); await create(page); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   await page.locator('[data-room="room-3"] > button').first().scrollIntoViewIfNeeded();
   const from = (await page.locator('[data-room="room-3"] > button').first().boundingBox())!;
   const to = (await page.locator('[data-room="quarto"] > button').first().boundingBox())!;

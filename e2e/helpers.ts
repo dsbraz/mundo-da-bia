@@ -35,7 +35,7 @@ export async function drag(page: Page, from: [number, number], to: [number, numb
 }
 export async function tap(page: Page, x: number, y: number) { const p = await point(page, x, y); await page.touchscreen.tap(p.x, p.y); }
 export async function clear(page: Page) {
-  await page.locator('#map-toggle').click();
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   if (!await page.locator('#room-options').evaluate(n => (n as HTMLDetailsElement).open)) await page.locator('#room-options summary').click();
   await page.locator('#clear-room').click(); await page.locator('#confirm-clear').click();
 }

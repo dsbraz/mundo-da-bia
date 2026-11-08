@@ -1,3 +1,4 @@
+import { houseActions } from './house-actions';
 import { facadeSvg, svgUrl } from './architecture-art';
 import { actors, items } from '../content/catalog';
 import { itemKind } from '../domain/item-kind';
@@ -11,11 +12,11 @@ function button(text: string, action: () => void) {
   const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.onclick = action; return b;
 }
 export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, selected: () => ActorId, close: () => void) {
+  const deletion = houseActions(root, get, dispatch);
   const list = document.createElement('section'); list.id = 'neighborhood-list';
   const title = document.createElement('h3'); title.textContent = 'Nosso bairro';
-  root.querySelector('#room-map')!.before(title, list);
   const street = button('♧ Visitar a rua', () => { dispatch({ type: 'visit', location: { kind: 'street' } }); close(); });
-  title.after(street);
+  root.querySelector('[data-home-panel="map organize"]')!.append(title, street, list);
   const carry = button('♧ Levar pela porta', () => carryDialog(root, get(), { actor: selected() }, dispatch));
   root.querySelector('#actor-context')!.append(carry);
   const accessible = document.createElement('div'); accessible.className = 'scene-controls'; root.append(accessible);
@@ -35,11 +36,13 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     plotDialog.append(button('Voltar', () => plotDialog.close())); plotDialog.showModal();
   }
   function refresh(building: boolean, camera: number) {
-    const town = get(); const where = town.location;
+    const town = get(); const where = town.location; deletion();
     root.classList.toggle('street', where.kind === 'street');
     list.replaceChildren(...town.buildings.map(b => {
       const card = document.createElement('article'); card.className = 'room-card';
-      card.append(button(`⌂ ${b.name}`, () => { dispatch({ type: 'visit', location: { kind: 'interior', building: b.id, room: b.entry } }); close(); }));
+      const visit = button(`⌂ ${b.name}`, () => { dispatch({ type: 'visit', location: { kind: 'interior', building: b.id, room: b.entry } }); close(); });
+      const image = document.createElement('img'); image.src = svgUrl(facadeSvg(b.model)); image.alt = ''; visit.prepend(image); card.append(visit);
+      const manage = button(`Organizar ${b.name}`, () => dispatch({ type: 'visit', location: { kind: 'interior', building: b.id, room: b.entry } })); manage.className = 'home-manage'; card.append(manage);
       if (building && where.kind === 'street') card.append(button('✎ Fachada', () => plot(b.plot)));
       return card;
     }));

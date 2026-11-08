@@ -37,6 +37,7 @@ import { bindInput } from '../presentation/input';
 import { PlayScene } from '../presentation/scene';
 import '../presentation/style.css';
 import '../presentation/immersive.css';
+import '../presentation/home-menu.css';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -139,14 +140,19 @@ function townDispatch(action: NeighborhoodAction) {
   if (next === town) return;
   if (!['visit', 'transport', 'outdoor'].includes(action.type)) remember();
   const settle = scene.captureMotion();
-  const previous = town.location;
+  const previous = town.location; const exitCamera = streetCamera(town);
   town = next; state = localWorld(town); edits = history(state); selectedPiece = null;
-  if (town.location.kind === 'street' && previous.kind === 'interior') camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, plotStart(town.buildings.find(b => b.id === previous.building)!.plot) - 280));
+  if (town.location.kind === 'street' && previous.kind === 'interior') camera = exitCamera;
   if (town.location.kind !== 'street') camera = 0;
   saved = saveNeighborhood(town); refresh();
   if (action.type === 'visit' || action.type === 'transport') scene.arrive(previous);
   if (action.type === 'construct') structure.open(town.nextBuilding - 1);
   if (action.type === 'outdoor') { settle(); scene.outdoorReaction(action); }
+}
+function streetCamera(previous: Neighborhood) {
+  const where = previous.location;
+  if (where.kind === 'street') return camera;
+  return Math.max(0, Math.min(streetWidth(previous.plots) - 1000, plotStart(previous.buildings.find(b => b.id === where.building)!.plot) - 280));
 }
 function remember() { streetPast = [...streetPast.slice(-49), town]; streetFuture = []; }
 function streetUndo(forward: boolean) {

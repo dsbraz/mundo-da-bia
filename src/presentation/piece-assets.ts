@@ -7,6 +7,7 @@ import sala from './assets/sala.svg?raw';
 import quarto from './assets/quarto.svg?raw';
 import workshop from './assets/workshop.svg?raw';
 import playroom from './assets/playroom.svg?raw';
+import everyday from './assets/everyday.svg?raw';
 import reading from './assets/reading.svg?raw';
 import decor from './assets/decor.svg?raw';
 
@@ -20,6 +21,7 @@ const extras: Partial<Record<PieceKind, string[]>> = {
   fridge: ['fridge-closed', 'fridge-open'], lamp: ['lamp-on', 'lamp-off'],
 };
 function source(kind: PieceKind) {
+  if (['sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart'].includes(kind)) return everyday;
   if (['armchair', 'reading-lamp', 'side-table'].includes(kind)) return reading;
   if (['piano', 'tv', 'aquarium'].includes(kind)) return playroom;
   if (['counter', 'stove', 'bath', 'desk', 'shelf'].includes(kind)) return workshop;

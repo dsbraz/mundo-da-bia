@@ -73,7 +73,7 @@ function createCatalog(root: HTMLElement, edit: (action: EditAction) => void, wi
     root.querySelector<HTMLElement>('#finishes')!.hidden = category !== 'finishes';
     root.querySelector<HTMLElement>('#piece-catalog')!.hidden = category === 'finishes';
     buttons.forEach((b, kind) => {
-      const decor = ['rug', 'plant', 'picture', 'cushion', 'neon'].includes(kind);
+      const decor = ['planter', 'rug', 'plant', 'picture', 'cushion', 'neon'].includes(kind);
       b.hidden = (category === 'decoracao' ? !decor : decor) || (collection.value === 'neon' && b.dataset.category !== 'neon');
     });
   };

@@ -20,4 +20,6 @@ export type NeighborhoodAction = ModuleAction | OutdoorAction
   | { type: 'transport'; actor?: ActorId; item?: ItemId; location: Location; point: Point }
   | { type: 'construct'; plot: number; model: BuildingModel }
   | { type: 'facade'; building: number; name?: string; color?: Palette }
-  | { type: 'duplicate'; building: number };
+  | { type: 'duplicate'; building: number }
+  | { type: 'remove-building'; building: number }
+  | { type: 'move-building'; building: number; plot: number };

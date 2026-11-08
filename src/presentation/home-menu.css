@@ -1,0 +1,39 @@
+#room-dialog { width:min(960px, calc(100vw - 32px)); padding:24px; background:#fffaf0; border:3px solid #dbc2a5; border-radius:28px; }
+#room-dialog .dialog-heading, #room-dialog .home-tabs { position:sticky; z-index:2; background:#fffaf0; }
+#room-dialog .dialog-heading { top:-24px; padding:8px 0; }
+#room-dialog .home-tabs { top:42px; display:flex; gap:8px; padding:8px 0 16px; }
+.home-tabs button { flex:1; min-height:48px; border-radius:18px; }
+.home-tabs button[aria-pressed="true"] { background:#dcebd9; border-color:#689a78; box-shadow:0 3px 0 #b1c9ac; }
+#room-dialog [hidden] { display:none !important; }
+#room-map { display:grid; grid-template-columns:repeat(var(--map-columns,4),minmax(0,1fr)); gap:12px; padding:20px 12px; background:linear-gradient(#e9f2ee,#f3e5cd); border-radius:22px; border-bottom:8px solid #c6b091; }
+#room-map .room-card { position:relative; display:flex; flex-direction:column; flex-wrap:nowrap; background:#fffaf0; border:2px solid #d6c3a8; border-radius:18px; padding:6px; touch-action:pan-y; box-shadow:0 5px 0 #d9c8ad; }
+#room-map .room-card small { padding:4px 8px 0; color:#6a6559; font-size:.75rem; }
+#room-map .room-card > button { width:100%; flex:none; }
+#room-map .room-card > button[aria-pressed="true"] { background:#e5efdc; border-color:#7e9c69; }
+#room-map .room-picture { height:100px; background:linear-gradient(#f4e7d3 68%,#dfc9a8 68%); border-radius:12px; }
+#room-dialog:not([data-home-tab="organize"]) .room-reorder, #room-dialog:not([data-home-tab="organize"]) .home-manage { display:none; }
+#room-dialog[data-home-tab="organize"] .room-card { touch-action:none; }
+#room-dialog .home-settings { padding:16px; margin:16px 0; border-radius:20px; background:#eee8db; }
+#room-dialog .home-settings label { display:block; margin-top:12px; }
+#room-dialog .home-settings input { width:min(100%,360px); display:block; margin:8px 0; }
+#delete-house { color:#8b3c33; border-color:#d5a69a; }
+#delete-house-hint { font-size:.9rem; }
+#neighborhood-list { display:flex; gap:10px; overflow:auto; padding:8px 2px 14px; }
+#neighborhood-list .room-card { flex:0 0 150px; }
+#neighborhood-list img { display:block; width:86px; height:80px; object-fit:contain; margin:auto; }
+#home-name { font-size:1.4rem; }
+#add-room { margin-top:16px; }
+@media(max-width:600px) { #room-dialog { padding:16px; } #room-map { gap:6px; padding:12px 5px; } #room-map .room-card { padding:2px; border-radius:10px; } #room-map .room-picture { height:70px; } #room-map button { font-size:.8rem; padding:6px 2px; } #room-map .room-card small { font-size:.65rem; padding:4px 1px; } }
+
+#room-dialog .home-tabs button { padding:10px 8px; min-width:0; }
+#room-map .room-card > button { touch-action:pan-y; font-size:.95rem; }
+#room-dialog[data-home-tab="organize"] #room-map .room-card > button { touch-action:none; }
+#room-map .room-picture img { max-height:90px; }
+
+@media(max-width:600px) { #room-dialog .home-tabs button { font-size:.9rem; padding:10px 4px; } #room-map .room-picture img { max-height:50px; } }
+
+.house-plots { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin:20px 0; }
+.house-plots button { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.house-plots img, .house-plots .empty-plot { width:100px; height:110px; object-fit:contain; }
+.house-plots .empty-plot { display:grid; place-items:center; font-size:60px; color:#72967e; background:#e7edda; border-radius:18px; }
+.moving-house { display:block; width:160px; height:180px; object-fit:contain; margin:12px auto; }

@@ -6,12 +6,12 @@ import { decode, encode } from '../persistence/save';
 it('oferece três novos looks e móveis que sobrevivem ao recarregamento', () => {
   expect(lookIds).toEqual(expect.arrayContaining(['denim', 'rehearsal', 'overalls']));
   expect(pieceKinds).toEqual(expect.arrayContaining(['armchair', 'reading-lamp', 'side-table']));
-  for (const look of lookIds.slice(-3)) {
+  for (const look of ['denim', 'rehearsal', 'overalls'] as const) {
     const state = transition(initialWorld(), { type: 'dress', actor: 'bia', look }).state;
     expect(decode(encode(state))).toEqual(state);
   }
   let state = initialWorld();
-  for (const kind of pieceKinds.slice(-3)) state = editWorld(state, { type: 'add', kind });
+  for (const kind of ['armchair', 'reading-lamp', 'side-table'] as const) state = editWorld(state, { type: 'add', kind });
   expect(decode(encode(state))).toEqual(state);
 });
 it('senta na poltrona e liga a luminária sem alterar os móveis vizinhos', () => {

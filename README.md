@@ -1,6 +1,6 @@
 # Mundo da Bia
 
-Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, 16 looks e um bairro com casas, prédios e lojas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
+Casinha de faz de conta em português, com quatro humanos fictícios, três gatos, 20 looks e um bairro com casas, prédios e lojas com até 12 cômodos. Arte SVG em camadas no Phaser, TypeScript estrito e Vite. Sem serviços de dados, anúncios ou telemetria da criança.
 
 **Estado da entrega:** evolução do piloto com construção modular, caminhada e praça; veja o [escopo e a verificação do MVP](docs/mvp.md). A aprovação dos gates não comprova acabamento visual, descoberta das ações ou desempenho em tablet real. A integração em main exige quality-gate aprovado para o mesmo SHA. Há nove alertas moderados de desenvolvimento, sem altas/críticas no audit registrado. Não há publicação Sites. Consulte [a evidência](docs/verification.md) e [a triagem](docs/dependency-audit.md).
 
@@ -33,9 +33,11 @@ Em **Construir**, escolha **Nova casa pronta**, um modelo de Casa, Prédio ou Lo
 
 Em **Decorar**, escolha móveis e acabamentos por cartões. Tocar adiciona a peça no espaço livre mais próximo; arrastar permite escolher o lugar. Peças sólidas não podem sobrepor outras nem bloquear a passagem da porta. Tapetes e decoração plana podem ficar sob móveis. Uma posição inválida recebe indicação e não altera o histórico. A lista **Peças neste cômodo** permite selecionar e retirar uma peça encoberta, inclusive em uma brincadeira antiga. Cores, espelhar, guardar, desfazer/refazer e esvaziar continuam disponíveis; esvaziar exige confirmação e pode ser desfeito.
 
-**Minha casa** reúne cartões de ambientes, reordenação, duplicação, nome e tamanho, som, reunir a turma e ideias opcionais. A turma é única entre as construções. Nome permite personalizar cada personagem até 24 caracteres ou restaurar o original. Os 16 looks incluem Homem-Aranha e Superman para todos os humanos; Rui e Léo mantêm versões com bermudas ou calças.
+**Minha casa** abre pelo mapa visual dos cômodos. **Organizar** reúne seleção da casa, nome, duplicação, mudança de terreno e exclusão com confirmação; mantém ao menos uma casa e preserva a turma e os objetos portáteis na rua ao excluir. **Mudar de terreno** move a casa para um terreno vazio ou troca com outra, mostrando a prévia e preservando tudo dentro delas. **Ideias** guarda as sugestões opcionais. A reordenação fica apenas em Organizar, e cancelar ampliação devolve o foco ao controle inicial. A turma é única entre as construções. Nome permite personalizar cada personagem até 24 caracteres ou restaurar o original. Os 20 looks incluem Homem-Aranha e Superman para todos os humanos; Rui e Léo mantêm versões com bermudas ou calças.
 
 As portas compartilham desenho, área clicável e animação. A caminhada acelera e desacelera, alterna os passos e mantém velocidade ao receber outro destino. Corpo, roupa e objeto acompanham a acomodação em assentos e cama. Redução de movimento continua disponível. Use Tab e Enter para os controles, setas para mover a seleção e Escape para cancelar. Os alvos dos móveis aparecem ao receber foco. A praça mantém banco, balanço, plantas e bola, além das campainhas e caixas de correio nas fachadas.
+
+A coleção cotidiana acrescenta seis móveis (pia, máquina de lavar, horta, mesa de piquenique, biblioteca e carrinho), quatro uniformes de profissões e três cômodos prontos: lavanderia, biblioteca e sala de jantar. Veja [escopo e evidências](docs/home-and-everyday.md).
 
 Veja [as correções anteriores](docs/reliable-play.md) e [a revisão de interação e construção](docs/immersive-play.md). A verificação em Chromium não substitui teste em iPad, trackpad físico ou observação da brincadeira.
 

@@ -7,7 +7,8 @@ import type { Album, World, RoomId } from './types';
 import type { Location, Neighborhood, NeighborhoodAction } from './neighborhood-types';
 import { activeHouse } from './houses';
 import { initialWorld } from './world';
-import { construct, duplicateBuilding, customize } from './buildings';
+import { removeBuilding } from './remove-building';
+import { construct, duplicateBuilding, customize, moveBuilding } from './buildings';
 import { transport } from './neighborhood-transfer';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const active = activeHouse(album);
@@ -37,6 +38,8 @@ export function neighborhoodAction(town: Neighborhood, action: NeighborhoodActio
     case 'construct': return construct(town, action.plot, action.model);
     case 'facade': return customize(town, action);
     case 'duplicate': return duplicateBuilding(town, action.building);
+    case 'remove-building': return removeBuilding(town, action.building);
+    case 'move-building': return moveBuilding(town, action.building, action.plot);
     default: return editModule(town, action);
   }
 }

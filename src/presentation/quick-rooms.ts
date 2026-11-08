@@ -4,6 +4,7 @@ import { roomTemplates } from '../domain/types';
 import { templates } from '../content/projects';
 import { pieceImage } from './piece-assets';
 const pictures: Record<RoomTemplate, PieceKind[]> = {
+  laundry: ['washer', 'sink'], library: ['bookcase', 'armchair'], dining: ['picnic-table', 'kitchen-cart'],
   empty: ['rug', 'plant'], bedroom: ['bed', 'lamp'], kitchen: ['fridge', 'counter', 'stove'],
   bathroom: ['bath', 'mirror'], studio: ['stage', 'speaker'], garden: ['plant', 'cat-bed'],
 };
@@ -32,6 +33,6 @@ export function quickRooms(root: HTMLElement, add: (room: NewRoom) => void, clos
     });
     root.querySelector('#room-cards')!.append(button);
   });
-  root.querySelector('#cancel-room-choice')!.addEventListener('click', () => { panel.hidden = true; root.querySelector<HTMLButtonElement>(`[aria-label="Construir no espaço ${cell + 1}"]`)?.focus(); });
+  root.querySelector('#cancel-room-choice')!.addEventListener('click', () => { panel.hidden = true; root.querySelector<HTMLButtonElement>('#add-room')?.focus(); });
   return (value: number) => { cell = value; panel.hidden = false; panel.querySelector('button')!.focus(); panel.scrollIntoView({ block: 'nearest' }); };
 }

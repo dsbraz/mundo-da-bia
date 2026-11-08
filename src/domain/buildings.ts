@@ -28,3 +28,13 @@ export function customize(town: Neighborhood, action: Extract<NeighborhoodAction
   return { ...town, buildings: town.buildings.map(b => b.id === action.building ? { ...b,
     name: action.name?.trim().slice(0, 48) || b.name, color: action.color ?? b.color } : b) };
 }
+
+export function moveBuilding(town: Neighborhood, id: number, plot: number): Neighborhood {
+  const source = town.buildings.find(b => b.id === id);
+  if (!source || !Number.isInteger(plot) || plot < 0 || plot >= town.plots || plot === source.plot) return town;
+  const buildings = town.buildings.map(b => {
+    if (b === source) return { ...b, plot };
+    return b.plot === plot ? { ...b, plot: source.plot } : b;
+  });
+  return { ...town, buildings };
+}

@@ -1,3 +1,4 @@
+import { homeMenu } from './home-menu';
 import { quickRooms, roomPicture } from './quick-rooms';
 import type { RoomId, World } from '../domain/types';
 import type { NewRoom } from '../domain/rooms';
@@ -9,8 +10,9 @@ interface Actions {
 export function roomControls(root: HTMLElement, actions: Actions) {
   const dialog = root.querySelector<HTMLDialogElement>('#room-dialog')!;
   let state: World;
+  const menu = homeMenu(root);
   const choose = quickRooms(root, actions.add, () => dialog.close());
-  root.querySelector('#map-toggle')!.addEventListener('click', () => { actions.closeTray(); dialog.showModal(); });
+  root.querySelector('#map-toggle')!.addEventListener('click', () => { actions.closeTray(); menu('map'); dialog.showModal(); });
   root.querySelector('#close-map')!.addEventListener('click', () => dialog.close());
   root.querySelector('#room-rename')!.addEventListener('click', () => actions.rename(root.querySelector<HTMLInputElement>('#current-room-name')!.value));
   root.querySelector('#add-room')!.addEventListener('click', () => choose(freeCell(state)));
@@ -26,14 +28,17 @@ export function roomControls(root: HTMLElement, actions: Actions) {
 function freeCell(state: World) { return Array.from({ length: 12 }, (_, i) => i).find(i => !Object.values(state.layout.rooms).some(r => r.cell === i)) ?? -1; }
 function renderCards(root: HTMLElement, state: World, actions: Actions, close: () => void) {
   const entries = (Object.entries(state.layout.rooms) as [RoomId, import('../domain/types').Room][]).sort((a, b) => a[1].cell - b[1].cell);
+  const columns = Math.max(...entries.map(([, room]) => room.cell % 4)) + 1;
+  root.querySelector<HTMLElement>('#room-map')!.style.setProperty('--map-columns', String(columns));
   const cards = entries.map(([id, room], index) => {
-    const card = document.createElement('article'); card.className = 'room-card'; card.dataset.room = id;
+    const card = document.createElement('article'); card.className = 'room-card'; card.dataset.room = id; card.style.gridColumn = String(room.cell % 4 + 1); card.style.gridRow = String(3 - Math.floor(room.cell / 4));
+    const floor = document.createElement('small'); floor.textContent = room.cell < 4 ? 'Térreo' : `${Math.floor(room.cell / 4)}º andar`; card.append(floor);
     const visit = document.createElement('button'); visit.append(roomPicture(room.template), document.createTextNode(room.name));
     visit.setAttribute('aria-label', `Visitar ${room.name}`); visit.setAttribute('aria-pressed', String(state.room === id));
     visit.addEventListener('click', () => { actions.enter(id); close(); }); card.append(visit);
     for (const [label, offset] of [['antes', -1], ['depois', 1]] as const) {
       const button = document.createElement('button'); button.textContent = offset < 0 ? '← Antes' : 'Depois →';
-      button.setAttribute('aria-label', `Mover ${room.name} ${label}`); const target = entries[index + offset]; button.disabled = !target || room.cell === 0 || target[1].cell === 0;
+      button.className = 'room-reorder'; button.setAttribute('aria-label', `Mover ${room.name} ${label}`); const target = entries[index + offset]; button.disabled = !target || room.cell === 0 || target[1].cell === 0;
       button.addEventListener('click', () => { actions.reorder(id, target![0]); root.querySelector<HTMLButtonElement>(`[aria-label="Visitar ${room.name}"]`)?.focus(); }); card.append(button);
     }
     cardDrag(card, id, actions.reorder); return card;
@@ -43,7 +48,7 @@ function renderCards(root: HTMLElement, state: World, actions: Actions, close: (
 function cardDrag(card: HTMLElement, id: RoomId, reorder: Actions['reorder']) {
   let active: { id: number; x: number; y: number } | null = null; let dragged = false;
   card.addEventListener('dragstart', e => e.preventDefault());
-  card.addEventListener('pointerdown', e => { if (active || (e.target as HTMLElement).closest('button')?.getAttribute('aria-label')?.startsWith('Mover')) return; active = { id: e.pointerId, x: e.clientX, y: e.clientY }; dragged = false; (e.target as Element).closest('button')?.setPointerCapture(e.pointerId); });
+  card.addEventListener('pointerdown', e => { if (card.closest<HTMLDialogElement>('dialog')?.dataset.homeTab !== 'organize' || active || (e.target as HTMLElement).closest('button')?.getAttribute('aria-label')?.startsWith('Mover')) return; active = { id: e.pointerId, x: e.clientX, y: e.clientY }; dragged = false; (e.target as Element).closest('button')?.setPointerCapture(e.pointerId); });
   card.addEventListener('pointermove', e => { if (active?.id === e.pointerId && Math.hypot(e.clientX - active.x, e.clientY - active.y) > 12) { dragged = true; card.classList.add('dragging'); } });
   card.addEventListener('pointerup', e => {
     if (active?.id !== e.pointerId) return;

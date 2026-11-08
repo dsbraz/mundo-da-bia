@@ -1,11 +1,11 @@
 export const actorIds = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'] as const;
-export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora', 'denim', 'rehearsal', 'overalls', 'rumi', 'mira', 'zoey', 'spiderman', 'superman'] as const;
+export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora', 'denim', 'rehearsal', 'overalls', 'rumi', 'mira', 'zoey', 'spiderman', 'superman', 'chef', 'doctor', 'gardener', 'builder'] as const;
 export const roomIds = ['sala', 'quarto'] as const;
 export const itemIds = ['lanche', 'peixe', 'microfone', 'ursinho'] as const;
 export type ActorId = typeof actorIds[number];
 export type LookId = typeof lookIds[number];
 export type RoomId = typeof roomIds[number] | `room-${number}`;
-export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden'] as const;
+export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden', 'laundry', 'library', 'dining'] as const;
 export const roomSizes = ['small', 'medium', 'large'] as const;
 export type RoomTemplate = typeof roomTemplates[number];
 export type RoomSize = typeof roomSizes[number];
@@ -50,7 +50,7 @@ export type Action =
 export interface PresentationEvent { type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId }
 export interface Transition { state: World; events: PresentationEvent[] }
 
-export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table'] as const;
+export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table', 'sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart'] as const;
 export const paletteIds = ['original', 'mint', 'lilac', 'rose', 'sky', 'gold'] as const;
 export type PieceKind = typeof pieceKinds[number];
 export type Palette = typeof paletteIds[number];

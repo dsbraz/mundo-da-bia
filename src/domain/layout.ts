@@ -2,6 +2,9 @@ import { validPoint } from './geometry';
 import type { Layout, Piece, PieceKind, Point, RoomId, World } from './types';
 
 export const pieceBounds: Record<PieceKind, Point & { width: number; height: number }> = {
+  sink: { x: 0, y: 0, width: 180, height: 160 }, washer: { x: 0, y: 0, width: 130, height: 155 },
+  planter: { x: 0, y: 0, width: 170, height: 130 }, 'picnic-table': { x: 0, y: 0, width: 240, height: 150 },
+  bookcase: { x: 0, y: 0, width: 160, height: 220 }, 'kitchen-cart': { x: 0, y: 0, width: 140, height: 150 },
   armchair: { x: 0, y: 0, width: 180, height: 180 },
   'reading-lamp': { x: 0, y: 0, width: 100, height: 220 },
   'side-table': { x: 0, y: 0, width: 130, height: 110 },

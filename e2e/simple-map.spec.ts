@@ -15,7 +15,7 @@ test('piano, televisão e aquário mantêm brincadeiras e persistência', async 
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
 });
 test('ideias são opcionais e salvam uma versão independente', async ({ page }) => {
-  await ready(page); await page.locator('#map-toggle').click(); await page.locator('#project-cards button').first().click(); await page.locator('#save-project').click();
-  await page.getByText('Minhas casas', { exact: true }).click(); await expect(page.locator('#house-list option')).toHaveCount(2);
+  await ready(page); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ideias', exact: true }).click(); await page.locator('#project-cards button').first().click(); await page.locator('#save-project').click();
+  await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await expect(page.locator('#house-list option')).toHaveCount(2);
   await page.screenshot({ path: 'reports/atelier-home.png' });
 });
