@@ -20,3 +20,24 @@ button.illustrated{display:inline-flex;align-items:center;justify-content:center
 .wardrobe-open #actor-context{display:none}
 #app:has(canvas[data-walking]:not([data-walking=""])) #actor-context{display:none}.building-choice{display:inline-flex;flex-direction:column;align-items:center;margin:8px;max-width:240px}.building-choice img{width:176px;height:192px;object-fit:contain}
 @media(orientation:portrait) and (min-height:700px){#orientation-dock h2{margin:0 0 8px}#orientation-dock p{margin:0 0 16px}#orientation-dock button{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:132px;font-size:17px;border:1px solid #dfcdb4;border-radius:18px;box-shadow:0 4px 0 #ddcfb8}#actor-context{top:calc(320px + 60vw)!important}}
+/* Cena e controles ocupam regiões próprias em todas as orientações. */
+#app{display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:76px 64px minmax(0,1fr) 142px 30px;gap:0;background:#faf5e9}
+header{grid-column:1/-1;grid-row:1;height:auto;padding:10px 16px;gap:10px}
+#world{position:relative;inset:auto;grid-column:1/-1;grid-row:3;min-height:0;min-width:0;height:auto}
+.tray-open #world,#app:has(#construction-tray:not([hidden])) #world{grid-column:1}
+#room-navigation{position:relative;inset:auto;grid-column:1/-1;grid-row:2;min-height:0;border-top:0;border-bottom:1px solid #ddd5c8;white-space:nowrap}
+.mode-tray{position:relative;inset:auto;grid-column:2;grid-row:3/5;width:auto;max-height:none;min-height:0;border-radius:0;border:0;border-left:1px solid #ddd5c8;box-shadow:none;padding:14px;background:#fffaf0}
+#actor-context,#build-inspector{position:relative;inset:auto!important;grid-column:1/-1;grid-row:4;max-width:none;min-width:0;width:auto;border:0;border-top:1px solid #ddd5c8;border-radius:0;box-shadow:none;padding:12px 18px;background:#faf5e9;overflow:auto}
+.tray-open #actor-context,.tray-open #build-inspector{grid-column:1}
+#actor-context .actions{display:inline-flex}#actor-context .actions button:last-child{display:inline-flex}#actor-context h2{font-size:16px}#actor-context p{margin:4px 0 8px}#actor-context button{font-size:12px}
+#app:not(.actor-chosen) #actor-context{display:none}.tray-open #actor-context,#app:has(canvas[data-walking]:not([data-walking=""])) #actor-context{display:block}
+.building #actor-context{display:none!important}.gesturing #actor-context,.gesturing #build-inspector{visibility:visible}
+#build-history{position:absolute;bottom:38px;right:18px;left:auto}#announcement{position:relative;inset:auto;grid-column:1/-1;grid-row:5;font-size:12px;max-width:none;padding:6px 16px;background:#eee8da;display:block}
+#construction-tray button{width:100%;margin-top:12px}#orientation-dock{display:none!important}
+@media(max-width:850px){header{padding:6px;gap:4px}header h1{display:none}header button{font-size:12px;padding:8px}.modes{margin-left:auto}button.illustrated{gap:4px}#app{grid-template-columns:minmax(0,1fr) 260px;grid-template-rows:68px 58px minmax(0,1fr) 142px 30px}.choices,#piece-catalog{grid-template-columns:1fr 1fr}}
+@media(orientation:portrait){#app{grid-template-columns:minmax(0,1fr);grid-template-rows:68px 58px minmax(200px,60vw) 142px minmax(0,1fr) 30px}#world,.tray-open #world,#app:has(#construction-tray:not([hidden])) #world{grid-column:1;grid-row:3;height:auto;inset:auto}#actor-context,#build-inspector{grid-column:1;grid-row:4;inset:auto!important}#announcement{grid-row:6}.mode-tray{grid-column:1;grid-row:5;inset:auto;max-height:none;border-left:0;border-top:1px solid #ddd5c8}.choices,#piece-catalog{grid-template-columns:repeat(4,minmax(0,1fr))}#build-history{bottom:38px}#actor-context button{font-size:12px}}
+@media(max-height:550px) and (orientation:landscape){#app{grid-template-rows:60px 54px minmax(0,1fr) 88px 26px}#actor-context,#build-inspector{padding:6px 12px}#actor-status{display:none}#actor-context h2{display:inline;margin-right:12px}#actor-context button{padding:6px}#announcement{font-size:11px;padding:4px 12px}}
+
+#actor-context .outdoor-controls{position:static;display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}#actor-context .outdoor-controls button{position:static;transform:none;max-width:none}
+
+#build-history{z-index:8;right:auto;left:18px;background:#faf5e9;padding:3px;border-radius:12px}#build-inspector{padding-bottom:58px}

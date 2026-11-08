@@ -1,4 +1,4 @@
-import { actorScale } from './pose';
+import { actorScale, settlePose } from './pose';
 import Phaser from 'phaser';
 import { actors } from '../content/catalog';
 import type { Actor } from '../domain/types';
@@ -22,7 +22,7 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean):
   if (actor.fed) container.add(scene.add.text(-48, -100, '♥', { resolution: 2, fontSize: '20px', color: '#d75c78' }));
   return container;
 }
-export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean) {
+export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
   figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(actor.seat === 'bed' && actor.resting);
   const blink = actor.resting || (time + index * 530) % 3900 < 130;
@@ -31,9 +31,12 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   if (actor.kind === 'human') {
     pose.getByName<Phaser.GameObjects.Image>('mouth').setVisible(!actor.fed);
     pose.getByName<Phaser.GameObjects.Image>('mouth-happy').setVisible(actor.fed);
-    seatLayers(pose, actor);
+    seatLayers(pose, actor, reduced);
   } else pose.getByName<Phaser.GameObjects.Image>('tail').rotation = actor.resting ? 0 : Math.sin(time / 700 + index) * 0.04;
-  pose.rotation = actor.seat === 'bed' ? -Math.PI / 2 : danceAngle(time, index, show && !actor.resting);
+  const angle = actor.seat === 'bed' ? -Math.PI / 2 : 0;
+  const restingAngle = settlePose(pose.getData('restingAngle') ?? angle, angle, reduced);
+  pose.setData('restingAngle', restingAngle);
+  pose.rotation = restingAngle + danceAngle(time, index, show && !actor.resting);
 }
 function danceAngle(time: number, index: number, dancing: boolean) { return dancing ? Math.sin(time / 220 + index) * 0.06 : 0; }
 
@@ -67,9 +70,10 @@ function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor:
   knees.add(lower);
 }
 
-function seatLayers(pose: Phaser.GameObjects.Container, actor: Actor) {
+function seatLayers(pose: Phaser.GameObjects.Container, actor: Actor, reduced: boolean) {
   const seated = !!actor.seat && actor.seat !== 'bed';
-  pose.y = seated ? 22 : 0;
+  const amount = settlePose(pose.getData('seatAmount') ?? Number(seated), Number(seated), reduced);
+  pose.setData('seatAmount', amount); pose.y = 22 * amount;
   const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
-  knees.setScale(1, seated ? .65 : 1).setRotation(seated ? -.35 : 0);
+  knees.setScale(1, 1 - .35 * amount).setRotation(-.35 * amount);
 }

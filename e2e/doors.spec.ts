@@ -9,7 +9,8 @@ test('navegação acompanha o dedo, retorna incompleta e respeita extremos sem l
 });
 test('transporta personagem com objeto; esperar não salva e cancelar restaura', async ({ page }) => {
   await ready(page); await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Ursinho', exact: true }).click(); await closeTray(page);
-  const before = await read(page); const a = await point(page, 520, 420), b = await point(page, 980, 500);
+  await expect.poll(async () => (await read(page)).items.find(i => i.id === '1:ursinho')!.holder).toBe('bia');
+  const before = await read(page); const actor = before.actors[0]!; const a = await point(page, actor.x, actor.y - 170), b = await point(page, 980, 500);
   for (const cancel of [true, false]) {
     await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 10 });
     await expect(page.locator('#edge-progress')).toBeVisible(); await expect(page.locator('#edge-progress')).toBeHidden();

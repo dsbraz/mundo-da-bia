@@ -14,17 +14,31 @@ function setup() {
   return { state, commit, preview, hint, walk, advance };
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
-it('only commits the confirmed endpoint and replaces unfinished routes', () => {
+it('confirms the visible stop once before replacing unfinished routes', () => {
   const s = setup(); s.walk.start({ x: 800, y: 530 }); s.advance(); expect(s.commit).not.toHaveBeenCalled();
   s.walk.start({ x: 600, y: 530 }); for (let n = 0; n < 30; n++) s.advance();
-  expect(s.commit).toHaveBeenCalledExactlyOnceWith('bia', { x: 600, y: 530 });
+  expect(s.commit).toHaveBeenCalledTimes(2); expect(s.commit).toHaveBeenLastCalledWith('bia', { x: 600, y: 530 });
 });
-it('cancel and inaccessible destinations never persist intermediate positions', () => {
+it('cancel confirms the visible position once; inaccessible destinations do not move', () => {
   const s = setup(); s.walk.start({ x: 900, y: 530 }); s.advance(); s.walk.cancel();
-  for (let n = 0; n < 50; n++) s.advance(); expect(s.commit).not.toHaveBeenCalled();
-  s.walk.start({ x: 500, y: 20 }); expect(s.hint).toHaveBeenCalled(); expect(s.commit).not.toHaveBeenCalled();
+  const visible = [...s.preview.mock.calls].reverse().find(call => call[0] === 'bia')![1];
+  for (let n = 0; n < 50; n++) s.advance(); expect(s.commit).toHaveBeenCalledExactlyOnceWith('bia', visible);
+  s.walk.start({ x: 500, y: 20 }); expect(s.hint).toHaveBeenCalled(); expect(s.commit).toHaveBeenCalledOnce();
 });
 it('reduced motion confirms immediately and equipment completes once', () => {
   const s = setup(), complete = vi.fn(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
   s.walk.start({ x: 600, y: 500 }, complete); expect(s.commit).toHaveBeenCalledOnce(); expect(complete).toHaveBeenCalledOnce();
+});
+
+it('an invalid replacement stops the previous command without completing its action', () => {
+  const s = setup(), complete = vi.fn();
+  s.walk.start({ x: 900, y: 530 }, complete); s.advance();
+  s.walk.start({ x: 500, y: 20 });
+  for (let n = 0; n < 50; n++) s.advance();
+  expect(s.commit).toHaveBeenCalledOnce(); expect(complete).not.toHaveBeenCalled();
+});
+it('completes an interaction at the current position without an endless walk', () => {
+  const s = setup(), complete = vi.fn(), actor = s.state.actors[0]!;
+  s.walk.start({ x: actor.x, y: actor.y }, complete); s.advance();
+  expect(complete).toHaveBeenCalledOnce(); expect(s.commit).toHaveBeenCalledOnce();
 });

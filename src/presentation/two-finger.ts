@@ -32,7 +32,7 @@ export function twoFinger(single: SingleGesture, nav: Navigation): SingleGesture
     if (blocked) return;
     if (navigating) { nav.update(0, center()); return; }
     if (id !== first) return;
-    locked ||= Math.hypot(pixels.x - origin.x, pixels.y - origin.y) >= 12;
+    locked ||= Math.hypot(pixels.x - origin.x, pixels.y - origin.y) >= 8;
     if (locked) single.update(id, point, pixels);
   }
   function end(id: number, point: Point, pixels: Point) {

@@ -18,7 +18,7 @@ export function outdoorTargets(town: Neighborhood): OutdoorTarget[] {
 }
 export function outdoorAt(town: Neighborhood, point: Point) { return outdoorTargets(town).find(t => Math.abs(t.point.x - point.x) < 48 && Math.abs(t.point.y - point.y) < 55); }
 export function outdoorControls(root: HTMLElement, use: (target: OutdoorTarget) => void, leave: () => void) {
-  const layer = document.createElement('div'); layer.className = 'outdoor-controls'; root.append(layer);
+  const layer = document.createElement('div'); layer.className = 'outdoor-controls'; root.querySelector('#actor-context')!.append(layer);
   const exit = document.createElement('button'); exit.textContent = 'Sair do equipamento'; exit.onclick = leave; root.querySelector('#actor-context')!.append(exit);
   return (town: Neighborhood, selected: ActorId, camera: number, building: boolean) => {
     exit.hidden = town.outdoor.bench !== selected && town.outdoor.swing !== selected;
@@ -26,7 +26,6 @@ export function outdoorControls(root: HTMLElement, use: (target: OutdoorTarget) 
     layer.replaceChildren(); if (!box || building) return;
     outdoorTargets(town).filter(t => t.point.x > camera + 65 && t.point.x < camera + 935).forEach(target => {
       const button = document.createElement('button'); button.textContent = target.name; button.onclick = () => use(target);
-      button.style.left = `${box.left + (target.point.x - camera) * box.width / 1000}px`; button.style.top = `${box.top + (target.point.y + 52) * box.height / 600}px`;
       layer.append(button);
     });
   };

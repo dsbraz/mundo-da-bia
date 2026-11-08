@@ -1,3 +1,4 @@
+import { doorway as geometry } from './door-geometry';
 import type Phaser from 'phaser';
 import type { Location, Neighborhood } from '../domain/neighborhood-types';
 import { plotStart } from '../domain/neighborhood-geometry';
@@ -16,9 +17,9 @@ function doorway(town: Neighborhood, previous: Location) {
   const where = town.location;
   if (where.kind === 'interior') {
     const building = town.buildings.find(b => b.id === where.building)!;
-    return where.room === building.entry ? { x: 510, y: 260, width: 80, height: 150 } : null;
+    return where.room === building.entry ? geometry.interior : null;
   }
   if (previous.kind !== 'interior') return null;
   const building = town.buildings.find(b => b.id === previous.building)!;
-  return { x: plotStart(building.plot) + 184, y: 343, width: 72, height: 104 };
+  return { ...geometry.facade, x: plotStart(building.plot) + geometry.facade.x };
 }

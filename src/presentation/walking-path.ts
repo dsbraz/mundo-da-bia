@@ -9,8 +9,14 @@ export function walkingPath(world: World, start: Point, end: Point): Point[] | n
   });
   const contains = (b: typeof blocks[number], p: Point) => p.x >= b.left && p.x <= b.right && p.y >= b.top && p.y <= b.bottom;
   if (!validPoint(end, width) || blocks.some(b => contains(b, end))) return null;
-  const obstacles = blocks.filter(b => !contains(b, start));
-  const free = (p: Point) => validPoint(p, width) && !obstacles.some(b => contains(b, p));
+  const free = (p: Point) => validPoint(p, width) && !blocks.some(b => contains(b, p));
+  const initial = blocks.filter(b => contains(b, start));
+  if (initial.length) {
+    const exits = initial.flatMap(b => [{ x: b.left - 1, y: start.y }, { x: b.right + 1, y: start.y }, { x: start.x, y: b.top - 1 }, { x: start.x, y: b.bottom + 1 }]).filter(free);
+    exits.sort((a, b) => Math.hypot(a.x - start.x, a.y - start.y) - Math.hypot(b.x - start.x, b.y - start.y));
+    const exit = exits[0]; if (!exit) return null;
+    const rest = walkingPath(world, exit, end); return rest ? [exit, ...rest] : null;
+  }
   const nodes: Point[] = [start, end];
   for (let y = 280; y <= 540; y += 20) for (let x = 60; x <= width - 60; x += 20) if (free({ x, y })) nodes.push({ x, y });
   return search(nodes, free);

@@ -24,3 +24,15 @@ it('tocar no personagem na frente da porta o seleciona em vez de abrir o armári
   expect(selected).toBe('bia');
   expect(toggled).toBe(false);
 });
+it('uses the displayed pose and rendered depth when supplied by the scene', async () => {
+  const { actorAt } = await import('./targets');
+  const world = initialWorld();
+  const state = { ...world, actorHit: (actor: typeof world.actors[number]) => actor.id === 'bia' || actor.id === 'luna',
+    visibleDepth: new Map([['bia', 600], ['luna', 500]]) };
+  expect(actorAt(state, { x: 20, y: 20 })?.id).toBe('bia');
+});
+it('a carried object does not cover the rest of the body', () => {
+  const state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'microfone' }).state;
+  expect(sourceAt(state, { x: 520, y: 475 }, false)).toBeUndefined();
+  expect(sourceAt(state, { x: 548, y: 475 }, false)?.id).toBe('microfone');
+});

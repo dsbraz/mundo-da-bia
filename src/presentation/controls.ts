@@ -77,12 +77,7 @@ function actorStatus(actor: Actor, held: Item | undefined): string {
 }
 
 export function positionContext(root: HTMLElement, actor: Actor, state: World) {
-  const canvas = root.querySelector('canvas'); if (!canvas) return;
-  const box = canvas.getBoundingClientRect(); const panel = root.querySelector<HTMLElement>('#actor-context')!;
-  panel.style.left = `${Math.max(12, Math.min(root.clientWidth - 280, box.left + ((actor.x < 300 ? actor.x + 70 : actor.x - 120) - Number(canvas.dataset.cameraX ?? 0)) / (state.streetWidth ? 1000 : roomWidth(state)) * box.width))}px`;
-  const head = actor.kind === 'cat' ? 105 : 190;
-  panel.style.top = `${Math.max(82, box.top + (actor.y - head) / 600 * box.height - (panel.offsetHeight || 150) - 12)}px`;
-  panel.classList.toggle('absent', actor.room !== state.room);
+  root.querySelector<HTMLElement>('#actor-context')!.classList.toggle('absent', actor.room !== state.room);
 }
 
 function rest(state: World, actor: ActorId, dispatch: (action: Action) => void) {

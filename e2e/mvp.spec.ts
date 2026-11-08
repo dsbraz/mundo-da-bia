@@ -8,6 +8,7 @@ test('trackpad, navigation strip and modular construction preserve the world', a
   await expect.poll(async () => (await readTown(page)).location).toMatchObject({ room: 'quarto' });
   await page.getByRole('button', { name: '← Anterior', exact: true }).click();
   await page.getByRole('button', { name: 'Construir', exact: true }).click();
+  await page.getByRole('button', { name: 'Terrenos e fachadas', exact: true }).click();
   await page.getByRole('button', { name: 'Terreno 2', exact: true }).click();
   await page.getByRole('button', { name: 'Prédio ·', exact: false }).click();
   await expect(page.getByText('Prévia · Prédio com dois andares')).toBeVisible();
@@ -47,7 +48,8 @@ test('module previews cancel cleanly and explicit floor travel carries the held 
   await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' });
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Microfone', exact: true }).click(); await closeTray(page);
   const before = await readTown(page);
-  await page.getByRole('button', { name: 'Estrutura', exact: true }).click();
+  await page.locator('#construct-mode').click();
+  await page.getByRole('button', { name: 'Estrutura modular', exact: true }).click();
   await page.getByRole('button', { name: '+ Andar', exact: true }).click();
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   expect(await readTown(page)).toEqual(before);
@@ -55,7 +57,7 @@ test('module previews cancel cleanly and explicit floor travel carries the held 
   await page.getByRole('button', { name: 'Confirmar módulo', exact: true }).click();
   await page.getByRole('button', { name: 'Fechar estrutura', exact: true }).click();
   await page.locator('#play-mode').click();
-  await page.getByRole('button', { name: 'Levar seleção', exact: true }).click();
+  await page.getByRole('button', { name: 'Levar Bia', exact: true }).click();
   await page.getByRole('button', { name: 'Sala · 1º andar', exact: true }).click();
   const town = await readTown(page), bia = town.actors[0]!;
   expect(bia.location).toEqual(town.location);

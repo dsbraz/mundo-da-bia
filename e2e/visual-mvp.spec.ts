@@ -30,7 +30,7 @@ for (const look of lookIds) test(`visual: ${look}, corpo, roupa e objeto em pose
   await tray(page, 'Turma'); await page.getByRole('button', { name: 'Rui', exact: true }).click(); await closeTray(page);
   const before = await readTown(page); await tap(page, 1160, 530);
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', 'rui');
-  await expect(page.locator('#actor-context')).toBeHidden();
+  await expect(page.locator('#actor-context')).toBeVisible();
   expect((await readTown(page)).actors[3]!.x).toBe(before.actors[3]!.x);
   await page.screenshot({ path: `reports/visual-${look}-walking.png` });
   await expect.poll(async () => (await readTown(page)).actors[3]!.x).toBeCloseTo(1160, 0);

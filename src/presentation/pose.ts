@@ -10,3 +10,6 @@ export function handAnchor(actor: Actor): Point {
   const scale = actorScale(actor);
   return actor.seat && actor.seat !== 'bed' ? { x: 0, y: -38 / scale - 22 } : { x: 28 / scale, y: -55 / scale };
 }
+export function settlePose(current: number, target: number, reduced: boolean) {
+  return reduced || Math.abs(target - current) < .001 ? target : current + (target - current) * .18;
+}

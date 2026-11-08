@@ -11,7 +11,9 @@ export function travelDialog(root: HTMLElement, town: Neighborhood, actor: Actor
   const choices = town.items.filter(i => !i.holder && i.spot === 'floor' && sameLocation(i.location, town.location)).map(i => ({ value: i.id as string, name: items[itemKind(i)].name }));
   if (sameLocation(resident.location, town.location)) choices.unshift({ value: 'actor', name: resident.name ?? actors[actor].name });
   choices.forEach(choice => { const option = document.createElement('option'); option.value = choice.value; option.textContent = choice.name; select.append(option); });
-  dialog.append(select);
+  const title = document.createElement('h2'); title.textContent = 'Levar para outro cômodo';
+  const description = document.createElement('p'); description.textContent = 'Levar transporta o personagem e o objeto na mão. Visitar só muda a vista.';
+  dialog.append(title, description, select);
   destinations.forEach(location => {
     const b = button(label(town, location), () => { dispatch({ type: 'transport', ...(select.value === 'actor' ? { actor } : { item: select.value as ItemId }), location, point: { x: 160, y: 520 } }); dialog.close(); });
     b.disabled = !choices.length; dialog.append(b);

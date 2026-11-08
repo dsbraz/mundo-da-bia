@@ -1,0 +1,60 @@
+import { expect, test } from '@playwright/test';
+import { initialWorld } from '../src/domain/world';
+import { initialAlbum } from '../src/domain/houses';
+import { migrateNeighborhood } from '../src/domain/neighborhood';
+import { encodeNeighborhood } from '../src/persistence/neighborhood';
+import { ready, point, read, tap } from './helpers';
+test.use({ video: 'on' });
+test.beforeEach(async ({ page }) => {
+  const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
+  world.actors = world.actors.map(a => ({ ...a, room: a.id === 'bia' ? 'sala' : 'quarto', x: 400, y: 530 }));
+  world.items = world.items.map((i, n) => ({ ...i, room: 'sala', spot: 'floor', x: n === 3 ? 700 : 400 + n * 80, y: n === 3 ? 530 : 300 }));
+  const saved = encodeNeighborhood(migrateNeighborhood(initialAlbum(world)));
+  await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, saved);
+  await ready(page);
+});
+test('clicking and cancelling a drag during walking keeps the displayed stop', async ({ page }) => {
+  await page.clock.install(); await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+  await tap(page, 930, 530);
+  await page.clock.runFor(650);
+  expect(Number(await page.locator('canvas').getAttribute('data-walk-x'))).toBeGreaterThan(480);
+  const x = Number(await page.locator('canvas').getAttribute('data-walk-x'));
+  const at = await point(page, x, 410); await page.mouse.move(at.x, at.y); await page.mouse.down();
+  const stop = (await read(page)).actors[0]!;
+  expect(stop.x).toBeGreaterThanOrEqual(x); expect(stop.x).toBeLessThan(x + 50);
+  await page.mouse.move(at.x + 70, at.y - 20, { steps: 4 }); await page.keyboard.press('Escape'); await page.mouse.up();
+  expect((await read(page)).actors[0]).toEqual(stop);
+  await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
+});
+test('keyboard movement continues from the visible walking position', async ({ page }) => {
+  await tap(page, 930, 530);
+  await expect.poll(async () => Number(await page.locator('canvas').getAttribute('data-walk-x'))).toBeGreaterThan(500);
+  const x = Number(await page.locator('canvas').getAttribute('data-walk-x'));
+  await page.locator('#world').focus(); await page.keyboard.press('ArrowRight');
+  expect((await read(page)).actors[0]!.x).toBeGreaterThanOrEqual(x + 20);
+  await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
+});
+test('walk, pick up, sit, leave, travel, drop and reload preserve the object', async ({ page }) => {
+  await tap(page, 700, 502);
+  await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBe('bia');
+  await tap(page, 150, 405);
+  await expect.poll(async () => (await read(page)).actors[0]!.seat).toBe('sofa-left');
+  await tap(page, 450, 530);
+  await expect.poll(async () => (await read(page)).actors[0]!.seat).toBeNull();
+  await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
+  await page.getByRole('button', { name: 'Levar Bia', exact: true }).click();
+  await page.getByRole('button', { name: 'Quarto dos sonhos · Térreo', exact: true }).click();
+  await page.getByRole('button', { name: 'Soltar objeto', exact: true }).click();
+  const state = await read(page); expect(state.room).toBe('quarto');
+  expect(state.items.find(i => i.id.endsWith('ursinho'))).toMatchObject({ holder: null, room: 'quarto' });
+  await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await read(page)).toEqual(state);
+});
+test('an occupied hand explains the refusal and cancels an older destination', async ({ page }) => {
+  await tap(page, 700, 502);
+  await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBe('bia');
+  await tap(page, 930, 530); await expect(page.locator('canvas')).toHaveAttribute('data-walking', 'bia');
+  await tap(page, 560, 272);
+  await expect(page.locator('#announcement')).toHaveText('Solte o objeto que está na mão primeiro.');
+  await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
+  expect((await read(page)).items.filter(i => i.holder === 'bia').map(i => i.id)).toEqual(['1:ursinho']);
+});

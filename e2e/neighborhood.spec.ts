@@ -13,6 +13,7 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   await page.getByRole('button', { name: 'Levar para Rua', exact: true }).click();
   expect((await readTown(page)).actors[0]).toMatchObject({ name: 'Sol', look: 'rumi', location: { kind: 'street' } });
   await page.getByRole('button', { name: 'Construir', exact: true }).click();
+  await page.getByRole('button', { name: 'Terrenos e fachadas', exact: true }).click();
   await page.getByRole('button', { name: 'Terreno 2', exact: true }).click();
   await page.getByRole('button', { name: 'Loja · salão e fundos', exact: false }).click();
   await page.getByRole('button', { name: 'Construir aqui', exact: true }).click();

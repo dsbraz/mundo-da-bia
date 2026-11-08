@@ -1,3 +1,4 @@
+import { doorway } from './door-geometry';
 import type { BuildingModel } from '../domain/neighborhood-types';
 import type { RoomTemplate } from '../domain/types';
 const stroke = '#786c62';
@@ -16,33 +17,34 @@ function wrap(content: string, width: number, height: number) {
 export const facadeKey = (model: BuildingModel, floors: number) => `facade-${model}-${floors}`;
 export function facadeSvg(model: BuildingModel, floors = model === 'apartment' ? 2 : 1): string {
   const body = model === 'house' ? house(floors) : model === 'shop' ? shop(floors) : apartment(floors);
-  return wrap(`<ellipse cx="220" cy="450" rx="191" ry="13" fill="#756a5a" opacity=".12"/>${body}${planter(80, 425)}${planter(355, 425)}${rect(184, 343, 72, 104, '#789a9a', 26)}${rect(194, 353, 52, 43, 'url(#glass)', 17)}<circle cx="242" cy="414" r="3" fill="#f7d786"/>${rect(177, 443, 86, 9, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}${line(307, 413, 333, 413)}`, 440, 480);
+  const d = doorway.facade;
+  return wrap(`<ellipse cx="220" cy="450" rx="191" ry="13" fill="#756a5a" opacity=".12"/>${body}${planter(80, 425)}${planter(355, 425)}${rect(d.x - 9, d.y - 9, d.width + 18, d.height + 9, '#f8ead2', 10)}${rect(d.x, d.y, d.width, d.height, '#789a9a', 6)}${rect(d.x + 12, d.y + 14, d.width - 24, 86, 'url(#glass)', 5)}${rect(d.x + 12, d.y + 119, d.width - 24, 91, '#89aaa5', 5)}<circle cx="${d.x + d.width - 16}" cy="${d.y + 124}" r="4" fill="#f7d786"/>${rect(d.x - 12, d.y + d.height - 2, d.width + 24, 9, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}${line(307, 413, 333, 413)}`, 440, 480);
 }
 function house(floors: number) {
-  const rise = (floors - 1) * 58;
+  const rise = (floors - 1) * 22;
   let detail = '';
   for (let y = 248; y < 440; y += 22) detail += line(57, y, 383, y, '#d2bea4');
-  return rect(55, 225 - rise, 330, 220 + rise, 'url(#wall)') + detail + upperWindows(floors, 225) + `<g transform="translate(0 ${-rise})"><path d="M35 234L165 120h83l157 114Z" fill="#809b98" stroke="${stroke}" stroke-width="2"/><path d="M58 219L168 132h77l133 87" fill="none" stroke="#abc3b6" stroke-width="3"/>${rect(301, 135, 25, 61, '#c7a48a')}${rect(140, 204, 160, 39, '#f5e7d1')}</g>${window(86, 274, 62, 82)}${window(292, 274, 62, 82)}${rect(85, 360, 64, 24, '#a4b99b')}${leaves(115, 366, .6)}${rect(160, 330, 120, 10, '#c2a88a')}${rect(166, 340, 8, 105, '#e7d4b6')}${rect(266, 340, 8, 105, '#e7d4b6')}`;
+  return rect(55, 165 - rise, 330, 280 + rise, 'url(#wall)') + detail + upperWindows(floors, 180, 22, 14) + `<g transform="translate(0 ${-60-rise})"><path d="M35 234L165 120h83l157 114Z" fill="#809b98" stroke="${stroke}" stroke-width="2"/><path d="M58 219L168 132h77l133 87" fill="none" stroke="#abc3b6" stroke-width="3"/>${rect(301, 135, 25, 61, '#c7a48a')}${rect(140, 204, 160, 39, '#f5e7d1')}</g>${window(86, 274, 62, 82)}${window(292, 274, 62, 82)}${rect(85, 360, 64, 24, '#a4b99b')}${leaves(115, 366, .6)}${rect(152, 201, 136, 9, '#c2a88a')}`;
 }
 function shop(floors: number) {
-  const rise = (floors - 1) * 58;
+  const rise = (floors - 1) * 50;
   let awning = '';
-  for (let i = 0; i < 10; i++) awning += `<path d="M${48 + i * 34} 276h34l8 48h-34Z" fill="${i % 2 ? '#fff1d8' : '#ce8e85'}"/>`;
-  return rect(48, 218 - rise, 344, 227 + rise, '#edddbe') + rect(45, 205 - rise, 350, 17, '#78968a') + upperWindows(floors, 218) + rect(72, 230, 296, 39, '#faf0d6', 9) + window(73, 332, 94, 85) + window(277, 332, 94, 58) + awning + line(48, 324, 396, 324) + rect(279, 398, 86, 36, '#abbe9c') + `<path d="M88 408l12-36 18 36m9 0 12-29 18 29" fill="#f2c982" stroke="${stroke}" stroke-width="1.2"/>`;
+  for (let i = 0; i < 10; i++) awning += `<path d="M${48 + i * 34} 181h34l8 35h-34Z" fill="${i % 2 ? '#fff1d8' : '#ce8e85'}"/>`;
+  return rect(48, 128 - rise, 344, 317 + rise, '#edddbe') + rect(45, 115 - rise, 350, 17, '#78968a') + upperWindows(floors, 128) + rect(72, 140, 296, 34, '#faf0d6', 9) + window(73, 332, 94, 85) + window(277, 332, 94, 58) + awning + line(48, 216, 396, 216) + rect(279, 398, 86, 36, '#abbe9c') + `<path d="M88 408l12-36 18 36m9 0 12-29 18 29" fill="#f2c982" stroke="${stroke}" stroke-width="1.2"/>`;
 }
 function apartment(count: number) {
-  const top = 85 + (3 - count) * 114;
+  const top = 70 + (3 - count) * 55;
   let floors = '';
-  for (const y of [118, 232].slice(3 - count)) {
-    floors += window(92, y, 73, 67) + window(276, y, 73, 67) + rect(72, y + 77, 294, 12, '#b6ada0');
-    for (let x = 78; x < 365; x += 23) floors += line(x, y + 53, x, y + 77, '#70857b');
-    floors += line(72, y + 53, 366, y + 53, '#70857b');
+  for (const y of [75, 145].slice(3 - count)) {
+    floors += window(92, y, 73, 48) + window(276, y, 73, 48) + rect(72, y + 57, 294, 12, '#b6ada0');
+    for (let x = 78; x < 365; x += 23) floors += line(x, y + 40, x, y + 57, '#70857b');
+    floors += line(72, y + 40, 366, y + 40, '#70857b');
   }
-  return rect(61, top, 318, 445 - top, '#d1dcca') + rect(50, top - 11, 340, 17, '#7c968c') + rect(197, top + 20, 46, 425 - top, '#eddfc8') + floors + window(91, 346, 70, 70) + window(279, 346, 70, 46) + leaves(128, top + 107, .5);
+  return rect(61, top, 318, 445 - top, '#d1dcca') + rect(50, top - 11, 340, 17, '#7c968c') + rect(197, top + 20, 46, 425 - top, '#eddfc8') + floors + window(91, 346, 70, 70) + window(279, 346, 70, 46) + planter(128, 421);
 }
-function upperWindows(floors: number, base: number) {
+function upperWindows(floors: number, base: number, step = 50, height = 30) {
   let result = '';
-  for (let level = 1; level < floors; level++) result += window(95, base - level * 58 + 12, 65, 30) + window(280, base - level * 58 + 12, 65, 30);
+  for (let level = 1; level < floors; level++) result += window(95, base - level * step + 5, 65, height) + window(280, base - level * step + 5, 65, height);
   return result;
 }
 export function roomArchitecture(template: RoomTemplate): string {
@@ -53,10 +55,10 @@ function interior(template: RoomTemplate) {
   const ceiling = `<path d="M0 0h1000v32L940 58H60L0 32Z" fill="#fff9ed"/><path d="M0 32l60 26h880l60-26" fill="none" stroke="#bcae9a" stroke-width="1.5"/>`;
   const art: Record<Exclude<RoomTemplate, 'garden'>, string> = {
     empty: `${window(90, 95, 185, 165)}${rect(72, 276, 220, 12, '#e2ccb1')}${window(744, 95, 150, 165)}<path d="M75 70h215M730 70h180" stroke="#a08b74" stroke-width="5"/><path d="M74 75v195q28-9 40-30V75M909 75v195q-28-9-40-30V75" fill="#d6b8a3" stroke="#9c8474" stroke-width="1.5"/>`,
-    bedroom: `${rect(0, 250, 1000, 135, '#e4d6dd', 0)}${window(95, 91, 180, 150)}<path d="M80 76q105-34 210 0v170q-30-8-35-38V90H115v118q-5 30-35 38Z" fill="#d3c5dc" stroke="#9a8a9e" stroke-width="1.5"/>${rect(570, 125, 320, 180, '#efe3d1', 100)}<path d="M640 179q100-65 180 0" fill="none" stroke="#c5b39a" stroke-width="2"/>`,
-    kitchen: `${rect(0, 190, 1000, 195, '#e0e8d9', 0)}${tiles(0, 190, 1000, 190, 48)}${window(90, 85, 230, 175)}${rect(570, 90, 310, 64, '#d5bb96')}${line(585, 157, 865, 157)}<path d="M645 160v49m66-49v35m58-35v49" stroke="#8d8a76" stroke-width="4"/>`,
+    bedroom: `${rect(0, 250, 1000, 135, '#e4d6dd', 0)}${window(95, 91, 180, 150)}<path d="M80 76q105-34 210 0v170q-30-8-35-38V90H115v118q-5 30-35 38Z" fill="#d3c5dc" stroke="#9a8a9e" stroke-width="1.5"/>${rect(570, 125, 320, 180, '#efe3d1', 28)}${rect(582, 137, 296, 156, '#e7d7c2', 22)}<path d="M600 275V155h260" fill="none" stroke="#f9edda" stroke-width="2"/>`,
+    kitchen: `${rect(0, 190, 1000, 195, '#e0e8d9', 0)}${tiles(0, 190, 1000, 190, 48)}${window(90, 85, 230, 175)}${rect(570, 90, 310, 64, '#d5bb96')}${line(585, 157, 865, 157)}<path d="M645 160v39m66-39v28m58-28v39" stroke="#8d8a76" stroke-width="3"/><ellipse cx="645" cy="209" rx="10" ry="15" fill="#bbbfad" stroke="#78867b" stroke-width="1.5"/><path d="M700 189h22v25h-22Z" fill="#d4bc98" stroke="#8c7963" stroke-width="1.5"/><path d="M761 199h16l5 20h-26Z" fill="#bbbfad" stroke="#78867b" stroke-width="1.5"/>`,
     bathroom: `${rect(0, 180, 1000, 210, '#c9ddd9', 0)}${tiles(0, 180, 1000, 210, 65)}${window(120, 90, 170, 80)}${rect(604, 75, 235, 220, '#f1e7d5', 100)}${rect(617, 88, 209, 194, 'url(#glass)', 95)}<path d="M624 98l75 0-75 103" fill="#fff" opacity=".25"/>`,
-    studio: `${rect(0, 270, 1000, 115, '#a8babd', 0)}${window(80, 80, 210, 220)}<path d="M65 65h240v245q-24-9-30-44V80H95v186q-6 35-30 44Z" fill="#ba9baa" stroke="#8c7485" stroke-width="1.5"/>${rect(640, 105, 240, 115, '#e9d5b6')}${line(675, 125, 675, 201)}${line(715, 125, 715, 201)}${line(755, 125, 755, 201)}${line(795, 125, 795, 201)}${line(835, 125, 835, 201)}`,
+    studio: `${rect(0, 270, 1000, 115, '#a8babd', 0)}${window(80, 80, 210, 220)}<path d="M65 65h240v245q-24-9-30-44V80H95v186q-6 35-30 44Z" fill="#ba9baa" stroke="#8c7485" stroke-width="1.5"/>${rect(640, 105, 240, 115, '#e9d5b6')}${rect(657, 120, 40, 85, '#b8c6be', 6)}${rect(711, 120, 40, 85, '#d1b9aa', 6)}${rect(765, 120, 40, 85, '#b8c6be', 6)}${rect(819, 120, 40, 85, '#d1b9aa', 6)}`,
   };
   return ceiling + art[template as Exclude<RoomTemplate, 'garden'>] + `<rect y="380" width="1000" height="12" fill="#f9f1e2" stroke="#b7aa97" stroke-width="1.5"/><path d="M100 390h160l165 175H205Z" fill="#fff7d5" opacity=".12"/>`;
 }

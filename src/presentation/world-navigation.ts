@@ -1,3 +1,4 @@
+import { actors } from '../content/catalog';
 import { travelDialog } from './travel-dialog';
 import type { ActorId, RoomId } from '../domain/types';
 import type { Location, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
@@ -13,9 +14,8 @@ export function worldNavigation(root: HTMLElement, actions: Actions) {
   const adjacent = document.createElement('div'); adjacent.className = 'neighbor-rooms';
   const floors = document.createElement('select'); floors.setAttribute('aria-label', 'Andar');
   const previous = button('← Anterior', () => step(-1)), next = button('Próximo →', () => step(1));
-  const structure = button('Estrutura', actions.structure);
-  const carry = button('Levar seleção', () => transport());
-  bar.append(button('Bairro', () => actions.dispatch({ type: 'visit', location: { kind: 'street' } })), button('Construir', actions.construct), structure, floors, previous, name, next, adjacent, carry);
+  const carry = button('Levar personagem', () => transport());
+  bar.append(button('⌂ Bairro', () => actions.dispatch({ type: 'visit', location: { kind: 'street' } })), floors, previous, name, next, adjacent, carry);
   let rooms: [RoomId, string][] = [], destinations: Location[] = [];
   function step(direction: number) {
     const town = actions.town();
@@ -30,8 +30,11 @@ export function worldNavigation(root: HTMLElement, actions: Actions) {
   };
   return () => {
     const town = actions.town(), location = town.location;
+    const selected = town.actors.find(a => a.id === actions.selected());
+    carry.textContent = `Levar ${selected?.name ?? actors[actions.selected()].name}`;
+    carry.title = 'Transportar personagem e objeto carregado. Visitar apenas muda a vista.';
     const building = location.kind === 'interior' ? town.buildings.find(b => b.id === location.building) : undefined;
-    floors.hidden = structure.hidden = carry.hidden = !building;
+    floors.hidden = carry.hidden = !building;
     if (!building || location.kind !== 'interior') { adjacent.replaceChildren(); previous.disabled = actions.camera() <= 0; next.disabled = actions.camera() >= streetWidth(town.plots) - 1000; return; }
     const entries = (Object.entries(building.layout.rooms) as [RoomId, typeof building.layout.rooms.sala][]).sort((a, b) => a[1].cell - b[1].cell);
     const floor = floorOf(building.layout.rooms[location.room]!.cell);

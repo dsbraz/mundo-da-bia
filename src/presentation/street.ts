@@ -1,3 +1,4 @@
+import { doorway } from './door-geometry';
 import { facadeKey } from './architecture-art';
 import { floorCount } from '../domain/modules';
 import { drawOutdoorState } from './outdoor-effects';
@@ -36,13 +37,17 @@ function facade(scene: Phaser.Scene, b: Building) {
   const x = plotStart(b.plot);
   const image = scene.add.image(x, 0, facadeKey(b.model, floorCount(b.layout))).setOrigin(0).setDisplaySize(440, 480);
   if (b.color !== 'original') image.setTint(Number.parseInt(palettes[b.color].light.slice(1), 16));
-  const y = b.model === 'apartment' ? 55 + (3 - floorCount(b.layout)) * 114 : b.model === 'shop' ? 250 : 220;
+  const y = b.model === 'apartment' ? 50 + (3 - floorCount(b.layout)) * 55 : b.model === 'shop' ? 156 : 160 - (floorCount(b.layout) - 1) * 22;
   scene.add.text(x + 220, y, b.name, { resolution: 2, fontSize: '17px', color: '#52665e', backgroundColor: '#fff4df', padding: { x: 10, y: 5 } }).setOrigin(.5);
 }
 export function drawExit(scene: Phaser.Scene) {
-  const g = scene.add.graphics().setDepth(150);
-  g.fillStyle(0x7a9692).fillRoundedRect(510, 260, 80, 150, { tl: 30, tr: 30, bl: 0, br: 0 });
-  g.lineStyle(2, 0x596e6a).strokeRoundedRect(510, 260, 80, 150, 12);
-  g.fillStyle(0xf7db94).fillCircle(573, 342, 4);
-  scene.add.text(550, 285, 'Rua', { resolution: 2, fontSize: '18px', color: '#fff8e7' }).setOrigin(.5).setDepth(151);
+  const d = doorway.interior, g = scene.add.graphics().setDepth(150);
+  g.fillStyle(0xf5e8d3).fillRoundedRect(d.x - 9, d.y - 9, d.width + 18, d.height + 9, 8);
+  g.lineStyle(2, 0xb9a68c).strokeRoundedRect(d.x - 9, d.y - 9, d.width + 18, d.height + 9, 8);
+  g.fillStyle(0x7a9692).fillRoundedRect(d.x, d.y, d.width, d.height, 5);
+  g.lineStyle(2, 0x596e6a).strokeRoundedRect(d.x, d.y, d.width, d.height, 5);
+  g.fillStyle(0xacc7bf).fillRoundedRect(d.x + 12, d.y + 14, d.width - 24, 86, 5);
+  g.fillStyle(0xf7db94).fillCircle(d.x + d.width - 16, d.y + 124, 4);
+  g.fillStyle(0xd7c3ab).fillRect(d.x - 12, d.y + d.height - 2, d.width + 24, 9);
+  scene.add.text(d.x + d.width / 2, d.y + 48, 'Rua', { resolution: 2, fontSize: '18px', color: '#334f49' }).setOrigin(.5).setDepth(151);
 }

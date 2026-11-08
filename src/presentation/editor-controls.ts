@@ -1,4 +1,3 @@
-import { positionInspector } from './inspector-position';
 import { roomWidth } from '../domain/geometry';
 import { catalogDrag } from './catalog-drag';
 import type { Album, EditAction, PieceKind } from '../domain/types';
@@ -17,7 +16,7 @@ export interface EditorActions {
 function on(root: HTMLElement, id: string, action: () => void) { root.querySelector(id)!.addEventListener('click', action); }
 export function createEditorControls(root: HTMLElement, actions: EditorActions) {
   let selected: number | null = null; let width = 1000;
-  on(root, '#build-toggle', () => { if (!root.classList.contains('building')) actions.toggle(); });
+  on(root, '#build-toggle', actions.toggle);
   on(root, '#undo', actions.undo); on(root, '#redo', actions.redo);
   on(root, '#flip-piece', () => { if (selected !== null) actions.edit({ type: 'flip', id: selected }); });
   on(root, '#remove-piece', () => { if (selected !== null) actions.edit({ type: 'remove', id: selected }); });
@@ -48,7 +47,6 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
     root.querySelector<HTMLButtonElement>('#flip-piece')!.disabled = !piece;
     root.querySelector<HTMLButtonElement>('#remove-piece')!.disabled = !piece;
     root.querySelector('#piece-name')!.textContent = piece ? furnishings[piece.kind].name : 'Escolha uma peça na casa';
-    positionInspector(root, piece, width);
     colors.forEach((button, index) => { button.disabled = !piece; button.setAttribute('aria-pressed', String(piece?.color === paletteIds[index])); });
     catalog.forEach((button, kind) => { button.disabled = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room); button.title = button.disabled ? 'Já existe neste cômodo. Você pode usar outro em um novo cômodo.' : '';  });
     updateHouseList(root, album);

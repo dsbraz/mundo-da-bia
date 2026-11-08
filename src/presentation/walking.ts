@@ -2,21 +2,33 @@ import type { ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
 interface Actions {
   state: () => World; selected: () => ActorId; preview: (id: ActorId | null, point: Point | null) => void;
+  reject?: (point: Point) => void;
   commit: (id: ActorId, point: Point) => void; hint: (text: string) => void;
 }
 export function walking(actions: Actions) {
+  let command = 0;
   let frame = 0, position: Point | null = null, actor: ActorId | null = null;
-  function cancel() { cancelAnimationFrame(frame); frame = 0; position = null; actor = null; actions.preview(null, null); }
+  function clear() { cancelAnimationFrame(frame); frame = 0; position = null; actor = null; }
+  function cancel() {
+    command++; const id = actor, point = position;
+    clear();
+    if (id && point) { actions.commit(id, point); actions.preview(null, null); }
+  }
   function start(destination: Point, complete = () => {}) {
     const id = actions.selected(), world = actions.state(), resident = world.actors.find(a => a.id === id)!;
     const origin = actor === id && position ? position : resident;
     const path = walkingPath(world, origin, destination);
     cancel();
-    if (resident.room !== world.room || !path) { actions.hint('Escolha um lugar livre no chão.'); return; }
-    actor = id; position = { x: origin.x, y: origin.y }; let last = performance.now();
+    if (resident.room !== world.room || !path) { actions.reject?.(destination); actions.hint('Escolha um lugar livre no chão.'); return; }
+    const current = command;
+    actor = id; position = { x: origin.x, y: origin.y }; let last = performance.now(), speed = 0;
     function tick(now: number) {
-      if (!position) return;
-      let distance = Math.min(50, now - last) * .24; last = now;
+      if (current !== command || !position) return;
+      const elapsed = Math.min(50, now - last); last = now;
+      const remaining = routeLength(position, path!);
+      if (remaining < .01) { finish(); return; }
+      speed = Math.min(.24, speed + elapsed * .0012, Math.sqrt(2 * .0012 * remaining));
+      let distance = speed * elapsed;
       while (path!.length && distance > 0) {
         const target = path![0]!, length = Math.hypot(target.x - position.x, target.y - position.y);
         if (length <= distance) { position = target; path!.shift(); distance -= length; }
@@ -24,10 +36,17 @@ export function walking(actions: Actions) {
       }
       actions.preview(id, position);
       if (path!.length) frame = requestAnimationFrame(tick);
-      else { cancel(); actions.commit(id, destination); complete(); }
+      else finish();
     }
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { cancel(); actions.commit(id, destination); complete(); }
+    function finish() { clear(); actions.commit(id, destination); actions.preview(null, null); if (current === command) complete(); }
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) finish();
     else frame = requestAnimationFrame(tick);
   }
   return { start, cancel };
+}
+
+function routeLength(start: Point, path: Point[]) {
+  let length = 0, previous = start;
+  for (const point of path) { length += Math.hypot(point.x - previous.x, point.y - previous.y); previous = point; }
+  return length;
 }

@@ -3,6 +3,10 @@ import { fixture, fromPiece } from '../domain/layout';
 import { availableSpot } from '../domain/furniture';
 import { lookIds } from '../domain/types';
 import type { Actor, Item, ItemId, LookId, Point, World } from '../domain/types';
+export type VisibleWorld = World & {
+  visibleItems?: ReadonlyMap<ItemId, Point>; visibleDepth?: ReadonlyMap<string, number>;
+  actorHit?: (actor: Actor, point: Point) => boolean;
+};
 export type DragToken = { kind: 'item'; id: ItemId } | { kind: 'look'; id: LookId };
 export type DragPreview = DragToken & { point: Point };
 export const wardrobeSlots = lookIds.map((id, index) => ({ id, x: 335 + index % 4 * 46, y: 180 + Math.floor(index / 4) * 44 }));
@@ -10,11 +14,12 @@ export function slotsFor(state: World) {
   const wardrobe = fixture(state, 'wardrobe');
   return wardrobe?.room === state.room ? wardrobeSlots.map(slot => ({ ...slot, ...fromPiece(wardrobe, slot) })) : [];
 }
-export function actorAt(state: World, p: Point) {
-  return [...state.actors].sort((a, b) => a.y - b.y).reverse().find(a => a.room === state.room
-    && actorContains(a, p));
+export function actorAt(state: VisibleWorld, p: Point) {
+  return [...state.actors].sort((a, b) => (state.visibleDepth?.get(a.id) ?? a.y) - (state.visibleDepth?.get(b.id) ?? b.y)).reverse().find(a => a.room === state.room
+    && (state.actorHit ? state.actorHit(a, p) : actorContains(a, p)));
 }
-export function itemPoint(state: World, item: Item): Point | null {
+export function itemPoint(state: VisibleWorld, item: Item): Point | null {
+  const visible = state.visibleItems?.get(item.id); if (visible) return visible;
   const holder = state.actors.find(a => a.id === item.holder);
   if (holder) return holder.room === state.room ? handPoint(holder) : null;
   return item.room === state.room && availableSpot(state, item.spot) ? { x: item.x, y: item.y - 28 } : null;
@@ -22,7 +27,7 @@ export function itemPoint(state: World, item: Item): Point | null {
 export function sourceAt(state: World, p: Point, wardrobe: boolean): DragToken | undefined {
   const item = [...state.items].reverse().find(i => {
     const position = itemPoint(state, i);
-    return position && Math.hypot(position.x - p.x, position.y - p.y) < 28;
+    return position && Math.abs(position.x - p.x) <= 20 && Math.abs(position.y - p.y) <= 20;
   });
   if (item) return { kind: 'item', id: item.id };
   if (actorAt(state, p)) return undefined;

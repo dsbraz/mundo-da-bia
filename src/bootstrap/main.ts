@@ -1,3 +1,4 @@
+import { pickupItem } from '../presentation/item-pickup';
 import { approach, equipmentAction } from '../presentation/equipment-interaction';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
 import type { OutdoorTarget } from '../presentation/outdoor-controls';
@@ -38,7 +39,7 @@ let camera = 0;
 let streetPast: Neighborhood[] = [], streetFuture: Neighborhood[] = [];
 function albumView(): Album { return { active: town.location.kind === 'interior' ? town.location.building : town.buildings[0]!.id, houses: town.buildings.map(b => ({ id: b.id, name: b.name, state: localWorld({ ...town, location: { kind: 'interior', building: b.id, room: b.entry } }) })) }; }
 let edits = history(state);
-let building = false;
+let building = false, constructing = false;
 let selectedPiece: number | null = null;
 let selected: ActorId = 'bia';
 let saved = saveNeighborhood(town);
@@ -48,13 +49,12 @@ let wardrobeOpen = false;
 let cancelInput = () => {};
 const wardrobeButton = root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!;
 const shell = createShell(root, () => cancelInput());
-root.querySelectorAll<HTMLButtonElement>('[data-dock-tab]').forEach(button => button.onclick = () => shell.playTab(button.dataset.dockTab!));
 function toggleWardrobe() { wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
 function openLooks() { closeWardrobe(); shell.looks(); }
 wardrobeButton.addEventListener('click', openLooks);
 const playSound = createSound(root.querySelector<HTMLButtonElement>('#sound-toggle')!);
-const controls = createControls(root, dispatch, select, () => state, () => building, item => neighborhood.carryItem(item), () => doors(town).length > 0);
+const controls = createControls(root, perform, select, () => state, () => building, item => neighborhood.carryItem(item), () => doors(town).length > 0);
 const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(); }, perform, toggleWardrobe);
 const rooms = roomControls(root, {
   enter: room => dispatch({ type: 'room', room }),
@@ -67,20 +67,21 @@ const rooms = roomControls(root, {
   snapshot: () => townDispatch({ type: 'duplicate', building: albumView().active }),
 });
 const editor = createEditorControls(root, {
-  toggle: toggleBuild, edit: applyEdit,
+  toggle: () => { if (!building) toggleBuild(); constructing = false; refresh(); }, edit: applyEdit,
   undo: () => streetUndo(false), redo: () => streetUndo(true),
   select: id => { selectedPiece = id; refresh(); },
   house: id => townDispatch({ type: 'visit', location: { kind: 'interior', building: id, room: town.buildings.find(b => b.id === id)!.entry } }),
   duplicate: empty => { if (empty) newBuilding(); else townDispatch({ type: 'duplicate', building: albumView().active }); },
   rename: name => townDispatch({ type: 'facade', building: albumView().active, name }),
 });
-const walker = walking({ state: () => state, selected: () => selected, preview: (id, point) => scene.previewActor(id, point),
-  commit: (actor, point) => dispatch({ type: 'move', actor, point }), hint: text => { root.querySelector('#announcement')!.textContent = text; } });
+const walker = walking({ reject: point => scene.reject(point), state: () => state, selected: () => selected, preview: (id, point) => scene.previewActor(id, point),
+  commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), hint: text => { root.querySelector('#announcement')!.textContent = text; } });
 function dropOutside(actor: ActorId, point: import('../domain/types').Point) {
   const target = outdoorAt(town, point); if (!target) return false;
   townDispatch({ type: 'outdoor', actor, target: target.target, ...(target.building ? { building: target.building } : {}) }); return true;
 }
 function useOutdoor(target: OutdoorTarget) {
+  walker.cancel();
   if (target.target === 'bench' || target.target === 'swing') {
     const occupant = town.outdoor[target.target];
     if (occupant && occupant !== selected) { root.querySelector('#announcement')!.textContent = 'Esse lugar está ocupado. Há outros lugares para brincar!'; return; }
@@ -91,9 +92,13 @@ const outside = outdoorControls(root, useOutdoor, () => townDispatch({ type: 'ou
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
 const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close());
+root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!building) toggleBuild(); constructing = true; walker.cancel(); cancelInput(); refresh(); });
+root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
+root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());
 root.querySelector('#play-mode')!.addEventListener('click', () => { if (building) toggleBuild(); });
 function persist() { town = storeWorld(town, state); saved = saveNeighborhood(town); }
 function toggleBuild() {
+  constructing = false;
   closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; selectedPiece = null; edits = history(state);
   shell.close();
   if (!building) { streetPast = []; streetFuture = []; }
@@ -151,8 +156,11 @@ function refresh() {
   camera = Math.min(camera, streetWidth(town.plots) - 1000);
   scene.neighborhood(town); scene.camera(camera);
   scene.buildMode(building, selectedPiece);
-  scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street');
+  scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street', constructing);
   renderControls();
+  root.querySelector<HTMLButtonElement>('#construct-structure')!.disabled = town.location.kind === 'street';
+  root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
+  root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building && !constructing));
 }
 function renderControls() {
   controls(state, selected, saved);
@@ -162,18 +170,26 @@ function renderControls() {
 }
 function select(id: ActorId) { walker.cancel(); root.classList.add('actor-chosen'); selected = id; refresh(); }
 function perform(action: Action) {
+  if (action.type === 'pick') { pickup(action.item); return; }
   if (!['use', 'sit', 'interact'].includes(action.type)) { dispatch(action); return; }
+  walker.cancel();
   const point = approach(state, selected, action);
   if (!point) { root.querySelector('#announcement')!.textContent = 'Esse lugar está ocupado ou sem passagem.'; return; }
-  walker.start(point, () => dispatch(action));
+  walker.start(point, () => {
+    if (approach(state, selected, action)) dispatch(action);
+    else root.querySelector('#announcement')!.textContent = 'Esse lugar está ocupado ou sem passagem.';
+  });
+}
+function pickup(item: import('../domain/types').ItemId) {
+  pickupItem(item, { state: () => state, selected: () => selected, dispatch, walk: walker, hint: text => { root.querySelector('#announcement')!.textContent = text; } });
 }
 function interact(point: import('../domain/types').Point) {
   const action = equipmentAction(state, selected, point);
-  if (action === 'wardrobe') toggleWardrobe(); else if (action) perform(action);
+  if (action === 'wardrobe') { walker.cancel(); toggleWardrobe(); } else if (action) perform(action);
   return action !== null;
 }
-function dispatch(action: Action) {
-  walker.cancel();
+function dispatch(action: Action, interrupt = true) {
+  if (interrupt) walker.cancel();
   if ('actor' in action) root.classList.add('actor-chosen');
   if (action.type === 'room' || action.type === 'travel') { cancelInput(); closeWardrobe(); }
   const settle = scene.captureMotion();
@@ -198,8 +214,9 @@ const game = new Phaser.Game({
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
     new ResizeObserver(renderControls).observe(current.canvas);
-    cancelInput = bindInput(current.canvas, () => state, select, point => dispatch({ type: 'move', actor: selected, point }), {
-      walk: point => { const target = outdoorAt(town, point); if (target) useOutdoor(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
+    new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); }).observe(root.querySelector('#world')!);
+    cancelInput = bindInput(current.canvas, () => scene.visibleWorld(), select, point => dispatch({ type: 'move', actor: selected, point }), {
+      walk: point => { const target = outdoorAt(town, point); if (target) useOutdoor(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup, interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
     }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point)) }, {
       camera: () => camera, setCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building, camera); outside(town, selected, camera, building); navigationBar(); },
       building: () => building, wardrobe: () => wardrobeOpen, dispatch,
@@ -210,7 +227,7 @@ const game = new Phaser.Game({
         indicator.hidden = value === 0; indicator.dataset.side = side;
         indicator.style.setProperty('--progress', `${value * 100}%`); indicator.setAttribute('aria-valuenow', String(Math.round(value * 100)));
       },
-    }, base => neighborhoodGesture(base, { town: () => town, world: () => state, building: () => building, dispatch: townDispatch, plot: neighborhood.plot, drop: dropOutside, preview: previewTown, progress: value => { const indicator = root.querySelector<HTMLElement>('#edge-progress')!; indicator.hidden = value === 0; indicator.style.setProperty('--progress', `${value * 100}%`); } }));
+    }, base => neighborhoodGesture(base, { town: () => town, world: () => scene.visibleWorld(), building: () => building, dispatch: townDispatch, plot: neighborhood.plot, drop: dropOutside, preview: previewTown, progress: value => { const indicator = root.querySelector<HTMLElement>('#edge-progress')!; indicator.hidden = value === 0; indicator.style.setProperty('--progress', `${value * 100}%`); } }));
   } },
 });
 root.addEventListener('keydown', event => {
@@ -227,7 +244,7 @@ root.addEventListener('keydown', event => {
     return;
   }
   if (!offset) return;
-  event.preventDefault();
+  event.preventDefault(); walker.cancel();
   const actor = state.actors.find(a => a.id === selected)!;
   dispatch({ type: 'move', actor: selected, point: { x: actor.x + offset[0], y: actor.y + offset[1] } });
 });

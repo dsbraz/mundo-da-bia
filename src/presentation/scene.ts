@@ -22,8 +22,8 @@ import { loadArt } from './svg-assets';
 import { animateActor, drawActor } from './art';
 import { drawRoom } from './room';
 import { drawPieces, pickPiece, pieceDepth, actorDepth } from './piece-art';
-import { actorAt, handPoint, previewPoint, itemPoint } from './targets';
-import type { DragPreview } from './targets';
+import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
+import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 export class PlayScene extends Phaser.Scene {
   private world: World;
@@ -134,6 +134,7 @@ export class PlayScene extends Phaser.Scene {
     if (figure) this.tweens.killTweensOf(figure);
     figure?.setPosition(destination.x, destination.y).setDepth(depth);
     this.moving = id; this.game.canvas.dataset.walking = id ?? '';
+    this.game.canvas.dataset.walkX = String(destination.x); this.game.canvas.dataset.walkY = String(destination.y);
     this.world.items.filter(i => i.holder === active).forEach(item => {
       const p = handPoint(preview);
       this.objects.find(o => o.name === item.id)?.setPosition(p.x, p.y).setDepth(depth + 2);
@@ -149,6 +150,36 @@ export class PlayScene extends Phaser.Scene {
     const settle = captureMotion(this, this.figures, [...this.objects, ...(this.ghost ? [this.ghost] : [])], this.world.room);
     return () => settle(this.figures, this.objects, this.world.room);
   }
+  visibleWorld(): VisibleWorld {
+    return { ...this.world, actorHit: (actor, point) => this.actorHit(actor, point), visibleDepth: new Map(this.figures.map(f => [f.name, f.depth])), visibleItems: new Map(this.objects.map(o => [o.name as ItemId, { x: o.x, y: o.y }])), actors: this.world.actors.map(actor => {
+      const figure = this.figures.find(f => f.name === actor.id);
+      if (!figure) return actor;
+      return { ...actor, x: figure.x, y: figure.y, seat: this.moving === actor.id ? null : actor.seat };
+    }) };
+  }
+  private actorHit(actor: Actor, point: Point) {
+    const pose = this.figures.find(f => f.name === actor.id)?.getByName<Phaser.GameObjects.Container>('pose');
+    if (!pose) return false;
+    const local = pose.getWorldTransformMatrix().applyInverse(point.x, point.y);
+    return Math.abs(local.x) <= 50 && local.y <= 20 && local.y >= (actor.kind === 'cat' ? -120 : -210);
+  }
+  hover(point: Point | null) {
+    this.hint?.clear();
+    if (!point || this.building) return;
+    if (!this.hint) this.hint = this.add.graphics().setDepth(999);
+    const world = this.visibleWorld(), token = sourceAt(world, point, false);
+    const object = token && this.objects.find(o => o.name === token.id);
+    if (object) { this.hint.lineStyle(2, 0x477e86, .8).strokeRoundedRect(object.x - 23, object.y - 23, 46, 46, 8); return; }
+    const actor = actorAt(world, point);
+    if (actor) { this.highlight(actor); return; }
+    const piece = this.pickPiece(point);
+    const target = piece && this.pieces.get(piece.id);
+    if (target) { const bounds = target.getBounds(); this.hint.lineStyle(2, 0x477e86, .55).strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, 8); }
+  }
+  reject(point: Point) {
+    const mark = this.add.text(point.x, point.y, '×', { fontSize: '32px', color: '#a25240' }).setOrigin(.5).setDepth(1000);
+    this.time.delayedCall(900, () => mark.destroy());
+  }
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }
@@ -159,8 +190,8 @@ export class PlayScene extends Phaser.Scene {
     if (!drag) { this.clearPreview(); return; }
     const key = drag.kind === 'look' ? `look-${drag.id}` : itemKind(this.world.items.find(i => i.id === drag.id)!);
     if (!this.ghost) this.ghost = this.add.image(drag.point.x, drag.point.y, key).setDepth(1000);
-    const target = actorAt(this.world, drag.point);
-    const point = previewPoint(this.world, drag);
+    const target = actorAt(this.visibleWorld(), drag.point);
+    const point = previewPoint(this.visibleWorld(), drag);
     this.snapGhost(point, drag.kind === 'item' ? target?.id ?? null : null);
     this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : 44, drag.kind === 'look' ? 56 : 44);
     this.highlight(target);
@@ -191,7 +222,7 @@ export class PlayScene extends Phaser.Scene {
   private animateFigure(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, reduced: boolean) {
     const seated = [this.town?.outdoor.bench, this.town?.outdoor.swing].includes(actor.id);
     const posed = this.moving === actor.id ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' as const } : actor;
-    animateActor(figure, posed, reduced ? 500 : time, index, !reduced && this.world.show);
+    animateActor(figure, posed, reduced ? 500 : time, index, !reduced && this.world.show, reduced);
     const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
     if (this.moving === actor.id && !reduced) {
       pose.y -= Math.abs(Math.sin(time / 120)) * 3;

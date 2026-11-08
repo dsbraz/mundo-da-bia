@@ -9,7 +9,11 @@ import type { PlayInput } from './play-gesture';
 
 export interface BuildInput { enabled: () => boolean; gesture: ReturnType<typeof createPlayGesture> }
 export function bindInput(canvas: HTMLCanvasElement, getState: () => World, select: (id: ActorId) => void, move: (point: Point) => void, play?: PlayInput, build?: BuildInput, house?: HouseInput, wrap: (gesture: ReturnType<typeof createPlayGesture>) => ReturnType<typeof createPlayGesture> = g => g) {
-  const gesture = createPlayGesture(getState, select, move, play);
+  const scaledPlay = play && { ...play, screenScale: () => {
+    const box = canvas.getBoundingClientRect();
+    return { x: box.width / (getState().streetWidth ? 1000 : roomWidth(getState())), y: box.height / 600 };
+  } };
+  const gesture = createPlayGesture(getState, select, move, scaledPlay);
   const wrappedPlay = wrap(gesture), wrappedBuild = build ? wrap(build.gesture) : wrappedPlay;
   const current = () => build?.enabled() ? wrappedBuild : wrappedPlay;
   const router = house ? houseInput(canvas, getState, current, house) : null;
@@ -24,10 +28,14 @@ export function bindInput(canvas: HTMLCanvasElement, getState: () => World, sele
     return { x: (event.clientX - bounds.left) * (getState().streetWidth ? 1000 : roomWidth(getState())) / bounds.width + (house?.camera?.() ?? 0), y: (event.clientY - bounds.top) * 600 / bounds.height };
   };
   canvas.addEventListener('pointerdown', event => {
-    wheel?.cancel();
+    wheel?.cancel(); play?.hover?.(null);
     if (router ? router.start(event.pointerId, point(event), pixels(event)) : current().start(event.pointerId, point(event))) { canvas.setPointerCapture(event.pointerId); canvas.parentElement?.closest('#app')?.classList.add('gesturing'); }
   });
-  canvas.addEventListener('pointermove', event => router ? router.update(event.pointerId, point(event), pixels(event)) : current().update(event.pointerId, point(event)));
+  canvas.addEventListener('pointermove', event => {
+    if (!event.buttons) play?.hover?.(point(event));
+    if (router) router.update(event.pointerId, point(event), pixels(event)); else current().update(event.pointerId, point(event));
+  });
+  canvas.addEventListener('pointerleave', () => play?.hover?.(null));
   canvas.addEventListener('pointerup', event => {
     const box = canvas.getBoundingClientRect();
     if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) cancel();

@@ -18,9 +18,9 @@ it.each([[700, 100], [520, 450], [150, 300]])('dois dedos sobre %s,%s cancelam a
   expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'room', room: 'quarto' });
   expect(gesture.end).not.toHaveBeenCalled();
 });
-it('fixa o arraste aos 12px e não aceita o segundo dedo', () => {
+it('fixa o arraste aos 8px e não aceita o segundo dedo', () => {
   const { input, gesture, dispatch, p } = setup();
-  input.start(1, p(520, 450), p(520)); input.update(1, p(532, 450), p(532));
+  input.start(1, p(520, 450), p(520)); input.update(1, p(528, 450), p(528));
   input.start(2, p(600), p(600)); input.update(2, p(100), p(100)); input.end(2, p(100), p(100));
   input.end(1, p(540, 450), p(540)); expect(gesture.end).toHaveBeenCalledTimes(1); expect(dispatch).not.toHaveBeenCalled();
 });

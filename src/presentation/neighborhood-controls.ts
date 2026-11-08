@@ -1,5 +1,5 @@
 import { facadeSvg, svgUrl } from './architecture-art';
-import { items } from '../content/catalog';
+import { actors, items } from '../content/catalog';
 import { itemKind } from '../domain/item-kind';
 import type { Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { buildingModels } from '../domain/neighborhood-types';
@@ -71,6 +71,7 @@ function facadeEditor(dialog: HTMLDialogElement, b: Neighborhood['buildings'][nu
 }
 function carryDialog(root: HTMLElement, town: Neighborhood, entity: { actor: ActorId } | { item: ItemId }, dispatch: (a: NeighborhoodAction) => void) {
   const dialog = document.createElement('dialog');
+  if ('actor' in entity) { const title = document.createElement('h2'); title.textContent = `Levar ${town.actors.find(a => a.id === entity.actor)?.name ?? actors[entity.actor].name} e seu objeto`; dialog.append(title); }
   if ('item' in entity) { const title = document.createElement('h2'); title.textContent = items[itemKind(town.items.find(i => i.id === entity.item)!)].name; dialog.append(title); }
   doors(town).forEach(d => dialog.append(button(`Levar para ${d.name}`, () => { dispatch({ type: 'transport', ...entity, location: d.location, point: destinationPoint(town, d.location) }); dialog.close(); })));
   dialog.append(button('Voltar', () => dialog.close())); dialog.onclose = () => dialog.remove(); root.append(dialog); dialog.showModal();
