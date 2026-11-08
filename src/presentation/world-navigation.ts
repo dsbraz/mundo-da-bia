@@ -10,12 +10,16 @@ interface Actions {
 function button(label: string, click: () => void) { const b = document.createElement('button'); b.textContent = label; b.onclick = click; return b; }
 export function worldNavigation(root: HTMLElement, actions: Actions) {
   const bar = root.querySelector<HTMLElement>('#room-navigation')!;
+  root.querySelector('[data-home-panel="map organize"]')!.prepend(bar);
   const name = root.querySelector<HTMLElement>('#room-name')!;
   const adjacent = document.createElement('div'); adjacent.className = 'neighbor-rooms';
   const floors = document.createElement('select'); floors.setAttribute('aria-label', 'Andar');
   const previous = button('← Anterior', () => step(-1)), next = button('Próximo →', () => step(1));
   const carry = button('Levar personagem', () => transport());
-  bar.append(button('⌂ Bairro', () => actions.dispatch({ type: 'visit', location: { kind: 'street' } })), floors, previous, name, next, adjacent, carry);
+  const shortcuts = document.createElement('details'); shortcuts.id = 'navigation-shortcuts';
+  const summary = document.createElement('summary'); summary.textContent = 'Atalhos de navegação';
+  shortcuts.append(summary, floors, previous, name, next, adjacent);
+  bar.append(button('⌂ Bairro', () => { actions.dispatch({ type: 'visit', location: { kind: 'street' } }); root.querySelector<HTMLDialogElement>('#room-dialog')!.close(); }), carry, shortcuts);
   let rooms: [RoomId, string][] = [], destinations: Location[] = [];
   function step(direction: number) {
     const town = actions.town();
@@ -23,7 +27,7 @@ export function worldNavigation(root: HTMLElement, actions: Actions) {
     const current = town.location.room, index = rooms.findIndex(([id]) => id === current), room = rooms[index + direction];
     if (room) actions.dispatch({ type: 'visit', location: { ...town.location, room: room[0] } });
   }
-  function transport() { travelDialog(root, actions.town(), actions.selected(), destinations, actions.dispatch); }
+  function transport() { root.querySelector<HTMLDialogElement>('#room-dialog')!.close(); travelDialog(root, actions.town(), actions.selected(), destinations, actions.dispatch); }
   floors.onchange = () => {
     const location = actions.town().location; if (location.kind !== 'interior') return;
     actions.dispatch({ type: 'visit', location: { ...location, room: floors.value as RoomId } });

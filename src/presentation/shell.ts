@@ -13,6 +13,8 @@ export function createShell(root: HTMLElement, cancel: () => void) {
   const toggle = root.querySelector<HTMLButtonElement>('#tray-toggle')!;
   function render() {
     root.classList.toggle('tray-open', opened);
+    root.querySelector<HTMLElement>('#play-mode')!.hidden = !building;
+    root.querySelector<HTMLElement>('#construct-mode')!.hidden = !building;
     play.hidden = building || !opened; catalog.hidden = !building || !opened || street || constructing;
     root.querySelector<HTMLElement>('#construction-tray')!.hidden = !constructing || !opened;
     streetTray.hidden = !building || !opened || !street || constructing;
@@ -32,7 +34,8 @@ export function createShell(root: HTMLElement, cancel: () => void) {
   }
   tabs.forEach(b => b.addEventListener('click', () => tab(b.dataset.playTab!)));
   return {
-    mode(value: boolean, outside = false, construction = false) { if (construction && !constructing) opened = true; constructing = construction; street = outside; if (building !== value) { building = value; opened = construction; } render(); },
+    mode(value: boolean, outside = false, construction = false) { if (construction && !constructing) opened = true; constructing = construction; street = outside; if (building !== value) { building = value; opened = value; } render(); },
+    open() { opened = !street; render(); },
     close() { opened = false; render(); },
     looks() { tab('looks'); },
     playTab(id: string) { tab(id); },
@@ -41,5 +44,5 @@ export function createShell(root: HTMLElement, cancel: () => void) {
 
 function trayLabel(building: boolean, street: boolean, constructing: boolean) {
   if (constructing) return 'Casas e cômodos';
-  return building ? (street ? 'Construir' : 'Móveis e cores') : 'Turma e objetos';
+  return building ? (street ? 'Construir' : 'Móveis e cores') : 'Turma';
 }

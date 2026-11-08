@@ -74,7 +74,7 @@ const rooms = roomControls(root, {
   snapshot: () => townDispatch({ type: 'duplicate', building: albumView().active }),
 });
 const editor = createEditorControls(root, {
-  toggle: () => { if (!building) toggleBuild(); constructing = false; refresh(); announceMode(); }, edit: applyEdit,
+  toggle: () => { if (!building) toggleBuild(); constructing = false; refresh(); shell.open(); announceMode(); }, edit: applyEdit,
   undo: () => streetUndo(false), redo: () => streetUndo(true),
   select: id => { selectedPiece = id; refresh(); },
   house: id => townDispatch({ type: 'visit', location: { kind: 'interior', building: id, room: town.buildings.find(b => b.id === id)!.entry } }),
@@ -98,7 +98,7 @@ function useOutdoor(target: OutdoorTarget) {
 const outside = outdoorControls(root, useOutdoor, () => townDispatch({ type: 'outdoor', actor: selected, target: 'leave' }));
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
-const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close());
+const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); });
 root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!building) toggleBuild(); constructing = true; walker.cancel(); cancelInput(); refresh(); announceMode(); });
 root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
 root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());
@@ -108,7 +108,6 @@ function toggleBuild() {
   constructing = false;
   closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; selectedPiece = null; edits = history(state);
   shell.close();
-  if (!building) { streetPast = []; streetFuture = []; }
   refresh();
   announceMode();
 }
@@ -156,10 +155,10 @@ function streetCamera(previous: Neighborhood) {
 }
 function remember() { streetPast = [...streetPast.slice(-49), town]; streetFuture = []; }
 function streetUndo(forward: boolean) {
-  cancelInput();
+  walker.cancel(); cancelInput();
   const from = forward ? streetFuture : streetPast, to = forward ? streetPast : streetFuture;
   const next = from.pop(); if (!next) return;
-  to.push(town); town = next; state = localWorld(town); saved = saveNeighborhood(town); refresh(); structure.refresh();
+  to.push(town); town = next; state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); refresh(); structure.refresh();
 }
 function previewTown(action: NeighborhoodAction | null) {
   const preview = action ? neighborhoodAction(town, action) : town;
@@ -188,6 +187,7 @@ function renderControls() {
   controls(state, selected, saved);
   editor(albumView(), edits, building, selectedPiece); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building, camera);
   navigationBar(); illustratedChoices(root); outside(town, selected, camera, building);
+  root.querySelector<HTMLElement>('#build-history')!.hidden = !building && !streetPast.length && !streetFuture.length;
   root.querySelector<HTMLButtonElement>('#undo')!.disabled = !streetPast.length; root.querySelector<HTMLButtonElement>('#redo')!.disabled = !streetFuture.length;
 }
 function select(id: ActorId) { walker.cancel(); root.classList.add('actor-chosen'); selected = id; refresh(); }
@@ -275,8 +275,6 @@ root.addEventListener('keydown', event => {
   const actor = state.actors.find(a => a.id === selected)!;
   dispatch({ type: 'move', actor: selected, point: { x: actor.x + offset[0], y: actor.y + offset[1] } });
 });
-const explore = document.createElement('button'); explore.id = 'navigation-toggle'; explore.textContent = '⌂ Explorar'; explore.setAttribute('aria-expanded', 'false');
-explore.onclick = () => { const open = root.classList.toggle('navigation-open'); explore.setAttribute('aria-expanded', String(open)); }; root.append(explore);
 buttonArt(root);
 root.querySelector('#announcement')!.textContent = `${actors[selected].name} · crie um lugar, invente uma história.`;
 refresh();

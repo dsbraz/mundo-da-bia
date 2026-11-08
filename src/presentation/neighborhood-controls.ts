@@ -1,3 +1,6 @@
+import { houseHandles } from './house-handles';
+import { moveHouse } from './move-house';
+import { removeHouse } from './remove-house';
 import { houseActions } from './house-actions';
 import { facadeSvg, svgUrl } from './architecture-art';
 import { actors, items } from '../content/catalog';
@@ -11,21 +14,24 @@ import { doors, destinationPoint } from './neighborhood-doors';
 function button(text: string, action: () => void) {
   const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.onclick = action; return b;
 }
-export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, selected: () => ActorId, close: () => void) {
+export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, selected: () => ActorId, close: () => void, pan: (dx: number) => void) {
   const deletion = houseActions(root, get, dispatch);
   const list = document.createElement('section'); list.id = 'neighborhood-list';
   const title = document.createElement('h3'); title.textContent = 'Nosso bairro';
-  const street = button('♧ Visitar a rua', () => { dispatch({ type: 'visit', location: { kind: 'street' } }); close(); });
-  root.querySelector('[data-home-panel="map organize"]')!.append(title, street, list);
+  root.querySelector('[data-home-panel="map organize"]')!.append(title, list);
   const carry = button('♧ Levar pela porta', () => carryDialog(root, get(), { actor: selected() }, dispatch));
   root.querySelector('#actor-context')!.append(carry);
   const accessible = document.createElement('div'); accessible.className = 'scene-controls'; root.append(accessible);
   const plotDialog = document.createElement('dialog'); plotDialog.id = 'plot-dialog'; root.append(plotDialog);
+  const handles = houseHandles(root, get, dispatch, plot, pan);
   function plot(index: number) {
     const town = get(); const existing = town.buildings.find(b => b.plot === index);
     if (index < 0 || index >= town.plots) return;
     plotDialog.replaceChildren();
-    if (existing) facadeEditor(plotDialog, existing, dispatch);
+    if (existing) {
+      facadeEditor(plotDialog, existing, dispatch);
+      plotDialog.prepend(button(`Mover ${existing.name}`, () => { plotDialog.close(); moveHouse(root, get(), existing, dispatch); }), button(`Excluir ${existing.name}…`, () => { plotDialog.close(); removeHouse(root, get(), existing, dispatch); }));
+    }
     else buildingModels.forEach(model => { const choice = button({ house: '⌂ Casa · sala e quarto', apartment: '▤ Prédio · entrada e dois ambientes', shop: '▧ Loja · salão e fundos' }[model], () => {
       const preview = document.createElement('h3'); preview.textContent = `Prévia · ${{ house: 'Casa com sala e quarto', apartment: 'Prédio com dois andares', shop: 'Loja com salão e fundos' }[model]}`;
       const picture = document.createElement('img'); picture.src = svgUrl(facadeSvg(model)); picture.alt = 'Modelo da construção'; picture.width = 220; picture.height = 240;
@@ -36,7 +42,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     plotDialog.append(button('Voltar', () => plotDialog.close())); plotDialog.showModal();
   }
   function refresh(building: boolean, camera: number) {
-    const town = get(); const where = town.location; deletion();
+    const town = get(); const where = town.location; deletion(); handles(building);
     root.classList.toggle('street', where.kind === 'street');
     list.replaceChildren(...town.buildings.map(b => {
       const card = document.createElement('article'); card.className = 'room-card';

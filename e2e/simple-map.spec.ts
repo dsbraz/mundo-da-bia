@@ -3,7 +3,7 @@ import { ready, read, create, tray, closeTray, tap } from './helpers';
 test('piano, televisão e aquário mantêm brincadeiras e persistência', async ({ page }) => {
   await ready(page); await create(page); await tray(page, 'Turma'); await page.locator('#bring-here').click(); await closeTray(page);
   for (const [index, name] of ['Piano', 'Televisão', 'Aquário'].entries()) {
-    await page.locator('#build-toggle').click(); await tray(page, 'Móveis'); await page.getByRole('button', { name: `Adicionar ${name}`, exact: true }).click(); await closeTray(page);
+    await page.locator('#build-toggle').click(); await tray(page, 'Todos'); await page.getByRole('button', { name: `Adicionar ${name}`, exact: true }).click(); await closeTray(page);
     const piece = (await read(page)).layout.pieces.at(-1)!;
     await page.locator('#play-mode').click();
     if (index === 2) { await page.getByRole('button', { name: 'Usar Aquário', exact: true }).focus(); await page.keyboard.press('Enter'); }

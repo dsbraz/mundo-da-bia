@@ -12,7 +12,7 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click();
   await page.getByRole('button', { name: 'Levar para Rua', exact: true }).click();
   expect((await readTown(page)).actors[0]).toMatchObject({ name: 'Sol', look: 'rumi', location: { kind: 'street' } });
-  await page.getByRole('button', { name: 'Construir', exact: true }).click();
+  await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.getByRole('button', { name: 'Nova casa pronta', exact: true }).click();
   await page.getByRole('button', { name: 'Loja · salão e fundos', exact: false }).click();
   await page.getByRole('button', { name: 'Construir aqui', exact: true }).click();
@@ -23,7 +23,7 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   await page.locator('#play-mode').click();
   await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click();
   await page.getByRole('button', { name: 'Levar para Loja 2', exact: true }).click();
-  await page.locator('#build-toggle').click(); await tray(page, 'Decoração');
+  await page.locator('#build-toggle').click(); await tray(page, 'Todos');
   await page.getByRole('button', { name: 'Adicionar Planta', exact: true }).click(); await closeTray(page);
   const count = (await read(page)).layout.pieces.length;
   await page.locator('#undo').click(); expect((await read(page)).layout.pieces).toHaveLength(count - 1);
@@ -33,7 +33,7 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
   for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
     await page.setViewportSize(viewport); await page.screenshot({ path: `reports/neighborhood-interior-${viewport.width}.png` });
-    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Visitar a rua', exact: false }).click();
+    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
     await page.screenshot({ path: `reports/neighborhood-street-${viewport.width}.png` });
   }
   expect(errors).toEqual([]);

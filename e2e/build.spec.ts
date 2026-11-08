@@ -6,7 +6,7 @@ test('esvaziar exige confirmação, desfaz, refaz, colore e duplica casas indepe
   expect(await read(page)).toEqual(original); await page.locator('#cancel-clear').click();
   await clear(page); expect((await read(page)).layout.pieces.filter(p => p.room === 'sala')).toHaveLength(0);
   await page.locator('#undo').click(); expect((await read(page)).layout.pieces).toEqual(original.layout.pieces); await page.locator('#redo').click();
-  await tray(page, 'Decoração'); await choice(page, '#collection-filter', 'neon');
+  await tray(page, 'Atividades');
   await page.getByRole('button', { name: 'Adicionar Letreiro Palco Neon' }).click(); await closeTray(page);
   await page.locator('#piece-colors button').nth(3).click(); await page.locator('#flip-piece').click();
   expect((await read(page)).layout.pieces.at(-1)).toMatchObject({ kind: 'neon', color: 'rose', flipped: true });
@@ -28,7 +28,7 @@ test('mover móveis não navega nem ativa brincadeiras; teclado, cancelar e guar
   await page.locator('#undo').click(); expect((await read(page)).layout.pieces.some(p => p.kind === 'sofa')).toBe(true);
 });
 test('catálogo adiciona por arraste e teclado sem duplicar e salva', async ({ page }) => {
-  await ready(page); await create(page); await page.locator('#build-toggle').click(); await tray(page, 'Decoração');
+  await ready(page); await create(page); await page.locator('#build-toggle').click(); await tray(page, 'Jardim');
   const button = page.getByRole('button', { name: 'Adicionar Planta', exact: true }); const start = (await button.boundingBox())!;
   const canvas = (await page.locator('canvas').boundingBox())!; const count = (await read(page)).layout.pieces.length;
   await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2); await page.mouse.down();
@@ -38,11 +38,11 @@ test('catálogo adiciona por arraste e teclado sem duplicar e salva', async ({ p
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await read(page)).toEqual(state);
 });
 test('Escape cancela catálogo sem adicionar; teclado seleciona e move móveis existentes', async ({ page }) => {
-  await ready(page); await page.locator('#build-toggle').click(); await tray(page, 'Decoração');
+  await ready(page); await page.locator('#build-toggle').click(); await tray(page, 'Jardim');
   const count = (await read(page)).layout.pieces.length; const button = page.getByRole('button', { name: 'Adicionar Planta', exact: true });
   const box = (await button.boundingBox())!; await page.mouse.move(box.x + 20, box.y + 20); await page.mouse.down(); await page.mouse.move(400, 400, { steps: 8 });
   await page.keyboard.press('Escape'); await page.mouse.up(); expect((await read(page)).layout.pieces).toHaveLength(count);
-  await clear(page); await tray(page, 'Móveis'); await page.getByRole('button', { name: 'Adicionar Sofá aconchego', exact: true }).click(); await closeTray(page);
+  await clear(page); await tray(page, 'Todos'); await page.getByRole('button', { name: 'Adicionar Sofá aconchego', exact: true }).click(); await closeTray(page);
   const target = page.getByRole('button', { name: 'Selecionar Sofá aconchego', exact: true }); await target.focus(); await page.keyboard.press('Enter');
   const before = (await read(page)).layout.pieces.find(p => p.kind === 'sofa')!.x; await page.keyboard.press('ArrowRight');
   expect((await read(page)).layout.pieces.find(p => p.kind === 'sofa')!.x).toBe(before + 20);

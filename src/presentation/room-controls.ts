@@ -18,7 +18,7 @@ export function roomControls(root: HTMLElement, actions: Actions) {
   root.querySelector('#add-room')!.addEventListener('click', () => choose(freeCell(state)));
   projectCards(root, actions.snapshot);
   return (next: World) => {
-    state = next; renderCards(root, state, actions, () => dialog.close());
+    state = next; renderCards(root, state, actions, () => dialog.close(), choose);
     root.querySelector<HTMLButtonElement>('#add-room')!.disabled = freeCell(state) < 0;
     root.querySelector('#room-name')!.textContent = state.layout.rooms[state.room]!.name;
     const input = root.querySelector<HTMLInputElement>('#current-room-name')!;
@@ -26,9 +26,9 @@ export function roomControls(root: HTMLElement, actions: Actions) {
   };
 }
 function freeCell(state: World) { return Array.from({ length: 12 }, (_, i) => i).find(i => !Object.values(state.layout.rooms).some(r => r.cell === i)) ?? -1; }
-function renderCards(root: HTMLElement, state: World, actions: Actions, close: () => void) {
+function renderCards(root: HTMLElement, state: World, actions: Actions, close: () => void, choose: (cell: number) => void) {
   const entries = (Object.entries(state.layout.rooms) as [RoomId, import('../domain/types').Room][]).sort((a, b) => a[1].cell - b[1].cell);
-  const columns = Math.max(...entries.map(([, room]) => room.cell % 4)) + 1;
+  const columns = 4;
   root.querySelector<HTMLElement>('#room-map')!.style.setProperty('--map-columns', String(columns));
   const cards = entries.map(([id, room], index) => {
     const card = document.createElement('article'); card.className = 'room-card'; card.dataset.room = id; card.style.gridColumn = String(room.cell % 4 + 1); card.style.gridRow = String(3 - Math.floor(room.cell / 4));
@@ -43,7 +43,7 @@ function renderCards(root: HTMLElement, state: World, actions: Actions, close: (
     }
     cardDrag(card, id, actions.reorder); return card;
   });
-  root.querySelector('#room-map')!.replaceChildren(...cards);
+  root.querySelector('#room-map')!.replaceChildren(...cards, ...emptyCells(state, choose));
 }
 function cardDrag(card: HTMLElement, id: RoomId, reorder: Actions['reorder']) {
   let active: { id: number; x: number; y: number } | null = null; let dragged = false;
@@ -68,4 +68,15 @@ function projectCards(root: HTMLElement, snapshot: Actions['snapshot']) {
     root.querySelector('#project-cards')!.append(button);
   });
   root.querySelector('#save-project')!.addEventListener('click', () => snapshot(name));
+}
+
+function emptyCells(state: World, choose: (cell: number) => void) {
+  const occupied = Object.values(state.layout.rooms).map(room => room.cell);
+  const count = (Math.floor(Math.max(...occupied) / 4) + 1) * 4;
+  return Array.from({ length: count }, (_, cell) => cell).filter(cell => !occupied.includes(cell)).map(cell => {
+    const button = document.createElement('button'); button.className = 'empty-room'; button.textContent = '＋ Cômodo';
+    const floor = Math.floor(cell / 4); button.setAttribute('aria-label', `Adicionar cômodo · ${floor ? `${floor}º andar` : 'Térreo'} · espaço ${cell % 4 + 1}`);
+    button.style.gridColumn = String(cell % 4 + 1); button.style.gridRow = String(3 - floor);
+    button.onclick = () => choose(cell); return button;
+  });
 }

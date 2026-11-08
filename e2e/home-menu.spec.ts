@@ -22,7 +22,7 @@ test('Minha casa abre mapa limpo, separa organização e permite excluir com con
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
   expect((await readTown(page)).buildings).toHaveLength(1);
   await page.locator('#map-toggle').click();
-  await expect(page.getByRole('button', { name: 'Mapa', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Lugares', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
 
 for (const width of [390, 768]) test(`mapa cabe em retrato ${width} e visita sem reorganizar`, async ({ page }) => {
@@ -73,7 +73,7 @@ test('cancelar arraste em Organizar não bloqueia a próxima visita no Mapa', as
   await card.scrollIntoViewIfNeeded(); const box = (await card.boundingBox())!;
   await page.mouse.move(box.x + 30, box.y + 35); await page.mouse.down(); await page.mouse.move(box.x + 50, box.y + 35);
   await card.dispatchEvent('pointercancel', { pointerId: 1 }); await page.mouse.up();
-  await page.getByRole('button', { name: 'Mapa', exact: true }).click(); await card.click();
+  await page.getByRole('button', { name: 'Lugares', exact: true }).click(); await card.click();
   await expect(page.locator('#room-dialog')).not.toBeVisible();
   expect((await readTown(page)).location).toMatchObject({ room: 'quarto' });
 });

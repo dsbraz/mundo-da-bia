@@ -7,8 +7,8 @@ test('trackpad, navigation strip and modular construction preserve the world', a
   await canvas.dispatchEvent('wheel', { deltaX: 300, deltaY: 0 });
   expect((await readTown(page)).location).toMatchObject({ room: 'sala' });
   await visitNeighbor(page);
-  await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#navigation-toggle').click();
-  await page.getByRole('button', { name: 'Construir', exact: true }).click();
+  await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#close-map').click();
+  await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.getByRole('button', { name: 'Nova casa pronta', exact: true }).click();
   await page.getByRole('button', { name: 'Prédio ·', exact: false }).click();
   await expect(page.getByText('Prévia · Prédio com dois andares')).toBeVisible();
@@ -33,7 +33,7 @@ test('tap walks, dragging the background does not, and the square saves equipmen
   await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y); await page.mouse.up(); expect(await readTown(page)).toEqual(before);
   await tray(page, 'Turma'); await page.locator('#cast button').first().click(); await closeTray(page);
   await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click(); await page.getByRole('button', { name: 'Levar para Rua', exact: true }).click();
-  await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#navigation-toggle').click();
+  await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#close-map').click();
   await page.getByRole('button', { name: 'Sentar no banco', exact: true }).click();
   await expect.poll(async () => (await readTown(page)).outdoor.bench).toBe('bia');
   await page.getByRole('button', { name: 'Sair do equipamento', exact: true }).click();
@@ -48,7 +48,7 @@ test('module previews cancel cleanly and explicit floor travel carries the held 
   await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' });
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Microfone', exact: true }).click(); await closeTray(page);
   const before = await readTown(page);
-  await page.locator('#construct-mode').click();
+  await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.getByRole('button', { name: 'Adicionar cômodo ou andar', exact: true }).click();
   await page.getByRole('button', { name: 'Mais um andar', exact: true }).click();
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
@@ -64,6 +64,7 @@ test('module previews cancel cleanly and explicit floor travel carries the held 
   expect(bia.location).toEqual(town.location);
   expect(town.items.find(i => i.kind === 'microfone')).toMatchObject({ holder: 'bia', location: town.location });
   expect(town.actors).toHaveLength(7); expect(town.items).toHaveLength(5);
+  await explore(page);
   await expect(page.locator('.choice-cards[aria-label=Andar] button[aria-pressed=true]')).toHaveText('1º andar');
   await expect(page.getByRole('button', { name: '← Anterior', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Próximo →', exact: true })).toBeDisabled();

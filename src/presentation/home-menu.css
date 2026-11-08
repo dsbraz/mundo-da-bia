@@ -37,3 +37,25 @@
 .house-plots img, .house-plots .empty-plot { width:100px; height:110px; object-fit:contain; }
 .house-plots .empty-plot { display:grid; place-items:center; font-size:60px; color:#72967e; background:#e7edda; border-radius:18px; }
 .moving-house { display:block; width:160px; height:180px; object-fit:contain; margin:12px auto; }
+
+#room-dialog #room-navigation { display:flex; position:static; max-width:none; max-height:none; margin:0 0 12px; background:#edf1e4; }
+#build-catalog .catalog-categories { display:flex; flex-wrap:wrap; position:static; gap:6px; }
+#build-catalog .catalog-categories button { flex:1 0 65px; min-width:65px; font-size:11px; }
+#build-catalog .catalog-categories button::before { width:24px; height:24px; flex-basis:24px; }
+header button[hidden] { display:none!important; }
+.house-handle { position:absolute; transform:translate(-50%,-50%); pointer-events:auto; touch-action:none; max-width:190px; background:#fff1c8ee; }
+.house-handle:hover:not(:disabled),.house-handle:active:not(:disabled) { transform:translate(-50%,-50%); }
+.house-handle.moving { opacity:.65; outline:4px dashed #527968; }
+.house-handle.destination { background:#b9d4bc; outline:5px solid #527968; }
+.house-handles { z-index:8; }
+#navigation-shortcuts { margin-left:auto; font-size:12px; }
+#navigation-shortcuts[open] { flex-basis:100%; }
+#navigation-shortcuts .neighbor-rooms { display:none; }
+.empty-room { align-self:stretch; border:2px dashed #91aa85; background:#edf1e0; box-shadow:none; min-height:110px; }
+.house-ghost { position:fixed; width:180px; height:180px; object-fit:contain; transform:translate(-50%,-65%); opacity:.85; pointer-events:none; filter:drop-shadow(0 8px 5px #453c4055); }
+@media(max-width:600px) { #room-map .empty-room { font-size:12px; padding:4px; min-width:0; } }
+@media(max-width:600px) {
+  #room-map { grid-template-columns:repeat(4,minmax(110px,1fr)); overflow-x:auto; overscroll-behavior-x:contain; }
+  #room-dialog:not([data-home-tab="organize"]) #room-map .room-card,
+  #room-dialog:not([data-home-tab="organize"]) #room-map .room-card > button { touch-action:pan-x pan-y; }
+}

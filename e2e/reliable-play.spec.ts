@@ -13,7 +13,7 @@ test('selection uses compact controls while the character walks and stops at the
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
 });
 test('three modes expose construction separately from decoration', async ({ page }) => {
-  await ready(page); await page.locator('#construct-mode').click();
+  await ready(page); await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await expect(page.locator('#construct-mode')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#tray-toggle')).toHaveText('Casas e cômodos');
   await expect(page.locator('#announcement')).toContainText('casa pronta');

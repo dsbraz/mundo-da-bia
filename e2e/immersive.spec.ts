@@ -17,7 +17,7 @@ test('cena preenche o viewport em paisagem e retrato e os controles recolhem', a
   }
 });
 test('ampliar usa cartões de cômodos com prévia e confirmação', async ({ page }) => {
-  await ready(page); await page.locator('#construct-mode').click();
+  await ready(page); await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.locator('#construct-structure').click();
   await page.getByRole('button', { name: 'Adicionar Cozinha', exact: true }).click();
   const before = await readTown(page);

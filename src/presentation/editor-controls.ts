@@ -1,3 +1,4 @@
+import { everydayGroups } from './everyday-groups';
 import { roomWidth } from '../domain/geometry';
 import { catalogDrag } from './catalog-drag';
 import type { Album, EditAction, PieceKind } from '../domain/types';
@@ -66,19 +67,17 @@ function createCatalog(root: HTMLElement, edit: (action: EditAction) => void, wi
     button.addEventListener('click', () => edit({ type: 'add', kind }));
     root.querySelector('#piece-catalog')!.append(button); buttons.set(kind, button);
   });
-  let category = 'moveis';
-  const collection = root.querySelector<HTMLSelectElement>('#collection-filter')!;
+  let category = 'all';
   const filter = () => {
     root.querySelectorAll<HTMLButtonElement>('[data-category-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.categoryFilter === category)));
     root.querySelector<HTMLElement>('#finishes')!.hidden = category !== 'finishes';
     root.querySelector<HTMLElement>('#piece-catalog')!.hidden = category === 'finishes';
     buttons.forEach((b, kind) => {
-      const decor = ['planter', 'rug', 'plant', 'picture', 'cushion', 'neon'].includes(kind);
-      b.hidden = (category === 'decoracao' ? !decor : decor) || (collection.value === 'neon' && b.dataset.category !== 'neon');
+      b.hidden = category !== 'all' && !everydayGroups[category]?.includes(kind);
     });
   };
   root.querySelectorAll<HTMLButtonElement>('[data-category-filter]').forEach(b => b.addEventListener('click', () => { category = b.dataset.categoryFilter!; filter(); }));
-  collection.addEventListener('change', filter); filter();
+  filter();
   return buttons;
 }
 function bindFinishes(root: HTMLElement, edit: (action: EditAction) => void) {

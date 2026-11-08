@@ -7,7 +7,7 @@ export const read = async (page: Page): Promise<World> => localWorld(await readT
 export async function ready(page: Page) { await page.goto('/'); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); }
 export async function tray(page: Page, tab?: string) {
   if (await page.locator('#tray-toggle').getAttribute('aria-expanded') !== 'true') await page.locator('#tray-toggle').click();
-  if (tab) await page.getByRole('button', { name: tab, exact: true }).click();
+  if (tab) await page.locator('.mode-tray:not([hidden])').getByRole('button', { name: tab, exact: true }).click();
 }
 export async function closeTray(page: Page) { if (await page.locator('#tray-toggle').getAttribute('aria-expanded') === 'true') await page.locator('#tray-toggle').click(); }
 export async function create(page: Page, name = 'Livre') {
@@ -50,11 +50,12 @@ export async function swipe(page: Page, from: number, to: number) {
 }
 
 export async function explore(page: Page) {
-  if (await page.locator('#navigation-toggle').getAttribute('aria-expanded') !== 'true') await page.locator('#navigation-toggle').click();
+  if (!await page.locator('#room-dialog').isVisible()) await page.locator('#map-toggle').click();
+  if (!await page.locator('#navigation-shortcuts').evaluate(n => (n as HTMLDetailsElement).open)) await page.locator('#navigation-shortcuts summary').click();
 }
 export async function visitNeighbor(page: Page, direction: 'next' | 'previous' = 'next') {
   await explore(page); await page.getByRole('button', { name: direction === 'next' ? 'Próximo →' : '← Anterior', exact: true }).click();
-  await page.locator('#navigation-toggle').click();
+  await page.locator('#close-map').click();
 }
 export async function choice(page: Page, id: string, value: string) {
   const label = await page.locator(`${id} option[value="${value}"]`).textContent();
