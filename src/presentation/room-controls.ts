@@ -48,7 +48,7 @@ function renderCards(root: HTMLElement, state: World, actions: Actions, close: (
 function cardDrag(card: HTMLElement, id: RoomId, reorder: Actions['reorder']) {
   let active: { id: number; x: number; y: number } | null = null; let dragged = false;
   card.addEventListener('dragstart', e => e.preventDefault());
-  card.addEventListener('pointerdown', e => { if (card.closest<HTMLDialogElement>('dialog')?.dataset.homeTab !== 'organize' || active || (e.target as HTMLElement).closest('button')?.getAttribute('aria-label')?.startsWith('Mover')) return; active = { id: e.pointerId, x: e.clientX, y: e.clientY }; dragged = false; (e.target as Element).closest('button')?.setPointerCapture(e.pointerId); });
+  card.addEventListener('pointerdown', e => { if (!active) dragged = false; if (card.closest<HTMLDialogElement>('dialog')?.dataset.homeTab !== 'organize' || active || (e.target as HTMLElement).closest('button')?.getAttribute('aria-label')?.startsWith('Mover')) return; active = { id: e.pointerId, x: e.clientX, y: e.clientY }; dragged = false; (e.target as Element).closest('button')?.setPointerCapture(e.pointerId); });
   card.addEventListener('pointermove', e => { if (active?.id === e.pointerId && Math.hypot(e.clientX - active.x, e.clientY - active.y) > 12) { dragged = true; card.classList.add('dragging'); } });
   card.addEventListener('pointerup', e => {
     if (active?.id !== e.pointerId) return;

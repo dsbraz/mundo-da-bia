@@ -65,3 +65,15 @@ test('muda casa para terreno vazio e troca com outra casa sem perder conteúdo',
   expect(after.buildings.map(({ plot: _plot, ...b }) => b)).toEqual(before.buildings.map(({ plot: _plot, ...b }) => b));
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(after);
 });
+
+test('cancelar arraste em Organizar não bloqueia a próxima visita no Mapa', async ({ page }) => {
+  await ready(page); await page.locator('#map-toggle').click();
+  await page.getByRole('button', { name: 'Organizar', exact: true }).click();
+  const card = page.getByRole('button', { name: 'Visitar Quarto dos sonhos', exact: true });
+  await card.scrollIntoViewIfNeeded(); const box = (await card.boundingBox())!;
+  await page.mouse.move(box.x + 30, box.y + 35); await page.mouse.down(); await page.mouse.move(box.x + 50, box.y + 35);
+  await card.dispatchEvent('pointercancel', { pointerId: 1 }); await page.mouse.up();
+  await page.getByRole('button', { name: 'Mapa', exact: true }).click(); await card.click();
+  await expect(page.locator('#room-dialog')).not.toBeVisible();
+  expect((await readTown(page)).location).toMatchObject({ room: 'quarto' });
+});
