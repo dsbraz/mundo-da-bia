@@ -1,0 +1,46 @@
+import { expect, it } from 'vitest';
+import { initialWorld } from '../domain/world';
+import { initialAlbum } from '../domain/houses';
+import { migrateNeighborhood } from '../domain/neighborhood';
+import { loadNeighborhood, saveNeighborhood } from './storage';
+it('migrates the old envelope once, preserves recovery and shifts outdoor positions', () => {
+  const town = migrateNeighborhood(initialAlbum(initialWorld()));
+  town.buildings[0]!.layout.rooms.sala.cell = 7; town.buildings[0]!.layout.rooms.quarto.cell = 2;
+  town.actors[0] = { ...town.actors[0]!, location: { kind: 'street' }, x: 200 };
+  const old = JSON.stringify({ version: 1, town });
+  const map = new Map([['mundo-da-bia:neighborhood:v1', old]]);
+  const port = { getItem: (key: string) => map.get(key) ?? null, setItem: (key: string, value: string) => { map.set(key, value); } };
+  const next = loadNeighborhood(port);
+  expect(next.actors[0]!.x).toBe(860);
+  expect(next.buildings[0]!.layout.rooms.sala.cell).toBe(0);
+  expect(next.buildings[0]!.layout.rooms.quarto.cell).toBe(1);
+  expect(saveNeighborhood(next, port)).toBe(true);
+  expect(map.get('mundo-da-bia:neighborhood:v1')).toBe(old);
+  expect(JSON.parse(map.get('mundo-da-bia:neighborhood:v2')!).version).toBe(2);
+  expect(loadNeighborhood(port)).toEqual(next);
+});
+it('rejects a v2 entrance off the ground floor and legacy positions beyond the old street', async () => {
+  const { decodeNeighborhood, encodeNeighborhood } = await import('./neighborhood');
+  const town = migrateNeighborhood(initialAlbum(initialWorld()));
+  town.buildings[0]!.layout.rooms.sala.cell = 8;
+  expect(decodeNeighborhood(encodeNeighborhood(town))).toBeNull();
+  town.buildings[0]!.layout.rooms.sala.cell = 0;
+  town.actors[0] = { ...town.actors[0]!, location: { kind: 'street' }, x: 1900 };
+  expect(decodeNeighborhood(JSON.stringify({ version: 1, town }))).toBeNull();
+});
+it('preserves named residents, held objects and relative room order across legacy buildings', async () => {
+  const { decodeNeighborhood } = await import('./neighborhood');
+  const { addRoom } = await import('../domain/rooms');
+  let world = addRoom(initialWorld(), { cell: 5, template: 'kitchen', name: 'Café', size: 'medium' });
+  world = addRoom(world, { cell: 3, template: 'garden', name: 'Flores', size: 'small' });
+  const town = migrateNeighborhood(initialAlbum(world));
+  town.buildings[0]!.layout.rooms.sala.cell = 8;
+  town.actors[0] = { ...town.actors[0]!, name: 'Beatriz', look: 'zoey', location: { kind: 'street' }, x: 200 };
+  town.items[0] = { ...town.items[0]!, holder: 'bia', spot: 'floor', location: { kind: 'street' }, x: 228 };
+  const next = decodeNeighborhood(JSON.stringify({ version: 1, town }))!;
+  expect(next.actors[0]).toEqual({ ...town.actors[0], x: 860 });
+  expect(next.items[0]).toEqual({ ...town.items[0], x: 888 });
+  expect(next.buildings[0]!.layout.pieces).toEqual(town.buildings[0]!.layout.pieces);
+  expect(Object.values(next.buildings[0]!.layout.rooms).sort((a, b) => a.cell - b.cell).map(r => r.name)).toEqual(['Sala & palco', 'Quarto dos sonhos', 'Flores', 'Café']);
+  expect(next.actors.slice(1)).toEqual(town.actors.slice(1));
+});

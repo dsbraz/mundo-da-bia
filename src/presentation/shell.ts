@@ -27,5 +27,6 @@ export function createShell(root: HTMLElement, cancel: () => void) {
     mode(value: boolean, outside = false) { street = outside; if (building !== value) { building = value; opened = false; } render(); },
     close() { opened = false; render(); },
     looks() { tab('looks'); },
+    playTab(id: string) { tab(id); },
   };
 }

@@ -33,7 +33,7 @@ function renderCards(root: HTMLElement, state: World, actions: Actions, close: (
     visit.addEventListener('click', () => { actions.enter(id); close(); }); card.append(visit);
     for (const [label, offset] of [['antes', -1], ['depois', 1]] as const) {
       const button = document.createElement('button'); button.textContent = offset < 0 ? '← Antes' : 'Depois →';
-      button.setAttribute('aria-label', `Mover ${room.name} ${label}`); const target = entries[index + offset]; button.disabled = !target;
+      button.setAttribute('aria-label', `Mover ${room.name} ${label}`); const target = entries[index + offset]; button.disabled = !target || room.cell === 0 || target[1].cell === 0;
       button.addEventListener('click', () => { actions.reorder(id, target![0]); root.querySelector<HTMLButtonElement>(`[aria-label="Visitar ${room.name}"]`)?.focus(); }); card.append(button);
     }
     cardDrag(card, id, actions.reorder); return card;

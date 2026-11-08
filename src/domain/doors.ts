@@ -1,9 +1,10 @@
+import { floorOf } from './neighborhood-geometry';
 import type { ActorId, RoomId, World } from './types';
 import { roomWidth } from './geometry';
 import { travel } from './room-state';
 export type Direction = 'left' | 'right';
 export function neighbor(state: World, direction: Direction): RoomId | undefined {
-  const rooms = (Object.keys(state.layout.rooms) as RoomId[]).sort((a, b) => state.layout.rooms[a]!.cell - state.layout.rooms[b]!.cell);
+  const rooms = (Object.keys(state.layout.rooms) as RoomId[]).filter(id => floorOf(state.layout.rooms[id]!.cell) === floorOf(state.layout.rooms[state.room]!.cell)).sort((a, b) => state.layout.rooms[a]!.cell - state.layout.rooms[b]!.cell);
   const index = rooms.indexOf(state.room);
   return rooms[index + (direction === 'left' ? -1 : 1)];
 }

@@ -23,7 +23,13 @@ export function quickRooms(root: HTMLElement, add: (room: NewRoom) => void, clos
   roomTemplates.forEach(template => {
     const button = document.createElement('button'); button.type = 'button'; button.setAttribute('aria-label', `Criar ${templates[template].name}`);
     button.append(roomPicture(template), document.createTextNode(templates[template].name));
-    button.addEventListener('click', () => { add({ name: templates[template].name, template, size: (root.querySelector<HTMLSelectElement>('#room-size')!.value as import('../domain/types').RoomSize), cell }); panel.hidden = true; close(); });
+    button.addEventListener('click', () => {
+      const preview = document.createElement('section'); preview.className = 'room-preview';
+      const confirm = document.createElement('button'); confirm.textContent = 'Construir cômodo';
+      confirm.onclick = () => { add({ name: templates[template].name, template, size: (root.querySelector<HTMLSelectElement>('#room-size')!.value as import('../domain/types').RoomSize), cell }); preview.remove(); panel.hidden = true; close(); };
+      const cancel = document.createElement('button'); cancel.textContent = 'Cancelar prévia'; cancel.onclick = () => preview.remove();
+      panel.querySelector('.room-preview')?.remove(); preview.append(roomPicture(template), confirm, cancel); panel.append(preview); confirm.focus();
+    });
     root.querySelector('#room-cards')!.append(button);
   });
   root.querySelector('#cancel-room-choice')!.addEventListener('click', () => { panel.hidden = true; root.querySelector<HTMLButtonElement>(`[aria-label="Construir no espaço ${cell + 1}"]`)?.focus(); });

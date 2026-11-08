@@ -1,3 +1,4 @@
+import { facadeSvg, svgUrl } from './architecture-art';
 import { items } from '../content/catalog';
 import { itemKind } from '../domain/item-kind';
 import type { Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
@@ -24,7 +25,13 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     if (index < 0 || index >= town.plots) return;
     plotDialog.replaceChildren();
     if (existing) facadeEditor(plotDialog, existing, dispatch);
-    else buildingModels.forEach(model => plotDialog.append(button({ house: '⌂ Casa · sala e quarto', apartment: '▤ Prédio · entrada e dois ambientes', shop: '▧ Loja · salão e fundos' }[model], () => { dispatch({ type: 'construct', plot: index, model }); plotDialog.close(); })));
+    else buildingModels.forEach(model => { const choice = button({ house: '⌂ Casa · sala e quarto', apartment: '▤ Prédio · entrada e dois ambientes', shop: '▧ Loja · salão e fundos' }[model], () => {
+      const preview = document.createElement('h3'); preview.textContent = `Prévia · ${{ house: 'Casa com sala e quarto', apartment: 'Prédio com dois andares', shop: 'Loja com salão e fundos' }[model]}`;
+      const picture = document.createElement('img'); picture.src = svgUrl(facadeSvg(model)); picture.alt = 'Modelo da construção'; picture.width = 220; picture.height = 240;
+      plotDialog.replaceChildren(preview, picture, button('Construir aqui', () => { plotDialog.close(); dispatch({ type: 'construct', plot: index, model }); }), button('Cancelar', () => plotDialog.close()));
+    });
+      const image = document.createElement('img'); image.src = svgUrl(facadeSvg(model)); image.alt = ''; choice.prepend(image); choice.className = 'building-choice'; plotDialog.append(choice);
+    });
     plotDialog.append(button('Voltar', () => plotDialog.close())); plotDialog.showModal();
   }
   function refresh(building: boolean, camera: number) {
@@ -46,7 +53,11 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     }));
     if (where.kind === 'street' && building) for (let i = 0; i < town.plots; i++) list.append(button(`✦ Terreno ${i + 1}`, () => plot(i)));
   }
-  return { refresh, plot, carryItem: (item: ItemId) => carryDialog(root, get(), { item }, dispatch) };
+  function choosePlot() {
+    plotDialog.replaceChildren(...Array.from({ length: get().plots }, (_, i) => i).filter(i => !get().buildings.some(b => b.plot === i)).map(i => button(`Terreno ${i + 1}`, () => { plotDialog.close(); plot(i); })), button('Cancelar', () => plotDialog.close()));
+    plotDialog.showModal();
+  }
+  return { refresh, plot, choosePlot, carryItem: (item: ItemId) => carryDialog(root, get(), { item }, dispatch) };
 }
 function roomWidth(town: Neighborhood) {
   const where = town.location;

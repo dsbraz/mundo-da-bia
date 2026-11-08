@@ -1,8 +1,9 @@
+import { plotStart } from '../domain/neighborhood-geometry';
 import type { Location, Neighborhood } from '../domain/neighborhood-types';
 import type { Point } from '../domain/types';
 export function doors(town: Neighborhood): { location: Location; name: string; point: Point }[] {
   const location = town.location;
-  if (location.kind === 'street') return town.buildings.map(b => ({ location: { kind: 'interior', building: b.id, room: b.entry }, name: b.name, point: { x: b.plot * 440 + 220, y: 400 } }));
+  if (location.kind === 'street') return town.buildings.map(b => ({ location: { kind: 'interior', building: b.id, room: b.entry }, name: b.name, point: { x: plotStart(b.plot) + 220, y: 400 } }));
   const building = town.buildings.find(b => b.id === location.building)!;
   return location.room === building.entry ? [{ location: { kind: 'street' }, name: 'Rua', point: { x: 550, y: 335 } }] : [];
 }
@@ -10,7 +11,7 @@ export function destinationPoint(town: Neighborhood, destination: Location): Poi
   if (destination.kind === 'interior') return { x: 160, y: 520 };
   const current = town.location;
   const building = current.kind === 'interior' ? town.buildings.find(b => b.id === current.building) : undefined;
-  return { x: building ? building.plot * 440 + 220 : 220, y: 520 };
+  return { x: building ? plotStart(building.plot) + 220 : 220, y: 520 };
 }
 export function doorAt(town: Neighborhood, point: Point) {
   return doors(town).find(d => Math.abs(d.point.x - point.x) <= 50 && Math.abs(d.point.y - point.y) <= 85);

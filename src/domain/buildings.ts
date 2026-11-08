@@ -15,7 +15,7 @@ export function construct(town: Neighborhood, plot: number, model: BuildingModel
     const rooms = { ...world.layout.rooms, sala: { ...world.layout.rooms.sala, name: model === 'shop' ? 'Salão' : 'Entrada' }, quarto: { ...world.layout.rooms.quarto, name: model === 'shop' ? 'Fundos' : 'Ateliê' } };
     world = { ...world, layout: { ...world.layout, rooms } };
   }
-  if (model === 'apartment') world = addRoom(world, { name: 'Sala de brincar', size: 'medium', template: 'empty', cell: 2 });
+  if (model === 'apartment') world = addRoom(world, { name: 'Sala de brincar', size: 'medium', template: 'empty', cell: 4 });
   const name = { house: 'Casa', apartment: 'Prédio', shop: 'Loja' }[model];
   return append(town, { id: town.nextBuilding, name: `${name} ${town.nextBuilding}`, model, color: 'original', plot, entry: 'sala', layout: world.layout, show: false });
 }

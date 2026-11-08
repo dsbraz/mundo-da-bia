@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, readTown, read, tray, closeTray, point, swipe, tap } from './helpers';
+import { ready, readTown, read, tray, closeTray, point, swipe } from './helpers';
 test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await ready(page); await tray(page, 'Turma');
@@ -12,8 +12,11 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click();
   await page.getByRole('button', { name: 'Levar para Rua', exact: true }).click();
   expect((await readTown(page)).actors[0]).toMatchObject({ name: 'Sol', look: 'rumi', location: { kind: 'street' } });
-  await page.locator('#build-toggle').click(); await tap(page, 660, 320);
+  await page.getByRole('button', { name: 'Construir', exact: true }).click();
+  await page.getByRole('button', { name: 'Terreno 2', exact: true }).click();
   await page.getByRole('button', { name: 'Loja · salão e fundos', exact: false }).click();
+  await page.getByRole('button', { name: 'Construir aqui', exact: true }).click();
+  await page.getByRole('button', { name: 'Fechar estrutura', exact: true }).click();
   expect((await readTown(page)).buildings).toHaveLength(2);
   await page.locator('#undo').click(); expect((await readTown(page)).buildings).toHaveLength(1);
   await page.locator('#redo').click(); expect((await readTown(page)).buildings).toHaveLength(2);
@@ -25,7 +28,7 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   const count = (await read(page)).layout.pieces.length;
   await page.locator('#undo').click(); expect((await read(page)).layout.pieces).toHaveLength(count - 1);
   await page.locator('#redo').click();
-  const town = await readTown(page); expect(town.actors).toHaveLength(7); expect(town.items).toHaveLength(4);
+  const town = await readTown(page); expect(town.actors).toHaveLength(7); expect(town.items).toHaveLength(5);
   expect(town.items.find(i => i.holder === 'bia')!.location).toEqual(town.location);
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
   for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
@@ -52,8 +55,9 @@ test('arraste pela porta, câmera da rua e figurinos completos nas duas orienta�
   await expect(page.locator('#edge-progress')).toBeVisible(); await expect(page.locator('#edge-progress')).toBeHidden();
   expect((await readTown(page)).location.kind).toBe('interior'); await page.mouse.up();
   expect((await readTown(page)).actors[0]!.location).toEqual({ kind: 'street' });
-  await swipe(page, 700, 300); expect(Number(await page.locator('canvas').getAttribute('data-camera-x'))).toBeCloseTo(400, 2);
-  await swipe(page, 700, 300); await expect(page.locator('canvas')).toHaveAttribute('data-camera-x', '760');
+  await swipe(page, 700, 300); expect(Number(await page.locator('canvas').getAttribute('data-camera-x'))).toBeCloseTo(780, 2);
+  await swipe(page, 700, 300); expect(Number(await page.locator('canvas').getAttribute('data-camera-x'))).toBeCloseTo(1180, 2);
+  await swipe(page, 700, 300); await expect(page.locator('canvas')).toHaveAttribute('data-camera-x', '1420');
   await page.locator('#map-toggle').click(); await page.locator('#neighborhood-list button').first().click();
   expect((await readTown(page)).location.kind).toBe('interior');
 });

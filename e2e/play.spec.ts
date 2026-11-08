@@ -14,7 +14,7 @@ test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar', async
 test('arraste cancelado preserva posição, teclado move e dados inválidos recuperam', async ({ page }) => {
   await ready(page); const before = await read(page); await drag(page, [520, 420], [550, 430], true); expect(await read(page)).toEqual(before);
   await page.locator('#world').focus(); await page.keyboard.press('ArrowRight'); expect((await read(page)).actors[0]!.x).toBe(540);
-  await page.evaluate(() => window.addEventListener('pagehide', () => { localStorage.setItem('mundo-da-bia:neighborhood:v1', '{bad'); localStorage.setItem('mundo-da-bia:v1', '{bad'); localStorage.setItem('mundo-da-bia:houses:v1', '{bad'); }));
+  await page.evaluate(() => window.addEventListener('pagehide', () => { localStorage.setItem('mundo-da-bia:neighborhood:v2', '{bad'); localStorage.setItem('mundo-da-bia:neighborhood:v1', '{bad'); localStorage.setItem('mundo-da-bia:v1', '{bad'); localStorage.setItem('mundo-da-bia:houses:v1', '{bad'); }));
   await page.reload(); expect((await read(page)).actors).toHaveLength(7); expect((await read(page)).actors[0]!.x).toBe(520);
 });
 test('móveis, alimentação, guardar objeto e show continuam respondendo na cena', async ({ page }) => {
@@ -22,11 +22,11 @@ test('móveis, alimentação, guardar objeto e show continuam respondendo na cen
   await drag(page, [680, 282], [260, 450]); expect((await read(page)).items[0]!.spot).toBe('table');
   await drag(page, [260, 447], [150, 350]); expect((await read(page)).actors[0]!.fed).toBe(true);
   await drag(page, [680, 332], [600, 470]); expect((await read(page)).actors[4]!.fed).toBe(true);
-  await tap(page, 380, 365); expect((await read(page)).home.drawer).toBe(true);
+  await tap(page, 380, 365); await expect.poll(async () => (await read(page)).home.drawer).toBe(true);
   await drag(page, [350, 382], [355, 370]); expect((await read(page)).items[3]!.spot).toBe('drawer');
-  await tap(page, 320, 390); expect((await read(page)).home.drawer).toBe(false);
-  await drag(page, [900, 252], [150, 350]); expect((await read(page)).show).toBe(true);
-  await tap(page, 60, 200); expect((await read(page)).home.lamp).toBe(false);
+  await tap(page, 320, 390); await expect.poll(async () => (await read(page)).home.drawer).toBe(false);
+  const performer = (await read(page)).actors[0]!; await drag(page, [900, 252], [performer.x, performer.y - 80]); expect((await read(page)).show).toBe(true);
+  await tap(page, 60, 200); await expect.poll(async () => (await read(page)).home.lamp).toBe(false);
 });
 test('cancelar objeto e arrastar para o chão mantém identidade e quantidade', async ({ page }) => {
   await ready(page); const before = await read(page); await drag(page, [350, 382], [935, 430], true); expect(await read(page)).toEqual(before);

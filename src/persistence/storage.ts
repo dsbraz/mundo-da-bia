@@ -1,3 +1,4 @@
+import { upgradeNeighborhood } from './neighborhood-upgrade';
 import { decodeNeighborhood, encodeNeighborhood } from './neighborhood';
 import { migrateNeighborhood } from '../domain/neighborhood';
 import { initialAlbum, activeHouse } from '../domain/houses';
@@ -41,13 +42,13 @@ export function saveAlbum(album: Album, storage?: StoragePort): boolean {
 export function loadNeighborhood(storage?: StoragePort): import('../domain/neighborhood-types').Neighborhood {
   try {
     const port = storage ?? globalThis.localStorage;
-    const saved = decodeNeighborhood(port.getItem('mundo-da-bia:neighborhood:v1'));
+    const saved = decodeNeighborhood(port.getItem('mundo-da-bia:neighborhood:v2')) ?? decodeNeighborhood(port.getItem('mundo-da-bia:neighborhood:v1'));
     if (saved) return saved;
-    const town = migrateNeighborhood(loadAlbum(port));
+    const town = upgradeNeighborhood(migrateNeighborhood(loadAlbum(port)));
     saveNeighborhood(town, port); return town;
-  } catch { return migrateNeighborhood(loadAlbum(storage)); }
+  } catch { return upgradeNeighborhood(migrateNeighborhood(loadAlbum(storage))); }
 }
 export function saveNeighborhood(town: import('../domain/neighborhood-types').Neighborhood, storage?: StoragePort): boolean {
-  try { (storage ?? globalThis.localStorage).setItem('mundo-da-bia:neighborhood:v1', encodeNeighborhood(town)); return true; }
+  try { (storage ?? globalThis.localStorage).setItem('mundo-da-bia:neighborhood:v2', encodeNeighborhood(town)); return true; }
   catch { return false; }
 }

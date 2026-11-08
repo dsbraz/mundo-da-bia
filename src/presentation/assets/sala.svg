@@ -1,5 +1,59 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600">
   <defs>
+<linearGradient id="material-0" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffebaa"/><stop offset=".55" stop-color="#ffebaa"/><stop offset="1" stop-color="#ffebaa" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-1" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#f9b590"/><stop offset=".55" stop-color="#f9b590"/><stop offset="1" stop-color="#f9b590" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-2" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#c98142"/><stop offset=".55" stop-color="#c98142"/><stop offset="1" stop-color="#c98142" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-3" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#8eb782"/><stop offset=".55" stop-color="#8eb782"/><stop offset="1" stop-color="#8eb782" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-4" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#fff4df"/><stop offset=".55" stop-color="#fff4df"/><stop offset="1" stop-color="#fff4df" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-5" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffe098"/><stop offset=".55" stop-color="#ffe098"/><stop offset="1" stop-color="#ffe098" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-6" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#d99851"/><stop offset=".55" stop-color="#d99851"/><stop offset="1" stop-color="#d99851" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-7" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#c67d66"/><stop offset=".55" stop-color="#c67d66"/><stop offset="1" stop-color="#c67d66" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-8" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#efb2ad"/><stop offset=".55" stop-color="#efb2ad"/><stop offset="1" stop-color="#efb2ad" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-9" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffe1aa"/><stop offset=".55" stop-color="#ffe1aa"/><stop offset="1" stop-color="#ffe1aa" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-10" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#8fa9cb"/><stop offset=".55" stop-color="#8fa9cb"/><stop offset="1" stop-color="#8fa9cb" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-11" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#677fa7"/><stop offset=".55" stop-color="#677fa7"/><stop offset="1" stop-color="#677fa7" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-12" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#d9e2f1"/><stop offset=".55" stop-color="#d9e2f1"/><stop offset="1" stop-color="#d9e2f1" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-13" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#df8c76"/><stop offset=".55" stop-color="#df8c76"/><stop offset="1" stop-color="#df8c76" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-14" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#b2a0c8"/><stop offset=".55" stop-color="#b2a0c8"/><stop offset="1" stop-color="#b2a0c8" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-15" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#bf9671"/><stop offset=".55" stop-color="#bf9671"/><stop offset="1" stop-color="#bf9671" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-16" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#edab79"/><stop offset=".55" stop-color="#edab79"/><stop offset="1" stop-color="#edab79" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-17" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#fff3d7"/><stop offset=".55" stop-color="#fff3d7"/><stop offset="1" stop-color="#fff3d7" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-18" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#f6bad4"/><stop offset=".55" stop-color="#f6bad4"/><stop offset="1" stop-color="#f6bad4" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-19" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#d96f91"/><stop offset=".55" stop-color="#d96f91"/><stop offset="1" stop-color="#d96f91" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-20" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#f4c752"/><stop offset=".55" stop-color="#f4c752"/><stop offset="1" stop-color="#f4c752" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-21" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#f3a075"/><stop offset=".55" stop-color="#f3a075"/><stop offset="1" stop-color="#f3a075" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-22" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#f6b18a"/><stop offset=".55" stop-color="#f6b18a"/><stop offset="1" stop-color="#f6b18a" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-23" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffdda2"/><stop offset=".55" stop-color="#ffdda2"/><stop offset="1" stop-color="#ffdda2" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-24" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#e7a761"/><stop offset=".55" stop-color="#e7a761"/><stop offset="1" stop-color="#e7a761" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-25" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#61747d"/><stop offset=".55" stop-color="#61747d"/><stop offset="1" stop-color="#61747d" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-26" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#b5c6c8"/><stop offset=".55" stop-color="#b5c6c8"/><stop offset="1" stop-color="#b5c6c8" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-27" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#c28642"/><stop offset=".55" stop-color="#c28642"/><stop offset="1" stop-color="#c28642" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-28" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#dba04f"/><stop offset=".55" stop-color="#dba04f"/><stop offset="1" stop-color="#dba04f" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-29" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffe7a1"/><stop offset=".55" stop-color="#ffe7a1"/><stop offset="1" stop-color="#ffe7a1" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-30" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#c48a4c"/><stop offset=".55" stop-color="#c48a4c"/><stop offset="1" stop-color="#c48a4c" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-31" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#cf8b4c"/><stop offset=".55" stop-color="#cf8b4c"/><stop offset="1" stop-color="#cf8b4c" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-32" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#c98b50"/><stop offset=".55" stop-color="#c98b50"/><stop offset="1" stop-color="#c98b50" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-33" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#fff0cb"/><stop offset=".55" stop-color="#fff0cb"/><stop offset="1" stop-color="#fff0cb" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-34" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#93b978"/><stop offset=".55" stop-color="#93b978"/><stop offset="1" stop-color="#93b978" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-35" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#f7a1ad"/><stop offset=".55" stop-color="#f7a1ad"/><stop offset="1" stop-color="#f7a1ad" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-36" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffd57e"/><stop offset=".55" stop-color="#ffd57e"/><stop offset="1" stop-color="#ffd57e" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-37" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#c78c50"/><stop offset=".55" stop-color="#c78c50"/><stop offset="1" stop-color="#c78c50" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-38" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#edaa84"/><stop offset=".55" stop-color="#edaa84"/><stop offset="1" stop-color="#edaa84" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-39" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#8fa85c"/><stop offset=".55" stop-color="#8fa85c"/><stop offset="1" stop-color="#8fa85c" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-40" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#b88bbd"/><stop offset=".55" stop-color="#b88bbd"/><stop offset="1" stop-color="#b88bbd" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-41" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#f4c454"/><stop offset=".55" stop-color="#f4c454"/><stop offset="1" stop-color="#f4c454" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-42" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffd88b"/><stop offset=".55" stop-color="#ffd88b"/><stop offset="1" stop-color="#ffd88b" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-43" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#e3acd0"/><stop offset=".55" stop-color="#e3acd0"/><stop offset="1" stop-color="#e3acd0" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-44" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffd698"/><stop offset=".55" stop-color="#ffd698"/><stop offset="1" stop-color="#ffd698" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-45" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#936a66"/><stop offset=".55" stop-color="#936a66"/><stop offset="1" stop-color="#936a66" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-46" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#c38eb7"/><stop offset=".55" stop-color="#c38eb7"/><stop offset="1" stop-color="#c38eb7" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-47" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#d99967"/><stop offset=".55" stop-color="#d99967"/><stop offset="1" stop-color="#d99967" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-48" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#fff1b3"/><stop offset=".55" stop-color="#fff1b3"/><stop offset="1" stop-color="#fff1b3" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-49" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ffdf85"/><stop offset=".55" stop-color="#ffdf85"/><stop offset="1" stop-color="#ffdf85" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-50" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#fff1b9"/><stop offset=".55" stop-color="#fff1b9"/><stop offset="1" stop-color="#fff1b9" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-51" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#d6ba83"/><stop offset=".55" stop-color="#d6ba83"/><stop offset="1" stop-color="#d6ba83" stop-opacity=".85"/></linearGradient>
+<linearGradient id="material-52" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#ead3a5"/><stop offset=".55" stop-color="#ead3a5"/><stop offset="1" stop-color="#ead3a5" stop-opacity=".85"/></linearGradient>
+
     <linearGradient id="wall" x2="0" y2="1">
       <stop stop-color="#ffd5ba" />
       <stop offset="1" stop-color="#f5a585" />
@@ -33,7 +87,7 @@
       <path d="M1 0V80" stroke="#db8d75" stroke-width="2" opacity=".2" />
     </pattern>
     <pattern id="gingham" width="24" height="24" patternUnits="userSpaceOnUse">
-      <rect width="24" height="24" fill="#ffebaa" />
+      <rect width="24" height="24" fill="url(#material-0)" />
       <path d="M0 6h24M6 0v24" stroke="#efbd56" stroke-width="9" opacity=".55" />
     </pattern>
     <clipPath id="window-clip">
@@ -46,128 +100,128 @@
       <path d="M0 0H1000V394H0Z" fill="url(#wallpaper)" stroke="none" />
       <path d="M0 16Q500 40 1000 16" fill="none" stroke="#dd8a72" stroke-width="4" />
       <rect y="389" width="1000" height="211" fill="url(#boards)" stroke="none" />
-      <path d="M0 380H1000V395H0" fill="#f9b590" stroke="#cb8062" stroke-width="2" />
+      <path d="M0 380H1000V395H0" fill="url(#material-1)" stroke="#cb8062" stroke-width="2" />
     </g>
     <g id="window">
-      <path d="M77 244V144a100 100 0 0 1 200 0v100Z" fill="#c98142" />
+      <path d="M77 244V144a100 100 0 0 1 200 0v100Z" fill="url(#material-2)" />
       <path d="M88 234V144a89 89 0 0 1 178 0v90Z" fill="url(#sky)" />
       <g clip-path="url(#window-clip)" stroke="none">
-        <path d="M85 228q20-72 70-35q5-65 48-41q25-59 73-15v110H85" fill="#8eb782" />
-        <path d="M108 108h38q8-20 20-9q16-6 22 9h19v10H108Z" fill="#fff4df" />
-        <circle cx="232" cy="100" r="19" fill="#ffe098" />
+        <path d="M85 228q20-72 70-35q5-65 48-41q25-59 73-15v110H85" fill="url(#material-3)" />
+        <path d="M108 108h38q8-20 20-9q16-6 22 9h19v10H108Z" fill="url(#material-4)" />
+        <circle cx="232" cy="100" r="19" fill="url(#material-5)" />
       </g>
       <path d="M176 57V235M89 153H264" stroke="#a96a37" stroke-width="9" />
       <path d="M176 59V234M89 153H264" stroke="#edb768" stroke-width="1.5" />
-      <rect x="70" y="239" width="213" height="17" rx="5" fill="#d99851" />
+      <rect x="70" y="239" width="213" height="17" rx="5" fill="url(#material-6)" />
     </g>
     <g id="rug">
-      <ellipse cx="493" cy="522" rx="398" ry="70" fill="#c67d66" opacity=".17" stroke="none" />
-      <ellipse cx="493" cy="514" rx="397" ry="72" fill="#efb2ad" stroke="#c78779" stroke-width="2" />
-      <ellipse cx="493" cy="514" rx="375" ry="61" fill="#ffe1aa" stroke="none" />
+      <ellipse cx="493" cy="522" rx="398" ry="70" fill="url(#material-7)" opacity=".17" stroke="none" />
+      <ellipse cx="493" cy="514" rx="397" ry="72" fill="url(#material-8)" stroke="#c78779" stroke-width="2" />
+      <ellipse cx="493" cy="514" rx="375" ry="61" fill="url(#material-9)" stroke="none" />
       <ellipse cx="493" cy="514" rx="348" ry="48" fill="none" stroke="#f8c1a0" stroke-width="8" />
     </g>
-    <g id="sofa"><ellipse cx="194" cy="428" rx="128" ry="10" fill="#33434a" opacity=".12"/><path d="M83 402v27h12v-27m196 0v27h12v-27" fill="#596568"/><rect x="72" y="276" width="244" height="125" rx="13" fill="#8fa9cb" stroke="#657e75" stroke-width="2"/><path d="M193 283v77" stroke="#677fa7" stroke-width="2"/><rect x="78" y="350" width="232" height="62" rx="9" fill="#677fa7"/><rect x="84" y="351" width="106" height="40" rx="8" fill="#d9e2f1"/><rect x="196" y="351" width="106" height="40" rx="8" fill="#d9e2f1"/><rect x="64" y="324" width="25" height="84" rx="8" fill="#8fa9cb"/><rect x="302" y="324" width="25" height="84" rx="8" fill="#8fa9cb"/><path d="m111 309 40-5 5 43-42 3Z" fill="#df8c76"/><path d="m241 303 39 5-6 42-39-6Z" fill="#b2a0c8"/><path d="m120 318 26-3m-25 12 26-3" stroke="#efe2cc" stroke-width="1.5"/></g>
-    <g id="wardrobe-frame"><rect x="305" y="112" width="202" height="282" rx="5" fill="#bf9671" stroke="#75634e" stroke-width="2"/><path d="M311 394v10m188-10v10" stroke="#46515b" stroke-width="7"/><rect x="314" y="151" width="184" height="196" fill="#52545c"/><rect x="315" y="351" width="182" height="35" fill="#52545c"/><path d="M316 129h178" stroke="#e8d5b8" stroke-width="2"/></g>
+    <g id="sofa"><ellipse cx="194" cy="428" rx="128" ry="10" fill="#33434a" opacity=".12"/><path d="M83 402v27h12v-27m196 0v27h12v-27" fill="#596568"/><rect x="72" y="276" width="244" height="125" rx="13" fill="url(#material-10)" stroke="#657e75" stroke-width="2"/><path d="M193 283v77" stroke="#677fa7" stroke-width="2"/><rect x="78" y="350" width="232" height="62" rx="9" fill="url(#material-11)"/><rect x="84" y="351" width="106" height="40" rx="8" fill="url(#material-12)"/><rect x="196" y="351" width="106" height="40" rx="8" fill="url(#material-12)"/><rect x="64" y="324" width="25" height="84" rx="8" fill="url(#material-10)"/><rect x="302" y="324" width="25" height="84" rx="8" fill="url(#material-10)"/><path d="m111 309 40-5 5 43-42 3Z" fill="url(#material-13)"/><path d="m241 303 39 5-6 42-39-6Z" fill="url(#material-14)"/><path d="m120 318 26-3m-25 12 26-3" stroke="#efe2cc" stroke-width="1.5"/></g>
+    <g id="wardrobe-frame"><rect x="305" y="112" width="202" height="282" rx="5" fill="url(#material-15)" stroke="#75634e" stroke-width="2"/><path d="M311 394v10m188-10v10" stroke="#46515b" stroke-width="7"/><rect x="314" y="151" width="184" height="196" fill="#52545c"/><rect x="315" y="351" width="182" height="35" fill="#52545c"/><path d="M316 129h178" stroke="#e8d5b8" stroke-width="2"/></g>
     <g id="fridge-frame">
-      <path d="M622 371V241q-1-42 56-43q62 0 66 40v132q0 16-15 16h-91q-16 0-16-15Z" fill="#edab79" />
+      <path d="M622 371V241q-1-42 56-43q62 0 66 40v132q0 16-15 16h-91q-16 0-16-15Z" fill="url(#material-16)" />
       <path d="M628 266V240q0-34 50-35q52 0 59 33v28Z" fill="url(#cream)" />
-      <rect x="632" y="272" width="99" height="102" rx="5" fill="#fff3d7" />
+      <rect x="632" y="272" width="99" height="102" rx="5" fill="url(#material-17)" />
       <path d="M631 310h102m-102 52h102" stroke="#c18b60" stroke-width="4" />
-      <path d="M663 224l17-4l4 21l-18 3Z" fill="#f6bad4" stroke="#c27f91" stroke-width="2" />
-      <path d="M676 234q-10-8-5-10q4-2 5 2q6-6 8 0q0 4-8 8Z" fill="#d96f91" stroke="none" />
-      <path d="m704 239 4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1Z" fill="#f4c752" stroke-width="2" />
+      <path d="M663 224l17-4l4 21l-18 3Z" fill="url(#material-18)" stroke="#c27f91" stroke-width="2" />
+      <path d="M676 234q-10-8-5-10q4-2 5 2q6-6 8 0q0 4-8 8Z" fill="url(#material-19)" stroke="none" />
+      <path d="m704 239 4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1Z" fill="url(#material-20)" stroke-width="2" />
     </g>
     <g id="cabinet">
-      <rect x="750" y="291" width="100" height="91" rx="6" fill="#f3a075" />
-      <rect x="759" y="305" width="37" height="66" rx="5" fill="#f6b18a" />
-      <rect x="802" y="305" width="38" height="66" rx="5" fill="#f6b18a" />
-      <circle cx="787" cy="340" r="4" fill="#ffdda2" />
-      <circle cx="812" cy="340" r="4" fill="#ffdda2" />
-      <rect x="741" y="280" width="117" height="15" rx="5" fill="#e7a761" />
+      <rect x="750" y="291" width="100" height="91" rx="6" fill="url(#material-21)" />
+      <rect x="759" y="305" width="37" height="66" rx="5" fill="url(#material-22)" />
+      <rect x="802" y="305" width="38" height="66" rx="5" fill="url(#material-22)" />
+      <circle cx="787" cy="340" r="4" fill="url(#material-23)" />
+      <circle cx="812" cy="340" r="4" fill="url(#material-23)" />
+      <rect x="741" y="280" width="117" height="15" rx="5" fill="url(#material-24)" />
     </g>
     <g id="stage" stroke="#46515b" stroke-width="2">
       <rect x="839" y="94" width="153" height="267" rx="5" fill="#35434a"/>
-      <path d="M850 108h130v235H850Z" fill="#61747d"/>
+      <path d="M850 108h130v235H850Z" fill="url(#material-25)"/>
       <path d="M857 116v218m15-218v218m15-218v218m15-218v218m15-218v218m15-218v218m15-218v218m15-218v218" stroke="#71878d" stroke-width="4"/>
       <path d="M850 106h130m-130 240h130" stroke="#8fa9cb" stroke-width="5"/>
       <rect x="875" y="146" width="84" height="48" rx="4" fill="#35434a"/>
       <path d="m888 170 10-10 10 20 10-20 10 20 10-10" fill="none" stroke="#d9e2f1" stroke-width="1.5"/>
       <path d="m835 365 19-17h125l17 17v42H835Z" fill="#46515b"/>
-      <path d="M836 365h159v12H836Z" fill="#677fa7"/>
+      <path d="M836 365h159v12H836Z" fill="url(#material-11)"/>
       <path d="M846 391h139" stroke="#8fa9cb" stroke-width="4"/>
       <ellipse cx="917" cy="357" rx="19" ry="5" fill="#26333b"/>
       <path d="M917 356V257l15-14" fill="none" stroke="#26333b" stroke-width="4"/>
-      <rect x="925" y="234" width="23" height="10" rx="5" fill="#b5c6c8" transform="rotate(-35 936 239)"/>
+      <rect x="925" y="234" width="23" height="10" rx="5" fill="url(#material-26)" transform="rotate(-35 936 239)"/>
     </g>
     <g id="lamp-base">
-      <ellipse cx="54" cy="424" rx="42" ry="12" fill="#c28642" />
-      <path d="M50 227v191q4 7 9 0V227Z" fill="#dba04f" />
+      <ellipse cx="54" cy="424" rx="42" ry="12" fill="url(#material-27)" />
+      <path d="M50 227v191q4 7 9 0V227Z" fill="url(#material-28)" />
       <path d="M77 227v45" stroke-width="2" />
-      <circle cx="77" cy="275" r="7" fill="#ffe7a1" />
+      <circle cx="77" cy="275" r="7" fill="url(#material-29)" />
     </g>
     <g id="table">
       <ellipse cx="280" cy="522" rx="114" ry="17" fill="#8f5435" opacity=".14" stroke="none" />
-      <path d="M189 476l-17 53q9 10 22 2l25-51m125-5 13 55q13 6 23-4l-14-52" fill="#c48a4c" />
-      <path d="M164 455v16q5 26 113 27q110-1 119-28v-17Z" fill="#cf8b4c" />
+      <path d="M189 476l-17 53q9 10 22 2l25-51m125-5 13 55q13 6 23-4l-14-52" fill="url(#material-30)" />
+      <path d="M164 455v16q5 26 113 27q110-1 119-28v-17Z" fill="url(#material-31)" />
       <ellipse cx="280" cy="454" rx="116" ry="26" fill="url(#wood)" />
       <path d="M187 447q80-17 181 2" fill="none" stroke="#ffe0a7" stroke-width="1.5" />
     </g>
     <g id="wall-decor">
       <path d="M618 122l29-24l29 24" fill="none" stroke-width="2" />
-      <rect x="614" y="122" width="66" height="70" rx="4" fill="#c98b50" />
-      <rect x="621" y="129" width="52" height="56" rx="2" fill="#fff0cb" stroke-width="2" />
-      <path d="M648 177v-30m0 24q-17-15-20-7q2 12 20 7m0-4q19-14 20-5q-3 9-20 5" fill="#93b978" stroke="#729254" stroke-width="2" />
-      <g fill="#f7a1ad" stroke="#c67c7c" stroke-width="1.5">
+      <rect x="614" y="122" width="66" height="70" rx="4" fill="url(#material-32)" />
+      <rect x="621" y="129" width="52" height="56" rx="2" fill="url(#material-33)" stroke-width="2" />
+      <path d="M648 177v-30m0 24q-17-15-20-7q2 12 20 7m0-4q19-14 20-5q-3 9-20 5" fill="url(#material-34)" stroke="#729254" stroke-width="2" />
+      <g fill="url(#material-35)" stroke="#c67c7c" stroke-width="1.5">
         <circle cx="648" cy="143" r="9" />
         <circle cx="639" cy="151" r="9" />
         <circle cx="657" cy="151" r="9" />
         <circle cx="648" cy="158" r="8" />
       </g>
-      <circle cx="648" cy="150" r="6" fill="#ffd57e" stroke="none" />
-      <rect x="735" y="139" width="125" height="13" rx="4" fill="#c78c50" />
-      <path d="M749 153v16l13-16m76 0v16l-13-16" fill="#c78c50" />
-      <path d="M761 136l-6-31h43l-5 31Z" fill="#edaa84" />
-      <path d="M777 110q-20-39-33-17q4 13 31 12q-1-43 21-33q13 9-18 29q40-24 40-3q-9 19-37 7" fill="#8fa85c" stroke="#668044" stroke-width="2" />
-      <rect x="818" y="105" width="13" height="33" rx="2" fill="#b88bbd" />
-      <rect x="835" y="110" width="12" height="28" rx="2" fill="#f4c454" />
+      <circle cx="648" cy="150" r="6" fill="url(#material-36)" stroke="none" />
+      <rect x="735" y="139" width="125" height="13" rx="4" fill="url(#material-37)" />
+      <path d="M749 153v16l13-16m76 0v16l-13-16" fill="url(#material-37)" />
+      <path d="M761 136l-6-31h43l-5 31Z" fill="url(#material-38)" />
+      <path d="M777 110q-20-39-33-17q4 13 31 12q-1-43 21-33q13 9-18 29q40-24 40-3q-9 19-37 7" fill="url(#material-39)" stroke="#668044" stroke-width="2" />
+      <rect x="818" y="105" width="13" height="33" rx="2" fill="url(#material-40)" />
+      <rect x="835" y="110" width="12" height="28" rx="2" fill="url(#material-41)" />
     </g>
   </g>
   <g id="wardrobe-closed" stroke="#657e75" stroke-width="1.5">
-    <rect x="317" y="153" width="88" height="194" rx="5" fill="#8fa9cb" />
-    <rect x="407" y="153" width="88" height="194" rx="5" fill="#8fa9cb" />
+    <rect x="317" y="153" width="88" height="194" rx="5" fill="url(#material-10)" />
+    <rect x="407" y="153" width="88" height="194" rx="5" fill="url(#material-10)" />
     <path d="M330 170v157m151-157v157" stroke="#d9e2f1" stroke-width="2"/>
-    <circle cx="392" cy="263" r="7" fill="#ffd88b" stroke="#9d6445" />
-    <circle cx="421" cy="263" r="7" fill="#ffd88b" stroke="#9d6445" />
+    <circle cx="392" cy="263" r="7" fill="url(#material-42)" stroke="#9d6445" />
+    <circle cx="421" cy="263" r="7" fill="url(#material-42)" stroke="#9d6445" />
   </g>
   <g id="wardrobe-open" stroke="#925776" stroke-width="1.5">
-    <path d="M315 155l-20-7v199l20-2m181-190 19-7v199l-19-2" fill="#e3acd0" />
+    <path d="M315 155l-20-7v199l20-2m181-190 19-7v199l-19-2" fill="url(#material-43)" />
     <path d="M320 185h173m-173 85h173" stroke="#ebc087" stroke-width="4" />
   </g>
   <g id="drawer-closed" stroke="#9c6085" stroke-width="1.5">
-    <rect x="316" y="351" width="180" height="34" rx="4" fill="#8fa9cb" />
-    <circle cx="405" cy="366" r="6" fill="#ffd698" stroke="#a36b47" />
+    <rect x="316" y="351" width="180" height="34" rx="4" fill="url(#material-10)" />
+    <circle cx="405" cy="366" r="6" fill="url(#material-44)" stroke="#a36b47" />
   </g>
   <g id="drawer-open" stroke="#a56b4c" stroke-width="1.5">
-    <path d="M315 351l-5 28h192l-6-28" fill="#936a66" />
+    <path d="M315 351l-5 28h192l-6-28" fill="url(#material-45)" />
     <rect x="310" y="379" width="192" height="28" rx="5" fill="url(#cream)" />
-    <circle cx="405" cy="392" r="6" fill="#c38eb7" />
+    <circle cx="405" cy="392" r="6" fill="url(#material-46)" />
   </g>
   <g id="fridge-closed" stroke="#9e6441" stroke-width="1.5">
     <rect x="629" y="270" width="106" height="104" rx="5" fill="url(#cream)" />
-    <rect x="712" y="283" width="7" height="43" rx="3" fill="#d99967" stroke-width="2" />
+    <rect x="712" y="283" width="7" height="43" rx="3" fill="url(#material-47)" stroke-width="2" />
   </g>
   <g id="fridge-open" stroke="#a9734d" stroke-width="1.5">
     <path d="M734 271l27 8v97l-27-3Z" fill="url(#cream)" />
     <path d="M744 292v60" stroke="#e7b27b" stroke-width="4" />
   </g>
   <g id="lamp-on">
-    <path d="M38 212L0 426H149L70 212Z" fill="#fff1b3" opacity=".12" />
-    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="#ffdf85" stroke="#a56730" stroke-width="1.5" />
-    <ellipse cx="55" cy="171" rx="26" ry="6" fill="#fff1b9" stroke="#a56730" stroke-width="1.5" />
+    <path d="M38 212L0 426H149L70 212Z" fill="url(#material-48)" opacity=".12" />
+    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="url(#material-49)" stroke="#a56730" stroke-width="1.5" />
+    <ellipse cx="55" cy="171" rx="26" ry="6" fill="url(#material-50)" stroke="#a56730" stroke-width="1.5" />
     <path d="M39 182l-9 38m27-38v40m14-40 14 38" stroke="#fff1b3" stroke-width="1.5" />
   </g>
   <g id="lamp-off">
-    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="#d6ba83" stroke="#a56730" stroke-width="1.5" />
-    <ellipse cx="55" cy="171" rx="26" ry="6" fill="#ead3a5" stroke="#a56730" stroke-width="1.5" />
+    <path d="M8 221l21-50q25-10 51 0l26 50q-1 15-16 9q-9 9-21 1q-12 9-24 0q-11 9-22 0q-16 8-15-10Z" fill="url(#material-51)" stroke="#a56730" stroke-width="1.5" />
+    <ellipse cx="55" cy="171" rx="26" ry="6" fill="url(#material-52)" stroke="#a56730" stroke-width="1.5" />
   </g>
 </svg>

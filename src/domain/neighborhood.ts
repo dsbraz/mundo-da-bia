@@ -1,4 +1,7 @@
-import { validLocation } from './location';
+import { initialOutdoor, interactOutdoor, releaseOutdoor } from './outdoor';
+import { streetWidth } from './neighborhood-geometry';
+import { editModule } from './modules';
+import { sameLocation, validLocation } from './location';
 import { itemKind } from './item-kind';
 import type { Album, World, RoomId } from './types';
 import type { Location, Neighborhood, NeighborhoodAction } from './neighborhood-types';
@@ -9,6 +12,7 @@ import { transport } from './neighborhood-transfer';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const active = activeHouse(album);
   return {
+    outdoor: initialOutdoor(),
     location: { kind: 'interior', building: active.id, room: active.state.room },
     nextBuilding: Math.max(...album.houses.map(h => h.id)) + 1,
     plots: Math.max(4, Math.ceil((album.houses.length + 1) / 2) * 2),
@@ -27,11 +31,13 @@ export function migrateNeighborhood(album: Album): Neighborhood {
 }
 export function neighborhoodAction(town: Neighborhood, action: NeighborhoodAction): Neighborhood {
   switch (action.type) {
+    case 'outdoor': return interactOutdoor(town, action);
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
     case 'transport': return transport(town, action);
     case 'construct': return construct(town, action.plot, action.model);
     case 'facade': return customize(town, action);
     case 'duplicate': return duplicateBuilding(town, action.building);
+    default: return editModule(town, action);
   }
 }
 function localRoom(location: Location, view: Location): RoomId {
@@ -43,14 +49,14 @@ export function localWorld(town: Neighborhood): World {
   const building = location.kind === 'interior' ? town.buildings.find(b => b.id === location.building)! : null;
   const room = location.kind === 'interior' ? location.room : 'sala';
   const layout = building?.layout ?? streetLayout(town.plots);
-  return { ...(building ? {} : { streetWidth: town.plots * 440 }), layout, room, home: layout.rooms[room]!.home, show: building?.show ?? false,
+  return { ...(building ? {} : { streetWidth: streetWidth(town.plots) }), layout, room, home: layout.rooms[room]!.home, show: building?.show ?? false,
     actors: town.actors.map(a => ({ ...a, room: localRoom(a.location, location) })),
     items: town.items.filter(i => localRoom(i.location, location) !== 'room-0').map(i => ({ ...i, room: localRoom(i.location, location) })),
   };
 }
 function streetLayout(plots: number) {
   const layout = initialWorld().layout;
-  return { ...layout, pieces: [], rooms: { ...layout.rooms, sala: { ...layout.rooms.sala, name: 'Nosso bairro', size: 'small' as const } }, streetWidth: plots * 440 } as typeof layout;
+  return { ...layout, pieces: [], rooms: { ...layout.rooms, sala: { ...layout.rooms.sala, name: 'Nosso bairro', size: 'small' as const } }, streetWidth: streetWidth(plots) } as typeof layout;
 }
 export function storeWorld(town: Neighborhood, world: World): Neighborhood {
   const view = town.location;
@@ -67,5 +73,7 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
   });
   const buildings = town.buildings.map(b => view.kind === 'interior' && b.id === view.building ? { ...b, show: world.show,
     layout: { ...world.layout, rooms: { ...world.layout.rooms, [world.room]: { ...world.layout.rooms[world.room], home: world.home } } } } : b);
-  return { ...town, buildings, actors, items, location: location(world.room) };
+  let outdoor = town.outdoor;
+  town.actors.forEach(a => { const next = actors.find(n => n.id === a.id)!; if (!sameLocation(next.location, a.location) || next.x !== a.x || next.y !== a.y) outdoor = releaseOutdoor(outdoor, a.id); });
+  return { ...town, outdoor, buildings, actors, items, location: location(world.room) };
 }

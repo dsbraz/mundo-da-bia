@@ -1,3 +1,6 @@
+import { validOutdoor } from './outdoor-validation';
+import { upgradeNeighborhood } from './neighborhood-upgrade';
+import { plotWidth, streetWidth } from '../domain/neighborhood-geometry';
 import { localWorld } from '../domain/neighborhood';
 import type { Building, Location, Neighborhood } from '../domain/neighborhood-types';
 import { buildingModels } from '../domain/neighborhood-types';
@@ -6,13 +9,18 @@ import { sameLocation, validLocation } from '../domain/location';
 import { member, positiveId, record, roomId } from './values';
 import { validLayout } from './layout-validation';
 import { actor, item, consistentWorld } from './validation';
-export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 1, town }); }
+export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 2, town }); }
 export function decodeNeighborhood(raw: string | null): Neighborhood | null {
   try {
     const value: unknown = JSON.parse(raw ?? 'null');
-    if (!record(value) || value.version !== 1 || !validTown(value.town)) return null;
-    return value.town;
+    if (!record(value) || (value.version !== 1 && value.version !== 2) || !validTown(value.town)) return null;
+    if (!validVersion(value.town, value.version)) return null;
+    return value.version === 1 ? upgradeNeighborhood(value.town) : value.town;
   } catch { return null; }
+}
+function validVersion(town: Neighborhood, version: number) {
+  if (version === 1) return [...town.actors, ...town.items].every(entity => entity.location.kind !== 'street' || entity.x <= town.plots * plotWidth - 60);
+  return validOutdoor(town) && town.buildings.every(b => b.layout.rooms[b.entry]!.cell === 0);
 }
 function location(value: unknown): value is Location {
   if (!record(value)) return false;
@@ -31,9 +39,9 @@ function resident(value: unknown): boolean {
   return record(value) && location(value.location) && actor({ ...value, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
 }
 function object(value: unknown): boolean {
-  if (!record(value) || !location(value.location) || !member(itemIds, value.kind)) return false;
-  return typeof value.id === 'string' && /^[1-9]\d*:(lanche|peixe|microfone|ursinho)$/.test(value.id)
-    && item({ ...value, id: value.kind, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
+  if (!record(value) || !location(value.location) || !member([...itemIds, 'bola'], value.kind)) return false;
+  return typeof value.id === 'string' && /^[1-9]\d*:(lanche|peixe|microfone|ursinho|bola)$/.test(value.id)
+    && item({ ...value, id: value.kind === 'bola' ? 'ursinho' : value.kind, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
 }
 function unique(values: unknown[]): boolean { return new Set(values).size === values.length; }
 function validTown(value: unknown): value is Neighborhood {
@@ -59,7 +67,7 @@ function consistent(town: Neighborhood): boolean {
 }
 function validPosition(town: Neighborhood, entity: { x: number; room: string; location: Location }): boolean {
   const where = entity.location;
-  if (where.kind === 'street') return entity.room === 'sala' && entity.x >= 60 && entity.x <= town.plots * 440 - 60;
+  if (where.kind === 'street') return entity.room === 'sala' && entity.x >= 60 && entity.x <= streetWidth(town.plots) - 60;
   const room = town.buildings.find(b => b.id === where.building)!.layout.rooms[where.room]!;
   return entity.room === where.room && entity.x >= 60 && entity.x <= { small: 1000, medium: 1200, large: 1400 }[room.size] - 60;
 }

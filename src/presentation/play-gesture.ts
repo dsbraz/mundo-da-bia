@@ -6,6 +6,7 @@ import { furnitureAt, seatAt, surfaceAt, usableAt, wardrobeHit } from './furnitu
 import { actorAt, sourceAt } from './targets';
 import type { DragPreview, DragToken } from './targets';
 export interface PlayInput {
+  interact?: (point: Point) => boolean; walk?: (point: Point) => void; cancelWalk?: () => void;
   cross?: (actor: ActorId, direction: Direction) => void;
   dispatch: (action: Action) => void;
   wardrobe: () => boolean; toggleWardrobe: () => void;
@@ -21,6 +22,7 @@ export function createPlayGesture(getState: () => World, select: (id: ActorId) =
       if (active) return false;
       const state = getState(); const token = play && sourceAt(state, point, play.wardrobe());
       const actor = token ? undefined : actorAt(state, point);
+      interruptWalk(play, !!(actor ?? token));
       active = startDrag(pointer, state, point, token, actor);
       if (token) play?.preview({ ...token, point });
       if (actor) select(actor.id);
@@ -48,7 +50,7 @@ function destination(active: Active, point: Point, state: World): Point {
 }
 function finish(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
   if (!active.actor && !active.token) {
-    if (play && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12) tapFurniture(state, point, undefined, play);
+    if (play && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12 && !tapFurniture(state, point, undefined, play)) play.walk?.(point);
     return;
   }
   if (active.token) { deliver(active.token, point, state, play!); return; }
@@ -70,6 +72,7 @@ function deliver(token: DragToken, point: Point, state: World, play: PlayInput) 
 }
 function tapFurniture(state: World, point: Point, token: DragToken | undefined, play: PlayInput): boolean {
   if (token || actorAt(state, point)) return false;
+  if (play.interact) return play.interact(point);
   if (wardrobeHit(state, point)) { play.toggleWardrobe(); return true; }
   const target = furnitureAt(state, point);
   if (target) { play.dispatch({ type: 'interact', target }); return true; }
@@ -82,3 +85,5 @@ function startDrag(pointer: number, state: World, point: Point, token: DragToken
   return { pointer, room: state.room, token, actor: actor?.id, start: point, last: actor ?? point,
     offset: actor ? { x: actor.x - point.x, y: actor.y - point.y } : { x: 0, y: 0 } };
 }
+
+function interruptWalk(play: PlayInput | undefined, dragging: boolean) { if (dragging) play?.cancelWalk?.(); }

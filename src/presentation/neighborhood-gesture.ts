@@ -1,9 +1,11 @@
+import { plotAt } from '../domain/neighborhood-geometry';
 import type { Neighborhood, NeighborhoodAction, Location } from '../domain/neighborhood-types';
 import type { ActorId, ItemId, Point, World } from '../domain/types';
 import { actorAt, sourceAt } from './targets';
 import { doorAt, destinationPoint } from './neighborhood-doors';
 type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, p: Point) => void; end: (id: number, p: Point) => void; cancel: () => void; transferring?: () => boolean };
 interface Actions {
+  drop?: (actor: ActorId, point: Point) => boolean;
   town: () => Neighborhood; world: () => World; building: () => boolean;
   dispatch: (action: NeighborhoodAction) => void; plot: (plot: number) => void;
   preview: (action: NeighborhoodAction | null) => void; progress: (value: number) => void;
@@ -44,10 +46,11 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
       if (active?.id !== id) return;
       const a = active;
       if (a.ready) { const action = transfer(a); cancel(); actions.dispatch(action); return; }
-      if (!a.actor && !a.item && Math.hypot(point.x - a.start.x, point.y - a.start.y) < 12) {
+      if (dropActor(a, point, actions)) { cancel(); return; }
+      if (backgroundTap(a, point)) {
         const door = doorAt(actions.town(), point);
         if (door) { cancel(); actions.dispatch({ type: 'visit', location: door.location }); return; }
-        if (actions.building() && actions.town().location.kind === 'street') { cancel(); actions.plot(Math.floor(point.x / 440)); return; }
+        if (actions.building() && actions.town().location.kind === 'street') { cancel(); actions.plot(plotAt(point.x)); return; }
       }
       base.end(id, point); cancel();
     }, cancel, transferring: () => active?.ready ?? false,
@@ -56,3 +59,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
 function loose(world: World, token: ReturnType<typeof sourceAt>): ItemId | undefined {
   return token?.kind === 'item' && world.items.some(i => i.id === token.id && !i.holder && i.spot === 'floor') ? token.id : undefined;
 }
+
+function dropActor(active: Active, point: Point, actions: Actions) { return !!active.actor && Math.hypot(point.x - active.start.x, point.y - active.start.y) >= 12 && !!actions.drop?.(active.actor, point); }
+
+function backgroundTap(active: Active, point: Point) { return !active.actor && !active.item && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12; }

@@ -1,3 +1,8 @@
+import { doorEffect } from './door-effect';
+import type { Location } from '../domain/neighborhood-types';
+import { outdoorEffect } from './outdoor-effects';
+import type { OutdoorAction } from '../domain/neighborhood-types';
+import { handAnchor } from './pose';
 import { rasterScale, logicalWidth } from './rendering';
 import { captureMotion } from './settle-motion';
 import { itemKind } from '../domain/item-kind';
@@ -25,6 +30,8 @@ export class PlayScene extends Phaser.Scene {
   private town: Neighborhood | null = null;
   private cameraX = 0;
   neighborhood(town: Neighborhood) { this.town = town; }
+  arrive(previous: Location) { if (this.ready && this.town) doorEffect(this, this.town, previous); }
+  outdoorReaction(action: OutdoorAction) { if (this.ready && this.town) outdoorEffect(this, this.town, action); }
   camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x; this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
@@ -40,23 +47,30 @@ export class PlayScene extends Phaser.Scene {
   private hint: Phaser.GameObjects.Graphics | null = null;
   private objects: Phaser.GameObjects.Image[] = [];
   constructor(state: World) { super('play'); this.world = state; }
-  preload() { loadArt(this); itemIds.forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); }
+  preload() { loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); }
   create() { this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true; this.paint(this.world, this.selected); }
   paint(state: World, selected: ActorId) {
     this.world = state; this.selected = selected;
-    if (!this.ready) return;
+    if (!this.prepareArt(state)) return;
     const width = state.streetWidth ? 1000 : roomWidth(state);
     if (logicalWidth(this) !== width) this.scale.setGameSize(width * rasterScale, 600 * rasterScale);
     this.cameras.main.scrollX = state.streetWidth ? this.cameraX : 0;
     this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(this.cameras.main.scrollX);
     this.sliding = null; this.transferRoom = null;
-    this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null;
+    this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
     if (state.streetWidth && this.town) drawStreet(this, this.town);
     else { drawRoom(this, state); this.exitDoor(); }
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
     this.game.canvas.dataset.ready = 'true';
+  }
+  private prepareArt(state: World) {
+    if (!this.ready || this.load.isLoading()) return false;
+    loadArt(this, state, this.town);
+    if (!this.load.list.size) return true;
+    this.game.canvas.dataset.ready = 'false';
+    this.load.once('complete', () => this.paint(this.world, this.selected)); this.load.start(); return false;
   }
   private exitDoor() {
     const location = this.town?.location;
@@ -119,7 +133,7 @@ export class PlayScene extends Phaser.Scene {
     const figure = this.figures.find(f => f.name === active);
     if (figure) this.tweens.killTweensOf(figure);
     figure?.setPosition(destination.x, destination.y).setDepth(depth);
-    this.moving = id;
+    this.moving = id; this.game.canvas.dataset.walking = id ?? '';
     this.world.items.filter(i => i.holder === active).forEach(item => {
       const p = handPoint(preview);
       this.objects.find(o => o.name === item.id)?.setPosition(p.x, p.y).setDepth(depth + 2);
@@ -167,10 +181,32 @@ export class PlayScene extends Phaser.Scene {
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   update(time: number) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
-      animateActor(figure, this.moving === actor.id ? { ...actor, seat: null, resting: false } : actor, time, index, this.world.show);
+      this.animateFigure(figure, actor, time, index, reduced);
     });
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }
+  private animateFigure(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, reduced: boolean) {
+    const seated = [this.town?.outdoor.bench, this.town?.outdoor.swing].includes(actor.id);
+    const posed = this.moving === actor.id ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' as const } : actor;
+    animateActor(figure, posed, reduced ? 500 : time, index, !reduced && this.world.show);
+    const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
+    if (this.moving === actor.id && !reduced) {
+      pose.y -= Math.abs(Math.sin(time / 120)) * 3;
+      pose.getByName<Phaser.GameObjects.Container>('knees')?.setRotation(Math.sin(time / 160) * .12).setScale(1, .96 + Math.abs(Math.sin(time / 160)) * .04);
+    }
+    this.animateSwing(figure, pose, actor, time, reduced);
+    const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
+    this.world.items.filter(i => i.holder === actor.id).forEach(i => this.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y));
+  }
+  private animateSwing(figure: Phaser.GameObjects.Container, pose: Phaser.GameObjects.Container, actor: Actor, time: number, reduced: boolean) {
+    if (this.town?.outdoor.swing !== actor.id || this.moving === actor.id) return;
+    const angle = reduced ? 0 : Math.sin(time / 600) * .08;
+    (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(angle);
+    figure.setPosition(actor.x - Math.sin(angle) * 210, actor.y + (Math.cos(angle) - 1) * 210);
+    pose.rotation = angle;
+  }
+
 }

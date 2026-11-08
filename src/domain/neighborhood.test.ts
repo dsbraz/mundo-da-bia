@@ -65,7 +65,7 @@ it('fachada, locais inválidos, modelos e cópias mantêm limites e entrada est�
 });
 it('recusa transporte ausente, destino inválido e posições fora do limite', () => {
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
-  for (const point of [{ x: 59, y: 500 }, { x: 1761, y: 500 }, { x: 300, y: 541 }, { x: NaN, y: 500 }]) {
+  for (const point of [{ x: 59, y: 500 }, { x: 2361, y: 500 }, { x: 300, y: 541 }, { x: NaN, y: 500 }]) {
     expect(neighborhoodAction(town, { type: 'transport', actor: 'bia', location: { kind: 'street' }, point })).toBe(town);
   }
   expect(neighborhoodAction(town, { type: 'transport', item: '2:ursinho', location: { kind: 'street' }, point: { x: 200, y: 500 } })).toBe(town);

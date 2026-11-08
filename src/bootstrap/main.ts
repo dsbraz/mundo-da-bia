@@ -1,3 +1,10 @@
+import { approach, equipmentAction } from '../presentation/equipment-interaction';
+import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
+import type { OutdoorTarget } from '../presentation/outdoor-controls';
+import { worldNavigation } from '../presentation/world-navigation';
+import { structureControls } from '../presentation/structure-controls';
+import { streetWidth, plotStart } from '../domain/neighborhood-geometry';
+import { walking } from '../presentation/walking';
 import { doors } from '../presentation/neighborhood-doors';
 import { localWorld, storeWorld, neighborhoodAction } from '../domain/neighborhood';
 import type { NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
@@ -8,9 +15,9 @@ import { cancelTrayDrag } from '../presentation/tray-drag';
 import { sceneControls } from '../presentation/scene-controls';
 import { createShell } from '../presentation/shell';
 import { roomControls } from '../presentation/room-controls';
-import { addRoom, renameRoom, reorderRoom } from '../domain/rooms';
+import { addRoom, renameRoom } from '../domain/rooms';
 import type { Album } from '../domain/types';
-import { editWorld, history, recordEdit, redo, undo } from '../domain/design';
+import { editWorld, history, recordEdit } from '../domain/design';
 import type { EditAction, World } from '../domain/types';
 import { createEditorControls } from '../presentation/editor-controls';
 import { createBuildGesture } from '../presentation/build-gesture';
@@ -41,71 +48,96 @@ let wardrobeOpen = false;
 let cancelInput = () => {};
 const wardrobeButton = root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!;
 const shell = createShell(root, () => cancelInput());
-function toggleWardrobe() { wardrobeOpen = !wardrobeOpen; scene.openWardrobe(wardrobeOpen); }
-function openLooks() { wardrobeOpen = false; scene.openWardrobe(false); shell.looks(); }
+root.querySelectorAll<HTMLButtonElement>('[data-dock-tab]').forEach(button => button.onclick = () => shell.playTab(button.dataset.dockTab!));
+function toggleWardrobe() { wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
+function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
+function openLooks() { closeWardrobe(); shell.looks(); }
 wardrobeButton.addEventListener('click', openLooks);
 const playSound = createSound(root.querySelector<HTMLButtonElement>('#sound-toggle')!);
 const controls = createControls(root, dispatch, select, () => state, () => building, item => neighborhood.carryItem(item), () => doors(town).length > 0);
-const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(); }, dispatch, toggleWardrobe);
+const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(); }, perform, toggleWardrobe);
 const rooms = roomControls(root, {
   enter: room => dispatch({ type: 'room', room }),
   add: options => {
     cancelInput(); restoreEdit(recordEdit(edits, addRoom(state, options)));
   },
   rename: name => restoreEdit(recordEdit(edits, renameRoom(state, name))),
-  reorder: (room, target) => restoreEdit(recordEdit(edits, reorderRoom(state, room, target))),
+  reorder: (room, target) => townDispatch({ type: 'move-module', building: albumView().active, room, cell: state.layout.rooms[target]!.cell }),
   closeTray: () => { cancelInput(); shell.close(); },
   snapshot: () => townDispatch({ type: 'duplicate', building: albumView().active }),
 });
 const editor = createEditorControls(root, {
   toggle: toggleBuild, edit: applyEdit,
-  undo: () => town.location.kind === 'street' ? streetUndo(false) : restoreEdit(undo(edits)), redo: () => town.location.kind === 'street' ? streetUndo(true) : restoreEdit(redo(edits)),
+  undo: () => streetUndo(false), redo: () => streetUndo(true),
   select: id => { selectedPiece = id; refresh(); },
   house: id => townDispatch({ type: 'visit', location: { kind: 'interior', building: id, room: town.buildings.find(b => b.id === id)!.entry } }),
   duplicate: empty => { if (empty) newBuilding(); else townDispatch({ type: 'duplicate', building: albumView().active }); },
   rename: name => townDispatch({ type: 'facade', building: albumView().active, name }),
 });
+const walker = walking({ state: () => state, selected: () => selected, preview: (id, point) => scene.previewActor(id, point),
+  commit: (actor, point) => dispatch({ type: 'move', actor, point }), hint: text => { root.querySelector('#announcement')!.textContent = text; } });
+function dropOutside(actor: ActorId, point: import('../domain/types').Point) {
+  const target = outdoorAt(town, point); if (!target) return false;
+  townDispatch({ type: 'outdoor', actor, target: target.target, ...(target.building ? { building: target.building } : {}) }); return true;
+}
+function useOutdoor(target: OutdoorTarget) {
+  if (target.target === 'bench' || target.target === 'swing') {
+    const occupant = town.outdoor[target.target];
+    if (occupant && occupant !== selected) { root.querySelector('#announcement')!.textContent = 'Esse lugar está ocupado. Há outros lugares para brincar!'; return; }
+  }
+  walker.start({ x: target.point.x, y: 510 }, () => townDispatch({ type: 'outdoor', actor: selected, target: target.target, ...(target.building ? { building: target.building } : {}) }));
+}
+const outside = outdoorControls(root, useOutdoor, () => townDispatch({ type: 'outdoor', actor: selected, target: 'leave' }));
+const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
+const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
 const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close());
 root.querySelector('#play-mode')!.addEventListener('click', () => { if (building) toggleBuild(); });
 function persist() { town = storeWorld(town, state); saved = saveNeighborhood(town); }
 function toggleBuild() {
-  cancelTrayDrag(); cancelInput(); building = !building; selectedPiece = null; edits = history(state); streetPast = []; streetFuture = [];
+  closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; selectedPiece = null; edits = history(state);
   shell.close();
+  if (!building) { streetPast = []; streetFuture = []; }
   refresh();
   root.querySelector('#announcement')!.textContent = building ? 'Escolha uma peça. Arraste para mudar de lugar. Experimente sem medo: dá para desfazer!' : 'Sua casa está pronta para brincar!';
 }
 function applyEdit(action: EditAction) {
   if (!building || town.location.kind === 'street') return;
   const next = editWorld(state, action);
+  if (next === state) return;
+  remember();
   edits = recordEdit(edits, next); state = next;
   if (action.type === 'add') selectedPiece = state.layout.pieces.at(-1)?.id ?? null;
   if (!state.layout.pieces.some(p => p.id === selectedPiece)) selectedPiece = null;
   persist(); refresh();
 }
-function restoreEdit(next: typeof edits) { cancelInput(); edits = next; state = edits.present; selectedPiece = null; persist(); refresh(); }
+function restoreEdit(next: typeof edits) { if (next.present === state) return; remember(); cancelInput(); edits = next; state = edits.present; selectedPiece = null; persist(); refresh(); }
 function newBuilding() {
   townDispatch({ type: 'visit', location: { kind: 'street' } });
   if (!building) toggleBuild();
   root.querySelector<HTMLDialogElement>('#room-dialog')!.close();
-  neighborhood.plot(Array.from({ length: town.plots }, (_, i) => i).find(i => !town.buildings.some(b => b.plot === i))!);
+  neighborhood.choosePlot();
 }
 function townDispatch(action: NeighborhoodAction) {
-  cancelTrayDrag(); cancelInput();
+  closeWardrobe();
+  walker.cancel(); cancelTrayDrag(); cancelInput();
   const next = neighborhoodAction(town, action);
   if (next === town) return;
-  if (building && town.location.kind === 'street' && ['construct', 'facade', 'duplicate'].includes(action.type)) { streetPast = [...streetPast.slice(-49), town]; streetFuture = []; }
-  else { streetPast = []; streetFuture = []; }
+  if (!['visit', 'transport', 'outdoor'].includes(action.type)) remember();
   const previous = town.location;
   town = next; state = localWorld(town); edits = history(state); selectedPiece = null;
-  if (town.location.kind === 'street' && previous.kind === 'interior') camera = Math.max(0, Math.min(town.plots * 440 - 1000, town.buildings.find(b => b.id === previous.building)!.plot * 440 - 280));
+  if (town.location.kind === 'street' && previous.kind === 'interior') camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, plotStart(town.buildings.find(b => b.id === previous.building)!.plot) - 280));
   if (town.location.kind !== 'street') camera = 0;
   saved = saveNeighborhood(town); refresh();
+  if (action.type === 'visit' || action.type === 'transport') scene.arrive(previous);
+  if (action.type === 'construct') structure.open(town.nextBuilding - 1);
+  if (action.type === 'outdoor') scene.outdoorReaction(action);
 }
+function remember() { streetPast = [...streetPast.slice(-49), town]; streetFuture = []; }
 function streetUndo(forward: boolean) {
   cancelInput();
   const from = forward ? streetFuture : streetPast, to = forward ? streetPast : streetFuture;
   const next = from.pop(); if (!next) return;
-  to.push(town); town = next; state = localWorld(town); saved = saveNeighborhood(town); refresh();
+  to.push(town); town = next; state = localWorld(town); saved = saveNeighborhood(town); refresh(); structure.refresh();
 }
 function previewTown(action: NeighborhoodAction | null) {
   const preview = action ? neighborhoodAction(town, action) : town;
@@ -116,7 +148,7 @@ function previewBuild(action: EditAction | null) {
   scene.previewLayout(preview);
 }
 function refresh() {
-  camera = Math.min(camera, town.plots * 440 - 1000);
+  camera = Math.min(camera, streetWidth(town.plots) - 1000);
   scene.neighborhood(town); scene.camera(camera);
   scene.buildMode(building, selectedPiece);
   scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street');
@@ -125,12 +157,25 @@ function refresh() {
 function renderControls() {
   controls(state, selected, saved);
   editor(albumView(), edits, building, selectedPiece); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building, camera);
-  if (town.location.kind === 'street') { root.querySelector<HTMLButtonElement>('#undo')!.disabled = !streetPast.length; root.querySelector<HTMLButtonElement>('#redo')!.disabled = !streetFuture.length; }
+  navigationBar(); outside(town, selected, camera, building);
+  root.querySelector<HTMLButtonElement>('#undo')!.disabled = !streetPast.length; root.querySelector<HTMLButtonElement>('#redo')!.disabled = !streetFuture.length;
 }
-function select(id: ActorId) { root.classList.add('actor-chosen'); selected = id; refresh(); }
+function select(id: ActorId) { walker.cancel(); root.classList.add('actor-chosen'); selected = id; refresh(); }
+function perform(action: Action) {
+  if (!['use', 'sit', 'interact'].includes(action.type)) { dispatch(action); return; }
+  const point = approach(state, selected, action);
+  if (!point) { root.querySelector('#announcement')!.textContent = 'Esse lugar está ocupado ou sem passagem.'; return; }
+  walker.start(point, () => dispatch(action));
+}
+function interact(point: import('../domain/types').Point) {
+  const action = equipmentAction(state, selected, point);
+  if (action === 'wardrobe') toggleWardrobe(); else if (action) perform(action);
+  return action !== null;
+}
 function dispatch(action: Action) {
+  walker.cancel();
   if ('actor' in action) root.classList.add('actor-chosen');
-  if (action.type === 'room' || action.type === 'travel') cancelInput();
+  if (action.type === 'room' || action.type === 'travel') { cancelInput(); closeWardrobe(); }
   const settle = scene.captureMotion();
   const result = transition(state, action);
   state = result.state;
@@ -154,9 +199,9 @@ const game = new Phaser.Game({
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
     new ResizeObserver(renderControls).observe(current.canvas);
     cancelInput = bindInput(current.canvas, () => state, select, point => dispatch({ type: 'move', actor: selected, point }), {
-      dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
+      walk: point => { const target = outdoorAt(town, point); if (target) useOutdoor(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
     }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point)) }, {
-      camera: () => camera, setCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building, camera); },
+      camera: () => camera, setCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building, camera); outside(town, selected, camera, building); navigationBar(); },
       building: () => building, wardrobe: () => wardrobeOpen, dispatch,
       pan: (room, fraction) => scene.pan(room, fraction),
       transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
@@ -165,7 +210,7 @@ const game = new Phaser.Game({
         indicator.hidden = value === 0; indicator.dataset.side = side;
         indicator.style.setProperty('--progress', `${value * 100}%`); indicator.setAttribute('aria-valuenow', String(Math.round(value * 100)));
       },
-    }, base => neighborhoodGesture(base, { town: () => town, world: () => state, building: () => building, dispatch: townDispatch, plot: neighborhood.plot, preview: previewTown, progress: value => { const indicator = root.querySelector<HTMLElement>('#edge-progress')!; indicator.hidden = value === 0; indicator.style.setProperty('--progress', `${value * 100}%`); } }));
+    }, base => neighborhoodGesture(base, { town: () => town, world: () => state, building: () => building, dispatch: townDispatch, plot: neighborhood.plot, drop: dropOutside, preview: previewTown, progress: value => { const indicator = root.querySelector<HTMLElement>('#edge-progress')!; indicator.hidden = value === 0; indicator.style.setProperty('--progress', `${value * 100}%`); } }));
   } },
 });
 root.addEventListener('keydown', event => {
@@ -190,5 +235,7 @@ buttonArt(root);
 root.querySelector('#announcement')!.textContent = `${actors[selected].name} · crie um lugar, invente uma história.`;
 refresh();
 window.addEventListener('resize', () => requestAnimationFrame(renderControls));
-window.addEventListener('pagehide', () => { persist(); game.loop.sleep(); });
+window.addEventListener('blur', () => walker.cancel());
+window.addEventListener('keydown', event => { if (event.key === 'Escape') walker.cancel(); });
+window.addEventListener('pagehide', () => { walker.cancel(); persist(); game.loop.sleep(); });
 window.addEventListener('pageshow', () => game.loop.wake());

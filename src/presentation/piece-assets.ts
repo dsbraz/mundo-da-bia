@@ -1,10 +1,8 @@
 import { loadSvg } from './rendering';
 import type Phaser from 'phaser';
-import { paletteIds, pieceKinds } from '../domain/types';
-import type { Palette, PieceKind } from '../domain/types';
+import type { Palette, PieceKind, World } from '../domain/types';
 import { pieceBounds } from '../domain/layout';
 import { recolor, svgFragment } from './svg-source';
-import atelier from './assets/atelier.svg?raw';
 import sala from './assets/sala.svg?raw';
 import quarto from './assets/quarto.svg?raw';
 import workshop from './assets/workshop.svg?raw';
@@ -33,13 +31,11 @@ export function pieceImage(kind: PieceKind, color: Palette = 'original', preview
   if (preview) parts.push(...(extras[kind] ?? []).filter(id => id.endsWith('closed') || id === 'lamp-on'));
   return svgFragment(recolor(source(kind), color), parts, pieceBounds[kind]);
 }
-export function loadPieces(scene: Phaser.Scene) {
-  loadSvg(scene, 'atelier-background', svgFragment(atelier, ['architecture']));
-  loadSvg(scene, 'atelier-details', svgFragment(atelier, ['window', 'posters']));
-  loadSvg(scene, 'window-sala', svgFragment(sala, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
-  loadSvg(scene, 'window-quarto', svgFragment(quarto, ['window'], { x: 70, y: 50, width: 215, height: 210 }));
-  pieceKinds.forEach(kind => paletteIds.forEach(color => {
+export function loadPieces(scene: Phaser.Scene, state: World) {
+  const unique = new Map(state.layout.pieces.map(piece => [`${piece.kind}-${piece.color}`, piece]));
+  unique.forEach(({ kind, color }) => {
+    if (scene.textures.exists(`piece-${kind}-${color}`)) return;
     loadSvg(scene, `piece-${kind}-${color}`, pieceImage(kind, color));
     (extras[kind] ?? []).forEach(part => loadSvg(scene, `piece-${part}-${color}`, svgFragment(recolor(source(kind), color), [part], pieceBounds[kind])));
-  }));
+  });
 }

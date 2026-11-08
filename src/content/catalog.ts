@@ -28,6 +28,7 @@ export const rooms: Record<'sala' | 'quarto', { name: string; icon: string }> = 
   sala: { name: 'Sala & palco', icon: '♫' }, quarto: { name: 'Quarto dos sonhos', icon: '☾' },
 };
 export const items: Record<ItemKind, { name: string }> = {
+  bola: { name: 'Bola da praça' },
   lanche: { name: 'Lanche' }, peixe: { name: 'Comidinha de gato' },
   microfone: { name: 'Microfone' }, ursinho: { name: 'Ursinho' },
 };

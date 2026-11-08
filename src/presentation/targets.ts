@@ -1,3 +1,4 @@
+import { handAnchor, posePoint } from './pose';
 import { fixture, fromPiece } from '../domain/layout';
 import { availableSpot } from '../domain/furniture';
 import { lookIds } from '../domain/types';
@@ -38,8 +39,7 @@ function actorContains(actor: Actor, p: Point): boolean {
 }
 
 export function handPoint(actor: Actor): Point {
-  if (actor.seat && actor.seat !== 'bed') return { x: actor.x, y: actor.y - 38 };
-  return actor.seat === 'bed' ? { x: actor.x - 55, y: actor.y - 28 } : { x: actor.x + 28, y: actor.y - 55 };
+  return posePoint(actor, handAnchor(actor));
 }
 
 export function previewPoint(state: World, drag: DragPreview): Point {

@@ -15,7 +15,7 @@ it('atravessa, volta e preserva identidade, roupa e objeto carregado', () => {
 });
 it('segue a ordem da planta sem dar a volta nas extremidades', () => {
   const state = initialWorld(); expect(neighbor(state, 'left')).toBeUndefined(); expect(crossDoor(state, 'bia', 'left')).toBe(state);
-  let next = addRoom(state, { name: 'Estúdio', template: 'empty', size: 'large', cell: 5 });
+  let next = addRoom(state, { name: 'Estúdio', template: 'empty', size: 'large', cell: 2 });
   expect(neighbor(next, 'right')).toBeUndefined(); expect(crossDoor(next, 'bia', 'left')).toBe(next);
   next = transition(next, { type: 'travel', actor: 'bia', room: next.room }).state;
   expect(crossDoor(next, 'bia', 'left').room).toBe('quarto');
@@ -25,7 +25,7 @@ it('segue a ordem da planta sem dar a volta nas extremidades', () => {
 it('entra pela extremidade correta de um cômodo amplo e acorda o personagem', () => {
   let state = addRoom(initialWorld(), { name: 'Amplo', template: 'empty', size: 'large', cell: 2 });
   state = transition(state, { type: 'room', room: 'sala' }).state;
-  state = moveRoom(state, 6);
+  state = moveRoom(state, 3);
   state = transition(state, { type: 'rest', actor: 'bia' }).state;
   const next = transition(state, { type: 'cross', actor: 'bia', direction: 'left' }).state;
   expect(next.actors[0]).toMatchObject({ room: 'room-3', x: 1290, y: 510, resting: false, seat: null });

@@ -9,7 +9,7 @@ export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio
 export const roomSizes = ['small', 'medium', 'large'] as const;
 export type RoomTemplate = typeof roomTemplates[number];
 export type RoomSize = typeof roomSizes[number];
-export type ItemKind = typeof itemIds[number];
+export type ItemKind = typeof itemIds[number] | 'bola';
 export type ItemId = ItemKind | `${number}:${ItemKind}`;
 export interface Point { x: number; y: number }
 export const seatIds = ['sofa-left', 'sofa-right', 'bed', 'armchair'] as const;

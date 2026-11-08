@@ -22,9 +22,9 @@ test('arrastar cartões muda a ordem; segundo toque e cancelamento não duplicam
   await ready(page); await create(page); await page.locator('#map-toggle').click();
   await page.locator('[data-room="room-3"] > button').first().scrollIntoViewIfNeeded();
   const from = (await page.locator('[data-room="room-3"] > button').first().boundingBox())!;
-  const to = (await page.locator('[data-room="sala"] > button').first().boundingBox())!;
+  const to = (await page.locator('[data-room="quarto"] > button').first().boundingBox())!;
   await page.mouse.move(from.x + 40, from.y + 40); await page.mouse.down(); await page.mouse.move(to.x + 40, to.y + 40, { steps: 8 }); await page.mouse.up();
-  expect((await read(page)).layout.rooms['room-3']!.cell).toBe(0); await page.locator('#close-map').click();
+  expect((await read(page)).layout.rooms['room-3']!.cell).toBe(1); await page.locator('#close-map').click();
   await swipe(page, 700, 300); const before = await read(page);
   const canvas = page.locator('canvas');
   await canvas.dispatchEvent('pointerdown', { pointerId: 11, clientX: 500, clientY: 450 });

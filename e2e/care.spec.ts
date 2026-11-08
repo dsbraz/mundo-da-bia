@@ -7,9 +7,10 @@ test('pega roupa no armário e brinquedo na gaveta, entrega no colo e deita com 
   await tap(page, 400, 230); await drag(page, [473, 268], [520, 430]);
   expect((await read(page)).actors[0]!.look).toBe('rumi');
   await tap(page, 400, 230);
-  await tap(page, 320, 390); await drag(page, [350, 382], [355, 370]);
+  await tap(page, 320, 390); await expect.poll(async () => (await read(page)).home.drawer).toBe(true);
+  await drag(page, [350, 382], [355, 370]);
   expect((await read(page)).items[3]!.spot).toBe('drawer');
-  await drag(page, [520, 420], [150, 405]);
+  const approaching = (await read(page)).actors[0]!; await drag(page, [approaching.x, approaching.y - 145], [150, 405]);
   await drag(page, [466, 364], [150, 350]);
   expect((await read(page)).items[3]!.holder).toBe('bia');
   await page.screenshot({ path: 'reports/care-lap.png' });

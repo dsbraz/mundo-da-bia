@@ -1,3 +1,4 @@
+import { actorScale } from './pose';
 import Phaser from 'phaser';
 import { actors } from '../content/catalog';
 import type { Actor } from '../domain/types';
@@ -36,7 +37,6 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
 }
 function danceAngle(time: number, index: number, dancing: boolean) { return dancing ? Math.sin(time / 220 + index) * 0.06 : 0; }
 
-function actorScale(actor: Actor) { return actor.kind === 'cat' ? 0.78 : 0.86; }
 
 function actorLabel(actor: Actor) { return actor.name ?? actors[actor.id].name; }
 
@@ -59,21 +59,17 @@ function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor:
   const key = `${actor.id}-${part}`;
   const image = scene.add.image(0, 0, key).setDisplaySize(140, actorHeight(actor)).setOrigin(.5, 1).setName(part);
   pose.add(image);
-  if (actor.kind !== 'human' || !actor.seat || actor.seat === 'bed') return;
-  if (part !== 'legs' && part !== actor.look) return;
+  if (actor.kind !== 'human' || (part !== 'legs' && part !== actor.look)) return;
   image.setCrop(0, 0, 280, 332);
-  const lower = scene.add.image(0, -21.6, key).setName(`${part}-seated`).setDisplaySize(140, 132).setOrigin(.5, 1).setCrop(0, 332, 280, 108);
-  pose.add(lower);
+  let knees = pose.getByName<Phaser.GameObjects.Container>('knees');
+  if (!knees) { knees = scene.add.container(0, -54).setName('knees'); pose.add(knees); }
+  const lower = scene.add.image(0, 54, key).setDisplaySize(140, 220).setOrigin(.5, 1).setCrop(0, 332, 280, 108);
+  knees.add(lower);
 }
 
 function seatLayers(pose: Phaser.GameObjects.Container, actor: Actor) {
   const seated = !!actor.seat && actor.seat !== 'bed';
   pose.y = seated ? 22 : 0;
-  for (const part of ['legs', actor.look]) {
-    const lower = pose.getByName<Phaser.GameObjects.Image>(`${part}-seated`);
-    if (!lower) continue;
-    lower.setVisible(seated);
-    const image = pose.getByName<Phaser.GameObjects.Image>(part);
-    if (seated) image.setCrop(0, 0, 280, 332); else image.setCrop();
-  }
+  const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
+  knees.setScale(1, seated ? .65 : 1).setRotation(seated ? -.35 : 0);
 }
