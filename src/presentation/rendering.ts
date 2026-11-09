@@ -4,4 +4,4 @@ export const rasterScale = 2;
 export function loadSvg(scene: Phaser.Scene, key: string, source: string) {
   if (!scene.textures.exists(key)) scene.load.svg(key, source, { scale: rasterScale });
 }
-export function logicalWidth(scene: Phaser.Scene) { return scene.scale.width / rasterScale; }
+export function logicalWidth(scene: Phaser.Scene) { return Number(scene.game.canvas.dataset.logicalWidth ?? scene.scale.width / rasterScale); }

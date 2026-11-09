@@ -1,3 +1,4 @@
+import { furnitureTransform } from './furniture-scale';
 import { loadSvg } from './rendering';
 import type Phaser from 'phaser';
 import type { Palette, PieceKind, World } from '../domain/types';
@@ -31,13 +32,13 @@ function source(kind: PieceKind) {
 export function pieceImage(kind: PieceKind, color: Palette = 'original', preview = false): string {
   const parts = [...(layers[kind] ?? [kind])];
   if (preview) parts.push(...(extras[kind] ?? []).filter(id => id.endsWith('closed') || id === 'lamp-on'));
-  return svgFragment(recolor(source(kind), color), parts, pieceBounds[kind]);
+  return svgFragment(recolor(source(kind), color), parts, pieceBounds[kind], furnitureTransform(kind));
 }
 export function loadPieces(scene: Phaser.Scene, state: World) {
   const unique = new Map(state.layout.pieces.map(piece => [`${piece.kind}-${piece.color}`, piece]));
   unique.forEach(({ kind, color }) => {
     if (scene.textures.exists(`piece-${kind}-${color}`)) return;
     loadSvg(scene, `piece-${kind}-${color}`, pieceImage(kind, color));
-    (extras[kind] ?? []).forEach(part => loadSvg(scene, `piece-${part}-${color}`, svgFragment(recolor(source(kind), color), [part], pieceBounds[kind])));
+    (extras[kind] ?? []).forEach(part => loadSvg(scene, `piece-${part}-${color}`, svgFragment(recolor(source(kind), color), [part], pieceBounds[kind], furnitureTransform(kind))));
   });
 }

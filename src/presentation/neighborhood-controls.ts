@@ -1,3 +1,4 @@
+import { positionTargets } from './viewport';
 import { houseHandles } from './house-handles';
 import { buildingChooser } from './building-chooser';
 import { floorCount } from '../domain/modules';
@@ -32,7 +33,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     else buildingChooser(plotDialog, model => dispatch({ type: 'construct', plot: index, model }));
     plotDialog.showModal();
   }
-  function refresh(building: boolean, camera: number) {
+  function refresh(building: boolean) {
     const town = get(); const where = town.location; deletion(); handles(building);
     currentActions.hidden = where.kind === 'street';
     if (where.kind === 'interior') currentActions.setAttribute('aria-label', `Ampliar, mover ou excluir ${town.buildings.find(b => b.id === where.building)!.name}`);
@@ -49,10 +50,9 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     const options = doors(town); carry.hidden = !options.length || building;
     accessible.replaceChildren(...options.map(d => {
       const b = button(`Visitar ${d.name}`, () => dispatch({ type: 'visit', location: d.location })); b.className = 'scene-target'; b.dataset.worldX = String(d.point.x); b.dataset.worldY = String(d.point.y);
-      const rect = root.querySelector('canvas')?.getBoundingClientRect();
-      if (rect) { b.style.left = `${rect.left + (d.point.x - camera) / (where.kind === 'street' ? 1000 : roomWidth(town)) * rect.width}px`; b.style.top = `${rect.top + d.point.y / 600 * rect.height}px`; }
       return b;
     }));
+    positionTargets(root);
     if (where.kind === 'street' && building) for (let i = 0; i < town.plots; i++) list.append(button(`✦ Terreno ${i + 1}`, () => plot(i)));
   }
   function choosePlot() {
@@ -62,11 +62,6 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     plotDialog.replaceChildren(button('Todos os terrenos estão ocupados. Voltar', () => plotDialog.close())); plotDialog.showModal();
   }
   return { refresh, plot, choosePlot, carryItem: (item: ItemId) => carryDialog(root, get(), { item }, dispatch) };
-}
-function roomWidth(town: Neighborhood) {
-  const where = town.location;
-  if (where.kind === 'street') return 1000;
-  return { small: 1000, medium: 1200, large: 1400 }[town.buildings.find(b => b.id === where.building)!.layout.rooms[where.room]!.size];
 }
 function carryDialog(root: HTMLElement, town: Neighborhood, entity: { actor: ActorId } | { item: ItemId }, dispatch: (a: NeighborhoodAction) => void) {
   const dialog = document.createElement('dialog');

@@ -1,4 +1,5 @@
-import { institutionFacade, institutionInterior } from './institution-art';
+import { panoramicFacade } from './panoramic-facade';
+import { institutionInterior } from './institution-art';
 import { institutionDoor } from './facade-parts';
 import { doorway } from './door-geometry';
 import type { BuildingModel } from '../domain/neighborhood-types';
@@ -18,39 +19,11 @@ function wrap(content: string, width: number, height: number) {
 }
 export const facadeKey = (model: BuildingModel, floors: number) => `facade-${model}-${floors}`;
 export function facadeSvg(model: BuildingModel, floors = ['apartment', 'hospital', 'office', 'fire-station', 'school'].includes(model) ? 2 : 1): string {
-  const institution = institutionFacade(model, floors);
-  const body = institution ?? (model === 'house' ? house(floors) : model === 'shop' ? shop(floors) : apartment(floors));
+  const body = panoramicFacade(model, floors);
   const d = doorway.facade;
-  if (institution) return wrap(`<ellipse cx="220" cy="450" rx="198" ry="13" fill="#756a5a" opacity=".12"/>${body}${institutionDoor(model)}${rect(d.x - 12, d.y + d.height - 2, d.width + 24, 9, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}`, 440, 480);
-  return wrap(`<ellipse cx="220" cy="450" rx="191" ry="13" fill="#756a5a" opacity=".12"/>${body}${planter(80, 425)}${planter(355, 425)}${rect(d.x - 9, d.y - 9, d.width + 18, d.height + 9, '#f8ead2', 10)}${rect(d.x, d.y, d.width, d.height, '#789a9a', 6)}${rect(d.x + 12, d.y + 14, d.width - 24, 86, 'url(#glass)', 5)}${rect(d.x + 12, d.y + 119, d.width - 24, 91, '#89aaa5', 5)}<circle cx="${d.x + d.width - 16}" cy="${d.y + 124}" r="4" fill="#f7d786"/>${rect(d.x - 12, d.y + d.height - 2, d.width + 24, 9, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}${line(307, 413, 333, 413)}`, 440, 480);
+  return wrap(`<ellipse cx="220" cy="450" rx="191" ry="10" fill="#756a5a" opacity=".1"/>${body}${institutionDoor(model)}${rect(d.x - 9, d.y + d.height - 2, d.width + 18, 7, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}`, 440, 480);
 }
-function house(floors: number) {
-  const rise = (floors - 1) * 22;
-  let detail = '';
-  for (let y = 248; y < 440; y += 22) detail += line(57, y, 383, y, '#d2bea4');
-  return rect(55, 165 - rise, 330, 280 + rise, 'url(#wall)') + detail + upperWindows(floors, 180, 22, 14) + `<g transform="translate(0 ${-60-rise})"><path d="M35 234L165 120h83l157 114Z" fill="#809b98" stroke="${stroke}" stroke-width="2"/><path d="M58 219L168 132h77l133 87" fill="none" stroke="#abc3b6" stroke-width="3"/>${rect(301, 135, 25, 61, '#c7a48a')}${rect(140, 204, 160, 39, '#f5e7d1')}</g>${window(86, 274, 62, 82)}${window(292, 274, 62, 82)}${rect(85, 360, 64, 24, '#a4b99b')}${leaves(115, 366, .6)}${rect(152, 201, 136, 9, '#c2a88a')}`;
-}
-function shop(floors: number) {
-  const rise = (floors - 1) * 50;
-  let awning = '';
-  for (let i = 0; i < 10; i++) awning += `<path d="M${48 + i * 34} 181h34l8 35h-34Z" fill="${i % 2 ? '#fff1d8' : '#ce8e85'}"/>`;
-  return rect(48, 128 - rise, 344, 317 + rise, '#edddbe') + rect(45, 115 - rise, 350, 17, '#78968a') + upperWindows(floors, 128) + rect(72, 140, 296, 34, '#faf0d6', 9) + window(73, 332, 94, 85) + window(277, 332, 94, 58) + awning + line(48, 216, 396, 216) + rect(279, 398, 86, 36, '#abbe9c') + `<path d="M88 408l12-36 18 36m9 0 12-29 18 29" fill="#f2c982" stroke="${stroke}" stroke-width="1.2"/>`;
-}
-function apartment(count: number) {
-  const top = 70 + (3 - count) * 55;
-  let floors = '';
-  for (const y of [75, 145].slice(3 - count)) {
-    floors += window(92, y, 73, 48) + window(276, y, 73, 48) + rect(72, y + 57, 294, 12, '#b6ada0');
-    for (let x = 78; x < 365; x += 23) floors += line(x, y + 40, x, y + 57, '#70857b');
-    floors += line(72, y + 40, 366, y + 40, '#70857b');
-  }
-  return rect(61, top, 318, 445 - top, '#d1dcca') + rect(50, top - 11, 340, 17, '#7c968c') + rect(197, top + 20, 46, 425 - top, '#eddfc8') + floors + window(91, 346, 70, 70) + window(279, 346, 70, 46) + planter(128, 421);
-}
-function upperWindows(floors: number, base: number, step = 50, height = 30) {
-  let result = '';
-  for (let level = 1; level < floors; level++) result += window(95, base - level * step + 5, 65, height) + window(280, base - level * step + 5, 65, height);
-  return result;
-}
+
 export function roomArchitecture(template: RoomTemplate): string {
   const content = ['garden', 'playground'].includes(template) ? garden() : interior(template);
   return wrap(content, 1000, 600);

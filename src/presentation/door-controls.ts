@@ -1,3 +1,4 @@
+import { worldToScreen, screenScale } from './viewport';
 import type { ActorId, Point, World } from '../domain/types';
 import { neighbor } from '../domain/doors';
 import type { Direction } from '../domain/doors';
@@ -16,9 +17,9 @@ export function doorControls(root: HTMLElement, go: (side: Direction) => void) {
   });
   const position = () => {
     const canvas = root.querySelector('canvas'); if (!canvas) return;
-    const parent = canvas.parentElement!;
-    const left = parent.offsetLeft + canvas.offsetLeft, top = parent.offsetTop + canvas.offsetTop;
-    nav.style.cssText = `left:${left}px;top:${top + canvas.clientHeight * 280 / 600}px;width:${canvas.clientWidth}px;height:${canvas.clientHeight * 170 / 600}px;--door-width:${canvas.clientWidth * 75 / width}px;`;
+    const point = worldToScreen(canvas, { x: 0, y: 280 }), scale = screenScale(canvas);
+    nav.style.cssText = `left:${point.x}px;top:${point.y}px;width:${width * scale}px;height:${170 * scale}px;--door-width:${75 * scale}px;`;
+
   };
   new ResizeObserver(position).observe(root);
   return (state: World, selected: ActorId) => {

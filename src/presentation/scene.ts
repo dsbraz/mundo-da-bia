@@ -1,3 +1,4 @@
+import { supportedActor } from './furniture-scale';
 import { visibleHit } from './visible-hit';
 import { childGameArt } from './child-game-art';
 import type { GamePreview } from './child-game-art';
@@ -5,7 +6,7 @@ import { doorEffect } from './door-effect';
 import type { Location } from '../domain/neighborhood-types';
 import { outdoorEffect } from './outdoor-effects';
 import type { OutdoorAction } from '../domain/neighborhood-types';
-import { handAnchor, actorScale } from './pose';
+import { handAnchor, contextScale, visualContext } from './pose';
 import { rasterScale, logicalWidth } from './rendering';
 import { captureMotion } from './settle-motion';
 import { itemKind } from '../domain/item-kind';
@@ -32,10 +33,16 @@ export class PlayScene extends Phaser.Scene {
   private world: World;
   private town: Neighborhood | null = null;
   private cameraX = 0;
+  frame(width: number, height: number, x: number, y: number) {
+    if (!this.ready) return;
+    const w = Math.round(width * rasterScale), h = Math.round(height * rasterScale);
+    if (this.scale.width !== w || this.scale.height !== h) this.scale.setGameSize(w, h);
+    this.cameras.main.setScroll(x + (this.world.streetWidth ? this.cameraX : 0), y);
+  }
   neighborhood(town: Neighborhood) { this.town = town; }
   arrive(previous: Location) { if (this.ready && this.town) doorEffect(this, this.town, previous); }
   outdoorReaction(action: OutdoorAction) { if (this.ready && this.town) outdoorEffect(this, this.town, action); }
-  camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x; this.game.canvas.dataset.cameraX = String(x); } }
+  camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x + Number(this.game.canvas.dataset.viewX ?? 0); this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private pieces = new Map<number, Phaser.GameObjects.Container>();
@@ -56,9 +63,9 @@ export class PlayScene extends Phaser.Scene {
     this.world = state; this.selected = selected;
     if (!this.prepareArt(state)) return;
     const width = state.streetWidth ? 1000 : roomWidth(state);
-    if (logicalWidth(this) !== width) this.scale.setGameSize(width * rasterScale, 600 * rasterScale);
-    this.cameras.main.scrollX = state.streetWidth ? this.cameraX : 0;
-    this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(this.cameras.main.scrollX);
+    this.game.canvas.dataset.logicalWidth = String(width);
+    this.cameras.main.scrollX = Number(this.game.canvas.dataset.viewX ?? 0) + (state.streetWidth ? this.cameraX : 0);
+    this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(state.streetWidth ? this.cameraX : 0);
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
     if (state.streetWidth && this.town) drawStreet(this, this.town);
@@ -82,12 +89,12 @@ export class PlayScene extends Phaser.Scene {
   private paintPlay(state: World, selected: ActorId) {
     this.figures = state.actors.filter(a => a.room === state.room).map(a => {
       const depth = actorDepth(state, a);
-      return drawActor(this, a, a.id === selected).setDepth(depth);
+      return drawActor(this, supportedActor(state, a), a.id === selected, visualContext(state)).setDepth(depth);
     });
     state.items.forEach(item => {
       const point = itemPoint(state, item); if (!point) return;
       const depth = objectDepth(state, item);
-      this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(40, 40).setName(item.id).setDepth(depth));
+      this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(40 * contextScale(visualContext(state)), 40 * contextScale(visualContext(state))).setName(item.id).setDepth(depth));
     });
     drawLighting(this, state);
     if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', { resolution: 2, fontSize: '18px', color: '#425b66', backgroundColor: '#f3efe4', padding: { x: 12, y: 8 } }).setOrigin(.5).setDepth(700);
@@ -99,7 +106,7 @@ export class PlayScene extends Phaser.Scene {
       this.paint(this.world, this.selected);
       const objects = [...this.children.list].sort((a, b) => (a as Phaser.GameObjects.Container).depth - (b as Phaser.GameObjects.Container).depth);
       const current = this.add.container(0, 0, objects);
-      const next = roomPreview(this, enterRoom(this.world, room), this.selected, this.building);
+      const next = roomPreview(this, enterRoom(this.world, room), this.selected, this.building, false);
       this.sliding = { room, current, next };
     }
     const width = logicalWidth(this);
@@ -135,7 +142,7 @@ export class PlayScene extends Phaser.Scene {
   previewActor(id: ActorId | null, point: Point | null) {
     const active = id ?? this.moving; if (!active) return;
     const actor = this.world.actors.find(a => a.id === active)!;
-    const destination = point ?? actor;
+    const destination = point ?? supportedActor(this.world, actor);
     const preview = point ? { ...actor, ...point, seat: null } : actor;
     const depth = actorDepth(this.world, preview);
     const figure = this.figures.find(f => f.name === active);
@@ -145,7 +152,7 @@ export class PlayScene extends Phaser.Scene {
     this.moving = id; this.game.canvas.dataset.walking = id ?? '';
     this.game.canvas.dataset.walkX = String(destination.x); this.game.canvas.dataset.walkY = String(destination.y);
     this.world.items.filter(i => i.holder === active).forEach(item => {
-      const p = handPoint(preview);
+      const p = handPoint(preview, visualContext(this.world));
       this.objects.find(o => o.name === item.id)?.setPosition(p.x, p.y).setDepth(depth + 2);
     });
   }
@@ -206,7 +213,7 @@ export class PlayScene extends Phaser.Scene {
     const target = actorAt(this.visibleWorld(), drag.point);
     const point = previewPoint(this.visibleWorld(), drag);
     this.snapGhost(point, drag.kind === 'item' ? target?.id ?? null : null);
-    this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : 44, drag.kind === 'look' ? 56 : 44);
+    this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : 40 * contextScale(visualContext(this.world)), drag.kind === 'look' ? 56 : 40 * contextScale(visualContext(this.world)));
     this.highlight(target);
   }
   private highlight(target: Actor | undefined) {
@@ -247,8 +254,8 @@ export class PlayScene extends Phaser.Scene {
     if (this.town?.outdoor.swing !== actor.id || this.moving === actor.id) return;
     const angle = reduced ? 0 : Math.sin(time / 600) * .08;
     (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(angle);
-    pose.x = -Math.sin(angle) * 210 / actorScale(actor);
-    pose.y += (Math.cos(angle) - 1) * 210 / actorScale(actor);
+    pose.x = -Math.sin(angle) * 126;
+    pose.y += (Math.cos(angle) - 1) * 126;
     pose.rotation = angle;
   }
 

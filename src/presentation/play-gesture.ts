@@ -1,3 +1,4 @@
+import { contextScale, visualContext } from './pose';
 import { doorAt } from './door-controls';
 import type { Direction } from '../domain/doors';
 import type { Action, ActorId, ItemId, Point, RoomId, World } from '../domain/types';
@@ -77,7 +78,7 @@ function deliver(token: DragToken, point: Point, state: World, play: PlayInput) 
   if (token.kind === 'look') { if (actor) play.dispatch({ type: 'dress', actor: actor.id, look: token.id }); }
   else if (actor) play.dispatch({ type: 'give', actor: actor.id, item: token.id });
   else if (surface) play.dispatch({ type: 'put', item: token.id, spot: surface });
-  else play.dispatch({ type: 'place', item: token.id, point: { x: point.x, y: point.y + 28 } });
+  else play.dispatch({ type: 'place', item: token.id, point: { x: point.x, y: point.y + 28 * contextScale(visualContext(state)) } });
 }
 function tapFurniture(state: World, point: Point, token: DragToken | undefined, play: PlayInput): boolean {
   if (token || actorAt(state, point)) return false;

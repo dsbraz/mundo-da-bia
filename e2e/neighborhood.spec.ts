@@ -1,3 +1,7 @@
+import { initialWorld } from '../src/domain/world';
+import { initialAlbum } from '../src/domain/houses';
+import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborhood';
+import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { expect, test } from '@playwright/test';
 import { ready, readTown, read, tray, closeTray, point, swipe, visitNeighbor } from './helpers';
 test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async ({ page }) => {
@@ -31,11 +35,6 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   const town = await readTown(page); expect(town.actors).toHaveLength(7); expect(town.items).toHaveLength(5);
   expect(town.items.find(i => i.holder === 'bia')!.location).toEqual(town.location);
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
-  for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
-    await page.setViewportSize(viewport); await page.screenshot({ path: `reports/neighborhood-interior-${viewport.width}.png` });
-    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
-    await page.screenshot({ path: `reports/neighborhood-street-${viewport.width}.png` });
-  }
   expect(errors).toEqual([]);
 });
 test('fundo com um dedo não move seleção; explorar não visita e porta por teclado não transporta', async ({ page }) => {
@@ -71,5 +70,19 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
     }
     await page.getByRole('button', { name: 'Zoey', exact: false }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `reports/look-tray-${viewport.width}.png` });
+  });
+}
+
+for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
+  test(`interior e bairro panorâmico em ${viewport.width}`, async ({ page }) => {
+    let town = migrateNeighborhood(initialAlbum(initialWorld()));
+    town = neighborhoodAction(town, { type: 'construct', plot: 1, model: 'shop' });
+    town = neighborhoodAction(town, { type: 'transport', actor: 'bia', location: { kind: 'interior', building: 2, room: town.buildings[1]!.entry }, point: { x: 520, y: 530 } });
+    await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v2', value), encodeNeighborhood(town));
+    await page.setViewportSize(viewport); await ready(page);
+    await page.screenshot({ path: `reports/neighborhood-interior-${viewport.width}.png` });
+    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
+    await page.screenshot({ path: `reports/neighborhood-street-${viewport.width}.png` });
+    expect((await readTown(page)).location).toEqual({ kind: 'street' });
   });
 }

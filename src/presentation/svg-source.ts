@@ -1,7 +1,7 @@
 import type { Palette } from '../domain/types';
 import { palettes } from '../content/furnishings';
 export interface Crop { x: number; y: number; width: number; height: number }
-export function svgFragment(source: string, ids: readonly string[], crop?: Crop): string {
+export function svgFragment(source: string, ids: readonly string[], crop?: Crop, transform?: string): string {
   const document = new DOMParser().parseFromString(source, 'image/svg+xml');
   const svg = document.documentElement.cloneNode(false) as Element;
   const definitions = document.querySelector('defs');
@@ -9,7 +9,9 @@ export function svgFragment(source: string, ids: readonly string[], crop?: Crop)
   ids.forEach(id => {
     const part = document.getElementById(id);
     if (!part) throw new Error(`Camada SVG ausente: ${id}`);
-    svg.append(part.cloneNode(true));
+    const copy = part.cloneNode(true) as Element;
+    if (transform) copy.setAttribute('transform', transform);
+    svg.append(copy);
   });
   if (crop) {
     svg.setAttribute('viewBox', `${crop.x} ${crop.y} ${crop.width} ${crop.height}`);

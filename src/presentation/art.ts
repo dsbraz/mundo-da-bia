@@ -1,15 +1,17 @@
-import { actorScale, settlePose } from './pose';
+import type { VisualContext } from './pose';
+import { actorScale, settlePose, contextScale } from './pose';
 import Phaser from 'phaser';
 import { actors } from '../content/catalog';
 import type { Actor } from '../domain/types';
 
-export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean): Phaser.GameObjects.Container {
+export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, context?: VisualContext): Phaser.GameObjects.Container {
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
   const labelX = actor.seat === 'bed' ? -80 : 0;
   const shadow = scene.add.ellipse(labelX, 2, actor.seat === 'bed' ? 140 : 56, 7, 0x716858, 0.08);
   if (selected) shadow.setStrokeStyle(3, 0xffefb7);
+  shadow.setScale(contextScale(context));
   container.add(shadow);
-  const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor));
+  const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
   container.add(pose);
   const parts = actor.kind === 'human'
     ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', 'eyes', 'lids', 'mouth', 'mouth-happy']
@@ -50,10 +52,10 @@ function actorLabel(actor: Actor) { return actor.name ?? actors[actor.id].name; 
 function cover(scene: Phaser.Scene, container: Phaser.GameObjects.Container, cat: boolean) {
   const width = cat ? 62 : 104;
   const blanket = scene.add.graphics().setName('blanket');
-  blanket.fillStyle(0xa8c9b8).fillRoundedRect(-width, -32, width + 12, 64, 12);
-  blanket.lineStyle(1.5, 0x789f8b).strokeRoundedRect(-width, -32, width + 12, 64, 12);
-  blanket.lineStyle(5, 0xdce9d1).lineBetween(-width + 8, -26, -width + 8, 26);
-  blanket.lineStyle(1, 0x789f8b, .5).lineBetween(-width + 26, 20, 0, 24);
+  blanket.fillStyle(0xa8c9b8).fillRoundedRect(-width, -44, width + 12, 88, 12);
+  blanket.lineStyle(1.5, 0x789f8b).strokeRoundedRect(-width, -44, width + 12, 88, 12);
+  blanket.lineStyle(5, 0xdce9d1).lineBetween(-width + 8, -36, -width + 8, 36);
+  blanket.lineStyle(1, 0x789f8b, .5).lineBetween(-width + 26, 32, 0, 36);
   container.add(blanket);
 }
 
@@ -67,12 +69,12 @@ function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor:
   const image = scene.add.image(0, 0, key).setDisplaySize(140, actorHeight(actor)).setOrigin(.5, 1).setName(part);
   pose.add(image);
   if (actor.kind !== 'human' || (part !== 'legs' && part !== actor.look)) return;
-  image.setCrop(0, 0, 280, 332).setData('hitCrop', { x: 0, y: 0, width: 280, height: 332 });
+  image.setCrop(0, 0, 280, 320).setData('hitCrop', { x: 0, y: 0, width: 280, height: 320 });
   let knees = pose.getByName<Phaser.GameObjects.Container>('knees');
-  if (!knees) { knees = scene.add.container(0, -54).setName('knees'); pose.add(knees); }
+  if (!knees) { knees = scene.add.container(0, -60).setName('knees'); pose.add(knees); }
   for (const side of [0, 1]) {
-    const lower = scene.add.image(0, 54, key).setDisplaySize(140, 220).setOrigin(.5, 1).setCrop(side * 140, 332, 140, 108);
-    lower.setData('hitCrop', { x: side * 140, y: 332, width: 140, height: 108 });
+    const lower = scene.add.image(0, 60, key).setDisplaySize(140, 220).setOrigin(.5, 1).setCrop(side * 140, 320, 140, 120);
+    lower.setData('hitCrop', { x: side * 140, y: 320, width: 140, height: 120 });
     lower.setData('side', side); knees.add(lower);
   }
 }
@@ -80,10 +82,10 @@ function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor:
 function seatLayers(pose: Phaser.GameObjects.Container, actor: Actor, reduced: boolean) {
   const seated = !!actor.seat && actor.seat !== 'bed';
   const amount = settlePose(pose.getData('seatAmount') ?? Number(seated), Number(seated), reduced);
-  pose.setData('seatAmount', amount); pose.y = 22 * amount;
+  pose.setData('seatAmount', amount); pose.y = 22 * amount * pose.scaleY;
   const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
   knees.setScale(1, 1 - .35 * amount).setRotation(-.35 * amount);
-  knees.list.forEach(part => (part as Phaser.GameObjects.Image).setPosition(0, 54));
+  knees.list.forEach(part => (part as Phaser.GameObjects.Image).setPosition(0, 60));
 }
 
 function heroLayer(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor: Actor, side: 'back' | 'front') {
@@ -102,6 +104,6 @@ export function walkPose(figure: Phaser.GameObjects.Container, distance: number,
   knees?.list.forEach(part => {
     const leg = part as Phaser.GameObjects.Image;
     const stride = Math.sin(phase + Number(leg.getData('side')) * Math.PI);
-    leg.y = 54 - Math.max(0, stride) * 8; leg.x = stride * 3;
+    leg.y = 60 - Math.max(0, stride) * 8; leg.x = stride * 3;
   });
 }

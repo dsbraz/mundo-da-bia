@@ -1,28 +1,38 @@
-import { initialWorld } from '../src/domain/world';
+import { initialWorld, transition } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { expect, test } from '@playwright/test';
-import { ready, read, tray, closeTray, drag, tap, visitNeighbor } from './helpers';
-test('pega roupa no armário e brinquedo na gaveta, entrega no colo e deita com coberta', async ({ page }) => {
+import { ready, read, tray, closeTray, drag, tap, visitNeighbor, onPiece } from './helpers';
+test('pega roupa no armário e brinquedo na gaveta e entrega no colo', async ({ page }) => {
   const world = initialWorld(); world.actors[1]!.room = 'quarto';
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await ready(page);
-  await expect(page.locator('canvas')).toHaveAttribute('width', '2000');
-  await tap(page, 400, 230); await drag(page, [473, 268], [520, 430]);
+  await expect(page.locator('canvas')).toHaveAttribute('data-logical-width', '1000');
+  await tap(page, 400, 230); await drag(page, await onPiece(page, 'wardrobe', 473, 248), [520, 430]);
   expect((await read(page)).actors[0]!.look).toBe('rumi');
   await tap(page, 400, 230);
-  await tap(page, 320, 390); await expect.poll(async () => (await read(page)).home.drawer).toBe(true);
-  await drag(page, [350, 382], [355, 370]);
+  await tap(page, ...await onPiece(page, 'wardrobe', 320, 390)); await expect.poll(async () => (await read(page)).home.drawer).toBe(true);
+  await drag(page, [350, 382], await onPiece(page, 'wardrobe', 355, 370));
   expect((await read(page)).items[3]!.spot).toBe('drawer');
   const approaching = (await read(page)).actors[0]!; await drag(page, [approaching.x, approaching.y - 145], [150, 405]);
-  await drag(page, [466, 364], [150, 350]);
+  await drag(page, await onPiece(page, 'wardrobe', 466, 364), [150, 350]);
   expect((await read(page)).items[3]!.holder).toBe('bia');
   await page.screenshot({ path: 'reports/care-lap.png' });
+  const state = await read(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
+  expect(await read(page)).toEqual(state);
+});
+test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar', async ({ page }) => {
+  let world = initialWorld(); world.actors[1]!.room = 'quarto';
+  world = transition(world, { type: 'dress', actor: 'bia', look: 'rumi' }).state;
+  world = transition(world, { type: 'pick', actor: 'bia', item: world.items[3]!.id }).state;
+  world = transition(world, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await ready(page);
   await visitNeighbor(page); await tray(page, 'Turma'); await page.locator('#bring-here').click(); await closeTray(page);
   const bia = (await read(page)).actors[0]!;
-  await drag(page, [bia.x, bia.y - 110], [620, 300]);
+  await drag(page, [bia.x, bia.y - 110], await onPiece(page, 'bed', 620, 300));
   expect((await read(page)).actors[0]).toMatchObject({ seat: 'bed', resting: true });
   expect((await read(page)).items[3]!.holder).toBe('bia');
   await page.screenshot({ path: 'reports/care-bed.png' });

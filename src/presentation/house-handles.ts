@@ -3,7 +3,7 @@ import { plotAt, plotStart } from '../domain/neighborhood-geometry';
 import type { Building, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { floorCount } from '../domain/modules';
 import { facadeSvg, svgUrl } from './architecture-art';
-import { positionTargets } from './viewport';
+import { positionTargets, screenToWorld } from './viewport';
 
 export function houseHandles(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, choose: (plot: number) => void, pan: (dx: number) => void) {
   const layer = document.createElement('div'); layer.className = 'scene-controls house-handles'; root.append(layer);
@@ -15,7 +15,7 @@ export function houseHandles(root: HTMLElement, get: () => Neighborhood, dispatc
   function destination(e: PointerEvent) {
     const canvas = root.querySelector('canvas')!, box = canvas.getBoundingClientRect();
     if (e.clientX < 0 || e.clientX > root.clientWidth || e.clientY < box.top || e.clientY > box.bottom) return -1;
-    return plotAt((e.clientX - box.left) * 1000 / box.width + Number(canvas.dataset.cameraX ?? 0));
+    return plotAt(screenToWorld(canvas, { x: e.clientX, y: e.clientY }).x);
   }
   layer.addEventListener('pointerdown', e => {
     const button = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-house]');

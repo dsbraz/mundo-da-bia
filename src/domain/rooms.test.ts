@@ -74,3 +74,15 @@ it('selecionar o cômodo atual não reinicia a luz ou a geladeira', () => {
   const state = transition(initialWorld(), { type: 'interact', target: 'lamp' }).state;
   expect(transition(state, { type: 'room', room: 'sala' }).state).toBe(state);
 });
+
+it('modelos novos deixam a faixa frontal livre sem alterar cômodos anteriores', async () => {
+  const { roomTemplates } = await import('./types');
+  const { footprint } = await import('./placement');
+  const original = initialWorld();
+  for (const template of roomTemplates) {
+    const state = addRoom(original, { name: template, template, size: 'medium', cell: 2 });
+    const pieces = state.layout.pieces.filter(p => p.room === state.room);
+    for (const piece of pieces) expect(footprint(piece)?.bottom ?? 0).toBeLessThanOrEqual(500);
+    expect(state.layout.pieces.filter(p => p.room !== state.room)).toEqual(original.layout.pieces);
+  }
+});

@@ -33,7 +33,11 @@ test('ampliar usa cartões de cômodos com prévia e confirmação', async ({ pa
 test('abajur muda de material na cena e preserva a cor ao recarregar', async ({ page }) => {
   await ready(page); await page.locator('#build-toggle').click();
   const target = page.getByRole('button', { name: /Selecionar Abajur/ }); await target.focus(); await page.keyboard.press('Enter');
-  const pixel = () => page.evaluate(() => Array.from(document.querySelector('canvas')!.getContext('2d')!.getImageData(110, 400, 1, 1).data));
+  const pixel = () => page.evaluate(() => {
+    const canvas = document.querySelector('canvas')!;
+    const x = Math.round((58 - Number(canvas.dataset.viewX)) * 2), y = Math.round((238.4 - Number(canvas.dataset.viewY)) * 2);
+    return Array.from(canvas.getContext('2d')!.getImageData(x, y, 1, 1).data);
+  });
   const before = await pixel();
   await page.getByRole('button', { name: 'Cor Menta', exact: true }).click();
   await expect.poll(pixel).not.toEqual(before);
@@ -45,7 +49,12 @@ test('cômodo maior preserva proporção após recarga', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click(); await page.locator('#add-room').click();
   await page.getByRole('button', { name: 'Criar Livre', exact: true }).click(); await page.getByRole('button', { name: 'Construir cômodo', exact: true }).click();
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
-  const bounds = (await page.locator('canvas').boundingBox())!; expect(bounds.width / bounds.height).toBeCloseTo(2);
+  const scale = await page.locator('canvas').evaluate(canvas => {
+    const box = canvas.getBoundingClientRect();
+    return { x: box.width / Number(canvas.dataset.viewWidth), y: box.height / Number(canvas.dataset.viewHeight) };
+  });
+  expect(scale.x).toBeCloseTo(scale.y);
+  await expect(page.locator('canvas')).toHaveAttribute('data-logical-width', '1200');
 });
 test('a frente da cama oculta completamente quem está atrás', async ({ page }) => {
   await ready(page);

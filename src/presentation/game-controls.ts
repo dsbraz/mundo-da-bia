@@ -1,3 +1,4 @@
+import { screenToWorld } from './viewport';
 import type { GameKind } from '../domain/child-games';
 import type { Point } from '../domain/types';
 
@@ -61,8 +62,8 @@ function bindGameTaps(root: HTMLElement, panel: HTMLElement, tap: (point: Point)
     if (type !== 'pointerup' || !contact) return;
     const start = contact; contact = null;
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) return;
-    const canvas = root.querySelector('canvas')!, bounds = canvas.getBoundingClientRect();
-    tap({ x: (event.clientX - bounds.left) * canvas.width / 2 / bounds.width + Number(canvas.dataset.cameraX), y: (event.clientY - bounds.top) * 600 / bounds.height });
+    const canvas = root.querySelector('canvas')!;
+    tap(screenToWorld(canvas, { x: event.clientX, y: event.clientY }));
   }, true);
   return () => { contact = null; };
 }

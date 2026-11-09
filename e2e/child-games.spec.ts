@@ -49,6 +49,7 @@ test('corda: interrupção ao trocar personagem, escapar e perder foco', async (
   for (const interrupt of ['escape', 'blur']) {
     await page.getByRole('button', { name: 'Brincadeiras', exact: true }).click();
     await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
+    await expect(page.locator('#game-panel')).toBeVisible();
     await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
     if (interrupt === 'escape') await page.keyboard.press('Escape');
     else await page.evaluate(() => window.dispatchEvent(new Event('blur')));
@@ -139,6 +140,7 @@ test('quintal pronto permite corda e amarelinha sem retirar a mobília', async (
   for (const name of ['Pular corda', 'Amarelinha']) {
     await page.getByRole('button', { name: 'Brincadeiras', exact: true }).click();
     await page.getByRole('button', { name, exact: true }).click();
+    await expect(page.locator('#game-panel')).toBeVisible();
     await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
     await page.getByRole('button', { name: 'Encerrar brincadeira', exact: true }).click();
   }

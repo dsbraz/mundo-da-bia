@@ -1,30 +1,35 @@
+import { visualPiecePoint } from './furniture-scale';
+import { fixture } from '../domain/layout';
+import type { PieceKind } from '../domain/types';
 import { expect, it } from 'vitest';
 import { initialWorld, transition } from '../domain/world';
 import { furnitureAt, seatAt, surfaceAt } from './furniture-targets';
 import { itemPoint, actorAt } from './targets';
 import { createPlayGesture } from './play-gesture';
 
+const at = (kind: PieceKind, x: number, y: number) => visualPiecePoint(fixture(initialWorld(), kind, kind === 'bed' ? 'quarto' : 'sala')!, { x, y });
+
 it('móveis e destinos respeitam cômodo e portas', () => {
   const state = initialWorld();
-  expect(furnitureAt(state, { x: 50, y: 200 })).toBe('lamp');
-  expect(furnitureAt(state, { x: 700, y: 230 })).toBe('fridge');
-  expect(furnitureAt(state, { x: 320, y: 375 })).toBe('drawer');
-  expect(surfaceAt(state, { x: 300, y: 450 })).toBe('table');
-  expect(surfaceAt(state, { x: 350, y: 370 })).toBeUndefined();
+  expect(furnitureAt(state, at('lamp', 50, 200))).toBe('lamp');
+  expect(furnitureAt(state, at('fridge', 700, 230))).toBe('fridge');
+  expect(furnitureAt(state, at('wardrobe', 320, 375))).toBe('drawer');
+  expect(surfaceAt(state, at('table', 300, 450))).toBe('table');
+  expect(surfaceAt(state, at('wardrobe', 350, 370))).toBeUndefined();
   const open = transition(state, { type: 'interact', target: 'drawer' }).state;
-  expect(surfaceAt(open, { x: 350, y: 370 })).toBe('drawer');
-  expect(surfaceAt(state, { x: 680, y: 320 })).toBe('fridge');
+  expect(surfaceAt(open, at('wardrobe', 350, 370))).toBe('drawer');
+  expect(surfaceAt(state, at('fridge', 680, 320))).toBe('fridge');
   expect(seatAt(state, { x: 150, y: 400 })).toBe('sofa-left');
   const away = transition(state, { type: 'room', room: 'quarto' }).state;
-  expect(furnitureAt(away, { x: 50, y: 200 })).toBeUndefined();
-  expect(surfaceAt(away, { x: 300, y: 450 })).toBeUndefined();
+  expect(furnitureAt(away, at('lamp', 50, 200))).toBeUndefined();
+  expect(surfaceAt(away, at('table', 300, 450))).toBeUndefined();
   expect(seatAt(away, { x: 790, y: 350 })).toBe('bed');
 });
 
 it('objeto guardado some com gaveta fechada e volta no mesmo lugar', () => {
   let state = transition(initialWorld(), { type: 'interact', target: 'drawer' }).state;
   state = transition(state, { type: 'put', item: 'ursinho', spot: 'drawer' }).state;
-  expect(itemPoint(state, state.items[3]!)).toEqual({ x: 466, y: 364 });
+  expect(itemPoint(state, state.items[3]!)).toEqual(at('wardrobe', 466, 364));
   state = transition(state, { type: 'interact', target: 'drawer' }).state;
   expect(itemPoint(state, state.items[3]!)).toBeNull();
 });
@@ -34,7 +39,7 @@ it('gestos entregam à mesa e sentam apenas ao concluir, sem sentar no cancelame
   const gesture = createPlayGesture(() => state, id => { expect(id).toBe('bia'); selected = 'bia'; }, point => {
     state = transition(state, { type: 'move', actor: selected, point }).state;
   }, { wardrobe: () => false, toggleWardrobe: () => {}, preview: () => {}, dispatch: action => { state = transition(state, action).state; } });
-  gesture.start(1, { x: 680, y: 282 }); gesture.end(1, { x: 260, y: 450 });
+  gesture.start(1, at('fridge', 680, 282)); gesture.end(1, at('table', 260, 450));
   expect(state.items[0]?.spot).toBe('table');
   gesture.start(1, { x: 520, y: 390 }); gesture.update(1, { x: 150, y: 405 }); gesture.cancel();
   expect(state.actors[0]?.seat).toBeNull();
@@ -57,7 +62,7 @@ it('objeto na mão acompanha o corpo deitado', () => {
   state = transition(state, { type: 'room', room: 'quarto' }).state;
   state = transition(state, { type: 'summon' }).state;
   state = transition(state, { type: 'sit', actor: 'bia', seat: 'bed' }).state;
-  expect(itemPoint(state, state.items[3]!)).toEqual({ x: 735, y: 322 });
+  expect(itemPoint(state, state.items[3]!)).toEqual({ x: 733.2, y: 336 });
 });
 
 it('soltar um objeto sobre o sofá não teletransporta quem o estava segurando', () => {
@@ -75,12 +80,12 @@ it('soltar um objeto sobre o sofá não teletransporta quem o estava segurando',
 
 it('aceita deitar em toda a área do colchão e ignora a cabeceira', () => {
   const state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
-  expect(seatAt(state, { x: 620, y: 300 })).toBe('bed');
-  expect(seatAt(state, { x: 910, y: 370 })).toBe('bed');
-  expect(seatAt(state, { x: 620, y: 190 })).toBeUndefined();
+  expect(seatAt(state, at('bed', 620, 300))).toBe('bed');
+  expect(seatAt(state, at('bed', 910, 370))).toBe('bed');
+  expect(seatAt(state, at('bed', 620, 190))).toBeUndefined();
 });
 it('encaixa um brinquedo no centro do colo quando sentado', () => {
   let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
   state = transition(state, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
-  expect(itemPoint(state, state.items[3]!)).toEqual({ x: 150, y: 367 });
+  expect(itemPoint(state, state.items[3]!)).toEqual({ x: 152.7, y: 373.3 });
 });

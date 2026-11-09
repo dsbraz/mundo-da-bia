@@ -19,6 +19,7 @@ it.each([
   if (reverse) state.actors.reverse();
   const before = structuredClone(state);
   const canvas = Object.assign(new EventTarget(), {
+    dataset: { viewWidth: '1000', viewX: '0', viewY: '0', cameraX: '0' },
     setPointerCapture: vi.fn(),
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 600 }),
   });
@@ -35,6 +36,7 @@ it.each([
 it('cancelar arraste de objeto não altera a brincadeira; ponteiro secundário não pode soltá-lo', () => {
   const state = initialWorld();
   const canvas = Object.assign(new EventTarget(), {
+    dataset: { viewWidth: '1000', viewX: '0', viewY: '0', cameraX: '0' },
     setPointerCapture: vi.fn(),
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 600 }),
   });
@@ -58,6 +60,7 @@ it('cancelar arraste de objeto não altera a brincadeira; ponteiro secundário n
 it('trocar de cômodo durante arraste descarta a entrega e limpa a prévia', () => {
   const state = initialWorld();
   const canvas = Object.assign(new EventTarget(), {
+    dataset: { viewWidth: '1000', viewX: '0', viewY: '0', cameraX: '0' },
     setPointerCapture: vi.fn(),
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 600 }),
   });

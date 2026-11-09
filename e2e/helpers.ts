@@ -1,3 +1,6 @@
+import { visualPiecePoint } from '../src/presentation/furniture-scale';
+import { fixture } from '../src/domain/layout';
+import type { PieceKind } from '../src/domain/types';
 import { expect, type Page } from '@playwright/test';
 import { localWorld } from '../src/domain/neighborhood';
 import type { Neighborhood } from '../src/domain/neighborhood-types';
@@ -19,18 +22,24 @@ export async function point(page: Page, x: number, y: number) {
   return (await points(page, [[x, y]]))[0]!;
 }
 async function points(page: Page, positions: [number, number][]) {
-  const state = await read(page); const width = { small: 1000, medium: 1200, large: 1400 }[state.layout.rooms[state.room]!.size];
-  let box = (await page.locator('canvas').boundingBox())!;
+  const project = () => page.locator('canvas').evaluate((canvas, positions) => {
+    const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth);
+    return positions.map(([x, y]) => ({ x: box.x + (x - Number(canvas.dataset.viewX) - Number(canvas.dataset.cameraX)) * scale,
+      y: box.y + (y - Number(canvas.dataset.viewY)) * scale }));
+  }, positions);
+  let projected = await project();
   const viewport = (await page.locator('#world').boundingBox())!;
-  const xs = positions.map(([x]) => box.x + x * box.width / width);
-  const left = Math.min(...xs), right = Math.max(...xs);
+  const left = Math.min(...projected.map(p => p.x)), right = Math.max(...projected.map(p => p.x));
   const shift = left < viewport.x + 24 ? left - viewport.x - 24 : right > viewport.x + viewport.width - 24 ? right - viewport.x - viewport.width + 24 : 0;
-  if (shift) { await page.locator('canvas').dispatchEvent('wheel', { deltaX: shift, deltaY: 0 }); box = (await page.locator('canvas').boundingBox())!; }
-  return positions.map(([x, y]) => ({ x: box.x + x * box.width / width, y: box.y + y * box.height / 600 }));
+  if (shift) { await page.locator('canvas').dispatchEvent('wheel', { deltaX: shift, deltaY: 0 }); projected = await project(); }
+  return projected;
 }
+
 export async function drag(page: Page, from: [number, number], to: [number, number], cancel = false) {
   const [a, b] = (await points(page, [from, to])) as [{ x: number; y: number }, { x: number; y: number }];
-  await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 8 });
+  await page.mouse.move(a.x, a.y); await page.mouse.down();
+  if (Math.hypot(b.x - a.x, b.y - a.y) < 12) await page.mouse.move(a.x + 16, a.y);
+  await page.mouse.move(b.x, b.y, { steps: 8 });
   if (cancel) await page.keyboard.press('Escape'); await page.mouse.up();
 }
 export async function tap(page: Page, x: number, y: number) { const p = await point(page, x, y); await page.touchscreen.tap(p.x, p.y); }
@@ -60,4 +69,10 @@ export async function visitNeighbor(page: Page, direction: 'next' | 'previous' =
 export async function choice(page: Page, id: string, value: string) {
   const label = await page.locator(`${id} option[value="${value}"]`).textContent();
   await page.locator(`${id} + .choice-cards`).getByRole('button', { name: label!, exact: true }).click();
+}
+
+export async function onPiece(page: Page, kind: PieceKind, x: number, y: number): Promise<[number, number]> {
+  const world = await read(page), piece = fixture(world, kind)!;
+  const point = visualPiecePoint(piece, { x, y });
+  return [point.x, point.y];
 }

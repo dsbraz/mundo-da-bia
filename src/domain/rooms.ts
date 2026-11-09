@@ -1,5 +1,8 @@
 import type { PieceKind, Room, RoomId, RoomSize, RoomTemplate, World } from './types';
 import { editWorld } from './design';
+import { freePlacement } from './placement';
+import { pieceBounds } from './layout';
+import { roomWidth } from './geometry';
 import { enterRoom } from './room-state';
 export interface NewRoom { name: string; template: RoomTemplate; size: RoomSize; cell: number }
 const furnishings: Record<RoomTemplate, PieceKind[]> = {
@@ -32,7 +35,11 @@ export function addRoom(state: World, options: NewRoom): World {
 export function furnishRoom(state: World, template: RoomTemplate): World {
   let next = state;
   furnishings[template].forEach((kind, index) => {
-    next = editWorld(next, { type: 'add', kind, point: { x: 210 + index * 240, y: 360 } });
+    const box = pieceBounds[kind];
+    const playground = template === 'playground' || template === 'garden';
+    const x = playground ? [60, 320, 60][index]! : 40 + index * (roomWidth(state) - 80 - box.width) / Math.max(1, furnishings[template].length - 1);
+    const point = freePlacement(next, { id: next.layout.nextId, kind, room: next.room, color: 'original', flipped: false, x, y: (playground && index === 2 ? 390 : 450) - box.height });
+    if (point) next = editWorld(next, { type: 'add', kind, point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } });
   });
   return next;
 }

@@ -43,7 +43,7 @@ export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | 
   actorIds.forEach((id, index) => loadActor(scene, id, index, state.actors.find(a => a.id === id)!.look));
   lookIds.filter(look => !scene.textures.exists(`look-${look}`)).forEach(look => {
     const source = human.replaceAll('#E889A1', color(looks[look].color)).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
-    const garment = source.replace('viewBox="0 0 140 220"', 'viewBox="15 110 110 110"').replace('width="140" height="220"', 'width="110" height="110"');
+    const garment = source.replace('viewBox="0 0 140 220"', 'viewBox="15 98 110 122"').replace('width="140" height="220"', 'width="110" height="122"');
     loadSvg(scene, `look-${look}`, layer(garment, outfitLayer(look)));
   });
 }

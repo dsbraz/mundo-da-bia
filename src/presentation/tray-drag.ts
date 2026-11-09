@@ -1,8 +1,9 @@
+import { screenToWorld } from './viewport';
 import type { Point } from '../domain/types';
 let owner: HTMLButtonElement | null = null;
 let cancelActive = () => {};
 export function cancelTrayDrag() { cancelActive(); }
-export function trayDrag(button: HTMLButtonElement, width: () => number, drop: (point: Point) => void, enabled: () => boolean) {
+export function trayDrag(button: HTMLButtonElement, _width: () => number, drop: (point: Point) => void, enabled: () => boolean) {
   let pointer: number | null = null; let start = { x: 0, y: 0 }; let dragged = false; let ghost: HTMLImageElement | null = null;
   const cancel = () => { if (pointer !== null) dragged = true; pointer = null; button.closest('#app')?.classList.remove('gesturing'); ghost?.remove(); ghost = null; if (owner === button) { owner = null; cancelActive = () => {}; } };
   button.addEventListener('pointerdown', e => {
@@ -21,7 +22,7 @@ export function trayDrag(button: HTMLButtonElement, width: () => number, drop: (
     if (pointer !== e.pointerId) return;
     const canvas = document.querySelector('canvas')!; const bounds = canvas.getBoundingClientRect();
     if (dragged && enabled() && e.clientX >= bounds.left && e.clientX <= bounds.right && e.clientY >= bounds.top && e.clientY <= bounds.bottom) {
-      drop({ x: (e.clientX - bounds.left) * (canvas.dataset.street === 'true' ? 1000 : width()) / bounds.width + Number(canvas.dataset.cameraX ?? 0), y: (e.clientY - bounds.top) * 600 / bounds.height });
+      drop(screenToWorld(canvas, { x: e.clientX, y: e.clientY }));
     }
     pointer = null; cancel();
   });

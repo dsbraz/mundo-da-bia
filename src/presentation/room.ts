@@ -1,21 +1,24 @@
 import type Phaser from 'phaser';
-import type { World } from '../domain/types';
+import type { World, RoomTemplate, Room } from '../domain/types';
 import { roomWidth } from '../domain/geometry';
 import { palettes } from '../content/furnishings';
-export function drawRoom(scene: Phaser.Scene, state: World) {
+const outdoorColors: Partial<Record<RoomTemplate, { wall: number; floor: number }>> = {
+  garden: { wall: 0xcce7e1, floor: 0xb3bf92 }, playground: { wall: 0xcce7e1, floor: 0xb3bf92 }, sportsfield: { wall: 0xdbece6, floor: 0x87ad7d },
+};
+export function drawRoom(scene: Phaser.Scene, state: World, extend = true) {
   const finish = state.layout.rooms[state.room]!; const width = roomWidth(state);
-  const wall = palettes[finish.wall]; const floor = palettes[finish.floor];
+  const margin = extend ? 10000 : 0;
   const g = scene.add.graphics();
-  const wallColor = finish.wall === 'original' ? 0xe8e6dd : Number(wall.light.replace('#', '0x'));
+  const outside = outdoorColors[finish.template];
   const tiled = finish.template === 'bathroom' || finish.template === 'kitchen';
-  const floorColor = finish.floor === 'original' ? (tiled ? 0xcbd3c0 : 0xc3a284) : Number(floor.base.replace('#', '0x'));
-  g.fillStyle(wallColor).fillRect(0, 0, width, 600);
-  g.fillStyle(0xffffff, .17).fillRect(0, 0, width, 200);
-  g.fillStyle(floorColor).fillRect(0, 390, width, 210);
+  const { wall: wallColor, floor: floorColor } = roomColors(finish, tiled);
+  g.fillStyle(wallColor).fillRect(-margin, -margin, width + margin * 2, 600 + margin * 2);
+  g.fillStyle(0xffffff, .17).fillRect(-margin, -margin, width + margin * 2, 200 + margin);
+  g.fillStyle(floorColor).fillRect(-margin, 390, width + margin * 2, 210 + margin);
   g.lineStyle(1, 0x6e655a, .22);
-  floorLines(g, width, tiled);
-  g.fillStyle(0x6e655a, .07).fillRect(0, 392, width, 8);
-  g.fillStyle(0xf6f4ec).fillRect(0, 382, width, 10);
+  if (!outside) floorLines(g, width, tiled);
+  g.fillStyle(0x6e655a, .07).fillRect(-margin, 392, width + margin * 2, 8);
+  g.fillStyle(0xf6f4ec).fillRect(-margin, 382, width + margin * 2, 10);
   scene.add.image(0, 0, `architecture-${finish.template}`).setOrigin(0).setDisplaySize(width, 600);
 }
 
@@ -29,4 +32,13 @@ function floorLines(g: Phaser.GameObjects.Graphics, width: number, tiled: boolea
       g.lineBetween(x, y, nextX, y + step);
     }
   }
+}
+
+function roomColors(finish: Room, tiled: boolean) {
+  const outside = outdoorColors[finish.template];
+  if (outside) return outside;
+  return {
+    wall: finish.wall === 'original' ? 0xe8e6dd : Number(palettes[finish.wall].light.replace('#', '0x')),
+    floor: finish.floor === 'original' ? (tiled ? 0xcbd3c0 : 0xc3a284) : Number(palettes[finish.floor].base.replace('#', '0x')),
+  };
 }

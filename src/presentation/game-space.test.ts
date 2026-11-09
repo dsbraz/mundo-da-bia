@@ -19,3 +19,10 @@ it('recusa uma área tomada por móveis ou pessoas e encontra chão livre sem at
   const point = gameSpace(world, world.actors[0]!, 'hopscotch');
   expect(point).not.toBeNull(); expect(point!.y).toBe(530);
 });
+it('quintal novo conserva espaço para amarelinha com toda a mobília', async () => {
+  const { addRoom } = await import('../domain/rooms');
+  const world = addRoom(initialWorld(), { name: 'Quintal', template: 'playground', size: 'small', cell: 2 });
+  world.actors = [{ ...world.actors[0]!, room: world.room, x: 650, y: 530 }]; world.items = [];
+  expect(world.layout.pieces.filter(p => p.room === world.room)).toHaveLength(3);
+  expect(gameSpace(world, world.actors[0]!, 'hopscotch')).not.toBeNull();
+});

@@ -23,7 +23,7 @@ export function drawPieces(scene: Phaser.Scene, state: World, wardrobe: boolean,
         .setStrokeStyle(2, 0x477e86).setFillStyle(0xffffff, 0.06));
     }
   });
-  if (wardrobe) slotsFor(state).forEach(slot => scene.add.image(slot.x, slot.y, `look-${slot.id}`).setDisplaySize(42, 44).setDepth(pieceDepth(fixture(state, 'wardrobe')!) + 2));
+  if (wardrobe) slotsFor(state).forEach(slot => scene.add.image(slot.x, slot.y, `look-${slot.id}`).setDisplaySize(27, 27).setDepth(pieceDepth(fixture(state, 'wardrobe')!) + 2));
   return pieces;
 }
 export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardrobe: boolean) {

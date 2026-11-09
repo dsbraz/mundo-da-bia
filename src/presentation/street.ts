@@ -12,10 +12,11 @@ import { palettes } from '../content/furnishings';
 export function drawStreet(scene: Phaser.Scene, town: Neighborhood) {
   const width = streetWidth(town.plots);
   const g = scene.add.graphics();
-  g.fillStyle(0xe9f3ef).fillRect(0, 0, width, 600);
+  g.fillStyle(0xe9f3ef).fillRect(-10000, -10000, width + 20000, 20600);
+  backdrop(g, width);
   g.fillStyle(0xd7e6c5).fillRect(0, 345, width, 120);
   g.fillStyle(0xf0e3ce).fillRect(0, 455, width, 110);
-  g.fillStyle(0x9eaeb0).fillRect(0, 565, width, 35);
+  g.fillStyle(0x9eaeb0).fillRect(-10000, 565, width + 20000, 10000);
   g.lineStyle(2, 0xbcaf9d).lineBetween(0, 455, width, 455).lineBetween(0, 562, width, 562);
   drawPlaza(scene, town);
   for (let plot = 0; plot < town.plots; plot++) {
@@ -39,7 +40,7 @@ function facade(scene: Phaser.Scene, b: Building) {
   const image = scene.add.image(x, 0, facadeKey(b.model, floorCount(b.layout))).setOrigin(0).setDisplaySize(440, 480);
   if (b.color !== 'original') image.setTint(Number.parseInt(palettes[b.color].light.slice(1), 16));
   const label = facadeLabel(b.model, floorCount(b.layout));
-  scene.add.text(x + label.x, label.y, b.name, { resolution: 2, fontSize: '17px', color: '#52665e', align: 'center', wordWrap: { width: label.width }, padding: { x: 5, y: 3 } }).setOrigin(.5);
+  scene.add.text(x + label.x, label.y, b.name, { resolution: 2, fontSize: '13px', maxLines: 2, color: '#52665e', align: 'center', wordWrap: { width: label.width }, padding: { x: 5, y: 3 } }).setOrigin(.5);
 }
 export function drawExit(scene: Phaser.Scene) {
   const d = doorway.interior, g = scene.add.graphics().setDepth(150);
@@ -51,4 +52,13 @@ export function drawExit(scene: Phaser.Scene) {
   g.fillStyle(0xf7db94).fillCircle(d.x + d.width - 16, d.y + 124, 4);
   g.fillStyle(0xd7c3ab).fillRect(d.x - 12, d.y + d.height - 2, d.width + 24, 9);
   scene.add.text(d.x + d.width / 2, d.y + 48, 'Rua', { resolution: 2, fontSize: '18px', color: '#334f49' }).setOrigin(.5).setDepth(151);
+}
+
+function backdrop(g: Phaser.GameObjects.Graphics, width: number) {
+  for (let x = -240; x < width; x += 480) {
+    g.fillStyle(0xffffff, .5).fillEllipse(x + 140, 135, 160, 28).fillEllipse(x + 120, 123, 75, 36);
+    g.fillStyle(0xb9cdb3, .4).fillEllipse(x + 240, 348, 500, 130);
+    g.lineStyle(3, 0xa6b4a3).lineBetween(x + 410, 315, x + 410, 380);
+    g.fillStyle(0xb5c9a4).fillEllipse(x + 410, 305, 75, 60);
+  }
 }

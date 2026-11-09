@@ -1,4 +1,5 @@
-import { seatPoint } from '../domain/furniture';
+import { visualPiecePoint, logicalPiecePoint } from './furniture-scale';
+import { seatPoint, seatKind } from '../domain/furniture';
 import { fixture, pieceBounds, toPiece } from '../domain/layout';
 import { seatIds } from '../domain/types';
 import type { Home, PieceKind, Point, Spot, World } from '../domain/types';
@@ -6,7 +7,7 @@ import type { Home, PieceKind, Point, Spot, World } from '../domain/types';
 function hit(state: World, kind: PieceKind, p: Point, x: number, y: number, width: number, height: number) {
   const piece = fixture(state, kind);
   if (!piece || piece.room !== state.room) return false;
-  const point = toPiece(piece, p);
+  const point = toPiece(piece, logicalPiecePoint(piece, p));
   return point.x >= x && point.x <= x + width && point.y >= y && point.y <= y + height;
 }
 export function furnitureAt(state: World, p: Point): keyof Home | undefined {
@@ -24,7 +25,8 @@ export function surfaceAt(state: World, p: Point): Exclude<Spot, 'floor'> | unde
 export function seatAt(state: World, p: Point) {
   if (hit(state, 'bed', p, 565, 271, 404, 110)) return 'bed';
   return seatIds.find(id => {
-    const seat = seatPoint(state, id);
+    const saved = seatPoint(state, id), piece = fixture(state, seatKind(id));
+    const seat = saved && piece ? { ...saved, ...visualPiecePoint(piece, saved) } : saved;
     return seat && seat.room === state.room && Math.abs(seat.x - p.x) <= 45 && Math.abs(seat.y - p.y) <= 55;
   });
 }

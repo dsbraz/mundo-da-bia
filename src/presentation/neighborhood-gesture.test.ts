@@ -40,7 +40,7 @@ it('segundo dedo antes do arraste cancela o toque pendente no móvel', () => {
   const play = createPlayGesture(() => state, vi.fn(), move, { dispatch, wardrobe: () => false, toggleWardrobe: vi.fn(), preview: vi.fn() });
   const canvas = { getBoundingClientRect: () => ({ width: 1000 }) } as HTMLCanvasElement;
   const input = houseInput(canvas, () => state, () => play, { building: () => false, wardrobe: () => false, dispatch, pan: vi.fn(), transfer: vi.fn(), progress: vi.fn() });
-  const point = { x: 60, y: 200 };
+  const point = { x: 62.25, y: 238.4 };
   input.start(1, point, point); expect(dispatch).not.toHaveBeenCalled();
   input.start(2, point, point); input.end(1, point, point); input.end(2, point, point); expect(dispatch).not.toHaveBeenCalled();
   input.start(3, point, point); input.end(3, point, point); expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'interact', target: 'lamp' });

@@ -1,6 +1,7 @@
+import { visualPiecePoint } from './furniture-scale';
 import { furnishings } from '../content/furnishings';
 import { pieceBounds } from '../domain/layout';
-import { roomWidth } from '../domain/geometry';
+import { positionTargets } from './viewport';
 import type { Action, ActorId, Piece, World } from '../domain/types';
 export function sceneControls(root: HTMLElement, select: (id: number) => void, dispatch: (action: Action) => void, dress: () => void) {
   const layer = document.createElement('div'); layer.className = 'scene-controls'; root.append(layer);
@@ -9,16 +10,13 @@ export function sceneControls(root: HTMLElement, select: (id: number) => void, d
     layer.replaceChildren(...world.layout.pieces.filter(p => p.room === world.room).map(piece => {
       const button = document.createElement('button'); button.className = 'scene-target'; button.dataset.piece = String(piece.id);
       button.textContent = `${building ? 'Selecionar' : 'Usar'} ${furnishings[piece.kind].name}`;
-      button.dataset.worldX = String(piece.x + pieceBounds[piece.kind].width / 2); button.dataset.worldY = String(piece.y + pieceBounds[piece.kind].height / 2);
-      const box = root.querySelector('canvas')?.getBoundingClientRect();
-      if (box) {
-        button.style.left = `${box.left + (piece.x + pieceBounds[piece.kind].width / 2) / roomWidth(world) * box.width}px`;
-        button.style.top = `${box.top + (piece.y + pieceBounds[piece.kind].height / 2) / 600 * box.height}px`;
-      }
+      const point = visualPiecePoint(piece, { x: piece.x + pieceBounds[piece.kind].width / 2, y: piece.y + pieceBounds[piece.kind].height / 2 });
+      button.dataset.worldX = String(point.x); button.dataset.worldY = String(point.y);
       button.addEventListener('click', () => {
         if (building) select(piece.id); else usePiece(piece, actor, world, dispatch, dress);
       }); return button;
     }));
+    positionTargets(root);
     if (focused) layer.querySelector<HTMLButtonElement>(`[data-piece="${focused}"]`)?.focus();
   };
 }

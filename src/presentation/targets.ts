@@ -1,6 +1,8 @@
-import { handAnchor, posePoint } from './pose';
+import { supportedActor, visualPiecePoint } from './furniture-scale';
+import { handAnchor, posePoint, contextScale, visualContext } from './pose';
+import type { VisualContext } from './pose';
 import { fixture, fromPiece } from '../domain/layout';
-import { availableSpot } from '../domain/furniture';
+import { availableSpot, spotKind } from '../domain/furniture';
 import { lookIds } from '../domain/types';
 import type { Actor, Item, ItemId, LookId, Point, World } from '../domain/types';
 export type VisibleWorld = World & {
@@ -11,10 +13,10 @@ export type VisibleWorld = World & {
 export type DragToken = { kind: 'item'; id: ItemId } | { kind: 'look'; id: LookId };
 export type DragPreview = DragToken & { point: Point };
 // The physical wardrobe has twenty hangers; the Looks tray contains the full catalog.
-export const wardrobeSlots = lookIds.slice(0, 20).map((id, index) => ({ id, x: 335 + index % 4 * 46, y: 180 + Math.floor(index / 4) * 44 }));
+export const wardrobeSlots = lookIds.slice(0, 20).map((id, index) => ({ id, x: 335 + index % 4 * 46, y: 180 + Math.floor(index / 4) * 34 }));
 export function slotsFor(state: World) {
   const wardrobe = fixture(state, 'wardrobe');
-  return wardrobe?.room === state.room ? wardrobeSlots.map(slot => ({ ...slot, ...fromPiece(wardrobe, slot) })) : [];
+  return wardrobe?.room === state.room ? wardrobeSlots.map(slot => ({ ...slot, ...visualPiecePoint(wardrobe, fromPiece(wardrobe, slot)) })) : [];
 }
 export function actorAt(state: VisibleWorld, p: Point) {
   return [...state.actors].sort((a, b) => (state.visibleDepth?.get(a.id) ?? a.y) - (state.visibleDepth?.get(b.id) ?? b.y)).reverse().find(a => a.room === state.room
@@ -24,19 +26,22 @@ export function actorAt(state: VisibleWorld, p: Point) {
 export function itemPoint(state: VisibleWorld, item: Item): Point | null {
   const visible = state.visibleItems?.get(item.id); if (visible) return visible;
   const holder = state.actors.find(a => a.id === item.holder);
-  if (holder) return holder.room === state.room ? handPoint(holder) : null;
-  return item.room === state.room && availableSpot(state, item.spot) ? { x: item.x, y: item.y - 28 } : null;
+  if (holder) return holder.room === state.room ? handPoint(state.visibleItems ? holder : supportedActor(state, holder), visualContext(state)) : null;
+  if (item.room !== state.room || !availableSpot(state, item.spot)) return null;
+  const point = { x: item.x, y: item.y - 28 * contextScale(visualContext(state)) };
+  const support = item.spot !== 'floor' && fixture(state, spotKind(item.spot));
+  return support ? visualPiecePoint(support, point) : point;
 }
 export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): DragToken | undefined {
   const foreground = foregroundDepth(state, p);
   const item = [...state.items].reverse().sort((a, b) => (state.itemDepth?.get(b.id) ?? b.y) - (state.itemDepth?.get(a.id) ?? a.y)).find(i => {
     const position = itemPoint(state, i);
-    return position && (state.itemDepth?.get(i.id) ?? Infinity) >= foreground && Math.abs(position.x - p.x) <= 20 && Math.abs(position.y - p.y) <= 20;
+    return position && (state.itemDepth?.get(i.id) ?? Infinity) >= foreground && Math.abs(position.x - p.x) <= 20 * contextScale(visualContext(state)) && Math.abs(position.y - p.y) <= 20 * contextScale(visualContext(state));
   });
   if (item) return { kind: 'item', id: item.id };
   if (actorAt(state, p)) return undefined;
   if (wardrobe) {
-    const look = slotsFor(state).find(slot => Math.abs(slot.x - p.x) < 23 && Math.abs(slot.y - p.y) < 30);
+    const look = slotsFor(state).find(slot => Math.abs(slot.x - p.x) < 14 && Math.abs(slot.y - p.y) < 14);
     if (look) return { kind: 'look', id: look.id };
   }
   return undefined;
@@ -47,13 +52,13 @@ function actorContains(actor: Actor, p: Point): boolean {
   return Math.abs(actor.x - p.x) < 43 && p.y <= actor.y + 20 && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175);
 }
 
-export function handPoint(actor: Actor): Point {
-  return posePoint(actor, handAnchor(actor));
+export function handPoint(actor: Actor, context: VisualContext = 'interior'): Point {
+  return posePoint(actor, handAnchor(actor), context);
 }
 
 export function previewPoint(state: World, drag: DragPreview): Point {
   const target = actorAt(state, drag.point);
-  return target && drag.kind === 'item' ? handPoint(target) : drag.point;
+  return target && drag.kind === 'item' ? handPoint(target, visualContext(state)) : drag.point;
 }
 
 function foregroundDepth(state: VisibleWorld, point: Point) {

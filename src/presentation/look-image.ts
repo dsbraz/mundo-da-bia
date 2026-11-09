@@ -6,5 +6,5 @@ import { svgFragment } from './svg-source';
 export function lookImage(look: LookId, masculine = false) {
   const source = human.replaceAll('#E889A1', `#${looks[look].color.toString(16).padStart(6, '0')}`).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
   const part = outfitLayer(look, masculine);
-  return svgFragment(source, ['legs', part], { x: 15, y: 110, width: 110, height: 110 });
+  return svgFragment(source, ['legs', part], { x: 15, y: 98, width: 110, height: 122 });
 }

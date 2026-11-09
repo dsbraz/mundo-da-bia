@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, read, tray, closeTray, drag, tap } from './helpers';
+import { ready, read, tray, closeTray, drag, tap, onPiece } from './helpers';
 test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message)); await ready(page);
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Lanche', exact: true }).click(); await closeTray(page);
@@ -17,18 +17,21 @@ test('arraste cancelado preserva posição, teclado move e dados inválidos recu
   await page.evaluate(() => window.addEventListener('pagehide', () => { localStorage.setItem('mundo-da-bia:neighborhood:v2', '{bad'); localStorage.setItem('mundo-da-bia:neighborhood:v1', '{bad'); localStorage.setItem('mundo-da-bia:v1', '{bad'); localStorage.setItem('mundo-da-bia:houses:v1', '{bad'); }));
   await page.reload(); expect((await read(page)).actors).toHaveLength(7); expect((await read(page)).actors[0]!.x).toBe(520);
 });
-test('móveis, alimentação, guardar objeto e show continuam respondendo na cena', async ({ page }) => {
+test('móveis, alimentação e guardar objeto continuam respondendo na cena', async ({ page }) => {
   await ready(page); await drag(page, [520, 420], [150, 405]); expect((await read(page)).actors[0]!.seat).toBe('sofa-left');
-  await drag(page, [680, 282], [260, 450]); expect((await read(page)).items[0]!.spot).toBe('table');
-  await drag(page, [260, 447], [150, 350]); expect((await read(page)).actors[0]!.fed).toBe(true);
-  await drag(page, [680, 332], [600, 490]); expect((await read(page)).actors[4]!.fed).toBe(true);
-  await tap(page, 380, 365); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(true);
-  await drag(page, [350, 382], [355, 370]); expect((await read(page)).items[3]!.spot).toBe('drawer');
-  await tap(page, 320, 390); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(false);
+  await drag(page, await onPiece(page, 'fridge', 680, 282), await onPiece(page, 'table', 260, 450)); expect((await read(page)).items[0]!.spot).toBe('table');
+  await drag(page, await onPiece(page, 'table', 260, 447), [150, 350]); expect((await read(page)).actors[0]!.fed).toBe(true);
+  await drag(page, await onPiece(page, 'fridge', 680, 332), [600, 490]); expect((await read(page)).actors[4]!.fed).toBe(true);
+  await tap(page, ...await onPiece(page, 'wardrobe', 380, 365)); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(true);
+  await drag(page, [350, 382], await onPiece(page, 'wardrobe', 355, 370)); expect((await read(page)).items[3]!.spot).toBe('drawer');
+  await tap(page, ...await onPiece(page, 'wardrobe', 320, 390)); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(false);
+});
+test('microfone e luminária respondem com as ações recolhidas', async ({ page }) => {
+  await ready(page); await tap(page, 520, 420);
   await page.getByRole('button', { name: 'Recolher ações', exact: true }).click();
   await expect(page.locator('#actions')).toBeHidden();
   const performer = (await read(page)).actors[0]!; await drag(page, [600, 402], [performer.x, performer.y - 140]); expect((await read(page)).show).toBe(true);
-  await tap(page, 60, 200); await expect.poll(async () => (await read(page)).home.lamp).toBe(false);
+  await tap(page, ...await onPiece(page, 'lamp', 60, 200)); await expect.poll(async () => (await read(page)).home.lamp).toBe(false);
 });
 test('cancelar objeto e arrastar para o chão mantém identidade e quantidade', async ({ page }) => {
   await ready(page); const before = await read(page); await drag(page, [350, 382], [935, 430], true); expect(await read(page)).toEqual(before);

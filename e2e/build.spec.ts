@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ready, read, tray, closeTray, clear, drag, create, choice } from './helpers';
-test('esvaziar exige confirmação, desfaz, refaz, colore e duplica casas independentes', async ({ page }) => {
+test('esvaziar exige confirmação, desfaz, refaz e permite colorir e espelhar', async ({ page }) => {
   await ready(page); const original = await read(page); await page.locator('#build-toggle').click();
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#room-options summary').click(); await page.locator('#clear-room').click();
   expect(await read(page)).toEqual(original); await page.locator('#cancel-clear').click();
@@ -10,6 +10,10 @@ test('esvaziar exige confirmação, desfaz, refaz, colore e duplica casas indepe
   await page.getByRole('button', { name: 'Adicionar Letreiro Palco Neon' }).click(); await closeTray(page);
   await page.locator('#piece-colors button').nth(3).click(); await page.locator('#flip-piece').click();
   expect((await read(page)).layout.pieces.at(-1)).toMatchObject({ kind: 'neon', color: 'rose', flipped: true });
+});
+test('acabamentos e cópias de casas permanecem independentes', async ({ page }) => {
+  await ready(page); await page.locator('#build-toggle').click(); await tray(page, 'Atividades');
+  await page.getByRole('button', { name: 'Adicionar Letreiro Palco Neon' }).click(); await closeTray(page);
   await tray(page, 'Acabamentos'); await choice(page, '#finish-wall', 'lilac'); await choice(page, '#finish-floor', 'sky');
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   await page.locator('#house-name').fill('Estúdio da Bia'); await page.locator('#rename-house').click(); await page.locator('#copy-house').click(); await page.locator('#close-map').click();
