@@ -1,4 +1,6 @@
 import { visibleHit } from './visible-hit';
+import { childGameArt } from './child-game-art';
+import type { GamePreview } from './child-game-art';
 import { doorEffect } from './door-effect';
 import type { Location } from '../domain/neighborhood-types';
 import { outdoorEffect } from './outdoor-effects';
@@ -25,6 +27,8 @@ import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 export class PlayScene extends Phaser.Scene {
+  private gameArt: ReturnType<typeof childGameArt> | null = null;
+  previewGame(value: GamePreview | null) { this.gameArt?.paint(value); }
   private world: World;
   private town: Neighborhood | null = null;
   private cameraX = 0;
@@ -47,7 +51,7 @@ export class PlayScene extends Phaser.Scene {
   private objects: Phaser.GameObjects.Image[] = [];
   constructor(state: World) { super('play'); this.world = state; }
   preload() { loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); }
-  create() { this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true; this.paint(this.world, this.selected); }
+  create() { this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true; this.gameArt = childGameArt(this); this.paint(this.world, this.selected); }
   paint(state: World, selected: ActorId) {
     this.world = state; this.selected = selected;
     if (!this.prepareArt(state)) return;
@@ -225,6 +229,7 @@ export class PlayScene extends Phaser.Scene {
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
       this.animateFigure(figure, actor, time, index, reduced);
+      this.gameArt?.animate(figure, performance.now(), reduced);
     });
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }

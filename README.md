@@ -87,6 +87,16 @@ Registre publicação, SHA, horário do commit e horário da disponibilização 
 
 ## Evidência da reorganização de UX
 
+### Corda e amarelinha — sessões de brincadeira
+
+Selecione uma criança e abra **Brincadeiras**. Corda aceita toque ou espaço, com volta de 1,6 segundo e tolerância de 250 ms para cada lado; não há punição nem pontuação. Amarelinha destaca as oito casas na ida e na volta, alterna um e dois pés e aceita toque na casa, botão ou espaço. A aproximação procura chão livre em cômodos e quintais, sem móveis, objetos ou outras pessoas na área. Mãos ocupadas recebem uma explicação e preservam o objeto. Escape, perda de foco, troca de personagem, modo ou lugar encerram a sessão, sem persistir a animação no envelope v2. A praça ainda depende da expansão do bairro.
+
+TDD: os quatro exemplos de regras falharam com implementações vazias antes de passar. A jornada inicial confirmou a ausência da entrada Brincadeiras. Na revisão visual, as últimas casas da amarelinha apareciam sobre a parede; `game-space.test.ts` reproduziu pontos acima do piso antes da projeção em perspectiva. O teste de acessibilidade encontrou 31 reescritas do mesmo status em 500 ms; após a correção, encontrou zero. Problemas na preparação dos testes (save sem geladeira mantendo objetos dentro dela, seleção ausente e encerramento individual não emitido pelo protocolo CDP) foram corrigidos nos testes, sem classificá-los como bugs do produto.
+
+`quality:fast`: 364 testes, tipagem, lint e arquitetura aprovados. Sete jornadas de navegador passaram, cobrindo ida/volta e recarga, interrupções, mãos ocupadas, ritmo determinístico, movimento reduzido, toque, multitoque sintético, retrato e orientação. Imagens de corda e amarelinha foram inspecionadas. A integração depende do quality-gate do SHA enviado; nenhuma validação física de iPad, trackpad, Android/FPS ou experiência com a criança foi realizada.
+
+A etapa anterior de instituições, figurinos e feedback de construção foi promovida em `4d797799bbc05da5c0f7f35bafd9d9c77b741191`, após a [CI aprovada](https://github.com/dsbraz/mundo-da-bia/actions/runs/42548856745): 128 jornadas, cobertura e mutação acima dos limites da política 1. As fachadas institucionais ainda compartilham a estrutura visual e serão diferenciadas na próxima revisão.
+
 ### Expansão de instituições e figurinos — implementação em andamento
 
 Hospital, delegacia e escritório agora têm modelos de construção próprios, plantas mobiliadas com peças existentes e fachadas para um a três andares. Nove modelos de cômodo foram acrescentados: recepção, consultório, enfermaria, central de atendimento, investigação, escritório, reunião, copa e quintal de brincadeiras. As novas roupas são enfermagem, polícia, detetive, escritório, esporte e passeio. IDs e roupas anteriores permanecem válidos no envelope v2.
