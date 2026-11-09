@@ -4,6 +4,15 @@ import { enterRoom } from './room-state';
 export interface NewRoom { name: string; template: RoomTemplate; size: RoomSize; cell: number }
 const furnishings: Record<RoomTemplate, PieceKind[]> = {
   laundry: ['washer', 'sink', 'shelf'], library: ['bookcase', 'armchair', 'reading-lamp'], dining: ['picnic-table', 'kitchen-cart', 'plant'],
+  reception: ['counter', 'armchair', 'plant'],
+  consultation: ['desk', 'armchair', 'sink'],
+  ward: ['bed', 'side-table', 'reading-lamp'],
+  dispatch: ['desk', 'shelf', 'armchair'],
+  investigation: ['desk', 'bookcase', 'picture'],
+  office: ['desk', 'bookcase', 'armchair'],
+  meeting: ['picnic-table', 'armchair', 'plant'],
+  breakroom: ['counter', 'fridge', 'kitchen-cart'],
+  playground: ['picnic-table', 'planter', 'plant'],
   empty: [], bedroom: ['bed', 'wardrobe', 'lamp'], kitchen: ['fridge', 'counter', 'stove', 'table'],
   bathroom: ['bath', 'mirror', 'plant'], studio: ['stage', 'speaker', 'desk', 'neon'], garden: ['plant', 'plant', 'cat-bed'],
 };
@@ -15,9 +24,13 @@ export function addRoom(state: World, options: NewRoom): World {
   if (!name || !freeCell(state, options.cell)) return state;
   const id: RoomId = `room-${state.layout.nextRoomId}`;
   const room: Room = { ...options, name, wall: 'original', floor: 'original', home: { lamp: true, fridge: true, drawer: false } };
-  let next = enterRoom({ ...state, layout: { ...state.layout, nextRoomId: state.layout.nextRoomId + 1,
+  const next = enterRoom({ ...state, layout: { ...state.layout, nextRoomId: state.layout.nextRoomId + 1,
     rooms: { ...state.layout.rooms, [id]: room } } }, id);
-  furnishings[options.template].forEach((kind, index) => {
+  return furnishRoom(next, options.template);
+}
+export function furnishRoom(state: World, template: RoomTemplate): World {
+  let next = state;
+  furnishings[template].forEach((kind, index) => {
     next = editWorld(next, { type: 'add', kind, point: { x: 210 + index * 240, y: 360 } });
   });
   return next;

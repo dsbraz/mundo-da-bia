@@ -4,7 +4,7 @@ import type { RoomId, World } from '../domain/types';
 import type { NewRoom } from '../domain/rooms';
 import { projects } from '../content/projects';
 interface Actions {
-  enter: (room: RoomId) => void; add: (room: NewRoom) => void; rename: (name: string) => void;
+  enter: (room: RoomId) => void; add: (room: NewRoom) => string | null; rename: (name: string) => void;
   reorder: (room: RoomId, target: RoomId) => void; snapshot: (name: string) => void; closeTray: () => void;
 }
 export function roomControls(root: HTMLElement, actions: Actions) {

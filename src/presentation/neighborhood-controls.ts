@@ -32,8 +32,8 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
       facadeEditor(plotDialog, existing, dispatch);
       plotDialog.prepend(button(`Mover ${existing.name}`, () => { plotDialog.close(); moveHouse(root, get(), existing, dispatch); }), button(`Excluir ${existing.name}…`, () => { plotDialog.close(); removeHouse(root, get(), existing, dispatch); }));
     }
-    else buildingModels.forEach(model => { const choice = button({ house: '⌂ Casa · sala e quarto', apartment: '▤ Prédio · entrada e dois ambientes', shop: '▧ Loja · salão e fundos' }[model], () => {
-      const preview = document.createElement('h3'); preview.textContent = `Prévia · ${{ house: 'Casa com sala e quarto', apartment: 'Prédio com dois andares', shop: 'Loja com salão e fundos' }[model]}`;
+    else buildingModels.forEach(model => { const choice = button({ house: '⌂ Casa · sala e quarto', apartment: '▤ Prédio · entrada e dois ambientes', shop: '▧ Loja · salão e fundos', hospital: 'Hospital · recepção, consultório e enfermaria', police: 'Delegacia · atendimento e investigação', office: 'Escritório · trabalho, reunião e copa' }[model], () => {
+      const preview = document.createElement('h3'); preview.textContent = `Prévia · ${{ house: 'Casa com sala e quarto', apartment: 'Prédio com dois andares', shop: 'Loja com salão e fundos', hospital: 'Hospital com três ambientes', police: 'Delegacia com três ambientes', office: 'Escritório com quatro ambientes' }[model]}`;
       const picture = document.createElement('img'); picture.src = svgUrl(facadeSvg(model)); picture.alt = 'Modelo da construção'; picture.width = 220; picture.height = 240;
       plotDialog.replaceChildren(preview, picture, button('Construir aqui', () => { plotDialog.close(); dispatch({ type: 'construct', plot: index, model }); }), button('Cancelar', () => plotDialog.close()));
     });

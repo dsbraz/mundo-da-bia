@@ -1,4 +1,5 @@
 import type { Building, BuildingModel, Neighborhood, NeighborhoodAction } from './neighborhood-types';
+import { institutionWorld } from './institution-plans';
 import { initialWorld } from './world';
 import { addRoom } from './rooms';
 import { editWorld } from './design';
@@ -16,7 +17,8 @@ export function construct(town: Neighborhood, plot: number, model: BuildingModel
     world = { ...world, layout: { ...world.layout, rooms } };
   }
   if (model === 'apartment') world = addRoom(world, { name: 'Sala de brincar', size: 'medium', template: 'empty', cell: 4 });
-  const name = { house: 'Casa', apartment: 'Prédio', shop: 'Loja' }[model];
+  world = institutionWorld(model) ?? world;
+  const name = { house: 'Casa', apartment: 'Prédio', shop: 'Loja', hospital: 'Hospital', police: 'Delegacia', office: 'Escritório' }[model];
   return append(town, { id: town.nextBuilding, name: `${name} ${town.nextBuilding}`, model, color: 'original', plot, entry: 'sala', layout: world.layout, show: false });
 }
 export function duplicateBuilding(town: Neighborhood, id: number): Neighborhood {

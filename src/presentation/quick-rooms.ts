@@ -4,6 +4,15 @@ import { roomTemplates } from '../domain/types';
 import { templates } from '../content/projects';
 import { pieceImage } from './piece-assets';
 const pictures: Record<RoomTemplate, PieceKind[]> = {
+  reception: ['counter', 'armchair'],
+  consultation: ['desk', 'armchair'],
+  ward: ['bed', 'side-table'],
+  dispatch: ['desk', 'shelf'],
+  investigation: ['desk', 'bookcase'],
+  office: ['desk', 'bookcase'],
+  meeting: ['picnic-table', 'armchair'],
+  breakroom: ['counter', 'fridge'],
+  playground: ['picnic-table', 'planter'],
   laundry: ['washer', 'sink'], library: ['bookcase', 'armchair'], dining: ['picnic-table', 'kitchen-cart'],
   empty: ['rug', 'plant'], bedroom: ['bed', 'lamp'], kitchen: ['fridge', 'counter', 'stove'],
   bathroom: ['bath', 'mirror'], studio: ['stage', 'speaker'], garden: ['plant', 'cat-bed'],
@@ -18,7 +27,7 @@ export function roomPicture(template: RoomTemplate): HTMLElement {
   pictures[template].forEach(kind => { const img = document.createElement('img'); img.src = pictureSource(kind); img.alt = ''; img.draggable = false; picture.append(img); });
   return picture;
 }
-export function quickRooms(root: HTMLElement, add: (room: NewRoom) => void, close: () => void) {
+export function quickRooms(root: HTMLElement, add: (room: NewRoom) => string | null, close: () => void) {
   const panel = root.querySelector<HTMLElement>('#quick-rooms')!;
   let cell = 2;
   roomTemplates.forEach(template => {
@@ -27,9 +36,14 @@ export function quickRooms(root: HTMLElement, add: (room: NewRoom) => void, clos
     button.addEventListener('click', () => {
       const preview = document.createElement('section'); preview.className = 'room-preview';
       const confirm = document.createElement('button'); confirm.textContent = 'Construir cômodo';
-      confirm.onclick = () => { add({ name: templates[template].name, template, size: (root.querySelector<HTMLSelectElement>('#room-size')!.value as import('../domain/types').RoomSize), cell }); preview.remove(); panel.hidden = true; close(); };
+      const status = document.createElement('p'); status.setAttribute('role', 'status');
+      confirm.onclick = () => {
+        const error = add({ name: templates[template].name, template, size: (root.querySelector<HTMLSelectElement>('#room-size')!.value as import('../domain/types').RoomSize), cell });
+        if (error) { status.textContent = error; return; }
+        preview.remove(); panel.hidden = true; close();
+      };
       const cancel = document.createElement('button'); cancel.textContent = 'Cancelar prévia'; cancel.onclick = () => preview.remove();
-      panel.querySelector('.room-preview')?.remove(); preview.append(roomPicture(template), confirm, cancel); panel.append(preview); confirm.focus();
+      panel.querySelector('.room-preview')?.remove(); preview.append(roomPicture(template), status, confirm, cancel); panel.append(preview); confirm.focus();
     });
     root.querySelector('#room-cards')!.append(button);
   });

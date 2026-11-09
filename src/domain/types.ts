@@ -1,11 +1,11 @@
 export const actorIds = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'] as const;
-export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora', 'denim', 'rehearsal', 'overalls', 'rumi', 'mira', 'zoey', 'spiderman', 'superman', 'chef', 'doctor', 'gardener', 'builder'] as const;
+export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'neon', 'aurora', 'denim', 'rehearsal', 'overalls', 'rumi', 'mira', 'zoey', 'spiderman', 'superman', 'chef', 'doctor', 'gardener', 'builder', 'nurse', 'police', 'detective', 'office', 'sport', 'outing'] as const;
 export const roomIds = ['sala', 'quarto'] as const;
 export const itemIds = ['lanche', 'peixe', 'microfone', 'ursinho'] as const;
 export type ActorId = typeof actorIds[number];
 export type LookId = typeof lookIds[number];
 export type RoomId = typeof roomIds[number] | `room-${number}`;
-export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden', 'laundry', 'library', 'dining'] as const;
+export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden', 'laundry', 'library', 'dining', 'reception', 'consultation', 'ward', 'dispatch', 'investigation', 'office', 'meeting', 'breakroom', 'playground'] as const;
 export const roomSizes = ['small', 'medium', 'large'] as const;
 export type RoomTemplate = typeof roomTemplates[number];
 export type RoomSize = typeof roomSizes[number];

@@ -5,6 +5,15 @@ export const projects: { id: string; title: string; description: string; rooms: 
   { id: 'sleepover', title: 'Noite entre amigos', description: 'Crie um quarto de hóspedes e prepare um espaço para conversar até tarde.', rooms: ['bedroom'], pieces: ['bed', 'sofa', 'cushion'] },
 ];
 export const templates: Record<RoomTemplate, { name: string; icon: string }> = {
+  reception: { name: 'Recepção', icon: '◇' },
+  consultation: { name: 'Consultório', icon: '◇' },
+  ward: { name: 'Enfermaria', icon: '◇' },
+  dispatch: { name: 'Central de atendimento', icon: '◇' },
+  investigation: { name: 'Sala de investigação', icon: '◇' },
+  office: { name: 'Escritório', icon: '◇' },
+  meeting: { name: 'Sala de reunião', icon: '◇' },
+  breakroom: { name: 'Copa', icon: '◇' },
+  playground: { name: 'Quintal de brincadeiras', icon: '◇' },
   laundry: { name: 'Lavanderia', icon: '◉' }, library: { name: 'Biblioteca', icon: '▤' }, dining: { name: 'Sala de jantar', icon: '◒' },
   empty: { name: 'Livre', icon: '◇' }, bedroom: { name: 'Quarto', icon: '☾' }, kitchen: { name: 'Cozinha', icon: '◒' },
   bathroom: { name: 'Banheiro', icon: '≋' }, studio: { name: 'Estúdio', icon: '♫' }, garden: { name: 'Jardim', icon: '✳' },

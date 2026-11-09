@@ -87,6 +87,24 @@ Registre publicação, SHA, horário do commit e horário da disponibilização 
 
 ## Evidência da reorganização de UX
 
+### Expansão de instituições e figurinos — implementação em andamento
+
+Hospital, delegacia e escritório agora têm modelos de construção próprios, plantas mobiliadas com peças existentes e fachadas para um a três andares. Nove modelos de cômodo foram acrescentados: recepção, consultório, enfermaria, central de atendimento, investigação, escritório, reunião, copa e quintal de brincadeiras. As novas roupas são enfermagem, polícia, detetive, escritório, esporte e passeio. IDs e roupas anteriores permanecem válidos no envelope v2.
+
+Evidência TDD: `npx vitest run src/domain/institutions.test.ts` falhou inicialmente com `undefined 2` para os modelos novos; os três casos passaram após implementação, incluindo round-trip do save. `src/presentation/institution-art.test.ts` confirmou fachadas idênticas e interiores com `undefined` antes da arte própria. `src/content/profession-looks.test.ts` confirmou a ausência dos seis figurinos antes da implementação. `src/presentation/wardrobe-capacity.test.ts` reproduziu cabides além do limite de 410 unidades; o armário físico conserva vinte cabides e a bandeja Looks oferece todo o catálogo.
+
+`npm run quality:fast` passou com 358 testes. A CI local aprovou 128 jornadas de navegador, sem falhas ou testes ignorados; duração acima de 300 segundos registrada como alerta. Após corrigir a prévia de hospital/escritório para dois andares (teste vermelho/verde), cinco jornadas focadas passaram novamente, incluindo construção, visita a cada cômodo, desfazer/refazer, recarga, figurinos e galeria de fachadas. Foram inspecionadas as fachadas e as seis roupas em pé, com objetos, sentadas e na cama. A mutação local foi interrompida para validar o código final na CI; a promoção depende do quality-gate do SHA enviado, política 1.
+
+Os equipamentos novos de profissão, seus objetos e ações, as novas ruas, a revisão completa de escala e as brincadeiras de corda/amarelinha ainda estão pendentes. Os ambientes institucionais nesta etapa usam móveis já existentes; não representam a conclusão do catálogo previsto. iPad, trackpad físico, Android/FPS e descoberta das ações pela criança não foram verificados.
+
+### Correções de construção
+
+- Reprodução: preencher as quatro posições do térreo e abrir Ampliar → Adicionar cômodo ou andar. Os cartões ficavam indisponíveis apesar de haver dois andares possíveis. `npx playwright test e2e/construction-feedback.spec.ts` confirmou o cartão Cozinha desabilitado. A busca agora considera as 12 posições e informa o andar de destino; capacidade esgotada explica o limite.
+- Na rua, a ação de ampliar estava desabilitada. Agora ela abre uma escolha explícita de construção, e o teste verifica a criação na construção escolhida e sua persistência após recarga. A hipótese anterior de criação silenciosa pelo mapa da rua não foi reproduzida: esse mapa já escondia a ação de adicionar cômodo.
+- Reprodução de falha de confirmação: `quickRooms` recebia uma recusa do callback e mesmo assim removia a prévia. O teste `prévia permanece aberta e explica uma criação recusada` confirmou a ausência da mensagem após a prévia desaparecer. O callback agora retorna motivo ou sucesso, e a recusa mantém a prévia aberta com status acessível.
+- Os controles receberam cantos regulares, contornos mais finos e sombras discretas. Isso é uma primeira alteração da base visual; enquadramento, mapa do bairro, proporções, catálogo de móveis ampliado, corda e amarelinha ainda estão pendentes.
+- `npm run quality:fast`: tipagem, lint, arquitetura e 349 testes unitários aprovados. A validação completa e a promoção do SHA continuam pendentes; os checks desta etapa não representam a conclusão do plano.
+
 Referências documentais: [categorias do Toca Boca World](https://tocaboca.helpshift.com/hc/en/3-toca-boca-world/faq/138-what-s-new-in-the-home-designer-decoration-menu/?p=all), [navegação do Sago Mini](https://sagomini.com/article/world-letter-to-parents/), [reformulação experimental do The Sims FreePlay](https://www.ea.com/games/the-sims/the-sims-freeplay/news/build-mode-and-home-store-refresh-faq) e [construção direta do Townscaper](https://store.steampowered.com/app/1291340/Townscaper/). São referências de organização; não houve teste presencial desses produtos.
 
 `e2e/organization.spec.ts` registra exemplos observáveis de navegação única, catálogo cotidiano, ampliação no espaço escolhido, movimento da casa com cancelamento, desfazer e retrato. Antes das implementações, os testes falharam porque faltavam as entradas, categorias, controles de casa e espaços de ampliação. A primeira jornada de desfazer parou antes, no catálogo fechado; não comprova isoladamente o vermelho da preservação do histórico.

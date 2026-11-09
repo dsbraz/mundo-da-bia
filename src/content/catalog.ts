@@ -9,6 +9,9 @@ export const actors: Record<ActorId, { name: string; skin: number; hair: number 
   pipoca: { name: 'Pipoca', skin: 0xfff6dc, hair: 0xb09d85 },
 };
 export const looks: Record<LookId, { name: string; color: number; icon: string }> = {
+  nurse: { name: 'Enfermagem', color: 0x76aaa6, icon: '+' }, police: { name: 'Polícia', color: 0x687f9e, icon: '◇' },
+  detective: { name: 'Detetive', color: 0xb39a79, icon: '⌕' }, office: { name: 'Escritório', color: 0x83968d, icon: '▤' },
+  sport: { name: 'Esporte', color: 0xc18b6c, icon: '○' }, outing: { name: 'Passeio', color: 0x9baabc, icon: '☀' },
   chef: { name: 'Chef de cozinha', color: 0xf1e6cc, icon: '♧' }, doctor: { name: 'Veterinária e médico', color: 0xa1c7c0, icon: '+' },
   gardener: { name: 'Jardinagem', color: 0x89a778, icon: '✿' }, builder: { name: 'Construtor e construtora', color: 0xe9af54, icon: '⌂' },
   spiderman: { name: 'Homem-Aranha', color: 0xcf514d, icon: '✳' },

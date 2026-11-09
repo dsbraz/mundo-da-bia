@@ -10,7 +10,8 @@ export type VisibleWorld = World & {
 };
 export type DragToken = { kind: 'item'; id: ItemId } | { kind: 'look'; id: LookId };
 export type DragPreview = DragToken & { point: Point };
-export const wardrobeSlots = lookIds.map((id, index) => ({ id, x: 335 + index % 4 * 46, y: 180 + Math.floor(index / 4) * 44 }));
+// The physical wardrobe has twenty hangers; the Looks tray contains the full catalog.
+export const wardrobeSlots = lookIds.slice(0, 20).map((id, index) => ({ id, x: 335 + index % 4 * 46, y: 180 + Math.floor(index / 4) * 44 }));
 export function slotsFor(state: World) {
   const wardrobe = fixture(state, 'wardrobe');
   return wardrobe?.room === state.room ? wardrobeSlots.map(slot => ({ ...slot, ...fromPiece(wardrobe, slot) })) : [];

@@ -66,7 +66,10 @@ const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(
 const rooms = roomControls(root, {
   enter: room => dispatch({ type: 'room', room }),
   add: options => {
-    cancelInput(); restoreEdit(recordEdit(edits, addRoom(state, options)));
+    if (town.location.kind === 'street') return 'Escolha a construção que deseja ampliar.';
+    const next = addRoom(state, options);
+    if (next === state) return 'Esse espaço não está disponível. Escolha outro espaço para o cômodo.';
+    cancelInput(); restoreEdit(recordEdit(edits, next)); return null;
   },
   rename: name => restoreEdit(recordEdit(edits, renameRoom(state, name))),
   reorder: (room, target) => townDispatch({ type: 'move-module', building: albumView().active, room, cell: state.layout.rooms[target]!.cell }),
@@ -177,7 +180,7 @@ function refresh() {
   scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street', constructing);
   view?.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state));
   renderControls();
-  root.querySelector<HTMLButtonElement>('#construct-structure')!.disabled = town.location.kind === 'street';
+  root.querySelector<HTMLButtonElement>('#construct-structure')!.textContent = town.location.kind === 'street' ? 'Escolher construção para ampliar' : 'Adicionar cômodo ou andar';
   root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
   root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building && !constructing));
 }

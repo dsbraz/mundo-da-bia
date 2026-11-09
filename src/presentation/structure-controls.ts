@@ -18,7 +18,7 @@ export function structureControls(root: HTMLElement, get: () => Neighborhood, di
     for (let floor = floorCount(building.layout) - 1; floor >= 0; floor--) {
       const heading = document.createElement('h3'); heading.textContent = floor ? `${floor}º andar` : 'Térreo';
       const row = document.createElement('div'); row.className = 'module-row';
-      for (let column = 0; column < 4; column++) row.append(cell(building, floor * 4 + column));
+      for (let column = 0; column < 4; column++) row.append(moduleCard(building, floor * 4 + column, choose, edit, room => { dispatch({ type: 'visit', location: { kind: 'interior', building: id, room } }); dialog.close(); }));
       dialog.append(heading, row);
     }
     const add = button('+ Andar', () => preview({ type: 'add-floor', building: id }, 'Novo andar com uma sala', 'empty'));
@@ -27,16 +27,6 @@ export function structureControls(root: HTMLElement, get: () => Neighborhood, di
   function render() { guidedRooms(dialog, current(), choosePreview, () => preview({ type: 'add-floor', building: id }, 'Novo andar com uma sala', 'empty'), advanced); }
   function choosePreview(cell: number, template: RoomTemplate) {
     preview({ type: 'add-module', building: id, cell, template }, templates[template].name, template);
-  }
-  function cell(building: Building, cell: number) {
-    const entry = (Object.entries(building.layout.rooms) as [RoomId, typeof building.layout.rooms.sala][]).find(([, r]) => r.cell === cell);
-    if (!entry) return button(`+ Cômodo ${cell % 4 + 1}`, () => choose(cell));
-    const [room, value] = entry;
-    const card = document.createElement('article'); card.className = 'module-card';
-    const visit = button(value.name, () => { dispatch({ type: 'visit', location: { kind: 'interior', building: id, room } }); dialog.close(); });
-    visit.prepend(roomPicture(value.template)); card.append(visit, button('Editar módulo', () => edit(room)));
-    if (room === building.entry) { const label = document.createElement('small'); label.textContent = 'Entrada fixa'; card.append(label); }
-    return card;
   }
   function choose(cell: number, room?: RoomId) {
     dialog.replaceChildren();
@@ -61,7 +51,18 @@ export function structureControls(root: HTMLElement, get: () => Neighborhood, di
     }
     dialog.append(button('Voltar aos módulos', render)); illustratedChoices(dialog);
   }
-  return { open(building?: number) { prepare(); const where = get().location; id = building ?? (where.kind === 'interior' ? where.building : get().buildings[0]!.id); render(); if (!dialog.open) dialog.showModal(); }, refresh() { if (dialog.open) render(); } };
+  let choosing = false;
+  function chooseBuilding() {
+    const title = document.createElement('h2'); title.textContent = 'Qual construção vamos ampliar?';
+    dialog.replaceChildren(title, ...get().buildings.map(b => button(`Ampliar ${b.name}`, () => { id = b.id; choosing = false; render(); })), button('Fechar estrutura', () => dialog.close()));
+  }
+  return { open(building?: number) {
+    prepare(); const where = get().location;
+    choosing = building === undefined && where.kind === 'street';
+    id = building ?? (where.kind === 'interior' ? where.building : get().buildings[0]!.id);
+    if (choosing) chooseBuilding(); else render();
+    if (!dialog.open) dialog.showModal();
+  }, refresh() { if (dialog.open && !choosing) render(); } };
 }
 
 function guidedRooms(dialog: HTMLDialogElement, building: Building, choosePreview: (cell: number, template: RoomTemplate) => void, addFloor: () => void, advanced: () => void) {
@@ -69,7 +70,8 @@ function guidedRooms(dialog: HTMLDialogElement, building: Building, choosePrevie
     const hint = document.createElement('p'); hint.textContent = 'Escolha um cômodo pronto. Você poderá decorar depois.';
     dialog.replaceChildren(heading, hint, button('Fechar estrutura', () => dialog.close()));
     const occupied = new Set(Object.values(building.layout.rooms).map(room => room.cell));
-    const free = Array.from({ length: floorCount(building.layout) * 4 }, (_, cell) => cell).find(cell => !occupied.has(cell));
+    const free = Array.from({ length: 12 }, (_, cell) => cell).find(cell => !occupied.has(cell));
+    hint.textContent = free === undefined ? 'Esta construção tem 12 de 12 cômodos. Crie outra construção para continuar.' : `O próximo cômodo ficará no ${free < 4 ? 'térreo' : `${Math.floor(free / 4)}º andar`}. Você poderá decorar depois.`;
     const choices = document.createElement('div'); choices.className = 'choices';
     roomTemplates.forEach(template => {
       const choice = button(`Adicionar ${templates[template].name}`, () => choosePreview(free!, template));
@@ -78,4 +80,15 @@ function guidedRooms(dialog: HTMLDialogElement, building: Building, choosePrevie
     const floor = button('Mais um andar', addFloor);
     floor.disabled = floorCount(building.layout) === 3;
     dialog.append(choices, floor, button('Organizar cômodos', advanced));
+  }
+
+function moduleCard(building: Building, cell: number, choose: (cell: number) => void, edit: (room: RoomId) => void, enter: (room: RoomId) => void) {
+    const entry = (Object.entries(building.layout.rooms) as [RoomId, typeof building.layout.rooms.sala][]).find(([, r]) => r.cell === cell);
+    if (!entry) return button(`+ Cômodo ${cell % 4 + 1}`, () => choose(cell));
+    const [room, value] = entry;
+    const card = document.createElement('article'); card.className = 'module-card';
+    const visit = button(value.name, () => enter(room));
+    visit.prepend(roomPicture(value.template)); card.append(visit, button('Editar módulo', () => edit(room)));
+    if (room === building.entry) { const label = document.createElement('small'); label.textContent = 'Entrada fixa'; card.append(label); }
+    return card;
   }

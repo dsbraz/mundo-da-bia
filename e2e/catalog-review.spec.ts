@@ -15,8 +15,10 @@ test('contact sheets cover every furniture asset and facade variant', async ({ p
     document.body.append(sheet);
     const facades = document.createElement('section'); facades.id = 'facade-sheet'; facades.hidden = true;
     facades.style.cssText = 'position:fixed;inset:0;z-index:201;background:#faf5e9;display:grid;grid-template-columns:repeat(3,1fr);overflow:auto';
-    for (const model of ['house', 'shop', 'apartment']) for (const floors of [1, 2, 3]) {
-      const card = document.createElement('figure'); card.style.cssText = 'margin:0;text-align:center';
+    const neighborhoodPath = '/src/domain/neighborhood-types.ts';
+    const { buildingModels } = await import(neighborhoodPath);
+    for (const model of buildingModels) for (const floors of [1, 2, 3]) {
+      const card = document.createElement('figure'); card.style.cssText = 'margin:0;text-align:center'; card.dataset.model = model;
       const img = new Image(); img.src = svgUrl(facadeSvg(model, floors)); img.style.cssText = 'height:350px;width:320px;object-fit:contain';
       const label = document.createElement('figcaption'); label.textContent = `${model} · ${floors}`; card.append(img, label); facades.append(card);
     }
@@ -24,6 +26,11 @@ test('contact sheets cover every furniture asset and facade variant', async ({ p
   });
   await expect.poll(() => page.locator('#review-sheet img').evaluateAll(images => images.every(i => (i as HTMLImageElement).complete))).toBe(true);
   await page.screenshot({ path: 'reports/catalog-all.png' });
+  await expect.poll(() => page.locator('#facade-sheet img').evaluateAll(images => images.every(i => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0))).toBe(true);
   await page.locator('#facade-sheet').evaluate(n => { (n as HTMLElement).hidden = false; });
   await page.screenshot({ path: 'reports/facades-all.png' });
+  for (const model of ['house', 'shop', 'apartment', 'hospital', 'police', 'office']) {
+    await page.locator(`#facade-sheet [data-model="${model}"]`).first().scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `reports/facades-${model}.png` });
+  }
 });

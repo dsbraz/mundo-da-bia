@@ -1,3 +1,4 @@
+import { institutionFacade, institutionInterior } from './institution-art';
 import { doorway } from './door-geometry';
 import type { BuildingModel } from '../domain/neighborhood-types';
 import type { RoomTemplate } from '../domain/types';
@@ -15,8 +16,8 @@ function wrap(content: string, width: number, height: number) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><linearGradient id="glass" x2=".8" y2="1"><stop stop-color="#cce7e1"/><stop offset="1" stop-color="#91b9c4"/></linearGradient><linearGradient id="wall" x2="0" y2="1"><stop stop-color="#fff2da"/><stop offset="1" stop-color="#e4d1b8"/></linearGradient><linearGradient id="shade" x2="0" y2="1"><stop stop-color="#6d655b" stop-opacity=".16"/><stop offset="1" stop-color="#6d655b" stop-opacity="0"/></linearGradient></defs>${content}</svg>`;
 }
 export const facadeKey = (model: BuildingModel, floors: number) => `facade-${model}-${floors}`;
-export function facadeSvg(model: BuildingModel, floors = model === 'apartment' ? 2 : 1): string {
-  const body = model === 'house' ? house(floors) : model === 'shop' ? shop(floors) : apartment(floors);
+export function facadeSvg(model: BuildingModel, floors = ['apartment', 'hospital', 'office'].includes(model) ? 2 : 1): string {
+  const body = institutionFacade(model, floors) ?? (model === 'house' ? house(floors) : model === 'shop' ? shop(floors) : apartment(floors));
   const d = doorway.facade;
   return wrap(`<ellipse cx="220" cy="450" rx="191" ry="13" fill="#756a5a" opacity=".12"/>${body}${planter(80, 425)}${planter(355, 425)}${rect(d.x - 9, d.y - 9, d.width + 18, d.height + 9, '#f8ead2', 10)}${rect(d.x, d.y, d.width, d.height, '#789a9a', 6)}${rect(d.x + 12, d.y + 14, d.width - 24, 86, 'url(#glass)', 5)}${rect(d.x + 12, d.y + 119, d.width - 24, 91, '#89aaa5', 5)}<circle cx="${d.x + d.width - 16}" cy="${d.y + 124}" r="4" fill="#f7d786"/>${rect(d.x - 12, d.y + d.height - 2, d.width + 24, 9, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}${line(307, 413, 333, 413)}`, 440, 480);
 }
@@ -48,12 +49,12 @@ function upperWindows(floors: number, base: number, step = 50, height = 30) {
   return result;
 }
 export function roomArchitecture(template: RoomTemplate): string {
-  const content = template === 'garden' ? garden() : interior(template);
+  const content = ['garden', 'playground'].includes(template) ? garden() : interior(template);
   return wrap(content, 1000, 600);
 }
 function interior(template: RoomTemplate) {
   const ceiling = `<path d="M0 0h1000v32L940 58H60L0 32Z" fill="#fff9ed"/><path d="M0 32l60 26h880l60-26" fill="none" stroke="#bcae9a" stroke-width="1.5"/>`;
-  const art: Record<Exclude<RoomTemplate, 'garden'>, string> = {
+  const art: Partial<Record<RoomTemplate, string>> = {
     laundry: `${rect(0, 190, 1000, 195, '#dce8e4', 0)}${tiles(0, 190, 1000, 190, 60)}${window(120, 90, 210, 140)}<path d="M570 110h300m-270 0v45m65-45v45m65-45v45" stroke="#a29279" stroke-width="4"/><path d="M580 130h55v70h-55Zm65 0h55v90h-55Zm65 0h55v70h-55Z" fill="#d9b7a7"/>`,
     library: `${rect(0, 270, 1000, 115, '#d8c6aa', 0)}${window(100, 80, 220, 225)}${rect(620, 90, 240, 160, '#d1b990')}${rect(634, 104, 212, 132, '#f4ecd8')}<path d="M665 200v-62h135v62l-67-12Z" fill="#91aaa0" stroke="#7c8e81" stroke-width="3"/>`,
     dining: `${window(100, 85, 220, 180)}${rect(0, 285, 1000, 100, '#d9c4a8', 0)}<path d="M720 35v65m-60 55 20-55h80l20 55Z" fill="#e0b175" stroke="#9e8365" stroke-width="3"/><ellipse cx="720" cy="155" rx="60" ry="10" fill="#f9e8b8"/>`,
@@ -63,7 +64,7 @@ function interior(template: RoomTemplate) {
     bathroom: `${rect(0, 180, 1000, 210, '#c9ddd9', 0)}${tiles(0, 180, 1000, 210, 65)}${window(120, 90, 170, 80)}${rect(604, 75, 235, 220, '#f1e7d5', 100)}${rect(617, 88, 209, 194, 'url(#glass)', 95)}<path d="M624 98l75 0-75 103" fill="#fff" opacity=".25"/>`,
     studio: `${rect(0, 270, 1000, 115, '#a8babd', 0)}${window(80, 80, 210, 220)}<path d="M65 65h240v245q-24-9-30-44V80H95v186q-6 35-30 44Z" fill="#ba9baa" stroke="#8c7485" stroke-width="1.5"/>${rect(640, 105, 240, 115, '#e9d5b6')}${rect(657, 120, 40, 85, '#b8c6be', 6)}${rect(711, 120, 40, 85, '#d1b9aa', 6)}${rect(765, 120, 40, 85, '#b8c6be', 6)}${rect(819, 120, 40, 85, '#d1b9aa', 6)}`,
   };
-  return ceiling + art[template as Exclude<RoomTemplate, 'garden'>] + `<rect y="380" width="1000" height="12" fill="#f9f1e2" stroke="#b7aa97" stroke-width="1.5"/><path d="M100 390h160l165 175H205Z" fill="#fff7d5" opacity=".12"/>`;
+  return ceiling + (institutionInterior(template) ?? art[template]) + `<rect y="380" width="1000" height="12" fill="#f9f1e2" stroke="#b7aa97" stroke-width="1.5"/><path d="M100 390h160l165 175H205Z" fill="#fff7d5" opacity=".12"/>`;
 }
 function tiles(x: number, y: number, w: number, h: number, size: number) {
   let result = ''; for (let a = x; a <= x + w; a += size) result += line(a, y, a, y + h, '#eef2e7');

@@ -4,7 +4,7 @@ import { addRoom } from './rooms';
 import { initialWorld } from './world';
 import { floorOf } from './neighborhood-geometry';
 export function floorCount(layout: Layout) { return Math.max(...Object.values(layout.rooms).map(r => floorOf(r.cell))) + 1; }
-const names: Record<RoomTemplate, string> = { laundry: 'Lavanderia', library: 'Biblioteca', dining: 'Sala de jantar', empty: 'Sala', bedroom: 'Quarto', kitchen: 'Cozinha', bathroom: 'Banheiro', studio: 'Estúdio', garden: 'Jardim' };
+const names: Record<RoomTemplate, string> = { reception: 'Recepção', consultation: 'Consultório', ward: 'Enfermaria', dispatch: 'Central de atendimento', investigation: 'Sala de investigação', office: 'Escritório', meeting: 'Sala de reunião', breakroom: 'Copa', playground: 'Quintal de brincadeiras', laundry: 'Lavanderia', library: 'Biblioteca', dining: 'Sala de jantar', empty: 'Sala', bedroom: 'Quarto', kitchen: 'Cozinha', bathroom: 'Banheiro', studio: 'Estúdio', garden: 'Jardim' };
 export function editModule(town: Neighborhood, action: ModuleAction): Neighborhood {
   const building = town.buildings.find(b => b.id === action.building);
   if (!building) return town;
