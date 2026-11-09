@@ -58,7 +58,12 @@ export class PlayScene extends Phaser.Scene {
   private objects: Phaser.GameObjects.Image[] = [];
   constructor(state: World) { super('play'); this.world = state; }
   preload() { loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); }
-  create() { this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true; this.gameArt = childGameArt(this); this.paint(this.world, this.selected); }
+  create() {
+    this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true;
+    const view = this.game.canvas.dataset;
+    this.frame(Number(view.viewWidth ?? 1000), Number(view.viewHeight ?? 600), Number(view.viewX ?? 0), Number(view.viewY ?? 0));
+    this.gameArt = childGameArt(this); this.paint(this.world, this.selected);
+  }
   paint(state: World, selected: ActorId) {
     this.world = state; this.selected = selected;
     if (!this.prepareArt(state)) return;
