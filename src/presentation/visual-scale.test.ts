@@ -23,3 +23,10 @@ it('porta externa acompanha a escala humana de rua', async () => {
   expect(doorway.facade.height).toBeCloseTo(doorway.interior.height * .6);
   expect(doorway.facade.y + doorway.facade.height).toBe(447);
 });
+
+it('soltar uma roupa na rua usa o corpo reduzido como alvo', async () => {
+  const { actorAt } = await import('./targets');
+  const world = { ...initialWorld(), streetWidth: 3000 };
+  expect(actorAt(world, { x: 520, y: 400 })).toBeUndefined();
+  expect(actorAt(world, { x: 520, y: 450 })?.id).toBe('bia');
+});

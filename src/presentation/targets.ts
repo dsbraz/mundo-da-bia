@@ -21,7 +21,7 @@ export function slotsFor(state: World) {
 export function actorAt(state: VisibleWorld, p: Point) {
   return [...state.actors].sort((a, b) => (state.visibleDepth?.get(a.id) ?? a.y) - (state.visibleDepth?.get(b.id) ?? b.y)).reverse().find(a => a.room === state.room
     && (state.visibleDepth?.get(a.id) ?? a.y) >= (state.occludingDepth?.(p) ?? 0)
-    && (state.actorHit ? state.actorHit(a, p) : actorContains(a, p)));
+    && (state.actorHit ? state.actorHit(a, p) : actorContains(a, p, visualContext(state))));
 }
 export function itemPoint(state: VisibleWorld, item: Item): Point | null {
   const visible = state.visibleItems?.get(item.id); if (visible) return visible;
@@ -47,7 +47,9 @@ export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): Drag
   return undefined;
 }
 
-function actorContains(actor: Actor, p: Point): boolean {
+function actorContains(actor: Actor, point: Point, context: VisualContext): boolean {
+  const scale = contextScale(context);
+  const p = { x: actor.x + (point.x - actor.x) / scale, y: actor.y + (point.y - actor.y) / scale };
   if (actor.seat === 'bed') return p.x >= actor.x - 185 && p.x <= actor.x + 20 && Math.abs(p.y - actor.y) < 45;
   return Math.abs(actor.x - p.x) < 43 && p.y <= actor.y + 20 && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175);
 }
