@@ -40,6 +40,7 @@ import { PlayScene } from '../presentation/scene';
 import '../presentation/style.css';
 import '../presentation/immersive.css';
 import '../presentation/home-menu.css';
+import '../presentation/dock-layout.css';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -106,7 +107,7 @@ function useOutdoor(target: OutdoorTarget) {
 const outside = outdoorControls(root, useOutdoor, () => townDispatch({ type: 'outdoor', actor: selected, target: 'leave' }));
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
-const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); });
+const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); }, id => structure.open(id));
 root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!building) toggleBuild(); constructing = true; walker.cancel(); cancelInput(); refresh(); announceMode(); });
 root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
 root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());

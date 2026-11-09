@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
   await ready(page);
 });
 test('clicking and cancelling a drag during walking keeps the displayed stop', async ({ page }) => {
-  await page.clock.install(); await page.clock.pauseAt(await page.evaluate(() => Date.now() + 100));
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') }); await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
   await tap(page, 930, 530);
   await page.clock.runFor(650);
   expect(Number(await page.locator('canvas').getAttribute('data-walk-x'))).toBeGreaterThan(480);

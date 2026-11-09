@@ -3,6 +3,7 @@ import { editWorld } from './design';
 import { enterRoom } from './room-state';
 export interface NewRoom { name: string; template: RoomTemplate; size: RoomSize; cell: number }
 const furnishings: Record<RoomTemplate, PieceKind[]> = {
+  classroom: ['desk', 'bookcase', 'picture'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
   laundry: ['washer', 'sink', 'shelf'], library: ['bookcase', 'armchair', 'reading-lamp'], dining: ['picnic-table', 'kitchen-cart', 'plant'],
   reception: ['counter', 'armchair', 'plant'],
   consultation: ['desk', 'armchair', 'sink'],

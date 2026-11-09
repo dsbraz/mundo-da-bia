@@ -22,6 +22,11 @@
 #neighborhood-list .room-card { flex:0 0 150px; }
 #neighborhood-list img { display:block; width:86px; height:80px; object-fit:contain; margin:auto; }
 #home-name { font-size:1.4rem; }
+#plot-dialog .building-models{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+#plot-dialog .building-choice{display:flex;align-items:center;gap:6px;width:100%;max-width:none;margin:0;padding:12px;border-radius:12px;background:#f6f0e2;box-shadow:none}
+#plot-dialog .building-choice img{width:100%;height:150px;object-fit:contain}#plot-dialog .building-choice small{font-weight:normal;line-height:1.4}
+.building-filters{display:flex;flex-wrap:wrap;gap:8px}.building-filters button{flex:1;min-width:80px}
+@media(max-width:600px){#plot-dialog .building-models{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#plot-dialog .building-choice img{height:120px}}
 #add-room { margin-top:16px; }
 @media(max-width:600px) { #room-dialog { padding:16px; } #room-map { gap:6px; padding:12px 5px; } #room-map .room-card { padding:2px; border-radius:10px; } #room-map .room-picture { height:70px; } #room-map button { font-size:.8rem; padding:6px 2px; } #room-map .room-card small { font-size:.65rem; padding:4px 1px; } }
 
@@ -59,3 +64,23 @@ header button[hidden] { display:none!important; }
   #room-dialog:not([data-home-tab="organize"]) #room-map .room-card,
   #room-dialog:not([data-home-tab="organize"]) #room-map .room-card > button { touch-action:pan-x pan-y; }
 }
+
+#room-map { gap:4px; padding:14px 8px 8px; border-radius:4px; border-top:10px solid #81958b; background:#d5c7b3; }
+#room-map .room-card { border:0; border-radius:3px; padding:0; box-shadow:none; gap:0; background:#f4eddf; }
+#room-map .room-card > button { padding:6px; border-radius:4px; border-color:transparent; box-shadow:none; }
+#room-map .room-thumbnail { display:block; position:relative; aspect-ratio:5/3; width:100%; overflow:hidden; margin-bottom:8px; border-radius:2px; }
+#room-map .room-thumbnail img { position:absolute; inset:0; width:100%; height:100%; max-width:none; max-height:none; object-fit:fill; }
+#room-capacity { color:#616a61; font-size:13px; }
+.street #room-capacity { display:none; }
+#neighborhood-list .room-card { flex-basis:190px; background:#f1ecdf; padding:8px; border:1px solid #d3c7b2; border-radius:12px; }
+#neighborhood-list .room-card > button:first-child { background:transparent; border:0; box-shadow:none; }
+#neighborhood-list img { width:132px; height:144px; }
+#neighborhood-list .building-manage { font-size:12px; min-height:48px; border-radius:8px; }
+.building-portrait { display:block; width:160px; height:176px; object-fit:contain; margin:0 auto 16px; }
+.building-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+#plot-dialog > h2 { text-align:center; }
+#room-dialog #room-navigation { padding:8px; border-radius:12px; border-width:1px; }
+#room-dialog #navigation-shortcuts { margin-block:0; }
+#room-dialog #home-name { display:inline-block; margin:12px 12px 8px 0; }
+#current-building-actions { font-size:13px; }
+#room-dialog #home-hint { margin:8px 0; }

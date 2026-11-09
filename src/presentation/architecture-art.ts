@@ -1,4 +1,5 @@
 import { institutionFacade, institutionInterior } from './institution-art';
+import { institutionDoor } from './facade-parts';
 import { doorway } from './door-geometry';
 import type { BuildingModel } from '../domain/neighborhood-types';
 import type { RoomTemplate } from '../domain/types';
@@ -16,9 +17,11 @@ function wrap(content: string, width: number, height: number) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><linearGradient id="glass" x2=".8" y2="1"><stop stop-color="#cce7e1"/><stop offset="1" stop-color="#91b9c4"/></linearGradient><linearGradient id="wall" x2="0" y2="1"><stop stop-color="#fff2da"/><stop offset="1" stop-color="#e4d1b8"/></linearGradient><linearGradient id="shade" x2="0" y2="1"><stop stop-color="#6d655b" stop-opacity=".16"/><stop offset="1" stop-color="#6d655b" stop-opacity="0"/></linearGradient></defs>${content}</svg>`;
 }
 export const facadeKey = (model: BuildingModel, floors: number) => `facade-${model}-${floors}`;
-export function facadeSvg(model: BuildingModel, floors = ['apartment', 'hospital', 'office'].includes(model) ? 2 : 1): string {
-  const body = institutionFacade(model, floors) ?? (model === 'house' ? house(floors) : model === 'shop' ? shop(floors) : apartment(floors));
+export function facadeSvg(model: BuildingModel, floors = ['apartment', 'hospital', 'office', 'fire-station', 'school'].includes(model) ? 2 : 1): string {
+  const institution = institutionFacade(model, floors);
+  const body = institution ?? (model === 'house' ? house(floors) : model === 'shop' ? shop(floors) : apartment(floors));
   const d = doorway.facade;
+  if (institution) return wrap(`<ellipse cx="220" cy="450" rx="198" ry="13" fill="#756a5a" opacity=".12"/>${body}${institutionDoor(model)}${rect(d.x - 12, d.y + d.height - 2, d.width + 24, 9, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}`, 440, 480);
   return wrap(`<ellipse cx="220" cy="450" rx="191" ry="13" fill="#756a5a" opacity=".12"/>${body}${planter(80, 425)}${planter(355, 425)}${rect(d.x - 9, d.y - 9, d.width + 18, d.height + 9, '#f8ead2', 10)}${rect(d.x, d.y, d.width, d.height, '#789a9a', 6)}${rect(d.x + 12, d.y + 14, d.width - 24, 86, 'url(#glass)', 5)}${rect(d.x + 12, d.y + 119, d.width - 24, 91, '#89aaa5', 5)}<circle cx="${d.x + d.width - 16}" cy="${d.y + 124}" r="4" fill="#f7d786"/>${rect(d.x - 12, d.y + d.height - 2, d.width + 24, 9, '#d7c3ab')}${rect(275, 390, 11, 20, '#f6e4a8')}${rect(303, 405, 34, 25, '#8caaa0')}${line(307, 413, 333, 413)}`, 440, 480);
 }
 function house(floors: number) {

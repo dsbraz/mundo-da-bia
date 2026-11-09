@@ -9,6 +9,10 @@ for (const [model, name, templates] of [
   ['hospital', 'Hospital', ['reception', 'consultation', 'ward']],
   ['police', 'Delegacia', ['reception', 'dispatch', 'investigation']],
   ['office', 'Escritório', ['reception', 'office', 'meeting', 'breakroom']],
+  ['fire-station', 'Bombeiros', ['dispatch', 'bedroom', 'breakroom']],
+  ['school', 'Escola', ['reception', 'classroom', 'library', 'playground']],
+  ['stadium', 'Estádio', ['sportsfield', 'gym', 'breakroom']],
+  ['sports-club', 'Clube esportivo', ['reception', 'gym', 'playground']],
 ] as const) it(`constrói ${name} mobiliado e preserva a turma e o save`, () => {
   const before = migrateNeighborhood(initialAlbum(initialWorld()));
   const town = neighborhoodAction(before, { type: 'construct', plot: 1, model: model as BuildingModel });

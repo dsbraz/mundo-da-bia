@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { ready, tray, closeTray, point, read } from './helpers';
-test('selection uses compact controls while the character walks and stops at the clicked pose', async ({ page }) => {
+test('selection uses external controls while the character walks and stops at the clicked pose', async ({ page }) => {
   await ready(page); await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
-  const canvas = (await page.locator('canvas').boundingBox())!, panel = (await page.locator('#actor-context').boundingBox())!;
-  expect(panel.width).toBeLessThan(canvas.width / 2);
-  expect(panel.height).toBeLessThan(canvas.height / 3);
+  const scene = (await page.locator('#world').boundingBox())!, panel = (await page.locator('#actor-context').boundingBox())!;
+  expect(panel.x).toBeGreaterThanOrEqual(scene.x + scene.width);
+  expect(panel.y).toBe(scene.y);
   const end = await point(page, 930, 530); await page.mouse.click(end.x, end.y);
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', 'bia');
   await page.keyboard.press('Escape');

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { ready, readTown, tray, closeTray } from './helpers';
 
-for (const [model, name, count] of [['hospital', 'Hospital', 3], ['police', 'Delegacia', 3], ['office', 'Escritório', 4]] as const) {
+for (const [model, name, count] of [['hospital', 'Hospital', 3], ['police', 'Delegacia', 3], ['office', 'Escritório', 4], ['fire-station', 'Bombeiros', 3], ['school', 'Escola', 4], ['stadium', 'Estádio', 3], ['sports-club', 'Clube esportivo', 3]] as const) {
   test(`${name}: construir, visitar ambientes, desfazer e recarregar`, async ({ page }) => {
     const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
     await page.setViewportSize({ width: 1280, height: 800 }); await ready(page);
@@ -33,16 +33,16 @@ for (const [model, name, count] of [['hospital', 'Hospital', 3], ['police', 'Del
   });
 }
 
-test('seis roupas de cotidiano aparecem completas e permanecem após recarga', async ({ page }) => {
-  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
-  await page.setViewportSize({ width: 1280, height: 800 }); await ready(page);
-  for (const [id, name] of [['nurse', 'Enfermagem'], ['police', 'Polícia'], ['detective', 'Detetive'], ['office', 'Escritório'], ['sport', 'Esporte'], ['outing', 'Passeio']]) {
+for (const [id, name] of [['nurse', 'Enfermagem'], ['police', 'Polícia'], ['detective', 'Detetive'], ['office', 'Escritório'], ['sport', 'Esporte'], ['outing', 'Passeio']]) {
+  test(`roupa ${name} aparece completa e permanece após recarga`, async ({ page }) => {
+    const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+    await page.setViewportSize({ width: 1280, height: 800 }); await ready(page);
     await tray(page, 'Looks'); await page.getByRole('button', { name: new RegExp(`${name}$`) }).click();
     await closeTray(page);
     expect((await readTown(page)).actors.find(a => a.id === 'bia')!.look).toBe(id);
     await page.screenshot({ path: `reports/outfit-${id}.png` });
-  }
-  const saved = await readTown(page); await page.reload();
-  await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
-  expect(await readTown(page)).toEqual(saved); expect(errors).toEqual([]);
-});
+    const saved = await readTown(page); await page.reload();
+    await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
+    expect(await readTown(page)).toEqual(saved); expect(errors).toEqual([]);
+  });
+}

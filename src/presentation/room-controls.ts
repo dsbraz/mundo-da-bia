@@ -1,5 +1,7 @@
 import { homeMenu } from './home-menu';
-import { quickRooms, roomPicture } from './quick-rooms';
+import { quickRooms } from './quick-rooms';
+import { roomThumbnail } from './room-thumbnail';
+import { floorCount } from '../domain/modules';
 import type { RoomId, World } from '../domain/types';
 import type { NewRoom } from '../domain/rooms';
 import { projects } from '../content/projects';
@@ -16,10 +18,15 @@ export function roomControls(root: HTMLElement, actions: Actions) {
   root.querySelector('#close-map')!.addEventListener('click', () => dialog.close());
   root.querySelector('#room-rename')!.addEventListener('click', () => actions.rename(root.querySelector<HTMLInputElement>('#current-room-name')!.value));
   root.querySelector('#add-room')!.addEventListener('click', () => choose(freeCell(state)));
+  const capacity = document.createElement('p'); capacity.id = 'room-capacity';
+  root.querySelector('#add-room')!.setAttribute('aria-describedby', capacity.id);
+  root.querySelector('#add-room')!.after(capacity);
   projectCards(root, actions.snapshot);
   return (next: World) => {
     state = next; renderCards(root, state, actions, () => dialog.close(), choose);
     root.querySelector<HTMLButtonElement>('#add-room')!.disabled = freeCell(state) < 0;
+    const count = Object.keys(state.layout.rooms).length;
+    capacity.textContent = count === 12 ? '12 de 12 cômodos. Crie outra construção para continuar.' : `${count} de 12 cômodos · até 3 andares.`;
     root.querySelector('#room-name')!.textContent = state.layout.rooms[state.room]!.name;
     const input = root.querySelector<HTMLInputElement>('#current-room-name')!;
     if (document.activeElement !== input) input.value = state.layout.rooms[state.room]!.name;
@@ -31,9 +38,9 @@ function renderCards(root: HTMLElement, state: World, actions: Actions, close: (
   const columns = 4;
   root.querySelector<HTMLElement>('#room-map')!.style.setProperty('--map-columns', String(columns));
   const cards = entries.map(([id, room], index) => {
-    const card = document.createElement('article'); card.className = 'room-card'; card.dataset.room = id; card.style.gridColumn = String(room.cell % 4 + 1); card.style.gridRow = String(3 - Math.floor(room.cell / 4));
+    const card = document.createElement('article'); card.className = 'room-card'; card.dataset.room = id; card.style.gridColumn = String(room.cell % 4 + 1); card.style.gridRow = String(floorCount(state.layout) - Math.floor(room.cell / 4));
     const floor = document.createElement('small'); floor.textContent = room.cell < 4 ? 'Térreo' : `${Math.floor(room.cell / 4)}º andar`; card.append(floor);
-    const visit = document.createElement('button'); visit.append(roomPicture(room.template), document.createTextNode(room.name));
+    const visit = document.createElement('button'); visit.append(roomThumbnail(state, id), document.createTextNode(room.name));
     visit.setAttribute('aria-label', `Visitar ${room.name}`); visit.setAttribute('aria-pressed', String(state.room === id));
     visit.addEventListener('click', () => { actions.enter(id); close(); }); card.append(visit);
     for (const [label, offset] of [['antes', -1], ['depois', 1]] as const) {
@@ -76,7 +83,7 @@ function emptyCells(state: World, choose: (cell: number) => void) {
   return Array.from({ length: count }, (_, cell) => cell).filter(cell => !occupied.includes(cell)).map(cell => {
     const button = document.createElement('button'); button.className = 'empty-room'; button.textContent = '＋ Cômodo';
     const floor = Math.floor(cell / 4); button.setAttribute('aria-label', `Adicionar cômodo · ${floor ? `${floor}º andar` : 'Térreo'} · espaço ${cell % 4 + 1}`);
-    button.style.gridColumn = String(cell % 4 + 1); button.style.gridRow = String(3 - floor);
+    button.style.gridColumn = String(cell % 4 + 1); button.style.gridRow = String(floorCount(state.layout) - floor);
     button.onclick = () => choose(cell); return button;
   });
 }

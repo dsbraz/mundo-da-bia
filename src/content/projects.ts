@@ -5,6 +5,7 @@ export const projects: { id: string; title: string; description: string; rooms: 
   { id: 'sleepover', title: 'Noite entre amigos', description: 'Crie um quarto de hóspedes e prepare um espaço para conversar até tarde.', rooms: ['bedroom'], pieces: ['bed', 'sofa', 'cushion'] },
 ];
 export const templates: Record<RoomTemplate, { name: string; icon: string }> = {
+  classroom: { name: 'Sala de aula', icon: '▤' }, sportsfield: { name: 'Campo', icon: '◉' }, gym: { name: 'Ginásio', icon: '◉' },
   reception: { name: 'Recepção', icon: '◇' },
   consultation: { name: 'Consultório', icon: '◇' },
   ward: { name: 'Enfermaria', icon: '◇' },

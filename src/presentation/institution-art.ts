@@ -1,24 +1,12 @@
 import type { BuildingModel } from '../domain/neighborhood-types';
 import type { RoomTemplate } from '../domain/types';
+import { hospitalFacade, policeFacade, officeFacade, fireFacade, schoolFacade } from './civic-facades';
+import { stadiumFacade, clubFacade } from './sport-facades';
 const rect = (x: number, y: number, w: number, h: number, fill: string) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" stroke="#75837f" stroke-width="1.5"/>`;
 const panes = (x: number, y: number, w: number, h: number) => rect(x - 5, y - 5, w + 10, h + 10, '#f6f0e4') + rect(x, y, w, h, 'url(#glass)') + `<path d="M${x + w / 2} ${y}v${h}m${-w / 2} ${-h / 2}h${w}" fill="none" stroke="#f6f0e4" stroke-width="3"/>`;
-const identities: Partial<Record<BuildingModel, { wall: string; trim: string; emblem: string }>> = {
-  hospital: { wall: '#e6ede4', trim: '#729c97', emblem: '<path d="M82 145h12v12h12v12H94v12H82v-12H70v-12h12Z" fill="#f7f2df"/>' },
-  police: { wall: '#e1e6eb', trim: '#6c829b', emblem: '<path d="M70 146h36v18q0 14-18 22-18-8-18-22Z" fill="#ead4a2" stroke="#f9f1d7" stroke-width="2"/><path d="m88 153 3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1Z" fill="#71859e"/>' },
-  office: { wall: '#e6ddce', trim: '#7e8f87', emblem: '<path d="M70 154h36v25H70Zm9 0v-8h18v8" fill="none" stroke="#fff3d7" stroke-width="3"/><path d="M70 163h36m-18 0v7" stroke="#fff3d7" stroke-width="2"/>' },
-};
+const facades: Partial<Record<BuildingModel, (floors: number) => string>> = { hospital: hospitalFacade, police: policeFacade, office: officeFacade, 'fire-station': fireFacade, school: schoolFacade, stadium: stadiumFacade, 'sports-club': clubFacade };
 export function institutionFacade(model: BuildingModel, floors: number): string | undefined {
-  const identity = identities[model]; if (!identity) return;
-  const top = 136 - (floors - 1) * 56;
-  let windows = '';
-  for (let level = 1; level < floors; level++) windows += panes(83, 137 - level * 56, 104, 34) + panes(253, 137 - level * 56, 104, 34);
-  return rect(44, top, 352, 309 + (floors - 1) * 56, identity.wall)
-    + rect(36, top - 12, 368, 12, identity.trim) + windows
-    + rect(44, 137, 352, 55, identity.trim) + identity.emblem
-    + rect(128, 148, 222, 32, '#faf3e3')
-    + panes(72, 266, 85, 116) + panes(283, 266, 85, 116)
-    + rect(52, 421, 108, 24, '#c3cbbb') + rect(280, 421, 108, 24, '#c3cbbb')
-    + `<path d="M44 204h352M44 405h112m128 0h112" stroke="${identity.trim}" stroke-width="3"/><path d="M50 196h340v12H50Z" fill="#596c64" opacity=".08"/>`;
+  return facades[model]?.(floors);
 }
 const rooms: Partial<Record<RoomTemplate, { wall: string; trim: string; label: string }>> = {
   reception: { wall: '#e3e7dc', trim: '#a7bdac', label: 'Bem-vindos' },
@@ -31,6 +19,8 @@ const rooms: Partial<Record<RoomTemplate, { wall: string; trim: string; label: s
   breakroom: { wall: '#e9eadb', trim: '#bac29e', label: 'Hora da pausa' },
 };
 export function institutionInterior(template: RoomTemplate): string | undefined {
+  if (template === 'classroom') return classroom();
+  if (template === 'sportsfield' || template === 'gym') return sportsInterior(template === 'sportsfield');
   const room = rooms[template]; if (!room) return;
   return rect(0, 58, 1000, 327, room.wall) + rect(0, 280, 1000, 105, room.trim)
     + panes(100, 100, 220, 155) + panes(675, 100, 220, 155)
@@ -38,4 +28,14 @@ export function institutionInterior(template: RoomTemplate): string | undefined 
     + rect(400, 111, 200, 47, '#faf6e9')
     + `<text x="500" y="140" text-anchor="middle" font-family="sans-serif" font-size="17" fill="#53665f">${room.label}</text>`
     + `<path d="M0 281h1000M0 290h1000" stroke="#f6f1e4" stroke-width="2"/>`;
+}
+function classroom() {
+  return rect(0, 58, 1000, 327, '#e9e1cd') + rect(0, 286, 1000, 99, '#bec9ac') + panes(80, 90, 200, 210)
+    + rect(365, 100, 510, 190, '#9a8869') + rect(377, 112, 486, 166, '#577b70')
+    + '<path d="M415 151h90m-90 42h180m-180 42h125m140-70 40-35 55 60h-95Z" fill="none" stroke="#e7e9ce" stroke-width="3"/><circle cx="807" cy="225" r="24" fill="none" stroke="#e7e9ce" stroke-width="3"/>';
+}
+function sportsInterior(outside: boolean) {
+  const wall = outside ? '<rect width="1000" height="390" fill="url(#glass)"/><path d="M0 290q200-120 400-10t600-40v140H0Z" fill="#a2bb90"/>' : rect(0, 58, 1000, 327, '#e3dcc7') + panes(100, 90, 280, 130) + panes(620, 90, 280, 130);
+  let fence = ''; if (outside) for (let x = 20; x < 1000; x += 40) fence += `<path d="M${x} 280v110" stroke="#7f9682" stroke-width="2"/>`;
+  return wall + fence + `<path d="M0 320h1000m-1000 68h1000" stroke="#829785" stroke-width="5"/><rect y="390" width="1000" height="210" fill="${outside ? '#9bb77e' : '#cba981'}"/><path d="M120 420h760l80 155H40Zm380 0v155" fill="none" stroke="#f3efce" stroke-width="3"/><ellipse cx="500" cy="490" rx="58" ry="31" fill="none" stroke="#f3efce" stroke-width="3"/>`;
 }

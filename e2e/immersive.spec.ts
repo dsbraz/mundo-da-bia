@@ -1,18 +1,22 @@
 import { test, expect } from '@playwright/test';
 import { ready, readTown, tray } from './helpers';
-test('cena preenche o viewport em paisagem e retrato e os controles recolhem', async ({ page }) => {
+test('jogo preenche o viewport, separa cena e controles e recolhe as bandejas', async ({ page }) => {
   for (const size of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
     await page.setViewportSize(size); await ready(page);
-    const scene = await page.locator('#world').boundingBox();
-    expect(scene).toEqual({ x: 0, y: 0, ...size });
+    expect(await page.locator('#app').boundingBox()).toEqual({ x: 0, y: 0, ...size });
+    const scene = (await page.locator('#world').boundingBox())!;
+    const hint = (await page.locator('#play-hint').boundingBox())!;
+    expect(Math.max(hint.x - scene.x - scene.width, hint.y - scene.y - scene.height)).toBeGreaterThanOrEqual(0);
+    const area = await page.locator('#world').evaluate(n => ({ width: n.clientWidth, height: n.clientHeight }));
     const canvas = (await page.locator('canvas').boundingBox())!;
-    expect(canvas.width).toBeGreaterThanOrEqual(size.width - 1); expect(canvas.height).toBeGreaterThanOrEqual(size.height - 1);
+    expect(canvas.width).toBeGreaterThanOrEqual(area.width - 1); expect(canvas.height).toBeGreaterThanOrEqual(area.height - 1);
     await tray(page, 'Looks');
     await expect(page.getByRole('button', { name: /Homem-Aranha/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Superman/ })).toBeVisible();
     await page.keyboard.press('Escape'); await expect(page.locator('#play-tray')).toBeHidden();
     const after = (await page.locator('canvas').boundingBox())!;
-    expect(after.width).toBeGreaterThanOrEqual(size.width - 1); expect(after.height).toBeGreaterThanOrEqual(size.height - 1);
+    expect(after.width).toBeGreaterThanOrEqual(area.width - 1); expect(after.height).toBeGreaterThanOrEqual(area.height - 1);
+    expect(await page.locator('#world').boundingBox()).toEqual(scene);
     await page.screenshot({ path: `reports/immersive-${size.width}.png` });
   }
 });

@@ -1,6 +1,7 @@
 import { houseEdgePan } from './house-edge-pan';
 import { plotAt, plotStart } from '../domain/neighborhood-geometry';
 import type { Building, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
+import { floorCount } from '../domain/modules';
 import { facadeSvg, svgUrl } from './architecture-art';
 import { positionTargets } from './viewport';
 
@@ -25,7 +26,7 @@ export function houseHandles(root: HTMLElement, get: () => Neighborhood, dispatc
   function preview(e: PointerEvent) {
     if (!active) return;
     active.dragged = true; active.button.classList.add('moving');
-    if (!ghost) { ghost = document.createElement('img'); ghost.src = svgUrl(facadeSvg(get().buildings.find(b => b.id === active!.house)!.model)); ghost.className = 'house-ghost'; layer.append(ghost); }
+    if (!ghost) { const house = get().buildings.find(b => b.id === active!.house)!; ghost = document.createElement('img'); ghost.src = svgUrl(facadeSvg(house.model, floorCount(house.layout))); ghost.className = 'house-ghost'; layer.append(ghost); }
     ghost.style.left = `${e.clientX}px`; ghost.style.top = `${e.clientY}px`;
     const plot = destination(e), town = get(), target = town.buildings.find(b => b.plot === plot);
     layer.querySelectorAll<HTMLElement>('[data-plot]').forEach(b => b.classList.toggle('destination', Number(b.dataset.plot) === plot));

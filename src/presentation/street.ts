@@ -1,5 +1,6 @@
 import { doorway } from './door-geometry';
 import { facadeKey } from './architecture-art';
+import { facadeLabel } from './facade-parts';
 import { floorCount } from '../domain/modules';
 import { drawOutdoorState } from './outdoor-effects';
 import { drawPlaza } from './plaza-art';
@@ -37,9 +38,8 @@ function facade(scene: Phaser.Scene, b: Building) {
   const x = plotStart(b.plot);
   const image = scene.add.image(x, 0, facadeKey(b.model, floorCount(b.layout))).setOrigin(0).setDisplaySize(440, 480);
   if (b.color !== 'original') image.setTint(Number.parseInt(palettes[b.color].light.slice(1), 16));
-  const y = b.model === 'apartment' ? 50 + (3 - floorCount(b.layout)) * 55 : b.model === 'shop' ? 156 : 160 - (floorCount(b.layout) - 1) * 22;
-  const institution = ['hospital', 'police', 'office'].includes(b.model);
-  scene.add.text(x + (institution ? 239 : 220), institution ? 164 : y, b.name, { resolution: 2, fontSize: '17px', color: '#52665e', backgroundColor: '#fff4df', padding: { x: 10, y: 5 } }).setOrigin(.5);
+  const label = facadeLabel(b.model, floorCount(b.layout));
+  scene.add.text(x + label.x, label.y, b.name, { resolution: 2, fontSize: '17px', color: '#52665e', align: 'center', wordWrap: { width: label.width }, padding: { x: 5, y: 3 } }).setOrigin(.5);
 }
 export function drawExit(scene: Phaser.Scene) {
   const d = doorway.interior, g = scene.add.graphics().setDepth(150);

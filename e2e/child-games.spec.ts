@@ -129,3 +129,17 @@ test('um segundo dedo não pula outra casa', async ({ page }) => {
   await expect(page.locator('#game-jump')).toHaveText('Pular para 2'); await expect(page.locator('#game-jump')).toBeEnabled();
   await page.touchscreen.tap(second.x, second.y); await expect(page.locator('#game-jump')).toHaveText('Pular para 3 e 4'); await session.detach();
 });
+
+test('quintal pronto permite corda e amarelinha sem retirar a mobília', async ({ page }) => {
+  await ready(page); await page.locator('#map-toggle').click(); await page.locator('#add-room').click();
+  await page.getByRole('button', { name: 'Criar Quintal de brincadeiras', exact: true }).click();
+  await page.getByRole('button', { name: 'Construir cômodo', exact: true }).click();
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click();
+  await page.locator('#bring-here').click(); await closeTray(page);
+  for (const name of ['Pular corda', 'Amarelinha']) {
+    await page.getByRole('button', { name: 'Brincadeiras', exact: true }).click();
+    await page.getByRole('button', { name, exact: true }).click();
+    await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+    await page.getByRole('button', { name: 'Encerrar brincadeira', exact: true }).click();
+  }
+});

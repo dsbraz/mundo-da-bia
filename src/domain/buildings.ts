@@ -18,7 +18,7 @@ export function construct(town: Neighborhood, plot: number, model: BuildingModel
   }
   if (model === 'apartment') world = addRoom(world, { name: 'Sala de brincar', size: 'medium', template: 'empty', cell: 4 });
   world = institutionWorld(model) ?? world;
-  const name = { house: 'Casa', apartment: 'Prédio', shop: 'Loja', hospital: 'Hospital', police: 'Delegacia', office: 'Escritório' }[model];
+  const name = { house: 'Casa', apartment: 'Prédio', shop: 'Loja', hospital: 'Hospital', police: 'Delegacia', office: 'Escritório', 'fire-station': 'Bombeiros', school: 'Escola', stadium: 'Estádio', 'sports-club': 'Clube esportivo' }[model];
   return append(town, { id: town.nextBuilding, name: `${name} ${town.nextBuilding}`, model, color: 'original', plot, entry: 'sala', layout: world.layout, show: false });
 }
 export function duplicateBuilding(town: Neighborhood, id: number): Neighborhood {

@@ -21,10 +21,10 @@ export async function point(page: Page, x: number, y: number) {
 async function points(page: Page, positions: [number, number][]) {
   const state = await read(page); const width = { small: 1000, medium: 1200, large: 1400 }[state.layout.rooms[state.room]!.size];
   let box = (await page.locator('canvas').boundingBox())!;
-  const viewport = page.viewportSize()!;
+  const viewport = (await page.locator('#world').boundingBox())!;
   const xs = positions.map(([x]) => box.x + x * box.width / width);
   const left = Math.min(...xs), right = Math.max(...xs);
-  const shift = left < 24 ? left - 24 : right > viewport.width - 24 ? right - viewport.width + 24 : 0;
+  const shift = left < viewport.x + 24 ? left - viewport.x - 24 : right > viewport.x + viewport.width - 24 ? right - viewport.x - viewport.width + 24 : 0;
   if (shift) { await page.locator('canvas').dispatchEvent('wheel', { deltaX: shift, deltaY: 0 }); box = (await page.locator('canvas').boundingBox())!; }
   return positions.map(([x, y]) => ({ x: box.x + x * box.width / width, y: box.y + y * box.height / 600 }));
 }

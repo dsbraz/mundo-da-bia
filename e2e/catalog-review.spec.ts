@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { ready } from './helpers';
+import { buildingModels } from '../src/domain/neighborhood-types';
 test('contact sheets cover every furniture asset and facade variant', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1200 }); await ready(page);
   await page.evaluate(async () => {
@@ -29,7 +30,7 @@ test('contact sheets cover every furniture asset and facade variant', async ({ p
   await expect.poll(() => page.locator('#facade-sheet img').evaluateAll(images => images.every(i => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0))).toBe(true);
   await page.locator('#facade-sheet').evaluate(n => { (n as HTMLElement).hidden = false; });
   await page.screenshot({ path: 'reports/facades-all.png' });
-  for (const model of ['house', 'shop', 'apartment', 'hospital', 'police', 'office']) {
+  for (const model of buildingModels) {
     await page.locator(`#facade-sheet [data-model="${model}"]`).first().scrollIntoViewIfNeeded();
     await page.screenshot({ path: `reports/facades-${model}.png` });
   }

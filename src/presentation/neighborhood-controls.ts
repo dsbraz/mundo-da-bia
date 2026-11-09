@@ -1,20 +1,18 @@
 import { houseHandles } from './house-handles';
-import { moveHouse } from './move-house';
-import { removeHouse } from './remove-house';
+import { buildingChooser } from './building-chooser';
+import { floorCount } from '../domain/modules';
+import { buildingActions } from './building-actions';
 import { houseActions } from './house-actions';
 import { facadeSvg, svgUrl } from './architecture-art';
 import { actors, items } from '../content/catalog';
 import { itemKind } from '../domain/item-kind';
 import type { Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
-import { buildingModels } from '../domain/neighborhood-types';
 import type { ActorId, ItemId } from '../domain/types';
-import { paletteIds } from '../domain/types';
-import { palettes } from '../content/furnishings';
 import { doors, destinationPoint } from './neighborhood-doors';
 function button(text: string, action: () => void) {
   const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.onclick = action; return b;
 }
-export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, selected: () => ActorId, close: () => void, pan: (dx: number) => void) {
+export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, selected: () => ActorId, close: () => void, pan: (dx: number) => void, extend: (id: number) => void) {
   const deletion = houseActions(root, get, dispatch);
   const list = document.createElement('section'); list.id = 'neighborhood-list';
   const title = document.createElement('h3'); title.textContent = 'Nosso bairro';
@@ -24,31 +22,26 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
   const accessible = document.createElement('div'); accessible.className = 'scene-controls'; root.append(accessible);
   const plotDialog = document.createElement('dialog'); plotDialog.id = 'plot-dialog'; root.append(plotDialog);
   const handles = houseHandles(root, get, dispatch, plot, pan);
+  const currentActions = button('Ampliar · Mover · Excluir', () => { const town = get(), where = town.location; if (where.kind === 'interior') plot(town.buildings.find(b => b.id === where.building)!.plot); });
+  currentActions.id = 'current-building-actions'; root.querySelector('#home-name')!.after(currentActions);
   function plot(index: number) {
     const town = get(); const existing = town.buildings.find(b => b.plot === index);
     if (index < 0 || index >= town.plots) return;
     plotDialog.replaceChildren();
-    if (existing) {
-      facadeEditor(plotDialog, existing, dispatch);
-      plotDialog.prepend(button(`Mover ${existing.name}`, () => { plotDialog.close(); moveHouse(root, get(), existing, dispatch); }), button(`Excluir ${existing.name}…`, () => { plotDialog.close(); removeHouse(root, get(), existing, dispatch); }));
-    }
-    else buildingModels.forEach(model => { const choice = button({ house: '⌂ Casa · sala e quarto', apartment: '▤ Prédio · entrada e dois ambientes', shop: '▧ Loja · salão e fundos', hospital: 'Hospital · recepção, consultório e enfermaria', police: 'Delegacia · atendimento e investigação', office: 'Escritório · trabalho, reunião e copa' }[model], () => {
-      const preview = document.createElement('h3'); preview.textContent = `Prévia · ${{ house: 'Casa com sala e quarto', apartment: 'Prédio com dois andares', shop: 'Loja com salão e fundos', hospital: 'Hospital com três ambientes', police: 'Delegacia com três ambientes', office: 'Escritório com quatro ambientes' }[model]}`;
-      const picture = document.createElement('img'); picture.src = svgUrl(facadeSvg(model)); picture.alt = 'Modelo da construção'; picture.width = 220; picture.height = 240;
-      plotDialog.replaceChildren(preview, picture, button('Construir aqui', () => { plotDialog.close(); dispatch({ type: 'construct', plot: index, model }); }), button('Cancelar', () => plotDialog.close()));
-    });
-      const image = document.createElement('img'); image.src = svgUrl(facadeSvg(model)); image.alt = ''; choice.prepend(image); choice.className = 'building-choice'; plotDialog.append(choice);
-    });
-    plotDialog.append(button('Voltar', () => plotDialog.close())); plotDialog.showModal();
+    if (existing) buildingActions(plotDialog, root, town, existing, dispatch, close, extend);
+    else buildingChooser(plotDialog, model => dispatch({ type: 'construct', plot: index, model }));
+    plotDialog.showModal();
   }
   function refresh(building: boolean, camera: number) {
     const town = get(); const where = town.location; deletion(); handles(building);
+    currentActions.hidden = where.kind === 'street';
+    if (where.kind === 'interior') currentActions.setAttribute('aria-label', `Ampliar, mover ou excluir ${town.buildings.find(b => b.id === where.building)!.name}`);
     root.classList.toggle('street', where.kind === 'street');
     list.replaceChildren(...town.buildings.map(b => {
       const card = document.createElement('article'); card.className = 'room-card';
       const visit = button(`⌂ ${b.name}`, () => { dispatch({ type: 'visit', location: { kind: 'interior', building: b.id, room: b.entry } }); close(); });
-      const image = document.createElement('img'); image.src = svgUrl(facadeSvg(b.model)); image.alt = ''; visit.prepend(image); card.append(visit);
-      const manage = button(`Organizar ${b.name}`, () => dispatch({ type: 'visit', location: { kind: 'interior', building: b.id, room: b.entry } })); manage.className = 'home-manage'; card.append(manage);
+      const image = document.createElement('img'); image.src = svgUrl(facadeSvg(b.model, floorCount(b.layout))); image.alt = ''; visit.prepend(image); card.append(visit);
+      const manage = button('Ampliar · Mover · Excluir', () => plot(b.plot)); manage.setAttribute('aria-label', `Ações de ${b.name}: ampliar, mover e excluir`); manage.className = 'building-manage'; card.append(manage);
       if (building && where.kind === 'street') card.append(button('✎ Fachada', () => plot(b.plot)));
       return card;
     }));
@@ -74,11 +67,6 @@ function roomWidth(town: Neighborhood) {
   const where = town.location;
   if (where.kind === 'street') return 1000;
   return { small: 1000, medium: 1200, large: 1400 }[town.buildings.find(b => b.id === where.building)!.layout.rooms[where.room]!.size];
-}
-function facadeEditor(dialog: HTMLDialogElement, b: Neighborhood['buildings'][number], dispatch: (a: NeighborhoodAction) => void) {
-  const input = document.createElement('input'); input.value = b.name; input.maxLength = 48; input.setAttribute('aria-label', 'Nome da construção');
-  dialog.append(input, button('Salvar nome', () => { dispatch({ type: 'facade', building: b.id, name: input.value }); dialog.close(); }));
-  paletteIds.forEach(color => { const choice = button(`Cor ${palettes[color].name}`, () => { dispatch({ type: 'facade', building: b.id, color }); dialog.close(); }); choice.style.background = palettes[color].base; dialog.append(choice); });
 }
 function carryDialog(root: HTMLElement, town: Neighborhood, entity: { actor: ActorId } | { item: ItemId }, dispatch: (a: NeighborhoodAction) => void) {
   const dialog = document.createElement('dialog');
