@@ -26,11 +26,11 @@ test('trackpad, navigation strip and modular construction preserve the world', a
   const town = await readTown(page); await page.reload(); await expect(canvas).toHaveAttribute('data-ready', 'true');
   expect(await readTown(page)).toEqual(town); expect(errors).toEqual([]);
 });
-/** With reduced motion walks are slow, not instant: scene time is played ahead in 50 ms frames (a walk step's cap) while waiting for an arrival. */
+/** With reduced motion walks are slow, not instant: scene time is played ahead in 100 ms frames (a walk step's cap) while waiting for an arrival. */
 async function reducedClock(page: Page) {
   await page.clock.install(); await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' });
   return async <T>(value: () => Promise<T>, done: (v: T) => boolean) => {
-    for (let t = 0; t < 15000 && !done(await value()); t += 250) for (let f = 0; f < 5; f++) await page.clock.fastForward(50);
+    for (let t = 0; t < 15000 && !done(await value()); t += 300) for (let f = 0; f < 3; f++) await page.clock.fastForward(100);
     return expect(await value());
   };
 }
@@ -40,21 +40,30 @@ test('tap walks and dragging the background does not', async ({ page }) => {
   const before = await readTown(page), a = await point(page, 300, 50), b = await point(page, 650, 50);
   await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y); await page.mouse.up(); expect(await readTown(page)).toEqual(before);
 });
-test('the square saves equipment and ball', async ({ page }) => {
-  const soon = await reducedClock(page);
+async function toSquare(page: Page) {
   await tray(page, 'Turma'); await page.locator('#cast button').first().click(); await closeTray(page);
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#close-map').click();
+}
+async function reloadKeeps(page: Page) {
+  const town = await readTown(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
+}
+test('the square saves equipment', async ({ page }) => {
+  const soon = await reducedClock(page); await toSquare(page);
   await tap(page, 180, 420);
   (await soon(async () => (await readTown(page)).outdoor.bench, v => v === 'bia')).toBe('bia');
   await tap(page, 180, 420);
   (await soon(async () => (await readTown(page)).outdoor.bench, v => v === null)).toBeNull();
   await tap(page, 560, 470);
   (await soon(async () => (await readTown(page)).outdoor.watered, v => v)).toBe(true);
+  await reloadKeeps(page);
+});
+test('the square saves the ball', async ({ page }) => {
+  const soon = await reducedClock(page); await toSquare(page);
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Bola da praça', exact: true }).click(); await closeTray(page);
   (await soon(async () => (await readTown(page)).items.find(i => i.kind === 'bola')!.holder, v => v === 'bia')).toBe('bia');
   for (const width of [1024, 768]) { await page.setViewportSize({ width, height: width === 1024 ? 768 : 1024 }); await page.screenshot({ path: `reports/mvp-square-${width}.png` }); }
-  const town = await readTown(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
+  await reloadKeeps(page);
 });
 test('module previews cancel cleanly and explicit floor travel carries the held object', async ({ page }) => {
   await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' });

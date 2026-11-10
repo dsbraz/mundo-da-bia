@@ -30,7 +30,7 @@ export function walking(actions: Actions) {
     const gait = gaitSpeed(contextScale(visualContext(world)), reducedMotion());
     function tick(now: number) {
       if (current !== command || !position) return;
-      const elapsed = Math.min(50, now - last); last = now;
+      const elapsed = Math.min(100, now - last); last = now;
       const remaining = routeLength(position, path);
       if (remaining < .01) { finish(); return; }
       speed = Math.min(gait.top, speed + elapsed * gait.acceleration, Math.sqrt(2 * gait.acceleration * remaining));
