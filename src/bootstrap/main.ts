@@ -208,6 +208,7 @@ function dispatch(action: Action, interrupt = true) {
   if (interrupt) { cancelGame(); walker.cancel(); }
   if ('actor' in action) root.classList.add('actor-chosen');
   if ('item' in action) scene.balls.forget(action.item);
+  if (['room', 'travel', 'cross', 'transfer'].includes(action.type)) scene.balls.settle();
   if (action.type === 'room' || action.type === 'travel') { cancelInput(); closeWardrobe(); }
   const settle = scene.captureMotion();
   const result = transition(state, action);

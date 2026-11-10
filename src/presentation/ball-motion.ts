@@ -4,7 +4,7 @@ import { contextScale, type VisualContext } from './pose';
  *  the floor, kicked by a child walking past. The save learns only where it stops (one `place`). */
 export interface Ball { x: number; y: number; vx: number; vy: number; spin: number }
 export interface Floor { left: number; right: number; top: number; bottom: number }
-const friction = .0035, bounce = .6, maxSpeed = 1.5, stopSpeed = .02, radius = 19, frameMs = 16, reach = 34;
+const friction = .0035, bounce = .6, maxSpeed = 1.5, stopSpeed = .02, radius = 19, frameMs = 16, reach = 50;
 /** The ball is big enough to see and catch on the street (38 px); every other object keeps 40 px times the context scale. */
 export function ballSize(kind: ItemKind, context: VisualContext) { return kind === 'bola' && context === 'street' ? 38 : 40 * contextScale(context); }
 /** px/ms from the finger's samples over the last 100 ms (none: still), at most 1.5 px/ms. */

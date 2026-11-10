@@ -45,6 +45,8 @@ it('a child walking close by kicks it along the way they go; far away or standin
   const kicked = kick({ x: 500, y: 520 }, { x: 480, y: 520, direction: 1 }, .6)!;
   expect(kicked.vx).toBeGreaterThan(.2);
   expect(kick({ x: 500, y: 520 }, { x: 520, y: 520, direction: -1 }, .6)!.vx).toBeLessThan(-.2);
+  // On the street the feet pass close enough when they come within 30 px, also a little off the ball's line.
+  expect(kick({ x: 500, y: 520 }, { x: 492, y: 494, direction: 1 }, .6)!.vx).toBeGreaterThan(.2);
   expect(kick({ x: 500, y: 520 }, { x: 400, y: 520, direction: 1 }, .6)).toBeNull();
   expect(kick({ x: 500, y: 520 }, { x: 490, y: 520, direction: 0 }, .6)).toBeNull();
 });
