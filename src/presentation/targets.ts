@@ -6,6 +6,8 @@ import { availableSpot, spotKind } from '../domain/furniture';
 import { lookIds } from '../domain/types';
 import type { Actor, Item, ItemId, LookId, Point, World } from '../domain/types';
 import { floorTop } from './floor-band';
+import { ballSize } from './ball-motion';
+import { itemKind } from '../domain/item-kind';
 export type VisibleWorld = World & {
   visibleItems?: ReadonlyMap<ItemId, Point>; visibleDepth?: ReadonlyMap<string, number>;
   occludingDepth?: (point: Point) => number; itemDepth?: ReadonlyMap<ItemId, number>;
@@ -39,7 +41,7 @@ export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): Drag
   const foreground = foregroundDepth(state, p);
   const item = [...state.items].reverse().sort((a, b) => (state.itemDepth?.get(b.id) ?? b.y) - (state.itemDepth?.get(a.id) ?? a.y)).find(i => {
     const position = itemPoint(state, i);
-    return position && (state.itemDepth?.get(i.id) ?? Infinity) >= foreground && Math.abs(position.x - p.x) <= 20 * contextScale(visualContext(state)) && Math.abs(position.y - p.y) <= 20 * contextScale(visualContext(state));
+    return position && (state.itemDepth?.get(i.id) ?? Infinity) >= foreground && Math.abs(position.x - p.x) <= ballSize(itemKind(i), visualContext(state)) / 2 && Math.abs(position.y - p.y) <= ballSize(itemKind(i), visualContext(state)) / 2;
   });
   if (item) return { kind: 'item', id: item.id };
   if (actorAt(state, p)) return undefined;

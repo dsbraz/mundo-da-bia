@@ -7,6 +7,8 @@ import { furnitureAt, seatAt, surfaceAt, usableAt, wardrobeHit } from './furnitu
 import { actorAt, sourceAt } from './targets';
 import type { DragPreview, DragToken } from './targets';
 import { floorTop } from './floor-band';
+import { throwVelocity } from './ball-motion';
+import { itemKind } from '../domain/item-kind';
 export interface PlayInput {
   hover?: (point: Point | null) => void;
   pickup?: (item: ItemId) => void; screenScale?: () => Point;
@@ -17,8 +19,12 @@ export interface PlayInput {
   preview: (preview: DragPreview | null) => void;
   previewActor?: (id: ActorId | null, point: Point | null) => void;
   selected?: () => ActorId; poke?: (actor: ActorId) => void;
+  /** The ball let go on the floor with a flick rolls from `point` (instead of a place) with the finger's speed in px/ms. */
+  roll?: (item: ItemId, point: Point, velocity: Point) => void;
+  /** The clock finger samples are timed by (performance.now by default). */
+  clock?: () => number;
 }
-interface Active { again: boolean; dragged: boolean; scale: Point; pointer: number; room: RoomId; token: DragToken | undefined; actor: ActorId | undefined; offset: Point; start: Point; last: Point }
+interface Active { samples: { t: number; x: number; y: number }[]; again: boolean; dragged: boolean; scale: Point; pointer: number; room: RoomId; token: DragToken | undefined; actor: ActorId | undefined; offset: Point; start: Point; last: Point }
 export function createPlayGesture(getState: () => World, select: (id: ActorId) => void, move: (p: Point) => void, play?: PlayInput) {
   let active: Active | null = null;
   function cancel() { const actor = active?.dragged ? active.actor : undefined; active = null; play?.preview(null); if (actor) play?.previewActor?.(null, null); }
@@ -33,6 +39,7 @@ export function createPlayGesture(getState: () => World, select: (id: ActorId) =
       if (active.room !== getState().room) { cancel(); return; }
       trackDrag(active, point);
       if (!active.dragged) return;
+      sample(active, point, play);
       claimDrag(active, select, play);
       if (active.token) play?.preview({ ...active.token, point });
       else if (active.actor) {
@@ -58,7 +65,7 @@ function finish(active: Active, point: Point, state: World, move: (p: Point) => 
     return;
   }
   if (!active.dragged) { tapToken(active, play); return; }
-  if (active.token) { deliver(active.token, point, state, play!); return; }
+  if (active.token) { deliver(active.token, point, state, play!, active.samples); return; }
   finishActor(active, point, state, move, play);
 }
 function finishActor(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
@@ -68,12 +75,23 @@ function finishActor(active: Active, point: Point, state: World, move: (p: Point
   if (active.actor && seat) { play?.dispatch({ type: 'sit', actor: active.actor, seat }); return; }
   if (active.actor && Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) move(destination(active, point, state));
 }
-function deliver(token: DragToken, point: Point, state: World, play: PlayInput) {
+function deliver(token: DragToken, point: Point, state: World, play: PlayInput, samples: Active['samples']) {
   const actor = actorAt(state, point); const surface = surfaceAt(state, point);
   if (token.kind === 'look') { if (actor) play.dispatch({ type: 'dress', actor: actor.id, look: token.id }); }
   else if (actor) play.dispatch({ type: 'give', actor: actor.id, item: token.id });
   else if (surface) play.dispatch({ type: 'put', item: token.id, spot: surface });
-  else play.dispatch({ type: 'place', item: token.id, point: { x: point.x, y: point.y + 28 * contextScale(visualContext(state)) } });
+  else {
+    const floor = { x: point.x, y: point.y + 28 * contextScale(visualContext(state)) };
+    if (!flick(token.id, floor, state, play, samples)) play.dispatch({ type: 'place', item: token.id, point: floor });
+  }
+}
+/** A ball let go while the finger still moves (over 0.15 px/ms) rolls away instead of being placed. */
+function flick(id: ItemId, floor: Point, state: World, play: PlayInput, samples: Active['samples']) {
+  const item = state.items.find(i => i.id === id);
+  if (!play.roll || !item || itemKind(item) !== 'bola') return false;
+  const velocity = throwVelocity(samples, (play.clock ?? (() => performance.now()))());
+  if (Math.hypot(velocity.x, velocity.y) < .15) return false;
+  play.roll(id, floor, velocity); return true;
 }
 function tapFurniture(state: World, point: Point, token: DragToken | undefined, play: PlayInput): boolean {
   if (token || actorAt(state, point)) return false;
@@ -87,12 +105,13 @@ function tapFurniture(state: World, point: Point, token: DragToken | undefined, 
 }
 
 function startDrag(pointer: number, state: World, point: Point, token: DragToken | undefined, actor: import('../domain/types').Actor | undefined): Active {
-  return { again: false, dragged: false, scale: { x: 1, y: 1 }, pointer, room: state.room, token, actor: actor?.id, start: point, last: actor ?? point,
+  return { samples: [], again: false, dragged: false, scale: { x: 1, y: 1 }, pointer, room: state.room, token, actor: actor?.id, start: point, last: actor ?? point,
     offset: actor ? { x: actor.x - point.x, y: actor.y - point.y } : { x: 0, y: 0 } };
 }
 
 function interruptWalk(play: PlayInput | undefined, dragging: boolean) { if (dragging) play?.cancelWalk?.(); }
 
+function sample(active: Active, point: Point, play?: PlayInput) { active.samples = [...active.samples.slice(-7), { t: (play?.clock ?? (() => performance.now()))(), ...point }]; }
 function trackDrag(active: Active, point: Point) {
   active.dragged ||= Math.hypot((point.x - active.start.x) * active.scale.x, (point.y - active.start.y) * active.scale.y) >= 8;
 }

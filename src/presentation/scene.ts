@@ -15,9 +15,7 @@ import { itemKind } from '../domain/item-kind';
 import { drawStreet, drawExit } from './street';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import Phaser from 'phaser';
-import { roomPreview } from './room-preview';
-import { enterRoom } from '../domain/room-state';
-import type { RoomId, ItemId } from '../domain/types';
+import type { RoomId, ItemId, ItemKind } from '../domain/types';
 import { actorIds, itemIds } from '../domain/types';
 import type { Actor, ActorId, Piece, Point, PresentationEvent, World } from '../domain/types';
 import { roomWidth } from '../domain/geometry';
@@ -35,7 +33,9 @@ import { trackGait } from './gait';
 import { weightFigures } from './weight-figures';
 import { objectFall } from './weight';
 import { swingMotion } from './swing-motion';
-import { placeTransfer, transferPreview } from './transfer-preview';
+import { ballRolls } from './ball-figures';
+import { ballSize } from './ball-motion';
+import { placeSlide, placeTransfer, slidePreview, transferPreview } from './transfer-preview';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 import { pokeFigure, refuseAt } from './feedback';
@@ -67,6 +67,9 @@ export class PlayScene extends Phaser.Scene {
   private strolls = strollFigures(() => this.game.canvas);
   private weight = weightFigures();
   private swing = swingMotion();
+  /** Rolling balls; `ballRest` (set by the app) places a ball where it stops, without interrupting anyone. */
+  readonly balls = ballRolls(() => this.game.canvas, (id, point) => this.ballRest(id, point)); ballRest: (id: ItemId, point: Point) => void = () => {};
+  throwBall(id: ItemId, from: Point, velocity: Point) { this.balls.throw(id, from, velocity, this.world, performance.now(), reducedMotion()); }
   /** A touch on the swing (or its rider, or sitting down on it): a push, and the rider laughs. */
   pushSwing(rider: ActorId) { this.faces.trigger(rider, 'laugh', performance.now(), 900); this.swing.push(performance.now(), reducedMotion()); }
   private pieces = new Map<number, Phaser.GameObjects.Container>();
@@ -128,7 +131,7 @@ export class PlayScene extends Phaser.Scene {
     state.items.forEach(item => {
       const point = itemPoint(state, item); if (!point) return;
       const depth = objectDepth(state, item);
-      this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(40 * contextScale(visualContext(state)), 40 * contextScale(visualContext(state))).setName(item.id).setDepth(depth));
+      this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth));
     });
     drawLighting(this, state);
     if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700);
@@ -136,16 +139,8 @@ export class PlayScene extends Phaser.Scene {
   pan(room: RoomId | null, fraction: number) {
     if (!this.ready) return;
     if (!room) { if (this.sliding) this.paint(this.world, this.selected); return; }
-    if (this.sliding?.room !== room) {
-      this.paint(this.world, this.selected);
-      const objects = [...this.children.list].sort((a, b) => (a as Phaser.GameObjects.Container).depth - (b as Phaser.GameObjects.Container).depth);
-      const current = this.add.container(0, 0, objects);
-      const next = roomPreview(this, enterRoom(this.world, room), this.selected, this.building, false);
-      this.sliding = { room, current, next };
-    }
-    const width = logicalWidth(this);
-    this.sliding.current.x = fraction * width;
-    this.sliding.next.x = fraction * width + (fraction < 0 ? width : -width);
+    if (this.sliding?.room !== room) { this.paint(this.world, this.selected); this.sliding = slidePreview(this, this.world, room, this.selected, this.building); }
+    placeSlide(this.sliding, fraction, logicalWidth(this));
   }
   previewTransfer(room: RoomId | null, actor: ActorId | null, item: ItemId | null, point: Point | null) {
     if (!this.ready) return;
@@ -249,7 +244,7 @@ export class PlayScene extends Phaser.Scene {
     const target = actorAt(this.visibleWorld(), drag.point);
     const point = previewPoint(this.visibleWorld(), drag);
     this.snapGhost(point, drag.kind === 'item' ? target?.id ?? null : null);
-    this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : 40 * contextScale(visualContext(this.world)), drag.kind === 'look' ? 56 : 40 * contextScale(visualContext(this.world)));
+    this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : ballSize(key as ItemKind, visualContext(this.world)), drag.kind === 'look' ? 56 : ballSize(key as ItemKind, visualContext(this.world)));
     this.highlight(target);
   }
   private highlight(target: Actor | undefined) {
@@ -271,6 +266,8 @@ export class PlayScene extends Phaser.Scene {
     return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.life, gaits: [],
       swing: { angle: this.swing.angle(), legs: this.swing.legs() }, walking: (f, a) => this.walking(f, a), weight: this.weight };
   }
+  /** Whoever walks on a command (not carried, not strolling) may kick the ball. */
+  private kicker() { const f = this.moving && !this.weight.carrying(this.moving) ? this.figures.find(f => f.name === this.moving) : undefined; return f ? { x: f.x, y: f.y, direction: f.getData('direction') ?? 0 } : null; }
   private mark(key: string, value: string) { if (this.game.canvas.dataset[key] !== value) this.game.canvas.dataset[key] = value; }
   update(time: number) {
     const reduced = reducedMotion(); this.swing.step(performance.now(), reduced);
@@ -281,6 +278,7 @@ export class PlayScene extends Phaser.Scene {
       shown.push(`${actor.id}:${animateFigure(ctx, figure, actor, time, index, reduced)}`);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
+    this.balls.step(this.world, this.objects, this.kicker(), ctx.now);
     this.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
     this.sky?.(time, reduced); (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(this.swing.angle());

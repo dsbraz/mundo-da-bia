@@ -20,3 +20,12 @@ export function placeTransfer(shown: TransferShown, x: number, y: number) {
   shown.figures[0]?.setPosition(x, y);
   shown.objects.forEach(o => o.setPosition(x + 28, y - 55)); shown.ghost?.setPosition(x, y - 28);
 }
+/** A swipe between rooms: what is drawn now slides out as one layer while the next room's preview slides in. */
+export function slidePreview(scene: Phaser.Scene, world: World, room: RoomId, selected: ActorId, building: boolean) {
+  const objects = [...scene.children.list].sort((a, b) => (a as Phaser.GameObjects.Container).depth - (b as Phaser.GameObjects.Container).depth);
+  return { room, current: scene.add.container(0, 0, objects), next: roomPreview(scene, enterRoom(world, room), selected, building, false) };
+}
+export function placeSlide(sliding: { current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container }, fraction: number, width: number) {
+  sliding.current.x = fraction * width;
+  sliding.next.x = fraction * width + (fraction < 0 ? width : -width);
+}
