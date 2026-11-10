@@ -1,0 +1,606 @@
+{
+ "version": 2,
+ "town": {
+  "outdoor": {
+   "bench": null,
+   "swing": null,
+   "watered": false,
+   "mail": [],
+   "bells": []
+  },
+  "location": {
+   "kind": "interior",
+   "building": 1,
+   "room": "sala"
+  },
+  "nextBuilding": 4,
+  "plots": 4,
+  "buildings": [
+   {
+    "id": 1,
+    "name": "Casa da Bia",
+    "model": "house",
+    "color": "lilac",
+    "plot": 0,
+    "entry": "sala",
+    "layout": {
+     "nextId": 15,
+     "nextRoomId": 4,
+     "rooms": {
+      "sala": {
+       "name": "Sala & palco",
+       "template": "empty",
+       "size": "small",
+       "cell": 0,
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       },
+       "wall": "original",
+       "floor": "original"
+      },
+      "quarto": {
+       "name": "Quarto dos sonhos",
+       "template": "bedroom",
+       "size": "small",
+       "cell": 1,
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       },
+       "wall": "lilac",
+       "floor": "original"
+      },
+      "room-3": {
+       "cell": 2,
+       "template": "kitchen",
+       "name": "Cozinha",
+       "size": "medium",
+       "wall": "original",
+       "floor": "original",
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       }
+      }
+     },
+     "pieces": [
+      {
+       "id": 1,
+       "kind": "rug",
+       "room": "sala",
+       "x": 90,
+       "y": 440,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 2,
+       "kind": "sofa",
+       "room": "sala",
+       "x": 60,
+       "y": 270,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 3,
+       "kind": "wardrobe",
+       "room": "sala",
+       "x": 292,
+       "y": 90,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 4,
+       "kind": "fridge",
+       "room": "sala",
+       "x": 620,
+       "y": 195,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 5,
+       "kind": "lamp",
+       "room": "sala",
+       "x": 0,
+       "y": 160,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 6,
+       "kind": "table",
+       "room": "sala",
+       "x": 160,
+       "y": 425,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 7,
+       "kind": "stage",
+       "room": "sala",
+       "x": 830,
+       "y": 80,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 8,
+       "kind": "bed",
+       "room": "quarto",
+       "x": 555,
+       "y": 145,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 9,
+       "kind": "dresser",
+       "room": "quarto",
+       "x": 295,
+       "y": 180,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 10,
+       "kind": "cat-bed",
+       "room": "quarto",
+       "x": 70,
+       "y": 300,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 11,
+       "kind": "fridge",
+       "room": "room-3",
+       "color": "original",
+       "flipped": false,
+       "x": 40,
+       "y": 260
+      },
+      {
+       "id": 12,
+       "kind": "counter",
+       "room": "room-3",
+       "color": "original",
+       "flipped": false,
+       "x": 340,
+       "y": 320
+      },
+      {
+       "id": 13,
+       "kind": "stove",
+       "room": "room-3",
+       "color": "original",
+       "flipped": false,
+       "x": 720,
+       "y": 300
+      },
+      {
+       "id": 14,
+       "kind": "table",
+       "room": "room-3",
+       "color": "original",
+       "flipped": false,
+       "x": 920,
+       "y": 340
+      }
+     ]
+    },
+    "show": false
+   },
+   {
+    "id": 2,
+    "name": "Prédio 2",
+    "model": "apartment",
+    "color": "original",
+    "plot": 1,
+    "entry": "sala",
+    "layout": {
+     "nextId": 11,
+     "nextRoomId": 4,
+     "rooms": {
+      "sala": {
+       "name": "Entrada",
+       "template": "empty",
+       "size": "small",
+       "cell": 0,
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       },
+       "wall": "original",
+       "floor": "original"
+      },
+      "quarto": {
+       "name": "Ateliê",
+       "template": "bedroom",
+       "size": "small",
+       "cell": 1,
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       },
+       "wall": "lilac",
+       "floor": "original"
+      },
+      "room-3": {
+       "name": "Sala de brincar",
+       "size": "medium",
+       "template": "empty",
+       "cell": 4,
+       "wall": "original",
+       "floor": "original",
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       }
+      }
+     },
+     "pieces": [
+      {
+       "id": 8,
+       "kind": "bed",
+       "room": "quarto",
+       "x": 555,
+       "y": 145,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 9,
+       "kind": "dresser",
+       "room": "quarto",
+       "x": 295,
+       "y": 180,
+       "color": "original",
+       "flipped": false
+      },
+      {
+       "id": 10,
+       "kind": "cat-bed",
+       "room": "quarto",
+       "x": 70,
+       "y": 300,
+       "color": "original",
+       "flipped": false
+      }
+     ]
+    },
+    "show": false
+   },
+   {
+    "id": 3,
+    "name": "Hospital 3",
+    "model": "hospital",
+    "color": "original",
+    "plot": 2,
+    "entry": "sala",
+    "layout": {
+     "nextId": 10,
+     "nextRoomId": 4,
+     "rooms": {
+      "sala": {
+       "name": "Recepção",
+       "template": "reception",
+       "size": "medium",
+       "cell": 0,
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       },
+       "wall": "original",
+       "floor": "original"
+      },
+      "quarto": {
+       "name": "Consultório",
+       "template": "consultation",
+       "size": "medium",
+       "cell": 1,
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       },
+       "wall": "original",
+       "floor": "original"
+      },
+      "room-3": {
+       "name": "Enfermaria",
+       "template": "ward",
+       "cell": 4,
+       "size": "medium",
+       "wall": "original",
+       "floor": "original",
+       "home": {
+        "lamp": true,
+        "fridge": true,
+        "drawer": false
+       }
+      }
+     },
+     "pieces": [
+      {
+       "id": 1,
+       "kind": "counter",
+       "room": "sala",
+       "color": "original",
+       "flipped": false,
+       "x": 40,
+       "y": 320
+      },
+      {
+       "id": 2,
+       "kind": "armchair",
+       "room": "sala",
+       "color": "original",
+       "flipped": false,
+       "x": 620,
+       "y": 260
+      },
+      {
+       "id": 3,
+       "kind": "plant",
+       "room": "sala",
+       "color": "original",
+       "flipped": false,
+       "x": 1080,
+       "y": 340
+      },
+      {
+       "id": 4,
+       "kind": "desk",
+       "room": "quarto",
+       "color": "original",
+       "flipped": false,
+       "x": 40,
+       "y": 300
+      },
+      {
+       "id": 5,
+       "kind": "armchair",
+       "room": "quarto",
+       "color": "original",
+       "flipped": false,
+       "x": 500,
+       "y": 260
+      },
+      {
+       "id": 6,
+       "kind": "sink",
+       "room": "quarto",
+       "color": "original",
+       "flipped": false,
+       "x": 980,
+       "y": 280
+      },
+      {
+       "id": 7,
+       "kind": "bed",
+       "room": "room-3",
+       "color": "original",
+       "flipped": false,
+       "x": 40,
+       "y": 180
+      },
+      {
+       "id": 8,
+       "kind": "side-table",
+       "room": "room-3",
+       "color": "original",
+       "flipped": false,
+       "x": 540,
+       "y": 340
+      },
+      {
+       "id": 9,
+       "kind": "reading-lamp",
+       "room": "room-3",
+       "color": "original",
+       "flipped": false,
+       "x": 1060,
+       "y": 220
+      }
+     ]
+    },
+    "show": false
+   }
+  ],
+  "actors": [
+   {
+    "id": "bia",
+    "kind": "human",
+    "room": "sala",
+    "look": "zoey",
+    "x": 520,
+    "y": 530,
+    "fed": false,
+    "resting": false,
+    "seat": null,
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    },
+    "name": "Beatriz"
+   },
+   {
+    "id": "luna",
+    "kind": "human",
+    "room": "sala",
+    "look": "spiderman",
+    "x": 1500,
+    "y": 520,
+    "fed": false,
+    "resting": false,
+    "seat": null,
+    "location": {
+     "kind": "street"
+    }
+   },
+   {
+    "id": "leo",
+    "kind": "human",
+    "room": "room-3",
+    "look": "doctor",
+    "x": 400,
+    "y": 500,
+    "fed": false,
+    "resting": false,
+    "seat": null,
+    "location": {
+     "kind": "interior",
+     "building": 2,
+     "room": "room-3"
+    }
+   },
+   {
+    "id": "rui",
+    "kind": "human",
+    "room": "sala",
+    "look": "neon",
+    "x": 880,
+    "y": 530,
+    "fed": true,
+    "resting": false,
+    "seat": null,
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    }
+   },
+   {
+    "id": "mimi",
+    "kind": "cat",
+    "room": "sala",
+    "look": "pijama",
+    "x": 600,
+    "y": 540,
+    "fed": false,
+    "resting": false,
+    "seat": null,
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    }
+   },
+   {
+    "id": "nino",
+    "kind": "cat",
+    "room": "sala",
+    "look": "festa",
+    "x": 710,
+    "y": 540,
+    "fed": false,
+    "resting": false,
+    "seat": null,
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    }
+   },
+   {
+    "id": "pipoca",
+    "kind": "cat",
+    "room": "sala",
+    "look": "superman",
+    "x": 835,
+    "y": 540,
+    "fed": false,
+    "resting": false,
+    "seat": null,
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    }
+   }
+  ],
+  "items": [
+   {
+    "id": "1:lanche",
+    "room": "sala",
+    "holder": null,
+    "spot": "fridge",
+    "x": 680,
+    "y": 310,
+    "kind": "lanche",
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    }
+   },
+   {
+    "id": "1:peixe",
+    "room": "sala",
+    "holder": null,
+    "spot": "fridge",
+    "x": 680,
+    "y": 360,
+    "kind": "peixe",
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    }
+   },
+   {
+    "id": "1:microfone",
+    "room": "sala",
+    "holder": "bia",
+    "spot": "floor",
+    "x": 520,
+    "y": 530,
+    "kind": "microfone",
+    "location": {
+     "kind": "interior",
+     "building": 1,
+     "room": "sala"
+    }
+   },
+   {
+    "id": "1:ursinho",
+    "room": "sala",
+    "holder": null,
+    "spot": "floor",
+    "x": 300,
+    "y": 480,
+    "kind": "ursinho",
+    "location": {
+     "kind": "interior",
+     "building": 3,
+     "room": "sala"
+    }
+   },
+   {
+    "id": "1:bola",
+    "kind": "bola",
+    "room": "sala",
+    "location": {
+     "kind": "street"
+    },
+    "x": 320,
+    "y": 525,
+    "holder": null,
+    "spot": "floor"
+   }
+  ]
+ }
+}

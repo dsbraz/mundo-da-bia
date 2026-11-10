@@ -1,5 +1,19 @@
 # Evidência de implementação — 2026-11-06
 
+## Medição de `nearestApproach` (W1-21, FIS-14) — 2026-11-09
+
+Medido com `performance.now()` em volta de `approach(world, 'bia', { type: 'use', id })`, que chama `nearestApproach`, para cada peça do cômodo. O cômodo é grande (`large`, 1400 × 600). As peças foram colocadas com `editWorld` em grade, cada tipo de `pieceKinds` no primeiro ponto válido. A Bia começa no primeiro ponto livre a partir de y = 540. Houve aquecimento de 5 rodadas e 20 rodadas medidas. Script descartável executado com Vitest. Ambiente: Node 26.13.0 e AMD EPYC 9354P com 4 vCPUs, compartilhados com outras sessões (load average entre 3 e 10 durante as medições). Por isso as caudas são ruidosas: entre execuções, o p95 do cômodo com 16 peças variou de 70 a 92 ms e o do cômodo com 8 peças de 50 a 55 ms. O máximo de 480 ms aconteceu numa única execução.
+
+| Cenário | Peças no cômodo | Chamadas com caminho: mediana / p95 / máx. | Chamadas sem caminho: mediana / p95 / máx. |
+| --- | --- | --- | --- |
+| Cômodo cheio (todos os 33 tipos tentados) | 31 | 0,66 / 1,3 / 2,8–9,0 ms | 0,41 / 3,1 / 4,4–45 ms |
+| Cômodo com 16 peças | 16 | 6,4 / 92 / 480 ms | 0,04 / 0,14 / 1,2 ms |
+| Cômodo com 8 peças | 8 | 7,2 / 50 / 62 ms | 0,03 / 0,11 / 1,0 ms |
+
+O cômodo cheio é o caso **mais barato**, porque sobram poucos nós livres na grade de 20 px. As faixas de máximo vêm de execuções repetidas. O custo cresce com o espaço livre: cada um dos 15 candidatos roda uma busca sobre todos os nós livres, e cada aresta testa colisão a cada 5 px. Num cômodo grande e pouco mobiliado, o p95 passa de 16 ms já num processador de servidor.
+
+**Resultado:** passa de 16 ms no p95 em todas as execuções com cômodo pouco mobiliado. Pelo critério do W1-21, abre-se um item de otimização: busca A* ou um único Dijkstra/BFS a partir da origem para todos os candidatos, em vez de 15 buscas. Esta medição não foi feita em tablet de entrada. Chromium ou Node em desktop não comprovam o desempenho Android, e lá o número deve ser maior.
+
 Esta é uma entrega local parcial, não uma aprovação do MVP ou publicação.
 
 ## Verificação das correções visuais e de dependências

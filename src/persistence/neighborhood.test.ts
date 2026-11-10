@@ -41,7 +41,7 @@ it('valida invariantes de cômodos, assentos, mãos e terrenos', () => {
   expect(changed(t => { t.items[0]!.holder = 'bia'; t.items[0]!.spot = 'floor'; t.items[1]!.holder = 'bia'; t.items[1]!.spot = 'floor'; })).toBeNull();
   expect(changed(t => { t.items[2]!.holder = 'bia'; t.items[2]!.location = { kind: 'street' }; })).toBeNull();
   expect(changed(t => { t.items[2]!.id = 'bad' as typeof t.items[2]['id']; })).toBeNull();
-  expect(changed(t => { t.items[2]!.kind = 'bad' as 'ursinho'; })).toBeNull();
+  expect(changed(t => { t.items[2]!.kind = 'bad' as 'ursinho'; })?.items.map(i => i.id)).toEqual(['1:lanche', '1:peixe', '1:ursinho', '1:bola']);
   expect(changed(t => { t.actors[0]!.x = 941; })).toBeNull();
   expect(changed(t => { t.actors[0]!.room = 'quarto'; })).toBeNull();
   expect(changed(t => { t.buildings[0]!.entry = 'room-99'; })).toBeNull();

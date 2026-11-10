@@ -5,6 +5,7 @@ import { gameSpace, hopPosition, hopTileAt } from './game-space';
 import { gameControls } from './game-controls';
 import type { GamePreview } from './child-game-art';
 import { gamePosition } from './child-game-art';
+import { reducedMotion } from './motion';
 interface Actions {
   world: () => World; selected: () => ActorId; prepare: () => void; stopWalk: () => void;
   walk: (point: Point, done: () => void) => void;
@@ -18,7 +19,7 @@ export function childGames(root: HTMLElement, actions: Actions) {
     command++; const active = session, wasPending = pending; session = null; pending = false;
     cancelAnimationFrame(frame); view.close(); actions.preview(null);
     if (wasPending) actions.stopWalk();
-    if (active) actions.commit(active.actor, gamePosition(active, performance.now(), matchMedia('(prefers-reduced-motion: reduce)').matches));
+    if (active) actions.commit(active.actor, gamePosition(active, performance.now(), reducedMotion()));
   }
   function start(kind: GameKind) {
     cancel(); actions.prepare();
@@ -64,7 +65,7 @@ export function childGames(root: HTMLElement, actions: Actions) {
   function tick() {
     if (!session) return;
     const now = performance.now(); render(now);
-    actions.follow(gamePosition(session, now, matchMedia('(prefers-reduced-motion: reduce)').matches));
+    actions.follow(gamePosition(session, now, reducedMotion()));
     frame = requestAnimationFrame(tick);
   }
   return { cancel };

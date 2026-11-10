@@ -1,11 +1,12 @@
 import type Phaser from 'phaser';
 import type { RoomId } from '../domain/types';
+import { reducedMotion } from './motion';
 type Figure = Phaser.GameObjects.Container | Phaser.GameObjects.Image;
 export function captureMotion(scene: Phaser.Scene, figures: Figure[], objects: Figure[], room: RoomId) {
   const poses = new Map(figures.map(f => [f.name, poseValues(f)]));
   const before = new Map([...figures, ...objects].map(f => [f.name, { x: f.x, y: f.y }]));
   return (nextFigures: Figure[], nextObjects: Figure[], nextRoom: RoomId) => {
-    if (room !== nextRoom || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (room !== nextRoom || reducedMotion()) return;
     nextFigures.forEach(f => {
       const previous = poses.get(f.name), pose = poseOf(f);
       if (previous && pose) { pose.setData('restingAngle', previous.angle); pose.setData('seatAmount', previous.seat); }

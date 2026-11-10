@@ -1,5 +1,5 @@
-import { expect, it } from 'vitest';
-import { framing, screenToWorld, worldToScreen } from './viewport';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { framing, screenToWorld, viewport, worldToScreen } from './viewport';
 it('acomoda o cômodo inteiro em retrato sem deformar', () => {
   const view = framing(768, 1024, 1000, { x: 500, y: 300 });
   expect(view.scale).toBeCloseTo(.768);
@@ -23,4 +23,34 @@ it('converte ponteiro e controles pela mesma câmera, incluindo sobras e rua', (
   const world = { x: 800, y: 445 };
   expect(worldToScreen(canvas, world)).toEqual({ x: 140, y: 327.5 });
   expect(screenToWorld(canvas, worldToScreen(canvas, world))).toEqual(world);
+});
+
+describe('acompanhamento da câmera', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  function camera(reduced: boolean) {
+    vi.stubGlobal('matchMedia', () => ({ matches: reduced }));
+    vi.stubGlobal('ResizeObserver', class { observe() {} });
+    const views: number[] = [];
+    const canvas = { parentElement: { clientWidth: 1000, clientHeight: 600 }, style: { setProperty() {} }, dataset: {} } as unknown as HTMLCanvasElement;
+    const view = viewport(canvas, (_w, _h, x) => views.push(x));
+    view.scene('sala', 1400);
+    return { view, views };
+  }
+  it('com movimento reduzido corta direto para o enquadramento final', () => {
+    const { view, views } = camera(true);
+    view.follow({ x: 1100, y: 430 }, 1000);
+    expect(views.at(-1)).toBe(350);
+    view.follow({ x: 1100, y: 430 }, 1016);
+    expect(views.at(-1)).toBe(350);
+  });
+  it('desliza pelo tempo decorrido, não pela quantidade de quadros', () => {
+    const { view, views } = camera(false);
+    view.follow({ x: 1100, y: 430 }, 1000);
+    expect(views.at(-1)).toBeCloseTo(218);
+    view.follow({ x: 1100, y: 430 }, 1000 + 2000 / 60);
+    expect(views.at(-1)).toBeCloseTo(218 + (150 - 18) * (1 - .88 ** 2));
+    view.follow({ x: 1100, y: 430 }, 5000);
+    const afterPause = views.at(-1)!;
+    expect(afterPause - views.at(-2)!).toBeCloseTo((350 - views.at(-2)!) * .12);
+  });
 });

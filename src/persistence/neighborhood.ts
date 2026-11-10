@@ -4,7 +4,7 @@ import { plotWidth, streetWidth } from '../domain/neighborhood-geometry';
 import { localWorld } from '../domain/neighborhood';
 import type { Building, Location, Neighborhood } from '../domain/neighborhood-types';
 import { buildingModels } from '../domain/neighborhood-types';
-import { actorIds, itemIds, paletteIds } from '../domain/types';
+import { actorIds, itemIds, lookIds, paletteIds } from '../domain/types';
 import { sameLocation, validLocation } from '../domain/location';
 import { member, positiveId, record, roomId } from './values';
 import { validLayout } from './layout-validation';
@@ -13,10 +13,18 @@ export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({
 export function decodeNeighborhood(raw: string | null): Neighborhood | null {
   try {
     const value: unknown = JSON.parse(raw ?? 'null');
-    if (!record(value) || (value.version !== 1 && value.version !== 2) || !validTown(value.town)) return null;
-    if (!validVersion(value.town, value.version)) return null;
-    return value.version === 1 ? upgradeNeighborhood(value.town) : value.town;
+    if (!record(value) || (value.version !== 1 && value.version !== 2)) return null;
+    const town = knownContent(value.town);
+    if (!validTown(town) || !validVersion(town, value.version)) return null;
+    return value.version === 1 ? upgradeNeighborhood(town) : town;
   } catch { return null; }
+}
+const itemKinds = [...itemIds, 'bola'];
+function knownContent(value: unknown): unknown {
+  if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return value;
+  const unknown = (entry: unknown, field: string, known: readonly string[]) => record(entry) && !member(known, entry[field]);
+  return { ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
+    items: value.items.filter(i => !unknown(i, 'kind', itemKinds)) };
 }
 function validVersion(town: Neighborhood, version: number) {
   if (version === 1) return [...town.actors, ...town.items].every(entity => entity.location.kind !== 'street' || entity.x <= town.plots * plotWidth - 60);
@@ -39,7 +47,7 @@ function resident(value: unknown): boolean {
   return record(value) && location(value.location) && actor({ ...value, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
 }
 function object(value: unknown): boolean {
-  if (!record(value) || !location(value.location) || !member([...itemIds, 'bola'], value.kind)) return false;
+  if (!record(value) || !location(value.location) || !member(itemKinds, value.kind)) return false;
   return typeof value.id === 'string' && /^[1-9]\d*:(lanche|peixe|microfone|ursinho|bola)$/.test(value.id)
     && item({ ...value, id: value.kind === 'bola' ? 'ursinho' : value.kind, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
 }

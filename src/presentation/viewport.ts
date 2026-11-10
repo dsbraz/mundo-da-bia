@@ -1,4 +1,5 @@
 import type { Point } from '../domain/types';
+import { followElapsed, followFactor } from './motion';
 const clamp = (value: number, maximum: number) => Math.max(0, Math.min(maximum, value));
 export function framing(width: number, height: number, worldWidth: number, center: Point) {
   const scale = Math.min(width / Math.min(worldWidth, 1000), height / 600);
@@ -9,7 +10,7 @@ function offset(center: number, world: number, visible: number) {
 }
 export function viewport(canvas: HTMLCanvasElement, changed: (width: number, height: number, x: number, y: number) => void) {
   const parent = canvas.parentElement!;
-  let center: Point = { x: 500, y: 360 }, width = 1000, room = '', manual = false;
+  let center: Point = { x: 500, y: 360 }, width = 1000, room = '', manual = false, followed: number | null = null;
   let view = { scale: 1, x: 0, y: 0 };
   function render() {
     view = framing(parent.clientWidth, parent.clientHeight, width, center);
@@ -33,12 +34,13 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
     },
     pan(dx: number, dy: number) { manual = true; center.x -= dx / view.scale; center.y -= dy / view.scale; render(); },
     resume() { manual = false; },
-    follow(point: Point) {
+    follow(point: Point, now = performance.now()) {
       if (manual) return;
+      const step = followFactor(followElapsed(now, followed)); followed = now;
       const half = { x: parent.clientWidth / view.scale * .25, y: parent.clientHeight / view.scale * .25 };
       const dx = point.x - center.x, dy = point.y - 70 - center.y;
-      if (Math.abs(dx) > half.x) center.x += (dx - Math.sign(dx) * half.x) * .12;
-      if (Math.abs(dy) > half.y) center.y += (dy - Math.sign(dy) * half.y) * .12;
+      if (Math.abs(dx) > half.x) center.x += (dx - Math.sign(dx) * half.x) * step;
+      if (Math.abs(dy) > half.y) center.y += (dy - Math.sign(dy) * half.y) * step;
       render();
     },
   };

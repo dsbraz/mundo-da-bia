@@ -7,8 +7,9 @@ import type Phaser from 'phaser';
 import type { Location, Neighborhood } from '../domain/neighborhood-types';
 import { plotStart } from '../domain/neighborhood-geometry';
 import { sameLocation } from '../domain/location';
+import { reducedMotion } from './motion';
 export function doorEffect(scene: Phaser.Scene, town: Neighborhood, previous: Location) {
-  if (sameLocation(town.location, previous) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (sameLocation(town.location, previous) || reducedMotion()) return;
   const point = doorway(town, previous); if (!point) return;
   const { x, y, width, height } = point;
   const recess = scene.add.rectangle(x, y, width, height, 0x465e5b).setOrigin(0).setDepth(152);

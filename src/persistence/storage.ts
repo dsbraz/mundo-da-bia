@@ -39,16 +39,26 @@ export function saveAlbum(album: Album, storage?: StoragePort): boolean {
   } catch { return false; }
 }
 
+const neighborhoodKey = 'mundo-da-bia:neighborhood:v2';
+const recoveryKey = `${neighborhoodKey}:recovery`;
 export function loadNeighborhood(storage?: StoragePort): import('../domain/neighborhood-types').Neighborhood {
   try {
     const port = storage ?? globalThis.localStorage;
-    const saved = decodeNeighborhood(port.getItem('mundo-da-bia:neighborhood:v2')) ?? decodeNeighborhood(port.getItem('mundo-da-bia:neighborhood:v1'));
+    const saved = decodeNeighborhood(port.getItem(neighborhoodKey)) ?? decodeNeighborhood(port.getItem('mundo-da-bia:neighborhood:v1'));
     if (saved) return saved;
     const town = upgradeNeighborhood(migrateNeighborhood(loadAlbum(port)));
     saveNeighborhood(town, port); return town;
   } catch { return upgradeNeighborhood(migrateNeighborhood(loadAlbum(storage))); }
 }
 export function saveNeighborhood(town: import('../domain/neighborhood-types').Neighborhood, storage?: StoragePort): boolean {
-  try { (storage ?? globalThis.localStorage).setItem('mundo-da-bia:neighborhood:v2', encodeNeighborhood(town)); return true; }
-  catch { return false; }
+  try {
+    const port = storage ?? globalThis.localStorage;
+    protectInvalid(port);
+    port.setItem(neighborhoodKey, encodeNeighborhood(town)); return true;
+  } catch { return false; }
+}
+function protectInvalid(port: StoragePort) {
+  const previous = port.getItem(neighborhoodKey);
+  if (previous === null || previous === port.getItem(recoveryKey) || decodeNeighborhood(previous)) return;
+  port.setItem(recoveryKey, previous);
 }

@@ -1,5 +1,6 @@
 import type { ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
+import { reducedMotion } from './motion';
 interface Actions {
   state: () => World; selected: () => ActorId; preview: (id: ActorId | null, point: Point | null) => void;
   reject?: (point: Point) => void;
@@ -39,7 +40,7 @@ export function walking(actions: Actions) {
       else finish();
     }
     function finish() { clear(); actions.commit(id, destination); actions.preview(null, null); if (current === command) complete(); }
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) finish();
+    if (reducedMotion()) finish();
     else frame = requestAnimationFrame(tick);
   }
   return { start, cancel };

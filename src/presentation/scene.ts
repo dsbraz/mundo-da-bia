@@ -27,6 +27,7 @@ import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './pi
 import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
+import { reducedMotion } from './motion';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
   previewGame(value: GamePreview | null) { this.gameArt?.paint(value); }
@@ -230,14 +231,14 @@ export class PlayScene extends Phaser.Scene {
     const ghost = this.ghost!;
     if (ghost.getData('target') !== target) {
       this.tweens.killTweensOf(ghost);
-      if (target && !matchMedia('(prefers-reduced-motion: reduce)').matches) this.tweens.add({ targets: ghost, ...point, duration: 100, ease: 'Sine.Out' });
+      if (target && !reducedMotion()) this.tweens.add({ targets: ghost, ...point, duration: 100, ease: 'Sine.Out' });
       else ghost.setPosition(point.x, point.y);
     } else if (!target) ghost.setPosition(point.x, point.y);
     ghost.setData('target', target);
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   update(time: number) {
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = reducedMotion();
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
       this.animateFigure(figure, actor, time, index, reduced);
