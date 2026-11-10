@@ -3,7 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { point, tap } from './helpers';
+import { playUntil, point, tap } from './helpers';
 
 /** An empty living room: Bia at x 700, the others watching at x 200 and 330; paused clock; every scene reaction recorded in order. */
 async function playground(page: Page, game: 'Pular corda' | 'Amarelinha') {
@@ -25,7 +25,7 @@ async function playground(page: Page, game: 'Pular corda' | 'Amarelinha') {
   await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: game, exact: true }).click();
   await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
-  await expect.poll(async () => { await page.clock.runFor(100); return page.locator('#game-panel').getAttribute('data-phase'); }, { intervals: [10], timeout: 20000 }).toBe('playing');
+  await playUntil(page, () => page.locator('#game-panel').getAttribute('data-phase'), 'playing', 100);
 }
 async function tapActor(page: Page, x: number) { const p = await point(page, x, 450); await page.mouse.click(p.x, p.y); }
 const canvas = (page: Page) => page.locator('canvas');
@@ -37,13 +37,13 @@ for (const reduced of [false, true]) test(`a corda se joga olhando só a cena: o
   await playground(page, 'Pular corda');
   // The panel is covered: only the scene tells when to jump.
   await page.addStyleTag({ content: '#game-panel{opacity:0!important}' });
-  await expect.poll(async () => { await page.clock.runFor(30); return canvas(page).getAttribute('data-rope-cue'); }, { intervals: [10], timeout: 20000 }).toBe('');
+  await playUntil(page, () => canvas(page).getAttribute('data-rope-cue'), '', 30);
   await tap(page, 900, 500);
   await expect.poll(async () => (await reactions(page)).at(-1)).toBe('bia:Ops! Quase, Bia!');
   await page.clock.runFor(200);
   await page.screenshot({ path: `reports/games-rope-goof${reduced ? '-reduced' : ''}.png`, clip: await clip(page, 700) });
   await page.clock.runFor(250); // past the 400 ms between two jumps
-  await expect.poll(async () => { await page.clock.runFor(30); return canvas(page).getAttribute('data-rope-cue'); }, { intervals: [10], timeout: 20000 }).toBe('now');
+  await playUntil(page, () => canvas(page).getAttribute('data-rope-cue'), 'now', 30);
   await page.screenshot({ path: `reports/games-rope-cue${reduced ? '-reduced' : ''}.png`, clip: await clip(page, 700) });
   const before = (await reactions(page)).length;
   await tap(page, 900, 500);

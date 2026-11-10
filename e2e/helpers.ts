@@ -7,6 +7,11 @@ import type { Neighborhood } from '../src/domain/neighborhood-types';
 import type { World } from '../src/domain/types';
 export const readTown = (page: Page): Promise<Neighborhood> => page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town);
 export const read = async (page: Page): Promise<World> => localWorld(await readTown(page));
+/** Plays scene time in `step` ms frames until `read` gives `value` (at most `limit` ms of scene time), then asserts it. */
+export async function playUntil<T>(page: Page, read: () => Promise<T>, value: T, step = 50, limit = 15000) {
+  for (let t = 0; t < limit && await read() !== value; t += step) await page.clock.runFor(step);
+  expect(await read()).toBe(value);
+}
 export async function ready(page: Page) { await page.goto('/'); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); }
 export async function tray(page: Page, tab?: string) {
   if (await page.locator('#tray-toggle').getAttribute('aria-expanded') !== 'true') await page.locator('#tray-toggle').click();

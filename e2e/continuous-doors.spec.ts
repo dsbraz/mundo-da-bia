@@ -1,12 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { plotStart } from '../src/domain/neighborhood-geometry';
-import { point, readTown, tap } from './helpers';
+import { playUntil as play, point, readTown, tap } from './helpers';
 
 const canvas = (page: Page) => page.locator('canvas');
 /** Plays scene time in 50 ms frames until the canvas attribute reads `value`. */
-async function playUntil(page: Page, name: string, value: string) {
-  await expect.poll(async () => { await page.clock.runFor(50); return canvas(page).getAttribute(name); }, { timeout: 20000, intervals: [10] }).toBe(value);
-}
+const playUntil = (page: Page, name: string, value: string) => play(page, () => canvas(page).getAttribute(name), value);
 async function clip(page: Page, x: number, top: number, bottom: number) {
   const a = await point(page, x - 170, top), b = await point(page, x + 170, bottom);
   return { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y };

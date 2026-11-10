@@ -4,7 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { Point } from '../src/domain/types';
-import { point, readTown, tap } from './helpers';
+import { playUntil as play, point, readTown, tap } from './helpers';
 
 /** Bia alone in the plaza at `at`, the rest of the cast at home, the ball out of the way; paused clock once ready. */
 async function plaza(page: Page, at: Point) {
@@ -18,9 +18,7 @@ async function plaza(page: Page, at: Point) {
   await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
 }
 const canvas = (page: Page) => page.locator('canvas');
-async function playUntil(page: Page, name: string, value: string) {
-  await expect.poll(async () => { await page.clock.runFor(30); return canvas(page).getAttribute(name); }, { timeout: 20000, intervals: [10] }).toBe(value);
-}
+const playUntil = (page: Page, name: string, value: string) => play(page, () => canvas(page).getAttribute(name), value, 30);
 async function clip(page: Page, x: number, top: number, bottom: number, half = 170) {
   const a = await point(page, x - half, top), b = await point(page, x + half, bottom);
   return { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y };
@@ -30,13 +28,16 @@ test('a criança contorna o canteiro em vez de passar por cima', async ({ page }
   await plaza(page, { x: 470, y: 455 });
   await tap(page, 700, 455);
   let lowest = 0, shot = false;
-  await expect.poll(async () => {
+  // At most 15 s of scene time, in 50 ms frames, until she stops at x 700.
+  for (let t = 0; t < 15000; t += 50) {
     await page.clock.runFor(50);
     const walking = await canvas(page).getAttribute('data-walking'), x = Number(await canvas(page).getAttribute('data-walk-x')), y = Number(await canvas(page).getAttribute('data-walk-y'));
     if (walking) lowest = Math.max(lowest, y);
     if (walking && !shot && x > 560) { shot = true; await page.screenshot({ path: 'reports/plaza-around-flowerbed.png', clip: await clip(page, 573, 300, 560, 220) }); }
-    return walking ? 'walking' : Math.round((await readTown(page)).actors[0]!.x);
-  }, { timeout: 20000, intervals: [10] }).toBe(700);
+    if (!walking && Math.round((await readTown(page)).actors[0]!.x) === 700) break;
+  }
+  expect(await canvas(page).getAttribute('data-walking')).toBe('');
+  expect(Math.round((await readTown(page)).actors[0]!.x)).toBe(700);
   expect(lowest).toBeGreaterThan(480);
 });
 
