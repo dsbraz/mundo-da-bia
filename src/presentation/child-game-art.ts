@@ -56,10 +56,13 @@ export function childGameArt(scene: Phaser.Scene) {
   return { paint, animate, active: () => current !== null };
 }
 
-/** Crouch and landing squash (at most 10%) on the pose, and the contact shadow shrinking while in the air. */
+/** Crouch and landing: bent knees with the body lowered so the feet stay planted, plus a squash of at most 10%;
+ *  the contact shadow shrinks while in the air. */
 function jumpBody(figure: Phaser.GameObjects.Container, pose: Phaser.GameObjects.Container, jump: JumpFrame) {
-  const base = Number(pose.getData('baseScale') ?? pose.scaleX);
+  const base = Number(pose.getData('baseScale') ?? pose.scaleX), bend = Math.max(0, -jump.squash) / .08;
   pose.setScale(base * (1 - jump.squash / 2), base * (1 + jump.squash));
+  const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
+  if (knees && bend) { knees.setScale(1, 1 - .4 * bend); pose.y += 60 * .4 * bend * pose.scaleY; }
   const shadow = figure.getByName<Phaser.GameObjects.Container>('shadow'), size = Number(shadow?.getData('base') ?? 1);
   shadow?.setScale(size * jump.shadow).setAlpha(.6 + .4 * jump.shadow);
 }

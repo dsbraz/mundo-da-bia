@@ -28,9 +28,9 @@ test('o salto da amarelinha agacha antes, encolhe a sombra no ar e levanta poeir
   await page.setViewportSize({ width: 1280, height: 800 }); await playground(page); await hopscotch(page);
   const canvas = page.locator('canvas');
   await page.keyboard.press('Space');
-  await page.clock.runFor(40); await expect(canvas).toHaveAttribute('data-jump', 'crouch');
+  await page.clock.runFor(80); await expect(canvas).toHaveAttribute('data-jump', 'crouch');
   await page.screenshot({ path: 'reports/hopscotch-jump-crouch.png', clip: await childClip(page) });
-  await page.clock.runFor(200); await expect(canvas).toHaveAttribute('data-jump', 'air');
+  await page.clock.runFor(160); await expect(canvas).toHaveAttribute('data-jump', 'air');
   await page.screenshot({ path: 'reports/hopscotch-jump-air.png', clip: await childClip(page) });
   await page.clock.runFor(180); await expect(canvas).toHaveAttribute('data-jump', 'land');
   await page.screenshot({ path: 'reports/hopscotch-jump-land.png', clip: await childClip(page) });
