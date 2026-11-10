@@ -2,6 +2,7 @@ import type { Point, World } from '../domain/types';
 import { roomWidth } from '../domain/geometry';
 import { footprint } from '../domain/placement';
 import { floorTop, walkable } from './floor-band';
+import { plazaObstacles } from './plaza-obstacles';
 export function walkingPath(world: World, start: Point, end: Point): Point[] | null {
   const blocks = furnitureBlocks(world);
   const free = (p: Point) => walkable(world, p) && !blocks.some(b => contains(b, p));
@@ -24,6 +25,9 @@ function exitFrom(world: World, start: Point, blocks: Block[], free: (p: Point) 
 }
 type Block = { left: number; right: number; top: number; bottom: number };
 function furnitureBlocks(world: World): Block[] {
+  return [...world.streetWidth ? plazaObstacles : [], ...pieceBlocks(world)];
+}
+function pieceBlocks(world: World): Block[] {
   return world.layout.pieces.filter(p => p.room === world.room).flatMap(p => {
     const area = footprint(p);
     return area ? [{ left: area.left - 26, right: area.right + 26, top: area.top - 15, bottom: area.bottom + 26 }] : [];

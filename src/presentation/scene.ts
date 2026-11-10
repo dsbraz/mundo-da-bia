@@ -63,7 +63,12 @@ export class PlayScene extends Phaser.Scene {
     this.faces.trigger(this.selected, 'surprise', performance.now()); if (!this.ready || !this.town) return;
     doorEffect(this, this.town, previous); const sill = walker && doorStep(this.town, previous); if (sill) this.strolls.emerge(this.figures, walker, sill);
   }
-  outdoorReaction(action: OutdoorAction) { if (action.target === 'swing') this.pushSwing(action.actor); if (this.ready && this.town) outdoorEffect(this, this.town, action); }
+  outdoorReaction(action: OutdoorAction) {
+    if (action.target === 'swing') this.pushSwing(action.actor);
+    const rider = this.world.actors.find(a => a.id === action.actor), figure = this.figures.find(f => f.name === action.actor);
+    if (rider && (action.target === 'swing' || action.target === 'bench')) { if (figure) this.tweens.killTweensOf(figure); this.strolls.climb(rider.id, { x: rider.x, y: rider.y }); }
+    if (this.ready && this.town) outdoorEffect(this, this.town, action);
+  }
   camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x + Number(this.game.canvas.dataset.viewX ?? 0); this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
