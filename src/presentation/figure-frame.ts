@@ -27,7 +27,7 @@ export function animateFigure(ctx: FrameContext, figure: Container, actor: Actor
   const pose = figure.getByName<Container>('pose');
   if (walking) walkPose(figure, figure.getData('distance') ?? 0, reduced, figure.getData('direction'));
   else gazePose(figure, face.look);
-  ctx.life.mark([...(face.blink ? ['blink'] : []), ...(face.glance ? ['glance'] : []), ...lifePose(pose, posed, time, reduced, !walking && !seated)]);
+  ctx.life.mark([...(face.blinked ? ['blink'] : []), ...(face.glance ? ['glance'] : []), ...lifePose(pose, posed, time, reduced, !walking && !seated)]);
   animateSwing(ctx, pose, actor, time, reduced);
   const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
   ctx.world.items.filter(i => i.holder === actor.id).forEach(i => ctx.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));
@@ -42,7 +42,9 @@ function posture(ctx: FrameContext, figure: Container, actor: Actor) {
 function faceFrame(ctx: FrameContext, actor: Actor, posed: Actor, walking: boolean, time: number, index: number, reduced: boolean) {
   const looked = ctx.gaze.get(actor.id) ?? 0, glance = walking || looked ? 0 : glanceDirection(ctx.world, actor, time, reduced);
   const expression = expressionOf({ ...posed, show: ctx.world.show }, ctx.faces.of(actor.id, ctx.now) ?? (glance ? 'curious' : null));
-  return { expression, blink: blinking(time, index), glance, look: looked || glance };
+  const blink = blinking(time, index);
+  // Asleep, the eyes stay shut; `blinked` is only the blink itself.
+  return { expression, blink: posed.resting || blink, blinked: blink, glance, look: looked || glance };
 }
 function animateSwing(ctx: FrameContext, pose: Container, actor: Actor, time: number, reduced: boolean) {
   if (ctx.town?.outdoor.swing !== actor.id || ctx.moving === actor.id) return;

@@ -33,6 +33,17 @@ test('entrar num cômodo mostra surpresa por cerca de 1,2 s', async ({ page }) =
   await page.clock.runFor(400); expect((await faces(page)).bia).not.toBe('surprise');
 });
 
+test('sair para a rua pela porta também surpreende quem chegou', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
+  await ready(page); await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
+  await expect(page.locator('canvas')).toHaveAttribute('data-street', 'true');
+  await page.clock.runFor(50);
+  await expect.poll(async () => (await faces(page)).bia).toBe('surprise');
+  await page.screenshot({ path: 'reports/faces-street-surprise.png' });
+  await page.clock.runFor(1400); expect((await faces(page)).bia).not.toBe('surprise');
+});
+
 test('a 1280 px os olhos da Bia medem 5 px ou mais na captura', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
   await page.setViewportSize({ width: 1280, height: 800 }); await ready(page); await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));

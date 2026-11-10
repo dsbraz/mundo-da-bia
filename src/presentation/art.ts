@@ -38,7 +38,7 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(actor.seat === 'bed' && actor.resting);
   pose.x = 0; pose.y = 0;
   shiftFace(pose, 0);
-  const shown = face ?? { expression: expressionOf({ ...actor, show: false }, null), blink: false };
+  const shown = face ?? { expression: expressionOf({ ...actor, show: false }, null), blink: actor.resting };
   paintFace(pose, actor.kind, shown.expression, shown.blink);
   bodyLayers(pose, actor, time, reduced);
   const angle = actor.seat === 'bed' ? -Math.PI / 2 : 0;
