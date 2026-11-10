@@ -170,4 +170,13 @@ test('sem espaço livre na sala inicial, a amarelinha leva a criança e a câmer
   }, [bia.x, bia.y]);
   expect(feet.x).toBeGreaterThan(scene.x); expect(feet.x).toBeLessThan(scene.x + scene.width);
   await page.screenshot({ path: 'reports/hopscotch-crowded-768.png' });
+  // Others may stand on the chalk (only furniture counts for the freest floor): a tap on a square still jumps, even under them.
+  for (const cells of ['1', '2', '3 e 4']) { await expect(page.locator('#game-jump')).toHaveText(`Pular para ${cells}`); await expect(page.locator('#game-jump')).toBeEnabled(); await page.locator('#game-jump').click(); }
+  await expect(page.locator('#game-jump')).toHaveText('Pular para 5'); await expect(page.locator('#game-jump')).toBeEnabled();
+  const square = await page.locator('canvas').evaluate((c, [x, y]) => {
+    const box = c.getBoundingClientRect(), d = (c as HTMLCanvasElement).dataset, scale = box.width / Number(d.viewWidth);
+    return { x: box.x + (x - Number(d.viewX) - Number(d.cameraX)) * scale, y: box.y + (y - Number(d.viewY)) * scale };
+  }, [bia.x + 3 * 42, bia.y - 12 - 3 * 20]);
+  await page.touchscreen.tap(square.x, square.y);
+  await expect(page.locator('#game-jump')).toHaveText('Pular para 6 e 7');
 });

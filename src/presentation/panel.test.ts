@@ -51,3 +51,8 @@ it('status becomes at most three badges with neutral, named labels', () => {
   expect(badges.map(b => b.label)).toEqual(['Bia está de barriga cheia', 'Bia está descansando', 'Bia está com Ursinho']);
   expect(badges.every(b => !/Pronto para/.test(b.label))).toBe(true);
 });
+
+it('Jogar stays dimmed on the street, where games have no floor', () => {
+  const street = { ...initialWorld(), streetWidth: 3000 };
+  expect(panelButtons(street, actor(street, 'bia')).find(b => b.slot === 'play')!.enabled).toBe(false);
+});

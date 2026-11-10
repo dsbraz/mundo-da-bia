@@ -62,5 +62,5 @@
 #play-hint p { max-width:360px; line-height:1.6; }
 
 /* Gate W1: no button or tab label under 16 px at any breakpoint (icon-only buttons carry an aria-label and no text). */
-button,summary { font-size:16px!important; }
+button,summary,button small,#project-cards button span { font-size:16px!important; }
 .game-choices button,.remove-house .keep-house { font-size:18px!important; }

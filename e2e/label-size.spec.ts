@@ -1,10 +1,19 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ready, tray, closeTray } from './helpers';
 
-// Every visible button or tab that shows text (buttons, Map tabs, <summary>) uses a computed font-size of 16 px or more.
+// Every visible text inside a visible button or tab (buttons, Map tabs, <summary>, including spans and <small> inside cards)
+// is drawn with a computed font-size of 16 px or more.
 const small = (page: Page) => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('button, summary, [role=tab]')]
-  .filter(node => node.checkVisibility({ visibilityProperty: true }) && !node.closest('[inert], .sr-only') && node.innerText.trim())
-  .map(node => ({ label: node.innerText.trim().replace(/\s+/g, ' '), size: Number.parseFloat(getComputedStyle(node).fontSize) }))
+  .filter(node => node.checkVisibility({ visibilityProperty: true }) && !node.closest('[inert], .sr-only'))
+  .flatMap(node => {
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT), found: { label: string; size: number }[] = [];
+    for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+      const owner = text.parentElement!;
+      if (!text.textContent!.trim() || !owner.checkVisibility({ visibilityProperty: true })) continue;
+      found.push({ label: text.textContent!.trim().replace(/\s+/g, ' ').slice(0, 40), size: Number.parseFloat(getComputedStyle(owner).fontSize) });
+    }
+    return found;
+  })
   .filter(item => item.size < 16));
 
 for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
@@ -21,6 +30,8 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     await page.locator('#game-stop').click();
     await page.locator('#build-toggle').click(); await check('Criar');
     await page.locator('#construct-mode').click(); await check('Ampliar');
+    await page.locator('#construct-structure').click(); await check('ampliar casa');
+    await page.keyboard.press('Escape');
     await page.locator('#map-toggle').click();
     for (const tab of ['Lugares', 'Organizar', 'Ideias']) { await page.getByRole('button', { name: tab, exact: true }).click(); await check(`Mapa ${tab}`); }
     await page.getByRole('button', { name: 'Organizar', exact: true }).click();
@@ -30,5 +41,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
     if (await page.locator('#room-dialog').isVisible()) await page.locator('#close-map').click();
     await check('rua');
+    await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
+    await page.getByRole('button', { name: 'Nova casa pronta', exact: true }).click(); await expect(page.locator('#plot-dialog')).toBeVisible(); await check('nova casa pronta');
   });
 }
