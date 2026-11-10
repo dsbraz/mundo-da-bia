@@ -3,7 +3,7 @@ import { ready, readTown } from './helpers';
 
 test('Minha casa abre mapa limpo, separa organização e permite excluir com confirmação', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
-  await expect(page.getByRole('button', { name: 'Visitar Sala & palco', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ir para Sala & palco', exact: true })).toBeVisible();
   await expect(page.locator('#rename-house')).toBeHidden();
   await page.screenshot({ path: 'reports/home-map-landscape.png' });
   await expect(page.getByRole('button', { name: 'Mover Quarto dos sonhos antes', exact: true })).toBeHidden();
@@ -29,7 +29,7 @@ for (const width of [390, 768]) test(`mapa cabe em retrato ${width} e visita sem
   await page.setViewportSize({ width, height: 1024 }); await ready(page); await page.locator('#map-toggle').click();
   await page.screenshot({ path: `reports/home-map-${width}.png` });
   expect(await page.locator('#room-dialog').evaluate(n => n.scrollWidth <= n.clientWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Visitar Quarto dos sonhos', exact: true }).click();
+  await page.getByRole('button', { name: 'Ir para Quarto dos sonhos', exact: true }).click();
   await expect(page.locator('#room-dialog')).not.toBeVisible();
   expect((await readTown(page)).location).toMatchObject({ room: 'quarto' });
 });
@@ -39,6 +39,7 @@ test('mapa vem antes do bairro e cancelar ampliação devolve o foco', async ({ 
   const map = (await page.locator('#room-map').boundingBox())!;
   const neighborhood = (await page.locator('#neighborhood-list').boundingBox())!;
   expect(map.y).toBeLessThan(neighborhood.y);
+  await expect(page.locator('#add-room')).toBeHidden(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   await page.locator('#add-room').click(); await page.locator('#cancel-room-choice').click();
   await expect(page.locator('#add-room')).toBeFocused();
 });
@@ -69,7 +70,7 @@ test('muda casa para terreno vazio e troca com outra casa sem perder conteúdo',
 test('cancelar arraste em Organizar não bloqueia a próxima visita no Mapa', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
   await page.getByRole('button', { name: 'Organizar', exact: true }).click();
-  const card = page.getByRole('button', { name: 'Visitar Quarto dos sonhos', exact: true });
+  const card = page.getByRole('button', { name: 'Ir para Quarto dos sonhos', exact: true });
   await card.scrollIntoViewIfNeeded(); const box = (await card.boundingBox())!;
   await page.mouse.move(box.x + 30, box.y + 35); await page.mouse.down(); await page.mouse.move(box.x + 50, box.y + 35);
   await card.dispatchEvent('pointercancel', { pointerId: 1 }); await page.mouse.up();

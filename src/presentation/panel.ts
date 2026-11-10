@@ -18,7 +18,7 @@ export function panelButtons(state: World, actor: Actor): PanelButton[] {
   const food = neededFood(actor);
   return [
     { slot: 'wear', label: 'Vestir', icon: icon('wear'), enabled: present && actor.kind === 'human' },
-    { slot: 'play', label: 'Brincar', icon: icon('play'), enabled: present && actor.kind === 'human' },
+    { slot: 'play', label: 'Jogar', icon: icon('play'), enabled: present && actor.kind === 'human' },
     { slot: 'rest', label: restLabel(state, actor), icon: icon(actor.resting ? 'wake' : 'rest'), enabled: present },
     { slot: 'drop', label: 'Soltar', icon: icon('drop'), enabled: present && !!held },
     { slot: 'eat', label: 'Comer', icon: `/icons/${food}.svg`, enabled: present && !!held && itemKind(held) === food },

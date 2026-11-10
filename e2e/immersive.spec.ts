@@ -25,9 +25,9 @@ test('ampliar usa cartões de cômodos com prévia e confirmação', async ({ pa
   await page.locator('#construct-structure').click();
   await page.getByRole('button', { name: 'Adicionar Cozinha', exact: true }).click();
   const before = await readTown(page);
-  await expect(page.getByRole('button', { name: 'Confirmar módulo' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Construir!' })).toBeVisible();
   expect(await readTown(page)).toEqual(before);
-  await page.getByRole('button', { name: 'Confirmar módulo' }).click();
+  await page.getByRole('button', { name: 'Construir!' }).click();
   await expect.poll(async () => Object.keys((await readTown(page)).buildings[0]!.layout.rooms).length).toBe(Object.keys(before.buildings[0]!.layout.rooms).length + 1);
 });
 test('abajur muda de material na cena e preserva a cor ao recarregar', async ({ page }) => {
@@ -46,7 +46,7 @@ test('abajur muda de material na cena e preserva a cor ao recarregar', async ({ 
   expect((await readTown(page)).buildings[0]!.layout.pieces.find(p => p.kind === 'lamp')!.color).toBe('mint');
 });
 test('cômodo maior preserva proporção após recarga', async ({ page }) => {
-  await ready(page); await page.locator('#map-toggle').click(); await page.locator('#add-room').click();
+  await ready(page); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#add-room').click();
   await page.getByRole('button', { name: 'Criar Livre', exact: true }).click(); await page.getByRole('button', { name: 'Construir cômodo', exact: true }).click();
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
   const scale = await page.locator('canvas').evaluate(canvas => {

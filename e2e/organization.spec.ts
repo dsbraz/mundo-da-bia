@@ -5,13 +5,19 @@ test('brincadeira tem três entradas e edição abre o catálogo sem outra procu
   await ready(page);
   await expect(page.locator('#map-toggle')).toHaveText('Mapa');
   await expect(page.locator('#tray-toggle')).toHaveText('Turma');
-  await expect(page.locator('#build-toggle')).toHaveText('Arrumar');
+  await expect(page.locator('#build-toggle')).toHaveText('Criar');
+  await expect(page.locator('#play-mode')).toHaveText('Brincar');
+  await expect(page.locator('#play-mode')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#construct-mode')).toBeHidden();
-  await expect(page.locator('#play-mode')).toBeHidden();
   await page.locator('#build-toggle').click();
   await expect(page.locator('#build-catalog')).toBeVisible();
-  await expect(page.locator('#play-mode')).toHaveText('Pronto');
-  await expect(page.locator('#construct-mode')).toBeVisible();
+  await expect(page.locator('#build-toggle')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#play-mode')).toHaveText('Brincar');
+  await expect(page.locator('header')).not.toContainText('Pronto');
+  await expect(page.locator('header')).not.toContainText('Ampliar');
+  await expect(page.locator('#create-tabs #construct-mode')).toBeVisible();
+  await expect(page.locator('#tray-toggle')).toHaveText('Móveis e cores');
+  await page.screenshot({ path: 'reports/header-create.png' });
 });
 
 test('desfazer continua disponível depois de terminar a edição', async ({ page }) => {
@@ -27,7 +33,19 @@ test('mapa reúne navegação e transporte sem um segundo menu Explorar', async 
   await ready(page); await page.locator('#map-toggle').click();
   await expect(page.locator('#room-dialog #room-navigation')).toBeVisible();
   await expect(page.locator('#navigation-toggle')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Levar Bia', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ir para Rua', exact: true })).toBeVisible();
+  await expect(page.locator('#room-dialog').getByRole('button', { name: /Excluir|Mover|Levar|Trazer/ })).toHaveCount(0);
+  await expect(page.locator('#room-map .room-cast img')).toHaveCount(7);
+});
+
+test('no modo Brincar, tocar num cômodo do Mapa leva quem está selecionado; em Criar só muda a vista', async ({ page }) => {
+  await ready(page); await page.locator('#map-toggle').click();
+  await expect(page.locator('#home-hint')).toHaveText('Toque num lugar para ir com Bia.');
+  await page.getByRole('button', { name: 'Ir para Quarto dos sonhos', exact: true }).click();
+  let state = await read(page); expect(state.room).toBe('quarto'); expect(state.actors[0]!.room).toBe('quarto');
+  await page.locator('#build-toggle').click(); await closeTray(page); await page.locator('#map-toggle').click();
+  await page.getByRole('button', { name: 'Ir para Sala & palco', exact: true }).click();
+  state = await read(page); expect(state.room).toBe('sala'); expect(state.actors[0]!.room).toBe('quarto');
 });
 
 test('catálogo encontra móveis por atividade cotidiana sem coleção intermediária', async ({ page }) => {
@@ -40,7 +58,7 @@ test('catálogo encontra móveis por atividade cotidiana sem coleção intermedi
 
 test('bairro oferece arraste da casa, destino visível e cancelamento', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
-  await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
+  await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await page.locator('#build-toggle').click();
   await page.setViewportSize({ width: 1440, height: 800 }); await closeTray(page);
   const source = page.getByRole('button', { name: 'Mover Minha casa', exact: true });
@@ -94,7 +112,7 @@ test('desfazer atualiza a lista de peças e o inspetor junto com a cena', async 
 
 test('segundo contato não abre ações durante o arraste de uma casa', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
-  await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
+  await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await page.locator('#build-toggle').click(); await closeTray(page);
   const source = page.getByRole('button', { name: 'Mover Minha casa', exact: true });
   const box = (await source.boundingBox())!;
@@ -113,7 +131,7 @@ test('Arrumar reabre o catálogo recolhido', async ({ page }) => {
 
 test('arraste na borda revela terrenos em retrato e Escape não muda a casa', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
-  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await page.locator('#build-toggle').click(); await closeTray(page);
   const before = await readTown(page), canvas = page.locator('canvas');
   const camera = Number(await canvas.getAttribute('data-camera-x'));

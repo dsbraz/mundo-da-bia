@@ -10,7 +10,7 @@ export const templates: Record<RoomTemplate, { name: string; icon: string }> = {
   consultation: { name: 'Consultório', icon: '◇' },
   ward: { name: 'Enfermaria', icon: '◇' },
   dispatch: { name: 'Central de atendimento', icon: '◇' },
-  investigation: { name: 'Sala de investigação', icon: '◇' },
+  investigation: { name: 'Achados e perdidos', icon: '◇' },
   office: { name: 'Escritório', icon: '◇' },
   meeting: { name: 'Sala de reunião', icon: '◇' },
   breakroom: { name: 'Copa', icon: '◇' },

@@ -10,24 +10,24 @@ for (const [model, name, count] of [['hospital', 'Hospital', 3], ['police', 'Del
     await page.locator('#construct-plot').click();
     await page.locator('#plot-dialog').getByRole('button', { name: new RegExp(`^${name} ·`) }).click();
     await page.getByRole('button', { name: 'Construir aqui', exact: true }).click();
-    await page.getByRole('button', { name: 'Fechar estrutura', exact: true }).click();
+    await page.getByRole('button', { name: 'Fechar', exact: true }).click();
     const built = await readTown(page), building = built.buildings.at(-1)!;
     expect(building.model).toBe(model); expect(Object.keys(building.layout.rooms)).toHaveLength(count);
     expect(built.actors).toEqual(original.actors); expect(built.items).toEqual(original.items);
     await page.locator('#undo').click(); expect((await readTown(page)).buildings).toEqual(original.buildings);
     await page.locator('#redo').click(); expect((await readTown(page)).buildings).toEqual(built.buildings);
     await page.locator('#play-mode').click(); await page.locator('#map-toggle').click();
-    await page.locator('#neighborhood-list').getByRole('button', { name: `⌂ ${building.name}`, exact: true }).click();
+    await page.locator('#neighborhood-list').getByRole('button', { name: `Ir para ${building.name}`, exact: true }).click();
     for (const room of Object.values(building.layout.rooms)) {
       await page.locator('#map-toggle').click();
-      await page.getByRole('button', { name: `Visitar ${room.name}`, exact: true }).click();
+      await page.getByRole('button', { name: `Ir para ${room.name}`, exact: true }).click();
       await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
       await page.screenshot({ path: `reports/${model}-${room.template}.png` });
     }
     const saved = await readTown(page); await page.reload();
     await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
     expect(await readTown(page)).toEqual(saved);
-    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
+    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
     await page.screenshot({ path: `reports/${model}-facade.png` });
     expect(errors).toEqual([]);
   });

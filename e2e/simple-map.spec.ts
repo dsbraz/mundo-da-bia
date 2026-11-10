@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { ready, read, create, tray, closeTray, tap } from './helpers';
+import { ready, read, create, tray, closeTray, tap, bringHere } from './helpers';
 test('piano, televisão e aquário mantêm brincadeiras e persistência', async ({ page }) => {
-  await ready(page); await create(page); await tray(page, 'Turma'); await page.locator('#bring-here').click(); await closeTray(page);
+  await ready(page); await create(page); await bringHere(page);
   for (const [index, name] of ['Piano', 'Televisão', 'Aquário'].entries()) {
     await page.locator('#build-toggle').click(); await tray(page, 'Todos'); await page.getByRole('button', { name: `Adicionar ${name}`, exact: true }).click(); await closeTray(page);
     const piece = (await read(page)).layout.pieces.at(-1)!;

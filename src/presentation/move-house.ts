@@ -15,7 +15,7 @@ export function moveHouse(root: HTMLElement, town: Neighborhood, house: Building
       const occupant = town.buildings.find(b => b.plot === plot);
       const card = button(`Terreno ${plot + 1} · ${occupant?.name ?? 'vazio'}`, () => preview(plot, occupant));
       if (occupant) { const image = document.createElement('img'); image.src = svgUrl(facadeSvg(occupant.model, floorCount(occupant.layout))); image.alt = ''; card.prepend(image); }
-      else { const garden = document.createElement('span'); garden.textContent = '✳'; garden.className = 'empty-plot'; garden.setAttribute('aria-hidden', 'true'); card.prepend(garden); }
+      else { const garden = document.createElement('img'); garden.src = '/icons/ui-plot.svg'; garden.alt = ''; garden.className = 'empty-plot'; garden.setAttribute('aria-hidden', 'true'); card.prepend(garden); }
       card.disabled = plot === house.plot; card.setAttribute('aria-pressed', String(card.disabled)); plots.append(card);
     }
     dialog.replaceChildren(title, hint, plots, button('Voltar para organizar', () => dialog.close()));

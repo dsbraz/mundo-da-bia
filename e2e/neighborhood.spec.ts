@@ -14,20 +14,18 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   await page.locator('#cast button').first().click();
   await tray(page, 'Looks'); await page.getByRole('button', { name: 'Rumi', exact: false }).click();
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Ursinho', exact: true }).click(); await closeTray(page);
-  await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click();
-  await page.getByRole('button', { name: 'Levar para Rua', exact: true }).click();
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   expect((await readTown(page)).actors[0]).toMatchObject({ name: 'Sol', look: 'rumi', location: { kind: 'street' } });
   await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.getByRole('button', { name: 'Nova casa pronta', exact: true }).click();
   await page.getByRole('button', { name: 'Loja · salão e fundos', exact: false }).click();
   await page.getByRole('button', { name: 'Construir aqui', exact: true }).click();
-  await page.getByRole('button', { name: 'Fechar estrutura', exact: true }).click();
+  await page.getByRole('button', { name: 'Fechar', exact: true }).click();
   expect((await readTown(page)).buildings).toHaveLength(2);
   await page.locator('#undo').click(); expect((await readTown(page)).buildings).toHaveLength(1);
   await page.locator('#redo').click(); expect((await readTown(page)).buildings).toHaveLength(2);
   await page.locator('#play-mode').click();
-  await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click();
-  await page.getByRole('button', { name: 'Levar para Loja 2', exact: true }).click();
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Loja 2', exact: true }).click();
   await page.locator('#build-toggle').click(); await tray(page, 'Todos');
   await page.getByRole('button', { name: 'Adicionar Planta', exact: true }).click(); await closeTray(page);
   const count = (await read(page)).layout.pieces.length;
@@ -82,7 +80,7 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
     await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v2', value), encodeNeighborhood(town));
     await page.setViewportSize(viewport); await ready(page);
     await page.screenshot({ path: `reports/neighborhood-interior-${viewport.width}.png` });
-    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
+    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
     await page.screenshot({ path: `reports/neighborhood-street-${viewport.width}.png` });
     expect((await readTown(page)).location).toEqual({ kind: 'street' });
     const edges = await page.locator('canvas').evaluate((canvas, [left, right]) => {

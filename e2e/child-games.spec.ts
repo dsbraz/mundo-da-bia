@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, readTown, tray, closeTray, point } from './helpers';
+import { ready, readTown, tray, closeTray, point, bringHere } from './helpers';
 import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
@@ -21,7 +21,7 @@ async function playground(page: import('@playwright/test').Page, holding = false
 
 test('amarelinha: ida e volta por teclado, sair e recarregar sem sessão persistida', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 }); await playground(page);
-  await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   for (const cells of ['1', '2', '3 e 4', '5', '6 e 7', '8', '6 e 7', '5', '3 e 4', '2', '1']) {
@@ -38,7 +38,7 @@ test('amarelinha: ida e volta por teclado, sair e recarregar sem sessão persist
 
 test('corda: interrupção ao trocar personagem, escapar e perder foco', async ({ page }) => {
   await playground(page); const original = await readTown(page);
-  await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   await page.keyboard.press('Space');
@@ -47,7 +47,7 @@ test('corda: interrupção ao trocar personagem, escapar e perder foco', async (
   expect((await readTown(page)).items).toEqual(original.items);
   await page.locator('#tray-toggle').click();
   for (const interrupt of ['escape', 'blur']) {
-    await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+    await page.getByRole('button', { name: 'Jogar', exact: true }).click();
     await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
     await expect(page.locator('#game-panel')).toBeVisible();
     await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
@@ -59,7 +59,7 @@ test('corda: interrupção ao trocar personagem, escapar e perder foco', async (
 
 test('mão ocupada explica a recusa e preserva o objeto', async ({ page }) => {
   await playground(page, true); const original = await readTown(page);
-  await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   for (const name of ['Pular corda', 'Amarelinha']) {
     await page.getByRole('button', { name, exact: true }).click();
     await expect(page.locator('#game-choice-message')).toContainText('Solte o objeto');
@@ -71,7 +71,7 @@ test('mão ocupada explica a recusa e preserva o objeto', async ({ page }) => {
 test('corda tem indicação de ritmo e novas tentativas por toque com movimento reduzido', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' }); await playground(page);
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') }); await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
-  await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   await page.evaluate(() => {
@@ -89,7 +89,7 @@ test('corda tem indicação de ritmo e novas tentativas por toque com movimento 
 
 test('amarelinha por toque mantém os controles abaixo da cena no retrato e cancela ao mudar de modo', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 }); await playground(page);
-  await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   const actor = (await readTown(page)).actors[0]!;
@@ -106,7 +106,7 @@ test('amarelinha por toque mantém os controles abaixo da cena no retrato e canc
 test('cancelar a aproximação invalida o início pendente', async ({ page }) => {
   await playground(page);
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') }); await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
-  await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'walking');
   await page.keyboard.press('Escape'); await page.clock.runFor(3000);
@@ -116,7 +116,7 @@ test('cancelar a aproximação invalida o início pendente', async ({ page }) =>
 
 test('um segundo dedo não pula outra casa', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 }); await playground(page);
-  await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   const actor = (await readTown(page)).actors[0]!;
@@ -132,13 +132,13 @@ test('um segundo dedo não pula outra casa', async ({ page }) => {
 });
 
 test('quintal pronto permite corda e amarelinha sem retirar a mobília', async ({ page }) => {
-  await ready(page); await page.locator('#map-toggle').click(); await page.locator('#add-room').click();
+  await ready(page); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#add-room').click();
   await page.getByRole('button', { name: 'Criar Quintal de brincadeiras', exact: true }).click();
   await page.getByRole('button', { name: 'Construir cômodo', exact: true }).click();
-  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click();
-  await page.locator('#bring-here').click(); await closeTray(page);
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+  await bringHere(page);
   for (const name of ['Pular corda', 'Amarelinha']) {
-    await page.getByRole('button', { name: 'Brincar', exact: true }).click();
+    await page.getByRole('button', { name: 'Jogar', exact: true }).click();
     await page.getByRole('button', { name, exact: true }).click();
     await expect(page.locator('#game-panel')).toBeVisible();
     await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');

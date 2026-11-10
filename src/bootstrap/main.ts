@@ -15,7 +15,8 @@ import { worldNavigation } from '../presentation/world-navigation';
 import { structureControls } from '../presentation/structure-controls';
 import { streetWidth, plotStart } from '../domain/neighborhood-geometry';
 import { walking } from '../presentation/walking';
-import { doors } from '../presentation/neighborhood-doors';
+import { goTo } from './go';
+import { uiText } from '../content/ui-text';
 import { localWorld, storeWorld, neighborhoodAction } from '../domain/neighborhood';
 import type { NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
 import { neighborhoodControls } from '../presentation/neighborhood-controls';
@@ -64,10 +65,11 @@ const feedback = sceneFeedback({ root, scene, state: () => state, selected: () =
 function toggleWardrobe() { cancelGame(); wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
 function openLooks() { closeWardrobe(); shell.looks(); }
-const controls = createControls(root, action => play.perform(action), id => play.select(id), () => state, () => building, item => neighborhood.carryItem(item), () => doors(town).length > 0, { looks: openLooks, games: () => games.open() });
+const controls = createControls(root, action => play.perform(action), id => play.select(id), () => state, () => building, { looks: openLooks, games: () => games.open() });
 const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(); }, action => play.perform(action), toggleWardrobe);
 const rooms = roomControls(root, {
-  enter: room => dispatch({ type: 'room', room }),
+  enter: (room, going) => { const where = town.location; if (going && where.kind === 'interior') go({ ...where, room }); else dispatch({ type: 'room', room }); },
+  hint: () => building ? uiText.map.createHint : uiText.map.playHint(nameOf(state.actors.find(a => a.id === selected)!)),
   add: options => {
     if (town.location.kind === 'street') return 'Escolha a construção que deseja ampliar.';
     const next = addRoom(state, options);
@@ -92,12 +94,13 @@ const walker = walking({ reject: point => feedback.refuse(refusal('walk', ''), {
   commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), face: (actor, point) => scene.face(actor, point), hint: () => {} });
 const games = childGames(root, { world: () => state, selected: () => selected, prepare: () => { walker.cancel(); cancelInput(); closeWardrobe(); shell.close(); view?.resume(); }, stopWalk: () => walker.cancel(), walk: walker.start, commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), preview: value => scene.previewGame(value), follow: point => view?.follow(point) });
 cancelGame = games.cancel;
+const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch, dispatch });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse });
 const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
-const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
-const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); }, id => structure.open(id));
+const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
+const neighborhood = neighborhoodControls(root, () => town, townDispatch, location => go(location), () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); }, id => structure.open(id));
 root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!building) toggleBuild(); constructing = true; walker.cancel(); cancelInput(); refresh(); announceMode(); });
 root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
 root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());
@@ -179,7 +182,8 @@ function refresh() {
   renderControls();
   root.querySelector<HTMLButtonElement>('#construct-structure')!.textContent = town.location.kind === 'street' ? 'Escolher construção para ampliar' : 'Adicionar cômodo ou andar';
   root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
-  root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building && !constructing));
+  root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building));
+  root.querySelector('#decorate-mode')!.setAttribute('aria-pressed', String(building && !constructing));
 }
 function renderControls() {
   const focus = state.layout.pieces.find(p => p.id === selectedPiece) ?? state.actors.find(a => a.id === selected)!;

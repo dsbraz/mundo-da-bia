@@ -45,8 +45,7 @@ test('walk, pick up, sit, leave, travel, drop and reload preserve the object', a
   await expect.poll(async () => (await read(page)).actors[0]!.seat).toBeNull();
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
   await explore(page);
-  await page.getByRole('button', { name: 'Levar Bia', exact: true }).click();
-  await page.getByRole('button', { name: 'Quarto dos sonhos · Térreo', exact: true }).click();
+  await page.getByRole('button', { name: 'Ir para Quarto dos sonhos', exact: true }).click();
   await page.getByRole('button', { name: 'Soltar', exact: true }).click();
   const state = await read(page); expect(state.room).toBe('quarto');
   expect(state.items.find(i => i.id.endsWith('ursinho'))).toMatchObject({ holder: null, room: 'quarto' });

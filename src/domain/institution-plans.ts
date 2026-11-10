@@ -9,7 +9,7 @@ const plans: Partial<Record<BuildingModel, { name: string; template: RoomTemplat
   stadium: [{ name: 'Campo', template: 'sportsfield', cell: 0 }, { name: 'Aquecimento', template: 'gym', cell: 1 }, { name: 'Lanchonete', template: 'breakroom', cell: 2 }],
   'sports-club': [{ name: 'Recepção do clube', template: 'reception', cell: 0 }, { name: 'Ginásio', template: 'gym', cell: 1 }, { name: 'Área de brincadeiras', template: 'playground', cell: 2 }],
   hospital: [{ name: 'Recepção', template: 'reception', cell: 0 }, { name: 'Consultório', template: 'consultation', cell: 1 }, { name: 'Enfermaria', template: 'ward', cell: 4 }],
-  police: [{ name: 'Recepção', template: 'reception', cell: 0 }, { name: 'Central de atendimento', template: 'dispatch', cell: 1 }, { name: 'Sala de investigação', template: 'investigation', cell: 2 }],
+  police: [{ name: 'Recepção', template: 'reception', cell: 0 }, { name: 'Central de atendimento', template: 'dispatch', cell: 1 }, { name: 'Achados e perdidos', template: 'investigation', cell: 2 }],
   office: [{ name: 'Recepção', template: 'reception', cell: 0 }, { name: 'Escritório', template: 'office', cell: 1 }, { name: 'Sala de reunião', template: 'meeting', cell: 4 }, { name: 'Copa', template: 'breakroom', cell: 5 }],
 };
 export function institutionWorld(model: BuildingModel): World | undefined {

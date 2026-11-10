@@ -5,20 +5,23 @@ import { floorCount } from '../domain/modules';
 import type { RoomId, World } from '../domain/types';
 import type { NewRoom } from '../domain/rooms';
 import { projects } from '../content/projects';
+import { uiText } from '../content/ui-text';
+import { portrait } from './portrait';
 interface Actions {
-  enter: (room: RoomId) => void; add: (room: NewRoom) => string | null; rename: (name: string) => void;
+  enter: (room: RoomId, go: boolean) => void; hint: () => string; add: (room: NewRoom) => string | null; rename: (name: string) => void;
   reorder: (room: RoomId, target: RoomId) => void; snapshot: (name: string) => void; closeTray: () => void;
 }
 export function roomControls(root: HTMLElement, actions: Actions) {
   const dialog = root.querySelector<HTMLDialogElement>('#room-dialog')!;
   let state: World;
-  const menu = homeMenu(root);
+  const menu = homeMenu(root, actions.hint);
   const choose = quickRooms(root, actions.add, () => dialog.close());
   root.querySelector('#map-toggle')!.addEventListener('click', () => { actions.closeTray(); menu('map'); dialog.showModal(); });
   root.querySelector('#close-map')!.addEventListener('click', () => dialog.close());
   root.querySelector('#room-rename')!.addEventListener('click', () => actions.rename(root.querySelector<HTMLInputElement>('#current-room-name')!.value));
   root.querySelector('#add-room')!.addEventListener('click', () => choose(freeCell(state)));
-  const capacity = document.createElement('p'); capacity.id = 'room-capacity';
+  const capacity = document.createElement('p'); capacity.id = 'room-capacity'; capacity.className = 'home-manage';
+  root.querySelector('#add-room')!.classList.add('home-manage');
   root.querySelector('#add-room')!.setAttribute('aria-describedby', capacity.id);
   root.querySelector('#add-room')!.after(capacity);
   projectCards(root, actions.snapshot);
@@ -40,13 +43,13 @@ function renderCards(root: HTMLElement, state: World, actions: Actions, close: (
   const cards = entries.map(([id, room], index) => {
     const card = document.createElement('article'); card.className = 'room-card'; card.dataset.room = id; card.style.gridColumn = String(room.cell % 4 + 1); card.style.gridRow = String(floorCount(state.layout) - Math.floor(room.cell / 4));
     const floor = document.createElement('small'); floor.textContent = room.cell < 4 ? 'Térreo' : `${Math.floor(room.cell / 4)}º andar`; card.append(floor);
-    const visit = document.createElement('button'); visit.append(roomThumbnail(state, id), document.createTextNode(room.name));
-    visit.setAttribute('aria-label', `Visitar ${room.name}`); visit.setAttribute('aria-pressed', String(state.room === id));
-    visit.addEventListener('click', () => { actions.enter(id); close(); }); card.append(visit);
+    const visit = document.createElement('button'); visit.append(roomThumbnail(state, id), roomCast(state, id), document.createTextNode(room.name));
+    visit.setAttribute('aria-label', uiText.go(room.name)); visit.setAttribute('aria-pressed', String(state.room === id));
+    visit.addEventListener('click', () => { const go = root.querySelector<HTMLElement>('#room-dialog')!.dataset.homeTab === 'map'; close(); actions.enter(id, go); }); card.append(visit);
     for (const [label, offset] of [['antes', -1], ['depois', 1]] as const) {
       const button = document.createElement('button'); button.textContent = offset < 0 ? '← Antes' : 'Depois →';
       button.className = 'room-reorder'; button.setAttribute('aria-label', `Mover ${room.name} ${label}`); const target = entries[index + offset]; button.disabled = !target || room.cell === 0 || target[1].cell === 0;
-      button.addEventListener('click', () => { actions.reorder(id, target![0]); root.querySelector<HTMLButtonElement>(`[aria-label="Visitar ${room.name}"]`)?.focus(); }); card.append(button);
+      button.addEventListener('click', () => { actions.reorder(id, target![0]); root.querySelector<HTMLButtonElement>(`[aria-label="${uiText.go(room.name)}"]`)?.focus(); }); card.append(button);
     }
     cardDrag(card, id, actions.reorder); return card;
   });
@@ -65,6 +68,11 @@ function cardDrag(card: HTMLElement, id: RoomId, reorder: Actions['reorder']) {
   card.addEventListener('click', e => { if (dragged) { e.preventDefault(); e.stopPropagation(); } }, true);
   const cancel = () => { active = null; card.classList.remove('dragging'); };
   card.addEventListener('pointercancel', cancel); card.addEventListener('lostpointercapture', cancel);
+}
+function roomCast(state: World, id: RoomId) {
+  const cast = document.createElement('span'); cast.className = 'room-cast'; cast.setAttribute('aria-hidden', 'true');
+  cast.append(...state.actors.filter(a => a.room === id).map(a => { const face = document.createElement('img'); face.src = portrait(a.id, a.look); face.alt = ''; face.draggable = false; return face; }));
+  return cast;
 }
 function projectCards(root: HTMLElement, snapshot: Actions['snapshot']) {
   let name = projects[0]!.title;

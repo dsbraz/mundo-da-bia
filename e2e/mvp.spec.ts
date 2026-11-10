@@ -17,9 +17,9 @@ test('trackpad, navigation strip and modular construction preserve the world', a
   await expect(page.locator('#structure-dialog')).toBeVisible();
   expect(Object.values((await readTown(page)).buildings[1]!.layout.rooms).map(r => r.cell)).toContain(4);
   await page.getByRole('button', { name: 'Mais um andar', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirmar módulo' }).click();
+  await page.getByRole('button', { name: 'Construir!' }).click();
   await expect(page.getByRole('button', { name: 'Mais um andar', exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Fechar estrutura' }).click();
+  await page.getByRole('button', { name: 'Fechar', exact: true }).click();
   await page.locator('#undo').click();
   expect(Object.values((await readTown(page)).buildings[1]!.layout.rooms).some(r => r.cell === 8)).toBe(false);
   await page.locator('#redo').click();
@@ -32,7 +32,7 @@ test('tap walks, dragging the background does not, and the square saves equipmen
   const before = await readTown(page), a = await point(page, 300, 50), b = await point(page, 650, 50);
   await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y); await page.mouse.up(); expect(await readTown(page)).toEqual(before);
   await tray(page, 'Turma'); await page.locator('#cast button').first().click(); await closeTray(page);
-  await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click(); await page.getByRole('button', { name: 'Levar para Rua', exact: true }).click();
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#close-map').click();
   await tap(page, 180, 420);
   await expect.poll(async () => (await readTown(page)).outdoor.bench).toBe('bia');
@@ -55,12 +55,11 @@ test('module previews cancel cleanly and explicit floor travel carries the held 
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   expect(await readTown(page)).toEqual(before);
   await page.getByRole('button', { name: 'Mais um andar', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirmar módulo', exact: true }).click();
-  await page.getByRole('button', { name: 'Fechar estrutura', exact: true }).click();
+  await page.getByRole('button', { name: 'Construir!', exact: true }).click();
+  await page.getByRole('button', { name: 'Fechar', exact: true }).click();
   await page.locator('#play-mode').click();
   await explore(page);
-  await page.getByRole('button', { name: 'Levar Bia', exact: true }).click();
-  await page.getByRole('button', { name: 'Sala · 1º andar', exact: true }).click();
+  await page.getByRole('button', { name: 'Ir para Sala', exact: true }).click();
   const town = await readTown(page), bia = town.actors[0]!;
   expect(bia.location).toEqual(town.location);
   expect(town.items.find(i => i.kind === 'microfone')).toMatchObject({ holder: 'bia', location: town.location });

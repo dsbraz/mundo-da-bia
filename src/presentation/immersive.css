@@ -24,3 +24,11 @@ select{display:none!important}.street .choice-cards[aria-label=Andar]{display:no
 #actor-context.folded>:not(#selected):not(#context-toggle){display:none!important}
 #actor-context #selected{display:inline-block;margin-right:12px}#context-toggle{font-size:11px!important;min-height:44px!important}
 #app{user-select:none}input,textarea{user-select:text}
+/* Stable header: Map left, Brincar/Criar switch in the middle, the mode's tray on the right, each mode with its own colour. */
+.modes{margin:0 auto;padding:3px;border-radius:16px;background:#fff7ddcc}.modes #play-mode[aria-pressed=true]{background:#bfe6df;border-color:var(--turquoise);color:#1d5a55}.modes #build-toggle[aria-pressed=true]{background:#f8d2c6;border-color:var(--coral);color:#7a3424}
+#app.building #tray-toggle{background:#f8d2c6}#app:not(.building) #tray-toggle{background:#bfe6df}
+#create-tabs{position:absolute;inset:84px auto auto 12px;display:flex;gap:6px;padding:4px;border-radius:16px;background:#fff7ddee;z-index:11}#create-tabs[hidden]{display:none}#create-tabs button{min-height:48px;border-radius:14px}#create-tabs button[aria-pressed=true]{background:#f8d2c6;border-color:var(--coral);color:#7a3424}
+/* Turma: one compact card per character; the pencil only on the selected one. */
+#cast .character-card{position:relative;min-width:0}#cast .character-card>.rename{position:absolute;top:2px;right:2px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border-radius:50%;font-size:0;display:none}#cast .character-card>.rename::before{width:24px;height:24px;flex-basis:24px}#cast .character-card:has(>.character[aria-pressed=true])>.rename{display:inline-flex}
+/* Lugares: big thumbnails with the faces of who is in each room. */
+#room-map .room-cast{display:flex;justify-content:center;gap:2px;min-height:30px;margin-top:-30px;position:relative}#room-map .room-cast img{width:30px;height:30px;border-radius:50%;background:#fffaf0;border:2px solid #fff}

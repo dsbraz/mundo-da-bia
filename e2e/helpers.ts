@@ -14,9 +14,13 @@ export async function tray(page: Page, tab?: string) {
 }
 export async function closeTray(page: Page) { if (await page.locator('#tray-toggle').getAttribute('aria-expanded') === 'true') await page.locator('#tray-toggle').click(); }
 export async function create(page: Page, name = 'Livre') {
-  await page.locator('#map-toggle').click(); await page.locator('#add-room').click();
+  await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#add-room').click();
   await page.getByRole('button', { name: `Criar ${name}`, exact: true }).click();
   await page.getByRole('button', { name: 'Construir cômodo', exact: true }).click();
+}
+/** In play, tapping the current room on the Map brings the selected character into it. */
+export async function bringHere(page: Page) {
+  await page.locator('#map-toggle').click(); await page.locator('#room-map .room-card > button[aria-pressed=true]').click();
 }
 export async function point(page: Page, x: number, y: number) {
   return (await points(page, [[x, y]]))[0]!;

@@ -2,6 +2,7 @@ import type { BuildingModel } from '../domain/neighborhood-types';
 import type { RoomTemplate } from '../domain/types';
 import { hospitalFacade, policeFacade, officeFacade, fireFacade, schoolFacade } from './civic-facades';
 import { stadiumFacade, clubFacade } from './sport-facades';
+import { uiText } from '../content/ui-text';
 const rect = (x: number, y: number, w: number, h: number, fill: string) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" stroke="#75837f" stroke-width="1.5"/>`;
 const panes = (x: number, y: number, w: number, h: number) => rect(x - 5, y - 5, w + 10, h + 10, '#f6f0e4') + rect(x, y, w, h, 'url(#glass)') + `<path d="M${x + w / 2} ${y}v${h}m${-w / 2} ${-h / 2}h${w}" fill="none" stroke="#f6f0e4" stroke-width="3"/>`;
 const facades: Partial<Record<BuildingModel, (floors: number) => string>> = { hospital: hospitalFacade, police: policeFacade, office: officeFacade, 'fire-station': fireFacade, school: schoolFacade, stadium: stadiumFacade, 'sports-club': clubFacade };
@@ -13,7 +14,7 @@ const rooms: Partial<Record<RoomTemplate, { wall: string; trim: string; label: s
   consultation: { wall: '#e3edeb', trim: '#a1c3be', label: 'Consultório' },
   ward: { wall: '#e7eddf', trim: '#b3c6ae', label: 'Descansar e cuidar' },
   dispatch: { wall: '#e1e7ee', trim: '#a3b3c6', label: 'Atendimento' },
-  investigation: { wall: '#e8e1d4', trim: '#b9ab94', label: 'Investigar' },
+  investigation: { wall: '#e8e1d4', trim: '#b9ab94', label: uiText.places.investigation },
   office: { wall: '#e4e7e1', trim: '#a2b3a8', label: 'Ideias e projetos' },
   meeting: { wall: '#ebe3d7', trim: '#c3b29e', label: 'Vamos conversar' },
   breakroom: { wall: '#e9eadb', trim: '#bac29e', label: 'Hora da pausa' },

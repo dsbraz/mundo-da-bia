@@ -17,7 +17,7 @@ export interface EditorActions {
 function on(root: HTMLElement, id: string, action: () => void) { root.querySelector(id)!.addEventListener('click', action); }
 export function createEditorControls(root: HTMLElement, actions: EditorActions) {
   let selected: number | null = null; let width = 1000;
-  on(root, '#build-toggle', actions.toggle);
+  on(root, '#build-toggle', actions.toggle); on(root, '#decorate-mode', actions.toggle);
   on(root, '#undo', actions.undo); on(root, '#redo', actions.redo);
   on(root, '#flip-piece', () => { if (selected !== null) actions.edit({ type: 'flip', id: selected }); });
   on(root, '#remove-piece', () => { if (selected !== null) actions.edit({ type: 'remove', id: selected }); });

@@ -3,7 +3,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { expect, test } from '@playwright/test';
-import { ready, read, tray, closeTray, drag, tap, visitNeighbor, onPiece } from './helpers';
+import { ready, read, drag, tap, visitNeighbor, onPiece, bringHere } from './helpers';
 test('pega roupa no armário e brinquedo na gaveta e entrega no colo', async ({ page }) => {
   const world = initialWorld(); world.actors[1]!.room = 'quarto'; world.actors[1]!.seat = null;
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
@@ -30,7 +30,7 @@ test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar',
   world = transition(world, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await page.emulateMedia({ reducedMotion: 'reduce' }); await ready(page);
-  await visitNeighbor(page); await tray(page, 'Turma'); await page.locator('#bring-here').click(); await closeTray(page);
+  await visitNeighbor(page); await bringHere(page);
   const bia = (await read(page)).actors[0]!;
   await drag(page, [bia.x, bia.y - 110], await onPiece(page, 'bed', 620, 300));
   expect((await read(page)).actors[0]).toMatchObject({ seat: 'bed', resting: true });

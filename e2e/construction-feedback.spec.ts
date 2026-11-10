@@ -5,12 +5,12 @@ import { neighborhoodAction } from '../src/domain/neighborhood';
 test('ampliação iniciada na rua pertence à construção mostrada e sobrevive à recarga', async ({ page }) => {
   await ready(page);
   await page.locator('#map-toggle').click();
-  await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
+  await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.locator('#construct-structure').click();
   await page.getByRole('button', { name: 'Ampliar Minha casa', exact: true }).click();
   await page.getByRole('button', { name: 'Adicionar Cozinha', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirmar módulo', exact: true }).click();
+  await page.getByRole('button', { name: 'Construir!', exact: true }).click();
   expect(Object.values((await readTown(page)).buildings[0]!.layout.rooms).some(r => r.template === 'kitchen')).toBe(true);
   await page.reload();
   expect(Object.values((await readTown(page)).buildings[0]!.layout.rooms).some(r => r.template === 'kitchen')).toBe(true);
@@ -23,7 +23,7 @@ test('limite de doze cômodos explica como continuar', async ({ page }) => {
   await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v2', JSON.stringify({ version: 2, town: value })), town);
   await page.reload(); await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.locator('#construct-structure').click();
-  await expect(page.getByText('Esta construção tem 12 de 12 cômodos. Crie outra construção para continuar.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Esta casa está cheia. Que tal outra casa?', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Adicionar Cozinha', exact: true })).toBeDisabled();
 });
 
@@ -51,6 +51,6 @@ test('andar cheio permite ampliar no próximo andar sem procurar outra opção',
   await page.locator('#construct-structure').click();
   await expect(page.getByRole('button', { name: 'Adicionar Cozinha', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Adicionar Cozinha', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirmar módulo', exact: true }).click();
+  await page.getByRole('button', { name: 'Construir!', exact: true }).click();
   expect(Object.values((await readTown(page)).buildings[0]!.layout.rooms).find(r => r.cell === 4)?.template).toBe('kitchen');
 });

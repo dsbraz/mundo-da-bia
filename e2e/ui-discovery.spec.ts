@@ -23,8 +23,10 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 1024
   });
 }
 
-test('mapa oferece ações da casa sem procurar em Organizar', async ({ page }) => {
+test('Organizar oferece as ações da casa; Lugares só serve para ir', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
+  await expect(page.getByRole('button', { name: 'Ações de Minha casa: ampliar, mover e excluir', exact: true })).toBeHidden();
+  await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   await page.getByRole('button', { name: 'Ações de Minha casa: ampliar, mover e excluir', exact: true }).click();
   const dialog = page.locator('#plot-dialog');
   await expect(dialog.getByRole('button', { name: 'Ampliar Minha casa', exact: true })).toBeVisible();
@@ -43,7 +45,7 @@ test('mapa mostra a mobília real e explica a capacidade esgotada', async ({ pag
   let town = await readTown(page);
   for (let cell = 2; cell < 12; cell++) town = neighborhoodAction(town, { type: 'add-module', building: 1, cell, template: 'empty' });
   await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v2', JSON.stringify({ version: 2, town: value })), town);
-  await page.reload(); await page.locator('#map-toggle').click();
+  await page.reload(); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   await expect(page.locator('#add-room')).toBeDisabled();
   await expect(page.locator('#room-capacity')).toHaveText('12 de 12 cômodos. Crie outra construção para continuar.');
   const pieces = town.buildings[0]!.layout.pieces.filter(p => p.room === town.buildings[0]!.entry);
@@ -51,8 +53,10 @@ test('mapa mostra a mobília real e explica a capacidade esgotada', async ({ pag
   await page.screenshot({ path: 'reports/ui-house-map.png' });
 });
 
-test('ações da construção atual aparecem junto do mapa sem rolar até o bairro', async ({ page }) => {
+test('ações da construção atual aparecem em Organizar sem rolar até o bairro', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
+  await expect(page.getByRole('button', { name: 'Ampliar, mover ou excluir Minha casa', exact: true })).toBeHidden();
+  await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   const action = page.getByRole('button', { name: 'Ampliar, mover ou excluir Minha casa', exact: true });
   await expect(action).toBeInViewport(); await action.click();
   await expect(page.locator('#plot-dialog').getByRole('button', { name: 'Excluir Minha casa…', exact: true })).toBeVisible();
@@ -78,4 +82,13 @@ test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async 
   await page.locator('#play-tray').getByRole('button', { name: 'Turma', exact: true }).click();
   await expect.poll(() => card.getAttribute('src')).not.toBe(before);
   await page.screenshot({ path: 'reports/ui-dock-dressed-768.png' });
+});
+
+test('a Turma inteira cabe sem rolagem a 768 px, com o lápis só no cartão escolhido', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page); await tray(page, 'Turma');
+  await expect(page.locator('#cast .character')).toHaveCount(7);
+  await expect(page.locator('#cast .rename:visible')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Mudar o nome de Bia', exact: true })).toBeVisible();
+  expect(await page.locator('#play-tray').evaluate(n => n.scrollHeight <= n.clientHeight + 1)).toBe(true);
+  await page.screenshot({ path: 'reports/cast-768.png' });
 });

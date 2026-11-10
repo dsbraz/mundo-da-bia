@@ -64,7 +64,7 @@ test('o painel tem cinco botões de ícone fixos que não mudam de lugar ao pega
   const panel = page.locator('#actions button');
   const boxes = async () => Promise.all((await panel.all()).map(b => b.boundingBox()));
   await expect(panel).toHaveCount(5);
-  expect(await panel.allTextContents()).toEqual(['Vestir', 'Brincar', 'Descansar', 'Soltar', 'Comer']);
+  expect(await panel.allTextContents()).toEqual(['Vestir', 'Jogar', 'Descansar', 'Soltar', 'Comer']);
   for (const button of await panel.all()) await expect(button.locator('img')).toHaveAttribute('src', /\.svg$/);
   await expect(page.locator('#actor-context')).not.toContainText('Pronto para');
   const before = await boxes(); await page.locator('#actions').screenshot({ path: 'reports/panel-before.png' });

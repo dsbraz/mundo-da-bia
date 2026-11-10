@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { ready, read, create, tray, closeTray, drag, visitNeighbor } from './helpers';
+import { ready, read, create, drag, visitNeighbor, bringHere } from './helpers';
 test('cria por cartão, renomeia e reordena sem transportar personagens', async ({ page }) => {
   await ready(page); await create(page, 'Cozinha'); let state = await read(page);
   expect(state.layout.rooms['room-3']).toMatchObject({ name: 'Cozinha', size: 'medium', cell: 2 }); expect(state.actors[0]!.room).toBe('sala');
-  await tray(page, 'Turma'); await page.locator('#bring-here').click(); expect((await read(page)).actors[0]!.room).toBe('room-3'); await closeTray(page);
+  await bringHere(page); expect((await read(page)).actors[0]!.room).toBe('room-3');
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#room-options summary').click();
   await page.locator('#current-room-name').fill('Café'); await page.locator('#room-rename').click();
   await page.getByRole('button', { name: 'Mover Café antes' }).click(); expect((await read(page)).layout.rooms['room-3']!.cell).toBe(1);
-  await page.getByRole('button', { name: 'Visitar Sala & palco' }).click(); expect((await read(page)).actors[0]!.room).toBe('room-3');
+  await page.getByRole('button', { name: 'Ir para Sala & palco' }).click(); expect((await read(page)).actors[0]!.room).toBe('room-3');
   await visitNeighbor(page); expect((await read(page)).room).toBe('room-3'); state = await read(page);
   await page.reload(); expect(await read(page)).toEqual(state);
 });

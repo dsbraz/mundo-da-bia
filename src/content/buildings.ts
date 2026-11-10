@@ -4,7 +4,7 @@ export const buildingChoices: Record<BuildingModel, { name: string; description:
   apartment: { name: 'Prédio', description: 'entrada e dois ambientes', preview: 'Prédio com dois andares', group: 'homes' },
   shop: { name: 'Loja', description: 'salão e fundos', preview: 'Loja com salão e fundos', group: 'services' },
   hospital: { name: 'Hospital', description: 'recepção, consultório e enfermaria', preview: 'Hospital com três ambientes', group: 'services' },
-  police: { name: 'Delegacia', description: 'atendimento e investigação', preview: 'Delegacia com três ambientes', group: 'services' },
+  police: { name: 'Delegacia', description: 'ajuda e achados e perdidos', preview: 'Delegacia com três ambientes', group: 'services' },
   office: { name: 'Escritório', description: 'trabalho, reunião e copa', preview: 'Escritório com quatro ambientes', group: 'services' },
   'fire-station': { name: 'Bombeiros', description: 'central, descanso e copa', preview: 'Bombeiros com três ambientes', group: 'services' },
   school: { name: 'Escola', description: 'sala de aula, biblioteca e pátio', preview: 'Escola com quatro ambientes', group: 'services' },

@@ -1,3 +1,5 @@
+import { uiText } from '../content/ui-text';
+const trayIcons: Record<string, string> = { [uiText.tray.cast]: 'toybox', [uiText.tray.furniture]: 'catalog', [uiText.tray.street]: 'plot', [uiText.tray.rooms]: 'blocks' };
 export function createShell(root: HTMLElement, cancel: () => void) {
   const context = root.querySelector('#actor-context')!;
   const contextToggle = root.querySelector<HTMLButtonElement>('#context-toggle')!;
@@ -13,12 +15,12 @@ export function createShell(root: HTMLElement, cancel: () => void) {
   const toggle = root.querySelector<HTMLButtonElement>('#tray-toggle')!;
   function render() {
     root.classList.toggle('tray-open', opened);
-    root.querySelector<HTMLElement>('#play-mode')!.hidden = !building;
-    root.querySelector<HTMLElement>('#construct-mode')!.hidden = !building;
+    root.querySelector<HTMLElement>('#create-tabs')!.hidden = !building;
     play.hidden = building || !opened; catalog.hidden = !building || !opened || street || constructing;
     root.querySelector<HTMLElement>('#construction-tray')!.hidden = !constructing || !opened;
     streetTray.hidden = !building || !opened || !street || constructing;
     toggle.textContent = trayLabel(building, street, constructing);
+    toggle.style.setProperty('--button-icon', `url('/icons/ui-${trayIcons[toggle.textContent]}.svg')`);
     toggle.setAttribute('aria-expanded', String(opened));
   }
   window.addEventListener('keydown', e => { if (e.key === 'Escape') { opened = false; render(); } });
@@ -30,7 +32,6 @@ export function createShell(root: HTMLElement, cancel: () => void) {
       const active = b.dataset.playTab === id; b.setAttribute('aria-pressed', String(active));
       root.querySelector<HTMLElement>(`#${b.dataset.playTab}`)!.hidden = !active;
     });
-    root.querySelector<HTMLElement>('#bring-here')!.hidden = id !== 'cast';
   }
   tabs.forEach(b => b.addEventListener('click', () => tab(b.dataset.playTab!)));
   return {
@@ -43,6 +44,6 @@ export function createShell(root: HTMLElement, cancel: () => void) {
 }
 
 function trayLabel(building: boolean, street: boolean, constructing: boolean) {
-  if (constructing) return 'Casas e cômodos';
-  return building ? (street ? 'Construir' : 'Móveis e cores') : 'Turma';
+  if (constructing) return uiText.tray.rooms;
+  return building ? (street ? uiText.tray.street : uiText.tray.furniture) : uiText.tray.cast;
 }
