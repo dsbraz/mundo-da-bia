@@ -23,14 +23,19 @@ export function stepAside(world: World, player: Actor, origin: Point): Move[] {
   return moves;
 }
 const half = (actor: Actor) => actor.kind === 'cat' ? 35 : 42;
-/** The nearest free floor spot off the board at the character's depth, first with nobody within 55 sideways, then with nobody close at that depth. */
+/** The nearest floor spot off the board at the character's depth. Always off the board; then, as far as the room allows: nobody within 55
+ *  sideways, nobody close at that depth, no furniture in front hiding it or in the way, in that order of giving up. */
 function aside(world: World, player: Actor, actor: Actor, zone: Zone, taken: Move[]): Point | undefined {
   const y = onFloor(world, actor).y, w = half(actor), blocks = world.layout.pieces.filter(p => p.room === world.room).map(footprint).filter(b => !!b);
   const others = world.actors.filter(o => o.id !== actor.id && o.id !== player.id && o.room === world.room && !taken.some(m => m.actor === o.id)).map(o => ({ x: o.x, y: o.y })).concat(taken.map(m => m.point));
-  const clear = (x: number) => walkable(world, { x, y }) && (x + w <= zone.left - 6 || x - w >= zone.right + 6)
-    && blocks.every(b => b.bottom + 8 <= y || x + w <= b.left || x - w >= b.right) && blocks.every(b => b.top > y + 4 || b.bottom < y - 4 || b.right <= Math.min(x, actor.x) - w || b.left >= Math.max(x, actor.x) + w);
-  const spots = Array.from({ length: Math.floor(roomWidth(world) / 10) + 1 }, (_, i) => i * 10).filter(clear).sort((a, b) => Math.abs(a - actor.x) - Math.abs(b - actor.x));
-  const x = spots.find(x => others.every(o => Math.abs(o.x - x) >= 55)) ?? spots.find(x => others.every(o => Math.abs(o.x - x) >= 55 || Math.abs(o.y - y) >= 60));
+  const hidden = (x: number) => blocks.some(b => b.bottom + 8 > y && x + w > b.left && x - w < b.right);
+  const blocked = (x: number) => blocks.some(b => b.top <= y + 4 && b.bottom >= y - 4 && b.right > Math.min(x, actor.x) - w && b.left < Math.max(x, actor.x) + w);
+  const spots = Array.from({ length: Math.floor(roomWidth(world) / 10) + 1 }, (_, i) => i * 10)
+    .filter(x => walkable(world, { x, y }) && (x + w <= zone.left - 6 || x - w >= zone.right + 6)).sort((a, b) => Math.abs(a - actor.x) - Math.abs(b - actor.x));
+  const levels = [(x: number) => !hidden(x) && !blocked(x) && others.every(o => Math.abs(o.x - x) >= 55),
+    (x: number) => !hidden(x) && !blocked(x) && others.every(o => Math.abs(o.x - x) >= 55 || Math.abs(o.y - y) >= 60),
+    (x: number) => !hidden(x) && !blocked(x), (x: number) => !hidden(x), () => true];
+  const x = levels.map(ok => spots.find(ok)).find(found => found !== undefined);
   return x === undefined ? undefined : { x, y };
 }
 function candidates(world: World, actor: Actor, kind: GameKind) {

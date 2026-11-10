@@ -79,3 +79,16 @@ it('quem ficaria sobre o giz ou colado à criança em alguma casa dá passos par
   const far = { ...world, actors: world.actors.map(a => a.id === 'bia' ? a : { ...a, x: 100, seat: null }) };
   expect(stepAside(far, bia, { x: 600, y: 530 })).toEqual([]);
 });
+/** The cast gathered on the floor at `shift`, with Bia at `x`; whoever still stands over the board after stepping aside. */
+function overBoard(base: ReturnType<typeof initialWorld>, shift: number, x: number) {
+  const world = structuredClone(base);
+  world.actors = world.actors.map((a, i) => ({ ...a, room: world.room, seat: null, x: a.id === 'bia' ? x : 100 + (i * 130 + shift) % 800, y: a.kind === 'cat' ? 540 : 530 }));
+  const bia = world.actors[0]!, origin = (gameSpace(world, bia, 'hopscotch') ?? freestFloor(world, bia, 'hopscotch'))!, board = hopBoard(origin), moves = stepAside(world, bia, origin);
+  return world.actors.filter(a => a.id !== 'bia').map(a => ({ ...a, ...moves.find(m => m.actor === a.id)?.point })).filter(a => body(a).right > board.left && body(a).left < board.right).map(a => `${a.id} (deslocamento ${shift}, Bia em ${x})`);
+}
+it('com a turma toda reunida no chão, na sala ou no quintal mobiliado, ninguém fica sobre o tabuleiro', async () => {
+  const { addRoom } = await import('../domain/rooms');
+  for (const base of [initialWorld(), addRoom(initialWorld(), { name: 'Quintal', template: 'playground', size: 'small', cell: 2 })]) {
+    for (let shift = 0; shift < 400; shift += 23) for (const x of [200, 520, 800]) expect(overBoard(base, shift, x)).toEqual([]);
+  }
+});
