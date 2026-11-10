@@ -34,14 +34,32 @@
 #app .home-tabs button,#app .module-card,#app .house-plots .empty-plot { border-radius:12px; }
 #app button:focus-visible,#app summary:focus-visible { outline:3px solid #3e776f; outline-offset:3px; }
 @media(orientation:portrait) {
-  /* The game panel takes the dock's own height: the scene (and the people in it) never shrink while playing. */
-  #app,#app.playing-game { --dock-height:calc(35dvh - var(--footer-height)); }
+  /* The game panel takes the dock's own height: the scene (and the people in it) never shrink while playing. The dock is sized to its
+     controls, not to a share of the screen, so the scene takes the rest; 260 px keeps the whole opening cast in view at 768 px. */
+  #app,#app.playing-game { --dock-height:calc(260px + var(--footer-height)); }
+  #app #play-hint { display:flex; flex-direction:column; justify-content:center; }
+  #app #play-hint .hint-cast img { width:80px; height:80px; }
+  #app #actor-context .actions { grid-template-columns:repeat(auto-fill,96px); }
+  #app #actor-context .panel-button { width:96px; min-width:96px; height:96px; }
+  #app #actor-context .panel-button img { width:48px; height:48px; }
+  #app #game-panel { display:grid; grid-template-columns:auto auto 1fr; align-content:center; align-items:center; }
+  #app #game-panel > :not(button) { grid-column:1/-1; }
   #app.tray-open { --dock-height:calc(40dvh - var(--footer-height)); }
   #app.tray-open:has(#build-inspector:not([hidden])) { --dock-height:calc(50dvh - var(--footer-height)); }
   #app.tray-open:has(#build-inspector:not([hidden])) #build-catalog { left:0; height:calc(var(--dock-height) - 150px); border-left:0; }
   #app.tray-open #build-inspector { width:100%; height:150px; bottom:calc(var(--footer-height) + var(--dock-height) - 150px)!important; }
   #app #piece-colors { display:inline-flex; margin:0 8px 8px 0; }
   #app #build-inspector .actions { display:inline-flex; }
+}
+@media(orientation:portrait) and (max-width:599px) {
+  /* Phones: four portraits a row and the status badges beside the name keep every dock state within 250 px. */
+  #app,#app.playing-game { --dock-height:calc(250px + var(--footer-height)); }
+  #app #play-hint .hint-cast button { width:80px; }
+  #app #play-hint .hint-cast img { width:64px; height:64px; }
+  #app #actor-context #actor-status { display:inline-flex; vertical-align:middle; margin:0 0 0 8px; }
+  #app #actor-context .actions { grid-template-columns:repeat(auto-fill,80px); }
+  #app #actor-context .panel-button { width:80px; min-width:80px; height:80px; }
+  #app #actor-context .panel-button img { width:40px; height:40px; }
 }
 @media(max-height:600px) and (orientation:landscape) {
   #app { --dock-height:120px; --footer-height:0px; }

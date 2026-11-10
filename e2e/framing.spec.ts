@@ -80,3 +80,27 @@ test('com a brincadeira aberta a 768, a cena não encolhe: mesma escala do paine
   }
   await page.screenshot({ path: 'reports/framing-playing-768.png' });
 });
+
+// In portrait the dock below the scene holds its controls without a big empty band and without scrolling, and never covers the scene.
+for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }]) {
+  test(`retrato a ${size.width}: painel abaixo da cena compacto, sem vão grande nem rolagem`, async ({ page }) => {
+    await page.setViewportSize(size); await ready(page);
+    const check = async (id: string) => {
+      const dock = await page.locator(id).evaluate(panel => {
+        const box = panel.getBoundingClientRect(), style = getComputedStyle(panel);
+        const kids = [...panel.querySelectorAll<HTMLElement>('button, h2, p, img')].filter(n => n.checkVisibility() && n.getBoundingClientRect().height > 0 && n.textContent!.trim() + n.tagName !== 'P');
+        const top = Math.min(...kids.map(n => n.getBoundingClientRect().top)), bottom = Math.max(...kids.map(n => n.getBoundingClientRect().bottom));
+        return { top: box.top, overflow: panel.scrollHeight - panel.clientHeight, above: top - box.top - Number.parseFloat(style.paddingTop), below: box.bottom - bottom - Number.parseFloat(style.paddingBottom) };
+      });
+      const scene = (await page.locator('#world').boundingBox())!;
+      expect(dock.overflow, `${id} rola`).toBeLessThanOrEqual(1);
+      expect(dock.above, `${id}: vão acima`).toBeLessThanOrEqual(64); expect(dock.below, `${id}: vão abaixo`).toBeLessThanOrEqual(64);
+      expect(scene.y + scene.height, `${id} sobre a cena`).toBeLessThanOrEqual(dock.top + 1);
+    };
+    await check('#play-hint');
+    await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+    await check('#actor-context');
+    await page.getByRole('button', { name: 'Jogar', exact: true }).click(); await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
+    await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing'); await check('#game-panel');
+  });
+}
