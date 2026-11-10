@@ -2,7 +2,7 @@ import { roomWidth } from '../domain/geometry';
 import { childGames } from '../presentation/child-games';
 import '../presentation/child-games.css';
 import { illustratedChoices } from '../presentation/illustrated-choices';
-import { viewport, positionTargets, screenScale, streetFrame } from '../presentation/viewport';
+import { viewport, positionTargets, screenScale, streetFrame, pieceSpans } from '../presentation/viewport';
 import { actorAt, sourceAt } from '../presentation/targets';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
 import { sceneFeedback } from './scene-feedback';
@@ -180,12 +180,17 @@ function refresh() {
   scene.neighborhood(town); scene.camera(camera);
   scene.buildMode(building, selectedPiece);
   scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street', constructing);
-  view?.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state), state.streetWidth ? streetFrame : 600);
+  frameScene();
   renderControls();
   root.querySelector<HTMLButtonElement>('#construct-structure')!.textContent = town.location.kind === 'street' ? 'Escolher construção para ampliar' : 'Adicionar cômodo ou andar';
   root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
   root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building));
   root.querySelector('#decorate-mode')!.setAttribute('aria-pressed', String(building && !constructing));
+}
+/** Street: its closer lower band. Interior: the full height, opening where the most pieces are whole with the chosen character in view. */
+function frameScene() {
+  const chosen = state.actors.find(a => a.id === selected && a.room === state.room), street = !!state.streetWidth;
+  view?.scene(JSON.stringify(town.location), street ? 1000 : roomWidth(state), street ? streetFrame : 600, street ? [] : pieceSpans(state), chosen && !street ? { left: chosen.x - 42, right: chosen.x + 42 } : undefined);
 }
 function renderControls() {
   const focus = state.layout.pieces.find(p => p.id === selectedPiece) ?? state.actors.find(a => a.id === selected)!;
@@ -216,7 +221,7 @@ void loadFonts().then(() => { game = new Phaser.Game({
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
     view = viewport(current.canvas, (width, height, x, y) => { scene.frame(width, height, x, y); positionTargets(root); });
-    view.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state), state.streetWidth ? streetFrame : 600);
+    frameScene();
     new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); view?.render(); }).observe(root.querySelector('#world')!);
     renderControls();
     firstTouch(root, { seen: loadFirstTouchSeen(), done: () => saveFirstTouchSeen(), target: () => { const bia = state.actors.find(a => a.id === selected)!; return { x: bia.x, y: bia.y - 90 }; },

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { framing, screenToWorld, streetFrame, viewport, worldToScreen } from './viewport';
+import { framing, openingX, screenToWorld, streetFrame, viewport, worldToScreen } from './viewport';
 // Drawn height of a human (hair to shoes) in logical units, measured on the rendered capture: 131 px at scale .768.
 const human = 170;
 // The scene area of a 768x1024 tablet in portrait, below the header and above the panel.
@@ -67,4 +67,32 @@ describe('acompanhamento da câmera', () => {
     const afterPause = views.at(-1)!;
     expect(afterPause - views.at(-2)!).toBeCloseTo((350 - views.at(-2)!) * .12);
   });
+});
+
+describe('onde o cômodo abre', () => {
+  it('abre na janela que mostra mais móveis inteiros, com a criança escolhida sempre à vista', () => {
+    const ward = [{ left: 14, right: 439 }, { left: 430, right: 540 }, { left: 600, right: 680 }], bia = { left: 478, right: 562 };
+    const x = openingX(ward, 793, 1000, bia);
+    expect(x).toBeLessThanOrEqual(14); expect(x + 793).toBeGreaterThanOrEqual(680);
+    expect(openingX([{ left: 0, right: 300 }, { left: 700, right: 1000 }], 500, 1000, { left: 800, right: 880 })).toBe(500);
+    expect(openingX([], 1200, 1000)).toBe(-100);
+    expect(openingX([{ left: 14, right: 439 }, { left: 640, right: 700 }, { left: 720, right: 780 }], 617, 1000, { left: 300, right: 384 })).toBeLessThanOrEqual(14);
+  });
+  it('abre a cena com a cama da enfermaria inteira a 768', () => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} });
+    const canvas = { parentElement: { clientWidth: 768, clientHeight: 582 }, style: { setProperty() {} }, dataset: {} as Record<string, string> } as unknown as HTMLCanvasElement;
+    const view = viewport(canvas, () => {});
+    view.scene('enfermaria', 1000, 600, [{ left: 14, right: 439 }, { left: 430, right: 540 }], { left: 478, right: 562 });
+    expect(Number(canvas.dataset.viewX)).toBeLessThanOrEqual(14);
+    view.scene('enfermaria', 1000, 600, [{ left: 14, right: 439 }], { left: 900, right: 990 });
+    expect(Number(canvas.dataset.viewX)).toBeLessThanOrEqual(14);
+    vi.unstubAllGlobals();
+  });
+});
+it('cada peça do cômodo atual vira uma faixa horizontal pelo seu desenho', async () => {
+  const { initialWorld } = await import('../domain/world');
+  const { pieceSpans } = await import('./viewport');
+  const world = initialWorld();
+  expect(pieceSpans(world)).toContainEqual({ left: 292, right: 518 });
+  expect(pieceSpans(world)).toHaveLength(world.layout.pieces.filter(p => p.room === world.room).length);
 });
