@@ -30,6 +30,8 @@ export function openingX(spans: Span[], visible: number, world: number, must?: S
 export const personWeight = 10_000;
 /** The chosen character stays this many screen pixels away from the scene's edge when a place opens. */
 export const openingMargin = 24;
+/** One follow step toward a target `gap` away; within half a unit it lands on it, so the camera comes to rest instead of creeping. */
+const ease = (gap: number, step: number) => Math.abs(gap) < .5 ? gap : gap * step;
 function offset(center: number, world: number, visible: number) {
   return visible >= world ? (world - visible) / 2 : clamp(center - visible / 2, world - visible);
 }
@@ -74,8 +76,8 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
       const step = followFactor(followElapsed(now, followed)); followed = now; shown();
       const half = { x: parent.clientWidth / view.scale * slack, y: parent.clientHeight / view.scale * slack };
       const dx = point.x - center.x, dy = point.y - 70 - center.y;
-      if (Math.abs(dx) > half.x) center.x += (dx - Math.sign(dx) * half.x) * step;
-      if (Math.abs(dy) > half.y) center.y += (dy - Math.sign(dy) * half.y) * step;
+      if (Math.abs(dx) > half.x) center.x += ease(dx - Math.sign(dx) * half.x, step);
+      if (Math.abs(dy) > half.y) center.y += ease(dy - Math.sign(dy) * half.y, step);
       render();
     },
   };

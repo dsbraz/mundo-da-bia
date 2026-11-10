@@ -67,6 +67,11 @@ describe('acompanhamento da câmera', () => {
     const afterPause = views.at(-1)!;
     expect(afterPause - views.at(-2)!).toBeCloseTo((350 - views.at(-2)!) * .12);
   });
+  it('chega e para: a menos de meio ponto do alvo, encosta nele em vez de deslizar para sempre', () => {
+    const { view, views } = camera(false);
+    for (let t = 1000; t < 4000; t += 16) view.follow({ x: 700, y: 430 }, t, 0);
+    expect(views.at(-1)).toBe(200);
+  });
   it('sem folga, centra o ponto (a amarelinha enquadra o tabuleiro, não só a criança)', () => {
     const { view, views } = camera(true);
     view.follow({ x: 700, y: 430 }, 1000);
