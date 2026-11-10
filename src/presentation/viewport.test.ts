@@ -88,6 +88,11 @@ describe('onde o cômodo abre', () => {
     expect(x).toBeLessThanOrEqual(14); expect(x + 793).toBeGreaterThanOrEqual(680);
     expect(openingX([{ left: 0, right: 300 }, { left: 700, right: 1000 }], 500, 1000, { left: 800, right: 880 })).toBe(500);
     expect(openingX([], 1200, 1000)).toBe(-100);
+    // A list of musts: the first that fits stays whole; a phone too narrow for the first keeps the next.
+    const both = { left: 300, right: 800 }, child = { left: 300, right: 400 };
+    expect(openingX([], 600, 1000, [both, child])).toBeLessThanOrEqual(300); expect(openingX([], 600, 1000, [both, child]) + 600).toBeGreaterThanOrEqual(800);
+    const phone = openingX([], 300, 1000, [both, child], [{ left: 900, right: 990 }]);
+    expect(phone).toBeLessThanOrEqual(300); expect(phone + 300).toBeGreaterThanOrEqual(400);
     expect(openingX([{ left: 14, right: 439 }, { left: 640, right: 700 }, { left: 720, right: 780 }], 617, 1000, { left: 300, right: 384 })).toBeLessThanOrEqual(14);
   });
   it('abre centrada nas pessoas: a turma inteira antes dos móveis, com a escolhida sempre à vista', () => {

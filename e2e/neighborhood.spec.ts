@@ -92,7 +92,36 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
     expect(edges.left).toBeGreaterThanOrEqual(world.x); expect(edges.right).toBeLessThanOrEqual(world.x + world.width);
     // Beside the house just left: the right part of its facade is in view too.
     expect(edges.door).toBeGreaterThan(world.x); expect(edges.door).toBeLessThan(world.x + world.width);
+    // Whoever left the house arrives whole, 24 px or more inside the scene.
+    const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!, ring = await streetRing(page, bia.x);
+    expect(ring.left - world.x).toBeGreaterThanOrEqual(24); expect(world.x + world.width - ring.right).toBeGreaterThanOrEqual(24);
     await tap(page, plotStart(2) + 125, 330);
     await expect(page.locator('#plot-dialog')).toBeVisible();
+  });
+}
+
+/** Screen x of street points, before any pan. */
+const screenX = (page: import('@playwright/test').Page, xs: number[]) => page.locator('canvas').evaluate((c, xs) => {
+  const box = c.getBoundingClientRect(), scale = box.width / Number(c.dataset.viewWidth), offset = Number(c.dataset.viewX) + Number(c.dataset.cameraX);
+  return xs.map(x => box.x + (x - offset) * scale);
+}, xs);
+/** A street character's ring, as wide as indoors so the arms are inside it too. */
+const streetRing = async (page: import('@playwright/test').Page, x: number) => { const [left, right] = await screenX(page, [x - 42, x + 42]); return { left: left!, right: right! }; };
+for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+  test(`ao sair de casa num jogo novo a ${viewport.width}, a Bia chega inteira à rua, a 24 px da borda`, async ({ page }) => {
+    await page.setViewportSize(viewport); await ready(page);
+    await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
+    await expect(page.locator('canvas')).toHaveAttribute('data-street', 'true');
+    const town = await readTown(page), bia = town.actors.find(a => a.id === 'bia')!, world = (await page.locator('#world').boundingBox())!;
+    expect(bia.location).toEqual({ kind: 'street' });
+    const ring = await streetRing(page, bia.x);
+    expect(ring.left - world.x).toBeGreaterThanOrEqual(24); expect(world.x + world.width - ring.right).toBeGreaterThanOrEqual(24);
+    await page.screenshot({ path: `reports/street-arrival-${viewport.width}.png` });
+    if (viewport.width < 768) return;
+    // On tablets and up, the nearest free plot's sign is whole beside her too.
+    const free = [...Array(town.plots).keys()].find(p => !town.buildings.some(b => b.plot === p))!;
+    const [left, right] = await screenX(page, [plotStart(free) + 40, plotStart(free) + 261]);
+    expect(left).toBeGreaterThanOrEqual(world.x); expect(right).toBeLessThanOrEqual(world.x + world.width);
   });
 }

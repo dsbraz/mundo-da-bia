@@ -15,16 +15,17 @@ export const pieceSpans = (state: World): Span[] => state.layout.pieces.filter(p
 export const peopleSpans = (state: World): Span[] => state.actors.filter(a => a.room === state.room).map(a => ({ left: a.x - (a.kind === 'cat' ? 35 : 42), right: a.x + (a.kind === 'cat' ? 35 : 42) }));
 /** Where a place opens: always with `must` (the chosen character, with its margin) in view when it fits, then the window with the most
  *  whole people, then the most whole furniture by width (a bed outweighs a lamp); ties lean toward the people. */
-export function openingX(spans: Span[], visible: number, world: number, must?: Span, people: Span[] = []) {
+export function openingX(spans: Span[], visible: number, world: number, must: Span | Span[] = [], people: Span[] = []) {
   const middle = (world - visible) / 2;
   if (visible >= world) return middle;
   const options = Array.from({ length: Math.floor((world - visible) / 10) + 1 }, (_, i) => i * 10).concat(world - visible);
   const fits = (x: number, s: Span) => s.left >= x && s.right <= x + visible;
-  const allowed = options.filter(x => !must || fits(x, must));
+  // `must` may list fallbacks: the first one that fits the view is kept whole.
+  const allowed = [must].flat().map(m => options.filter(x => fits(x, m))).find(fitting => fitting.length) ?? options;
   const whole = (x: number) => people.filter(s => fits(x, s)).length * personWeight + spans.filter(s => fits(x, s)).reduce((sum, s) => sum + s.right - s.left, 0);
   // Ties lean toward the people (centred on them), or the middle of the place without anyone.
   const lean = people.length ? people.reduce((sum, s) => sum + s.left + s.right, 0) / people.length / 2 - visible / 2 : middle;
-  return (allowed.length ? allowed : options).reduce((best, x) => whole(x) > whole(best) || whole(x) === whole(best) && Math.abs(x - lean) < Math.abs(best - lean) ? x : best);
+  return allowed.reduce((best, x) => whole(x) > whole(best) || whole(x) === whole(best) && Math.abs(x - lean) < Math.abs(best - lean) ? x : best);
 }
 /** Wider than any room, so one more whole person always beats any amount of furniture. */
 export const personWeight = 10_000;
@@ -38,7 +39,7 @@ function offset(center: number, world: number, visible: number) {
 export function viewport(canvas: HTMLCanvasElement, changed: (width: number, height: number, x: number, y: number) => void) {
   const parent = canvas.parentElement!;
   let center: Point = { x: 500, y: 360 }, width = 1000, frame = 600, room = '', manual = false, followed: number | null = null;
-  let opening: { spans: Span[]; must?: Span | undefined; people: Span[] } | null = null;
+  let opening: { spans: Span[]; must?: Span | Span[] | undefined; people: Span[] } | null = null;
   let view = { scale: 1, x: 0, y: 0 };
   // `center` is the intended focus and survives resizes (a tray opening and closing must not drift the view);
   // panning and following start from what is actually shown.
@@ -46,8 +47,9 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
   function render() {
     view = framing(parent.clientWidth, parent.clientHeight, width, center, frame);
     if (opening) {
-      const visible = parent.clientWidth / view.scale, margin = openingMargin / view.scale, must = opening.must;
-      center.x = openingX(opening.spans, visible, width, must && { left: must.left - margin, right: must.right + margin }, opening.people) + visible / 2; opening = null;
+      const visible = parent.clientWidth / view.scale, margin = openingMargin / view.scale;
+      const must = [opening.must ?? []].flat().map(m => ({ left: m.left - margin, right: m.right + margin }));
+      center.x = openingX(opening.spans, visible, width, must, opening.people) + visible / 2; opening = null;
       view = framing(parent.clientWidth, parent.clientHeight, width, center, frame);
     }
     canvas.style.setProperty('--view-width', `${parent.clientWidth}px`);
@@ -63,7 +65,7 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
   return {
     render,
     /** `spans` (pieces), `must` (the chosen character) and `people` pick where a newly entered place opens; without them it opens on its 1000-wide core. */
-    scene(key: string, logicalWidth: number, logicalHeight = 600, spans: Span[] = [], must?: Span, people: Span[] = []) {
+    scene(key: string, logicalWidth: number, logicalHeight = 600, spans: Span[] = [], must?: Span | Span[], people: Span[] = []) {
       width = logicalWidth; frame = logicalHeight;
       if (room !== key) { room = key; center = { x: Math.min(width, 1000) / 2, y: 360 }; manual = false; opening = spans.length || must || people.length ? { spans, must, people } : null; }
       render();
