@@ -149,7 +149,7 @@ export class PlayScene extends Phaser.Scene {
     if (!this.hint) this.hint = this.add.graphics().setDepth(999);
     const b = target.getBounds(); this.hint.lineStyle(3, hex('coral'), .9).strokeRoundedRect(b.x - 4, b.y - 4, b.width + 8, b.height + 8, 14);
   }
-  slidePiece(id: number, from: Point) { const piece = this.pieces.get(id); if (piece && !reducedMotion()) this.tweens.add({ targets: piece, x: { from: from.x, to: piece.x }, y: { from: from.y, to: piece.y }, duration: 240, ease: 'Back.Out' }); }
+  slidePiece(id: number, from: Point) { const piece = this.pieces.get(id), home = this.world.layout.pieces.find(p => p.id === id); if (piece && home && !reducedMotion()) this.tweens.add({ targets: piece, x: { from: from.x, to: home.x }, y: { from: from.y, to: home.y }, duration: 240, ease: 'Back.Out' }); }
   blinkPiece(kind: Piece['kind']) {
     const piece = this.world.layout.pieces.find(p => p.kind === kind && p.room === this.world.room), target = piece && this.pieces.get(piece.id); if (!target) return;
     this.game.canvas.dataset.blink = kind; this.tweens.killTweensOf(target); target.setAlpha(1);
