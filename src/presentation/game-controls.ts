@@ -6,7 +6,7 @@ export function gameControls(root: HTMLElement, actions: { start: (kind: GameKin
   const chooser = document.createElement('dialog'); chooser.id = 'game-chooser'; chooser.setAttribute('aria-labelledby', 'game-title');
   chooser.innerHTML = '<h2 id="game-title">Vamos brincar?</h2><p>Qual vai ser?</p><div class="game-choices"><button data-game="rope">Pular corda</button><button data-game="hopscotch">Amarelinha</button></div><p id="game-choice-message" role="status"></p><button id="game-close">Voltar</button>';
   const panel = document.createElement('section'); panel.id = 'game-panel'; panel.hidden = true; panel.setAttribute('aria-label', 'Brincadeira em andamento');
-  panel.innerHTML = '<h2 id="game-name"></h2><p id="game-instruction"></p><p id="game-cue" aria-hidden="true"></p><p id="game-message" role="status"></p><button id="game-jump">Pular</button><button id="game-restart" hidden>Brincar de novo</button><button id="game-stop">Encerrar brincadeira</button>';
+  panel.innerHTML = '<h2 id="game-name"></h2><p id="game-cue" aria-hidden="true"></p><p id="game-message" role="status"></p><button id="game-jump" aria-keyshortcuts="Space">Pular</button><button id="game-restart" hidden>Brincar de novo</button><button id="game-stop">Encerrar brincadeira</button>';
   root.append(chooser, panel);
   chooser.querySelector<HTMLButtonElement>('#game-close')!.onclick = () => chooser.close();
   chooser.querySelectorAll<HTMLButtonElement>('[data-game]').forEach(b => { b.onclick = () => actions.start(b.dataset.game as GameKind); });
@@ -25,7 +25,6 @@ export function gameControls(root: HTMLElement, actions: { start: (kind: GameKin
     start(kind: GameKind) {
       chooser.close(); panel.hidden = false; panel.dataset.kind = kind; panel.dataset.phase = 'walking'; root.classList.add('playing-game');
       panel.querySelector('#game-name')!.textContent = kind === 'rope' ? 'Pular corda' : 'Amarelinha';
-      panel.querySelector('#game-instruction')!.textContent = kind === 'rope' ? 'Toque ou aperte espaço quando aparecer “Agora!”. Pode tentar quantas vezes quiser.' : 'Toque na próxima casa iluminada, use o botão ou aperte espaço. Vá até 8 e volte.';
       jump.focus();
     },
     update(phase: string, label: string, message: string, disabled: boolean, cue = '') {

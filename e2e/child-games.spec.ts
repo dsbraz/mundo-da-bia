@@ -37,6 +37,32 @@ test('amarelinha: ida e volta por teclado, sair e recarregar sem sessão persist
   await expect(page.locator('#game-panel')).toBeHidden(); expect(await readTown(page)).toEqual(saved);
 });
 
+/** Every visible text in the game panel: its words and computed size. */
+const panelTexts = (page: import('@playwright/test').Page) => page.locator('#game-panel').evaluate(panel => {
+  const walker = document.createTreeWalker(panel, NodeFilter.SHOW_TEXT), found: { text: string; words: number; size: number }[] = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const owner = node.parentElement!, text = node.textContent!.trim();
+    if (text && owner.checkVisibility({ visibilityProperty: true })) found.push({ text, words: text.split(/\s+/).length, size: Number.parseFloat(getComputedStyle(owner).fontSize) });
+  }
+  return found;
+});
+for (const game of ['Pular corda', 'Amarelinha']) test(`painel de ${game}: ícone e rótulos curtos de 16 px, sem parágrafo de instruções`, async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 }); await playground(page);
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await page.getByRole('button', { name: game, exact: true }).click();
+  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+  await expect(page.locator('#game-instruction')).toHaveCount(0);
+  const icon = await page.locator('#game-name').evaluate(h => getComputedStyle(h, '::before').backgroundImage);
+  expect(icon).toContain(game === 'Amarelinha' ? 'ui-hopscotch.svg' : 'ui-rope.svg');
+  const check = async () => { for (const t of await panelTexts(page)) { expect(t.words, t.text).toBeLessThanOrEqual(6); expect(t.size, t.text).toBeGreaterThanOrEqual(16); } };
+  await check();
+  if (game === 'Pular corda') { await page.locator('#game-jump').click(); await check(); return; }
+  for (const cells of ['1', '2', '3 e 4', '5', '6 e 7', '8', '6 e 7', '5', '3 e 4', '2', '1']) {
+    await expect(page.locator('#game-jump')).toHaveText(`Pular para ${cells}`); await expect(page.locator('#game-jump')).toBeEnabled(); await page.keyboard.press('Space');
+  }
+  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'complete'); await check();
+});
+
 test('corda: interrupção ao trocar personagem, escapar e perder foco', async ({ page }) => {
   await playground(page); const original = await readTown(page);
   await page.getByRole('button', { name: 'Jogar', exact: true }).click();
