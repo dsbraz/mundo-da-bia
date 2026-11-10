@@ -100,7 +100,7 @@ const play = playActions({ root, state: () => state, selected: () => selected, c
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
-const neighborhood = neighborhoodControls(root, () => town, townDispatch, location => go(location), () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); }, id => structure.open(id));
+const neighborhood = neighborhoodControls(root, () => town, townDispatch, location => go(location), () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); }, id => structure.open(id), () => streetUndo(false));
 root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!building) toggleBuild(); constructing = true; walker.cancel(); cancelInput(); refresh(); announceMode(); });
 root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
 root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());

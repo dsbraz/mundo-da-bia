@@ -11,8 +11,8 @@ import { doors } from './neighborhood-doors';
 function button(text: string, action: () => void) {
   const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.onclick = action; return b;
 }
-export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, go: (location: Location) => void, close: () => void, pan: (dx: number) => void, extend: (id: number) => void) {
-  const deletion = houseActions(root, get, dispatch);
+export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood, dispatch: (a: NeighborhoodAction) => void, go: (location: Location) => void, close: () => void, pan: (dx: number) => void, extend: (id: number) => void, undo: () => void) {
+  const deletion = houseActions(root, get, dispatch, undo);
   const list = document.createElement('section'); list.id = 'neighborhood-list';
   const title = document.createElement('h3'); title.textContent = 'Nosso bairro';
   root.querySelector('[data-home-panel="map organize"]')!.append(title, list);
@@ -25,7 +25,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     const town = get(); const existing = town.buildings.find(b => b.plot === index);
     if (index < 0 || index >= town.plots) return;
     plotDialog.replaceChildren();
-    if (existing) buildingActions(plotDialog, root, town, existing, dispatch, close, extend);
+    if (existing) buildingActions(plotDialog, root, town, existing, dispatch, close, extend, undo);
     else buildingChooser(plotDialog, model => dispatch({ type: 'construct', plot: index, model }));
     plotDialog.showModal();
   }

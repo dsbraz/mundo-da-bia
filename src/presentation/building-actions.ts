@@ -8,7 +8,7 @@ import { palettes } from '../content/furnishings';
 function button(label: string, click: () => void) {
   const result = document.createElement('button'); result.textContent = label; result.onclick = click; return result;
 }
-export function buildingActions(dialog: HTMLDialogElement, root: HTMLElement, town: Neighborhood, house: Building, dispatch: (a: NeighborhoodAction) => void, closeMap: () => void, extend: (id: number) => void) {
+export function buildingActions(dialog: HTMLDialogElement, root: HTMLElement, town: Neighborhood, house: Building, dispatch: (a: NeighborhoodAction) => void, closeMap: () => void, extend: (id: number) => void, undo: () => void) {
   const title = document.createElement('h2'); title.textContent = house.name;
   const image = document.createElement('img'); image.src = svgUrl(facadeSvg(house.model, floorCount(house.layout))); image.alt = ''; image.className = 'building-portrait';
   const actions = document.createElement('div'); actions.className = 'building-actions';
@@ -16,7 +16,7 @@ export function buildingActions(dialog: HTMLDialogElement, root: HTMLElement, to
     button(`Entrar em ${house.name}`, () => { dialog.close(); closeMap(); dispatch({ type: 'visit', location: { kind: 'interior', building: house.id, room: house.entry } }); }),
     button(`Ampliar ${house.name}`, () => { dialog.close(); closeMap(); extend(house.id); }),
     button(`Mover ${house.name}`, () => { dialog.close(); moveHouse(root, town, house, dispatch); }),
-    button(`Excluir ${house.name}…`, () => { dialog.close(); removeHouse(root, town, house, dispatch); }),
+    button(`Excluir ${house.name}…`, () => { dialog.close(); removeHouse(root, town, house, dispatch, undo); }),
   );
   const settings = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Nome e cores'; settings.append(summary);
   const input = document.createElement('input'); input.value = house.name; input.maxLength = 48; input.setAttribute('aria-label', 'Nome da construção');
