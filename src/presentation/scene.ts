@@ -10,6 +10,7 @@ import type { OutdoorAction } from '../domain/neighborhood-types';
 import { handAnchor, contextScale, visualContext } from './pose';
 import { rasterScale, logicalWidth } from './rendering';
 import { captureMotion } from './settle-motion';
+import { strollFigures } from './stroll-figures';
 import { itemKind } from '../domain/item-kind';
 import { drawStreet, drawExit } from './street';
 import type { Neighborhood } from '../domain/neighborhood-types';
@@ -51,6 +52,7 @@ export class PlayScene extends Phaser.Scene {
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private gaze = new Map<ActorId, number>();
+  private strolls = strollFigures(() => this.game.canvas);
   private pieces = new Map<number, Phaser.GameObjects.Container>();
   private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
   private transferRoom: RoomId | null = null;
@@ -71,6 +73,7 @@ export class PlayScene extends Phaser.Scene {
     this.gameArt = childGameArt(this); this.paint(this.world, this.selected);
   }
   paint(state: World, selected: ActorId) {
+    this.strolls.leave(this.world, state);
     this.world = state; this.selected = selected;
     if (!this.prepareArt(state)) return;
     const width = state.streetWidth ? 1000 : roomWidth(state);
@@ -183,6 +186,9 @@ export class PlayScene extends Phaser.Scene {
     return new Promise(resolve => this.tweens.add({ targets: point, x, y: 510, duration,
       onUpdate: () => this.previewActor(id, point), onComplete: () => resolve() }));
   }
+  /** Whoever moves for a game walks there (fades with reduced motion); call it before committing the moves. */
+  stroll(moves: { actor: ActorId; point: Point }[]) { this.strolls.start(this.figures, moves); }
+  private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.strolls.step(figure, actor, this.world) || this.moving === actor.id; }
   captureMotion() {
     const settle = captureMotion(this, this.figures, [...this.objects, ...(this.ghost ? [this.ghost] : [])], this.world.room);
     return () => settle(this.figures, this.objects, this.world.room);
@@ -265,10 +271,11 @@ export class PlayScene extends Phaser.Scene {
   }
   private animateFigure(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, reduced: boolean) {
     const seated = [this.town?.outdoor.bench, this.town?.outdoor.swing].includes(actor.id);
-    const posed = this.moving === actor.id ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' as const } : actor;
+    const walking = this.walking(figure, actor);
+    const posed = walking ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' as const } : actor;
     animateActor(figure, posed, reduced ? 500 : time, index, !reduced && this.world.show, reduced);
     const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
-    if (this.moving === actor.id) walkPose(figure, figure.getData('distance') ?? 0, reduced, figure.getData('direction'));
+    if (walking) walkPose(figure, figure.getData('distance') ?? 0, reduced, figure.getData('direction'));
     else gazePose(figure, this.gaze.get(actor.id) ?? 0);
     this.animateSwing(pose, actor, time, reduced);
     const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { ready, readTown, tray, closeTray, point, bringHere } from './helpers';
 import { initialWorld } from '../src/domain/world';
-import { hopTiles } from '../src/presentation/game-space';
+import { hopPosition, hopTiles } from '../src/presentation/game-space';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { decodeNeighborhood, encodeNeighborhood } from '../src/persistence/neighborhood';
@@ -224,7 +224,10 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
     await page.getByRole('button', { name: 'Jogar', exact: true }).click();
     await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
+    // Whoever stood over the board walks off it (a short walk drawn in the scene), then stands still.
+    await expect(page.locator('canvas')).not.toHaveAttribute('data-strolling', '');
     await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+    await expect(page.locator('canvas')).toHaveAttribute('data-strolling', '');
     const town = await readTown(page), origin = town.actors.find(a => a.id === 'bia')!, scene = (await page.locator('#world').boundingBox())!;
     const inside = async () => (await squareCentres(page, origin)).every(p => p.x > scene.x && p.x < scene.x + scene.width && p.y > scene.y && p.y < scene.y + scene.height);
     await expect.poll(inside).toBe(true);
@@ -235,6 +238,9 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
         const cx = origin.x + t.x, cy = origin.y + t.y, dy = foot - cy;
         expect(Math.abs(a.x - cx + dy * 2.1) <= 47 && Math.abs(dy) <= 10, `${a.id} pisa na casa ${t.cell}`).toBe(false);
         expect(Math.abs(a.x - cx) < half && cy < foot && cy > foot - height, `${a.id} cobre a casa ${t.cell}`).toBe(false);
+        // Nor does anyone's body meet the child's on any square (no cat ears behind her head).
+        const child = hopPosition(origin, t.cell);
+        expect(Math.abs(a.x - child.x) < half + 42 && foot - height < child.y && child.y - 189 < foot, `${a.id} colado à criança na casa ${t.cell}`).toBe(false);
       }
     }
     for (const cells of ['1', '2', '3 e 4', '5']) { await expect(page.locator('#game-jump')).toHaveText(`Pular para ${cells}`); await expect(page.locator('#game-jump')).toBeEnabled(); await page.locator('#game-jump').click(); }

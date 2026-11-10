@@ -11,6 +11,8 @@ interface Actions {
   walk: (point: Point, done: () => void) => void;
   commit: (actor: ActorId, point: Point) => void; preview: (value: GamePreview | null) => void;
   follow: (point: Point, slack?: number) => void; select: (actor: ActorId) => void; drop: (actor: ActorId) => void;
+  /** Draws the moves as short walks (fades with reduced motion); called before they are committed. */
+  stroll: (moves: { actor: ActorId; point: Point }[]) => void;
 }
 export function childGames(root: HTMLElement, actions: Actions) {
   let session: GamePreview | null = null, frame = 0, pending = false, command = 0;
@@ -74,9 +76,11 @@ export function childGames(root: HTMLElement, actions: Actions) {
   return { cancel, open: view.open };
 }
 
-/** Hopscotch: whoever would hide a square steps back behind the board, and the camera frames the whole board. */
+/** Hopscotch: whoever stands over the board walks a few steps off it, and the camera frames the whole board. */
 function makeRoom(actions: Actions, kind: GameKind, actor: Actor, origin: Point) {
-  if (kind === 'hopscotch') for (const move of stepAside(actions.world(), actor, origin)) actions.commit(move.actor, move.point);
+  const moves = kind === 'hopscotch' ? stepAside(actions.world(), actor, origin) : [];
+  actions.stroll(moves);
+  for (const move of moves) actions.commit(move.actor, move.point);
   follow(actions, kind, origin, origin);
 }
 /** Hopscotch frames the whole board (centred, no slack); the rope follows the child. */

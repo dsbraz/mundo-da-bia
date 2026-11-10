@@ -95,7 +95,7 @@ const editor = createEditorControls(root, {
 const walker = walking({ reject: point => feedback.refuse(refusal('walk', ''), { x: point.x, y: point.y - 40 }), state: () => state, selected: () => selected, preview: (id, point) => { scene.previewActor(id, point); if (point) view?.follow({ ...point, x: point.x - camera }); },
   commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), face: (actor, point) => scene.face(actor, point), hint: () => {} });
 const games = childGames(root, { world: () => state, selected: () => selected, prepare: () => { walker.cancel(); cancelInput(); closeWardrobe(); shell.close(); view?.resume(); }, stopWalk: () => walker.cancel(), walk: walker.start, commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), preview: value => scene.previewGame(value), follow: (point, slack) => view?.follow(point, undefined, slack),
-  select: id => play.select(id), drop: actor => dispatch({ type: 'drop', actor }, false) });
+  select: id => play.select(id), drop: actor => dispatch({ type: 'drop', actor }, false), stroll: moves => scene.stroll(moves) });
 cancelGame = games.cancel;
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse });
