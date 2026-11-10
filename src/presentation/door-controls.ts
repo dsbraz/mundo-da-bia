@@ -35,16 +35,3 @@ export function doorControls(root: HTMLElement, go: (side: Direction) => void) {
     requestAnimationFrame(position);
   };
 }
-export async function slideRoom(canvas: HTMLCanvasElement, direction: Direction, commit: () => void, duration: number) {
-  const box = canvas.getBoundingClientRect(); const image = new Image(); image.src = canvas.toDataURL();
-  image.className = 'room-transition'; image.style.cssText = `left:${box.left}px;top:${box.top}px;width:${box.width}px;height:${box.height}px;`;
-  document.body.append(image);
-  try {
-    commit();
-    const offset = direction === 'right' ? box.width : -box.width;
-    await Promise.all([
-      image.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-offset}px)` }], { duration, easing: 'ease-in-out' }).finished,
-      canvas.animate([{ transform: `translateX(${offset}px)` }, { transform: 'translateX(0)' }], { duration, easing: 'ease-in-out' }).finished,
-    ]);
-  } finally { image.remove(); }
-}

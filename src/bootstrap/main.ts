@@ -17,6 +17,7 @@ import { structureControls } from '../presentation/structure-controls';
 import { streetWidth } from '../domain/neighborhood-geometry';
 import { walking } from '../presentation/walking';
 import { goTo } from './go';
+import { doorWalk } from './door-walk';
 import { uiText } from '../content/ui-text';
 import { localWorld, storeWorld, neighborhoodAction } from '../domain/neighborhood';
 import type { NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
@@ -98,6 +99,7 @@ const games = childGames(root, { world: () => state, selected: () => selected, p
   select: id => play.select(id), drop: actor => dispatch({ type: 'drop', actor }, false), stroll: moves => scene.stroll(moves) });
 cancelGame = games.cancel;
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
+const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: townDispatch, enterDoor: (id, where, done) => scene.enterDoor(id, where, done) });
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.pushSwing(rider) });
 const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse });
@@ -149,10 +151,12 @@ function townDispatch(action: NeighborhoodAction) {
   if (town.location.kind === 'street' && previous.kind === 'interior') camera = exitCamera;
   if (town.location.kind !== 'street') camera = 0;
   saved = saveNeighborhood(town); refresh();
-  if (action.type === 'visit' || action.type === 'transport') { scene.arrive(previous); feedback.sound.cue('door'); }
+  if (action.type === 'visit' || action.type === 'transport') { scene.arrive(previous, comer(action)); feedback.sound.cue('door'); }
   if (action.type === 'construct') structure.open(town.nextBuilding - 1);
   if (action.type === 'outdoor') { settle(); scene.outdoorReaction(action); }
 }
+/** Who came along through a door, if anyone. */
+const comer = (action: NeighborhoodAction) => action.type === 'transport' ? action.actor : undefined;
 function streetCamera(previous: Neighborhood) {
   const where = previous.location;
   if (where.kind === 'street') return camera;
@@ -245,7 +249,7 @@ void loadFonts().then(() => { game = new Phaser.Game({
       pan: (room, fraction) => scene.pan(room, fraction),
       transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
       progress,
-    }, base => neighborhoodGesture(base, { town: () => town, world: () => scene.visibleWorld(), building: () => building, dispatch: townDispatch, plot: neighborhood.plot, drop: square.drop, preview: previewTown, progress }));
+    }, base => neighborhoodGesture(base, { town: () => town, world: () => scene.visibleWorld(), building: () => building, dispatch: townDispatch, plot: neighborhood.plot, drop: square.drop, enter: enterDoor, preview: previewTown, progress }));
   } },
 }); });
 bindKeyboard(root, { building: () => building, state: () => state, piece: () => selectedPiece, actor: () => state.actors.find(a => a.id === selected)!,

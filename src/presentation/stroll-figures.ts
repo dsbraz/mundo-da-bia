@@ -16,6 +16,11 @@ export function strollFigures(canvas: () => HTMLCanvasElement) {
       for (const m of moves) { const f = figures.find(f => f.name === m.actor); if (f) strolls.set(m.actor, stroll({ x: f.x, y: f.y }, m.point, now, reducedMotion())); }
       canvas().dataset.strolled = moves.filter(m => strolls.has(m.actor)).map(m => m.actor).join(' '); mark();
     },
+    /** Someone who just came through a door walks out of its doorway `from` to where they are drawn (the save already holds it). */
+    emerge(figures: Phaser.GameObjects.Container[], id: ActorId, from: Point) {
+      const f = figures.find(f => f.name === id); if (!f) return;
+      strolls.set(id, stroll(from, { x: f.x, y: f.y }, performance.now(), reducedMotion())); canvas().dataset.strolled = id; mark();
+    },
     /** Draws this frame of the actor's walk, if it has one; true while it walks (the caller poses the legs). */
     step(figure: Phaser.GameObjects.Container, actor: Actor, world: World): boolean {
       const step = strolls.get(actor.id); if (!step) return false;

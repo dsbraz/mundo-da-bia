@@ -7,6 +7,8 @@ import { doorAt, destinationPoint } from './neighborhood-doors';
 type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, p: Point) => void; end: (id: number, p: Point) => void; cancel: () => void; transferring?: () => boolean };
 interface Actions {
   drop?: (actor: ActorId, point: Point) => boolean;
+  /** A tap on a door: the chosen character walks through it (true), or false to only visit. */
+  enter?: (destination: Location) => boolean;
   town: () => Neighborhood; world: () => World; building: () => boolean;
   dispatch: (action: NeighborhoodAction) => void; plot: (plot: number) => void;
   preview: (action: NeighborhoodAction | null) => void; progress: (value: number) => void;
@@ -48,14 +50,17 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
       const a = active;
       if (a.ready) { const action = transfer(a); cancel(); actions.dispatch(action); return; }
       if (dropActor(a, point, actions)) { cancel(); return; }
-      if (backgroundTap(a, point)) {
-        const door = doorAt(actions.town(), point);
-        if (door && !actions.building()) { cancel(); actions.dispatch({ type: 'visit', location: door.location }); return; }
-        if (plotTap(actions, point)) { cancel(); actions.plot(plotAt(point.x)); return; }
-      }
+      const tapped = backgroundTap(a, point) ? backgroundAction(actions, point) : null;
+      if (tapped) { cancel(); tapped(); return; }
       base.end(id, point); cancel();
     }, cancel, transferring: () => active?.ready ?? false,
   };
+}
+/** A tap on the bare scene: through a door (walking there in play, or just visiting), or choosing a plot; null when it is neither. */
+function backgroundAction(actions: Actions, point: Point): (() => void) | null {
+  const door = actions.building() ? undefined : doorAt(actions.town(), point);
+  if (door) return () => { if (!actions.enter?.(door.location)) actions.dispatch({ type: 'visit', location: door.location }); };
+  return plotTap(actions, point) ? () => actions.plot(plotAt(point.x)) : null;
 }
 function loose(world: World, token: ReturnType<typeof sourceAt>): ItemId | undefined {
   return token?.kind === 'item' && world.items.some(i => i.id === token.id && !i.holder && i.spot === 'floor') ? token.id : undefined;

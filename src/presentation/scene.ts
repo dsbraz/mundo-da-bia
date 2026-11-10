@@ -3,7 +3,8 @@ import { textStyle } from './text-style';
 import { visibleHit } from './visible-hit';
 import { childGameArt } from './child-game-art';
 import type { GamePreview } from './child-game-art';
-import { doorEffect } from './door-effect';
+import { doorEffect, enterDoor } from './door-effect';
+import { doorStep } from './neighborhood-doors';
 import type { Location } from '../domain/neighborhood-types';
 import { outdoorEffect } from './outdoor-effects';
 import type { OutdoorAction } from '../domain/neighborhood-types';
@@ -57,7 +58,11 @@ export class PlayScene extends Phaser.Scene {
     this.cameras.main.setScroll(x + (this.world.streetWidth ? this.cameraX : 0), y);
   }
   neighborhood(town: Neighborhood) { this.town = town; }
-  arrive(previous: Location) { this.faces.trigger(this.selected, 'surprise', performance.now()); if (this.ready && this.town) doorEffect(this, this.town, previous); }
+  /** A new place: the door just come through swings, and `walker` (if they came along) walks out of its doorway. */
+  arrive(previous: Location, walker?: ActorId) {
+    this.faces.trigger(this.selected, 'surprise', performance.now()); if (!this.ready || !this.town) return;
+    doorEffect(this, this.town, previous); const sill = walker && doorStep(this.town, previous); if (sill) this.strolls.emerge(this.figures, walker, sill);
+  }
   outdoorReaction(action: OutdoorAction) { if (action.target === 'swing') this.pushSwing(action.actor); if (this.ready && this.town) outdoorEffect(this, this.town, action); }
   camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x + Number(this.game.canvas.dataset.viewX ?? 0); this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
@@ -192,12 +197,8 @@ export class PlayScene extends Phaser.Scene {
     const distance = (figure.getData('distance') ?? 0) + Math.hypot(point.x - figure.x, point.y - figure.y);
     figure.setData('distance', distance).setData('gait', trackGait(figure.getData('gait'), performance.now(), distance));
   }
-  walkToDoor(id: ActorId, x: number, duration: number): Promise<void> {
-    const actor = this.world.actors.find(a => a.id === id)!;
-    const point = { x: actor.x, y: actor.y };
-    return new Promise(resolve => this.tweens.add({ targets: point, x, y: 510, duration,
-      onUpdate: () => this.previewActor(id, point), onComplete: () => resolve() }));
-  }
+  /** Through the door to `destination`: it opens and the figure fades into the doorway, then `done` (at most 240 ms, nothing held). */
+  enterDoor(id: ActorId, destination: Location, done: () => void) { if (this.ready && this.town) enterDoor(this, this.town, () => this.figures.find(f => f.name === id), destination, done); else done(); }
   /** Whoever moves for a game walks there (fades with reduced motion); call it before committing the moves. */
   stroll(moves: { actor: ActorId; point: Point }[]) { this.strolls.start(this.figures, moves); }
   private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.strolls.step(figure, actor, this.world) || this.life.step(figure, actor, this.world, performance.now()) || (this.moving === actor.id && !this.weight.carrying(actor.id)); }
