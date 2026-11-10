@@ -32,17 +32,27 @@ it('with reduced motion the walk is slow and still: no bob, no legs, no lean', (
 });
 it('the cat trots with its tail up, faster and lower than a child', () => {
   const trot = catTrot(stepPx / 4, 1, false);
-  expect(trot.tail).toBeLessThan(0); expect(trot.tail).toBeGreaterThan(-.25);
+  expect(trot.tail).toBeLessThan(0); expect(trot.tail).toBeGreaterThan(-.25); expect(trot.raise).toBeGreaterThan(1.2);
   expect(trot.bob).toBeGreaterThan(0); expect(trot.bob).toBeLessThanOrEqual(3);
   expect(catTrot(stepPx / 4 * .6, .6, false).bob).toBeCloseTo(trot.bob * .6);
-  expect(catTrot(stepPx / 4, 1, true)).toEqual({ bob: 0, tail: trot.tail });
+  expect(catTrot(stepPx / 4, 1, true)).toEqual({ bob: 0, tail: trot.tail, raise: trot.raise });
 });
 it('tracks speed and acceleration from the walked distance between frames', () => {
   const first = trackGait(undefined, 0, 0);
   expect(first.acceleration).toBe(0);
   const moving = trackGait(first, 16, 3.2);
-  expect(moving.speed).toBeCloseTo(.2); expect(moving.acceleration).toBeGreaterThan(0);
-  const steady = trackGait(trackGait(moving, 32, 6.4), 48, 9.6);
-  expect(steady.acceleration).toBeCloseTo(0, 4);
+  expect(moving.speed).toBeGreaterThan(0); expect(moving.acceleration).toBeGreaterThan(0);
+  let steady = moving;
+  for (let n = 2; n < 40; n++) steady = trackGait(steady, n * 16, n * 3.2);
+  expect(steady.acceleration).toBeCloseTo(0, 4); expect(steady.speed).toBeCloseTo(.2, 3);
   expect(trackGait(steady, 2000, 9.6)).toEqual({ time: 2000, distance: 9.6, speed: 0, acceleration: 0 });
+  expect(trackGait(steady, 40 * 16, 40 * 3.2).acceleration).toBeCloseTo(steady.acceleration * .85, 5);
+});
+it('frame timing jitter (±1 ms at a steady pace) does not make the lean flicker; a real start still leans', () => {
+  let track = trackGait(undefined, 0, 0), widest = 0;
+  for (let n = 1; n < 60; n++) { track = trackGait(track, n * 16 + (n % 2 ? 1 : -1), n * 3.2); if (n > 30) widest = Math.max(widest, Math.abs(track.acceleration)); }
+  expect(widest * 40).toBeLessThan(.01);
+  let start = trackGait(undefined, 0, 0), speed = 0, at = 0;
+  for (let n = 1; n <= 10; n++) { speed = Math.min(.2, speed + .0012 * 16); at += speed * 16; start = trackGait(start, n * 16, at); }
+  expect(gaitFrame(at, 1, 1, start.acceleration, false).lean).toBeGreaterThan(gaitFrame(at, 1, 1, 0, false).lean + .02);
 });

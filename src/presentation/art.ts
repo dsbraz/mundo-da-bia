@@ -51,12 +51,12 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
 }
 /** The cat's tail turns about its base (88, 100) and the ears about the head (70, 45), in the 140 × 120 art. */
 function pivotCat(pose: Phaser.GameObjects.Container) {
-  pose.getByName<Phaser.GameObjects.Image>('tail').setOrigin(88 / 140, 100 / 120).setPosition(18, -20);
+  const tail = pose.getByName<Phaser.GameObjects.Image>('tail').setOrigin(88 / 140, 100 / 120).setPosition(18, -20); tail.setData('base', tail.scaleY);
   pose.getByName<Phaser.GameObjects.Image>('ears').setOrigin(.5, 45 / 120).setPosition(0, -75);
 }
 function bodyLayers(pose: Phaser.GameObjects.Container, actor: Actor, time: number, reduced: boolean) {
   if (actor.kind === 'human') seatLayers(pose, actor, reduced);
-  else pose.getByName<Phaser.GameObjects.Image>('tail').rotation = catTail(time, phaseOf(actor.id), actor.resting, reduced);
+  else { const tail = pose.getByName<Phaser.GameObjects.Image>('tail'); tail.rotation = catTail(time, phaseOf(actor.id), actor.resting, reduced); tail.scaleY = tail.getData('base'); }
 }
 function pulseStar(figure: Phaser.GameObjects.Container, time: number, reduced: boolean) {
   const star = figure.getByName<Phaser.GameObjects.Graphics>('selection-star');
@@ -114,7 +114,10 @@ function heroLayer(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, acto
 /** One frame of walking: the cycle comes from `gait` (cadence and step scaled by the context); a cat trots with its tail up. */
 export function walkPose(figure: Phaser.GameObjects.Container, actor: Actor, scale: number, reduced: boolean) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose'), distance = figure.getData('distance') ?? 0, direction = figure.getData('direction') ?? 0;
-  if (actor.kind === 'cat') { const trot = catTrot(distance, scale, reduced); pose.y -= trot.bob; pose.getByName<Phaser.GameObjects.Image>('tail').rotation = trot.tail; return; }
+  if (actor.kind === 'cat') {
+    const trot = catTrot(distance, scale, reduced), tail = pose.getByName<Phaser.GameObjects.Image>('tail');
+    pose.y -= trot.bob; tail.rotation = trot.tail; tail.scaleY = tail.getData('base') * trot.raise; return;
+  }
   const gait = gaitFrame(distance, scale, direction, figure.getData('gait')?.acceleration ?? 0, reduced);
   if (reduced) return;
   pose.y -= gait.bob; pose.rotation += gait.lean;

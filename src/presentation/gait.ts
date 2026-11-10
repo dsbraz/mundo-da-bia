@@ -18,18 +18,20 @@ export function gaitFrame(distance: number, scale: number, direction: number, ac
     return { x: stride * legPx, lift: Math.max(0, stride) * liftPx };
   }) };
 }
-/** Held up and still (no idle sway); further than this the short tail would turn behind the body. */
-export const trotTail = -.12;
+/** Held up and still (no idle sway): turned up a little and drawn 1.4× taller, so the short tail stands above the back
+ *  (turned further it would only hide behind the body). */
+export const trotTail = -.2, trotRaise = 1.4;
 /** A cat trots: twice the steps of a child, a lower bob and the tail held up (no mirroring of the art). */
 export function catTrot(distance: number, scale: number, reduced: boolean) {
   const phase = distance / (stepPx * scale) * Math.PI * 2;
-  return { bob: reduced ? 0 : Math.abs(Math.sin(phase)) * 3 * scale, tail: trotTail };
+  return { bob: reduced ? 0 : Math.abs(Math.sin(phase)) * 3 * scale, tail: trotTail, raise: trotRaise };
 }
 export interface GaitTrack { time: number; distance: number; speed: number; acceleration: number }
-/** Speed and acceleration from the walked distance between frames; a pause longer than 100 ms starts over at rest. */
+/** Smoothed speed and acceleration from the walked distance between frames; a pause longer than 100 ms starts over at rest. */
 export function trackGait(previous: GaitTrack | undefined, time: number, distance: number): GaitTrack {
   const elapsed = previous ? time - previous.time : 0;
   if (!previous || elapsed <= 0 || elapsed > 100) return { time, distance, speed: 0, acceleration: 0 };
-  const speed = (distance - previous.distance) / elapsed;
-  return { time, distance, speed, acceleration: (speed - previous.speed) / elapsed };
+  const speed = previous.speed * .7 + (distance - previous.distance) / elapsed * .3;
+  // Low-passed, so frame timing jitter never flickers the lean while a real start or stop (about 10 frames) still shows.
+  return { time, distance, speed, acceleration: previous.acceleration * .85 + (speed - previous.speed) / elapsed * .15 };
 }
