@@ -99,3 +99,8 @@ export function showBook(scene: Phaser.Scene, hand: Point) {
   place(); dataset.book = 'hand';
   scene.tweens.add({ targets: clock, t: bookDuration, duration: bookDuration, onUpdate: place, onComplete: () => { book.destroy(); dataset.book = ''; } });
 }
+/** The piece blinks three times so the child finds it (one short fade with reduced motion). */
+export function blinkPiece(scene: Phaser.Scene, target: Container) {
+  scene.tweens.killTweensOf(target); target.setAlpha(1);
+  scene.tweens.add({ targets: target, alpha: .35, duration: reducedMotion() ? reducedFadeMs : 160, yoyo: true, repeat: reducedMotion() ? 0 : 2, onComplete: () => target.setAlpha(1) });
+}

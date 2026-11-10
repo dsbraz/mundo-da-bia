@@ -5,7 +5,10 @@ import { rasterScale } from './rendering';
 import type Phaser from 'phaser';
 import { fixture, pieceBounds } from '../domain/layout';
 import type { Actor, Piece, World } from '../domain/types';
-import { slotsFor } from './targets';
+import { itemPoint, slotsFor } from './targets';
+import { ballSize } from './ball-motion';
+import { visualContext } from './pose';
+import { itemKind } from '../domain/item-kind';
 import { floorTop } from './floor-band';
 import { drawnUse, drawUse } from './use-effects';
 export function orderedPieces(state: World) {
@@ -83,4 +86,12 @@ function seatFront(scene: Phaser.Scene, piece: Piece, state: World) {
   const box = pieceBounds[piece.kind], top = Math.round(box.height * .82);
   scene.add.image(piece.x + box.width / 2, piece.y + box.height / 2, `piece-${piece.kind}-${piece.color}`)
     .setDisplaySize(box.width, box.height).setFlipX(piece.flipped).setCrop(0, top * rasterScale, box.width * rasterScale, (box.height - top) * rasterScale).setDepth(pieceDepth(piece) + 2);
+}
+/** The loose and held objects of this room, named by id, each at its drawn depth. */
+export function drawObjects(scene: Phaser.Scene, state: World) {
+  return state.items.flatMap(item => {
+    const point = itemPoint(state, item); if (!point) return [];
+    const depth = objectDepth(state, item);
+    return [scene.add.image(point.x, point.y, itemKind(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth)];
+  });
 }

@@ -3,17 +3,12 @@ import { textStyle } from './text-style';
 import { visibleHit } from './visible-hit';
 import { childGameArt } from './child-game-art';
 import type { GamePreview } from './child-game-art';
-import { doorEffect, enterDoor } from './door-effect';
-import { doorStep } from './neighborhood-doors';
-import type { Location } from '../domain/neighborhood-types';
-import { outdoorEffect } from './outdoor-effects';
-import type { OutdoorAction } from '../domain/neighborhood-types';
+import { sceneOutdoor } from './scene-outdoor';
+import { sceneLife } from './scene-life';
 import { contextScale, visualContext } from './pose';
 import { rasterScale, logicalWidth } from './rendering';
 import { captureMotion } from './settle-motion';
-import { strollFigures } from './stroll-figures';
 import { itemKind } from '../domain/item-kind';
-import { drawStreet, drawExit } from './street';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import Phaser from 'phaser';
 import type { RoomId, ItemId, ItemKind } from '../domain/types';
@@ -25,28 +20,25 @@ import { loadArt } from './svg-assets';
 import { drawActor } from './art';
 import { animateFigure, type FrameContext } from './figure-frame';
 import { faceEvents, faces, pokeFace } from './expression';
-import { ambientLife } from './ambient';
-import { drawRoom } from './room';
-import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
-import { actorAt, handPoint, previewPoint, itemPoint } from './targets';
+import { drawPieces, drawObjects, pickPiece, pieceDepth, actorDepth } from './piece-art';
+import { actorAt, handPoint, previewPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
-import { trackGait } from './gait';
+import { trackSteps } from './scene-life';
+import { snapGhost } from './scene-ghost';
 import { weightFigures } from './weight-figures';
 import { objectFall } from './weight';
-import { swingMotion } from './swing-motion';
 import { ballRolls } from './ball-figures';
 import { ballSize } from './ball-motion';
 import { placeSlide, placeTransfer, slidePreview, transferPreview } from './transfer-preview';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
-import { animatePieces } from './use-effects';
+import { animatePieces, blinkPiece } from './use-effects';
 import { pokeFigure, refuseAt } from './feedback';
 import type { ReactionPose } from '../content/personalities';
-import { reducedMotion, reducedFadeMs } from './motion';
+import { reducedMotion } from './motion';
 import { hex } from './palette';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
-  private sky: ReturnType<typeof drawStreet> | null = null;
   previewGame(value: GamePreview | null) { this.gameArt?.paint(value); }
   private world: World;
   private town: Neighborhood | null = null;
@@ -58,31 +50,19 @@ export class PlayScene extends Phaser.Scene {
     this.cameras.main.setScroll(x + (this.world.streetWidth ? this.cameraX : 0), y);
   }
   neighborhood(town: Neighborhood) { this.town = town; }
-  /** A new place: the door just come through swings, and `walker` (if they came along) walks out of its doorway. */
-  arrive(previous: Location, walker?: ActorId) {
-    this.faces.trigger(this.selected, 'surprise', performance.now()); if (!this.ready || !this.town) return;
-    doorEffect(this, this.town, previous); const sill = walker && doorStep(this.town, previous); if (sill) this.strolls.emerge(this.figures, walker, sill);
-  }
-  outdoorReaction(action: OutdoorAction) {
-    if (action.target === 'swing') this.pushSwing(action.actor);
-    const rider = this.world.actors.find(a => a.id === action.actor), figure = this.figures.find(f => f.name === action.actor);
-    if (rider && (action.target === 'swing' || action.target === 'bench')) { if (figure) this.tweens.killTweensOf(figure); this.strolls.climb(rider.id, { x: rider.x, y: rider.y }); }
-    if (this.ready && this.town) outdoorEffect(this, this.town, action);
-  }
   camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x + Number(this.game.canvas.dataset.viewX ?? 0); this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private gaze = new Map<ActorId, number>();
   private faces = faces();
-  private life = ambientLife(() => this.game.canvas);
-  private strolls = strollFigures(() => this.game.canvas);
+  readonly ambient = sceneLife(() => this.game.canvas);
   private weight = weightFigures();
-  private swing = swingMotion();
+  /** Street, plaza and doors: `arrive`, `reaction` to the plaza, `push` the swing and `enterDoor`. */
+  readonly outdoor = sceneOutdoor({ scene: this, ready: () => this.ready, town: () => this.town, world: () => this.world, selected: () => this.selected,
+    figures: () => this.figures, faces: () => this.faces, ambient: () => this.ambient, mark: (key, value) => this.mark(key, value) });
   /** Rolling balls; `ballRest` (set by the app) places a ball where it stops, without interrupting anyone. */
   readonly balls = ballRolls(() => this.game.canvas, (id, point) => this.ballRest(id, point)); ballRest: (id: ItemId, point: Point) => void = () => {};
   throwBall(id: ItemId, from: Point, velocity: Point) { this.balls.throw(id, from, velocity, this.world, performance.now(), reducedMotion()); }
-  /** A touch on the swing (or its rider, or sitting down on it): a push, and the rider laughs. */
-  pushSwing(rider: ActorId) { this.faces.trigger(rider, 'laugh', performance.now(), 900); this.swing.push(performance.now(), reducedMotion()); }
   private pieces = new Map<number, Phaser.GameObjects.Container>();
   private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
   private transferRoom: RoomId | null = null;
@@ -101,10 +81,10 @@ export class PlayScene extends Phaser.Scene {
     const view = this.game.canvas.dataset;
     this.frame(Number(view.viewWidth ?? 1000), Number(view.viewHeight ?? 600), Number(view.viewX ?? 0), Number(view.viewY ?? 0));
     this.gameArt = childGameArt(this); this.paint(this.world, this.selected);
-    for (const type of ['pointerdown', 'keydown']) window.addEventListener(type, () => this.life.input(performance.now()), { capture: true });
+    this.ambient.listen();
   }
   paint(state: World, selected: ActorId) {
-    this.strolls.leave(this.world, state); this.life.painted(state, performance.now());
+    this.ambient.painted(this.world, state);
     this.world = state; this.selected = selected;
     if (!this.prepareArt(state)) return;
     const width = state.streetWidth ? 1000 : roomWidth(state);
@@ -113,15 +93,11 @@ export class PlayScene extends Phaser.Scene {
     this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(state.streetWidth ? this.cameraX : 0);
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
-    this.drawPlace(state, selected);
+    this.outdoor.paint(state, selected);
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
     this.game.canvas.dataset.ready = 'true';
-  }
-  private drawPlace(state: World, selected: ActorId) {
-    this.sky = state.streetWidth && this.town ? drawStreet(this, this.town, selected) : null;
-    if (!this.sky) { drawRoom(this, state); this.exitDoor(); }
   }
   private prepareArt(state: World) {
     if (!this.ready || this.load.isLoading()) return false;
@@ -130,20 +106,12 @@ export class PlayScene extends Phaser.Scene {
     this.game.canvas.dataset.ready = 'false';
     this.load.once('complete', () => this.paint(this.world, this.selected)); this.load.start(); return false;
   }
-  private exitDoor() {
-    const location = this.town?.location;
-    if (location?.kind === 'interior' && this.town!.buildings.find(b => b.id === location.building)?.entry === location.room) drawExit(this);
-  }
   private paintPlay(state: World, selected: ActorId) {
     this.figures = state.actors.filter(a => a.room === state.room).map(a => {
       const depth = actorDepth(state, a);
       return drawActor(this, supportedActor(state, a), a.id === selected, visualContext(state)).setDepth(depth);
     });
-    state.items.forEach(item => {
-      const point = itemPoint(state, item); if (!point) return;
-      const depth = objectDepth(state, item);
-      this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth));
-    });
+    this.objects = drawObjects(this, state);
     drawLighting(this, state);
     if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700);
   }
@@ -174,8 +142,7 @@ export class PlayScene extends Phaser.Scene {
   slidePiece(id: number, from: Point) { const piece = this.pieces.get(id), home = this.world.layout.pieces.find(p => p.id === id); if (piece && home && !reducedMotion()) this.tweens.add({ targets: piece, x: { from: from.x, to: home.x }, y: { from: from.y, to: home.y }, duration: 240, ease: 'Back.Out' }); }
   blinkPiece(kind: Piece['kind']) {
     const piece = this.world.layout.pieces.find(p => p.kind === kind && p.room === this.world.room), target = piece && this.pieces.get(piece.id); if (!target) return;
-    this.game.canvas.dataset.blink = kind; this.tweens.killTweensOf(target); target.setAlpha(1);
-    this.tweens.add({ targets: target, alpha: .35, duration: reducedMotion() ? reducedFadeMs : 160, yoyo: true, repeat: reducedMotion() ? 0 : 2, onComplete: () => target.setAlpha(1) });
+    this.game.canvas.dataset.blink = kind; blinkPiece(this, target);
   }
   /** `carried`: the finger drags the figure (it hangs, never walks); without `id` whoever moved is let go. */
   previewActor(id: ActorId | null, point: Point | null, carried = false) {
@@ -187,7 +154,7 @@ export class PlayScene extends Phaser.Scene {
     const depth = actorDepth(this.world, preview);
     const figure = this.figures.find(f => f.name === active);
     if (figure) this.tweens.killTweensOf(figure);
-    this.trackSteps(figure, carried ? null : point);
+    trackSteps(figure, carried ? null : point, this.gaze);
     figure?.setPosition(destination.x, destination.y).setDepth(depth);
     this.moving = id; this.game.canvas.dataset.walking = id ?? '';
     this.game.canvas.dataset.walkX = String(destination.x); this.game.canvas.dataset.walkY = String(destination.y);
@@ -196,28 +163,16 @@ export class PlayScene extends Phaser.Scene {
       this.objects.find(o => o.name === item.id)?.setPosition(p.x, p.y).setDepth(depth + 2);
     });
   }
-  private trackSteps(figure: Phaser.GameObjects.Container | undefined, point: Point | null) {
-    if (!figure || !point) return;
-    figure.setData('direction', Math.sign(point.x - figure.x)); this.gaze.delete(figure.name as ActorId);
-    const distance = (figure.getData('distance') ?? 0) + Math.hypot(point.x - figure.x, point.y - figure.y);
-    figure.setData('distance', distance).setData('gait', trackGait(figure.getData('gait'), performance.now(), distance));
-  }
-  /** Through the door to `destination`: it opens and the figure fades into the doorway, then `done` (at most 240 ms, nothing held). */
-  enterDoor(id: ActorId, destination: Location, done: () => void) { if (this.ready && this.town) enterDoor(this, this.town, () => this.figures.find(f => f.name === id), destination, done); else done(); }
   /** Whoever moves for a game walks there (fades with reduced motion); call it before committing the moves. */
-  stroll(moves: { actor: ActorId; point: Point }[]) { this.strolls.start(this.figures, moves); }
-  private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.strolls.step(figure, actor, this.world) || this.life.step(figure, actor, this.world, performance.now()) || (this.moving === actor.id && !this.weight.carrying(actor.id)); }
+  stroll(moves: { actor: ActorId; point: Point }[]) { this.ambient.strolls.start(this.figures, moves); }
+  private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.ambient.walking(figure, actor, this.world, () => this.moving === actor.id && !this.weight.carrying(actor.id)); }
   captureMotion() {
     const settle = captureMotion(this, this.figures, [...this.objects, ...(this.ghost ? [this.ghost] : [])], this.world.room), name = this.ghost?.name;
     return () => settle(this.figures, this.objects, this.world.room, this.world.items.some(i => i.id === name && !i.holder) ? { name: name!, fall: objectFall(contextScale(visualContext(this.world))) } : null);
   }
   visibleWorld(): VisibleWorld {
-    return shownWorld({ world: this.world, figures: this.figures, objects: this.objects, moving: this.moving, pickPiece: p => this.pickPiece(p), actorHit: (actor, point) => this.actorHit(actor, point) });
-  }
-  private actorHit(actor: Actor, point: Point) {
-    const pose = this.figures.find(f => f.name === actor.id)?.getByName<Phaser.GameObjects.Container>('pose');
-    if (!pose) return false;
-    return visibleHit(this, pose, point);
+    return shownWorld({ world: this.world, figures: this.figures, objects: this.objects, moving: this.moving, pickPiece: p => this.pickPiece(p),
+      actorHit: (actor, point) => { const pose = this.figures.find(f => f.name === actor.id)?.getByName<Phaser.GameObjects.Container>('pose'); return !!pose && visibleHit(this, pose, point); } });
   }
   hover(point: Point | null) {
     this.hint?.clear();
@@ -250,7 +205,7 @@ export class PlayScene extends Phaser.Scene {
     if (!this.ghost) this.ghost = this.add.image(drag.point.x, drag.point.y, key).setDepth(1000);
     const target = actorAt(this.visibleWorld(), drag.point);
     const point = previewPoint(this.visibleWorld(), drag);
-    this.snapGhost(point, drag.kind === 'item' ? target?.id ?? null : null);
+    snapGhost(this, this.ghost, point, drag.kind === 'item' ? target?.id ?? null : null);
     this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : ballSize(key as ItemKind, visualContext(this.world)), drag.kind === 'look' ? 56 : ballSize(key as ItemKind, visualContext(this.world)));
     this.highlight(target);
   }
@@ -259,37 +214,27 @@ export class PlayScene extends Phaser.Scene {
     this.hint.clear();
     if (target) this.hint.lineStyle(3, 0x477e86).strokeEllipse(target.x, target.y + 3, 76, 22);
   }
-  private snapGhost(point: Point, target: ActorId | null) {
-    const ghost = this.ghost!;
-    if (ghost.getData('target') !== target) {
-      this.tweens.killTweensOf(ghost);
-      if (target && !reducedMotion()) this.tweens.add({ targets: ghost, ...point, duration: 100, ease: 'Sine.Out' });
-      else ghost.setPosition(point.x, point.y);
-    } else if (!target) ghost.setPosition(point.x, point.y);
-    ghost.setData('target', target);
-  }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   private get frameContext(): FrameContext {
-    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.life, gaits: [],
-      swing: { angle: this.swing.angle(), legs: this.swing.legs() }, walking: (f, a) => this.walking(f, a), weight: this.weight };
+    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.ambient.life, gaits: [],
+      swing: { angle: this.outdoor.swing.angle(), legs: this.outdoor.swing.legs() }, walking: (f, a) => this.walking(f, a), weight: this.weight };
   }
   /** Whoever walks on a command (not carried, not strolling) may kick the ball. */
   private kicker() { const f = this.moving && !this.weight.carrying(this.moving) ? this.figures.find(f => f.name === this.moving) : undefined; return f ? { x: f.x, y: f.y, direction: f.getData('direction') ?? 0 } : null; }
   private mark(key: string, value: string) { if (this.game.canvas.dataset[key] !== value) this.game.canvas.dataset[key] = value; }
   update(time: number) {
-    const reduced = reducedMotion(); this.swing.step(performance.now(), reduced);
+    const reduced = reducedMotion(); this.outdoor.swing.step(performance.now(), reduced);
     const ctx = this.frameContext, shown: string[] = [];
-    this.life.tick(this.world, this.selected, ctx.now, !reduced && !this.building && !this.wardrobe && !this.moving && !this.gameArt?.active() && !this.game.canvas.dataset.strolling);
+    this.ambient.life.tick(this.world, this.selected, ctx.now, !reduced && !this.building && !this.wardrobe && !this.moving && !this.gameArt?.active() && !this.game.canvas.dataset.strolling);
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
       shown.push(`${actor.id}:${animateFigure(ctx, figure, actor, time, index, reduced)}`);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
     this.balls.step(this.world, this.objects, this.kicker(), ctx.now);
-    this.life.flush(); this.mark('gait', ctx.gaits.join(' '));
+    this.ambient.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
-    this.sky?.(time, reduced); (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(this.swing.angle());
-    if (this.sky) { this.mark('swing', this.swing.amplitude().toFixed(2)); this.mark('swingAngle', this.swing.angle().toFixed(2)); }
+    this.outdoor.frame(time, reduced);
     this.mark('uses', animatePieces(this.pieces, time, reduced));
   }
 }
