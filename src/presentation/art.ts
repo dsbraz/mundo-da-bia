@@ -8,6 +8,7 @@ import { selectionPulse } from './motion';
 import { actors } from '../content/catalog';
 import { contactShadow } from './contact-shadow';
 import { catTail, phaseOf } from './idle-life';
+import { catTrot, gaitFrame } from './gait';
 import { expressionOf, faceParts, paintFace, type Expression } from './expression';
 import type { Actor } from '../domain/types';
 
@@ -110,18 +111,18 @@ function heroLayer(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, acto
   if (side === 'back' && actor.look === 'superman') addPart(scene, pose, actor, 'cape-superman');
   if (side === 'front' && actor.look === 'spiderman') addPart(scene, pose, actor, 'mask-spiderman');
 }
-export function walkPose(figure: Phaser.GameObjects.Container, distance: number, reduced: boolean, direction = 0) {
-  const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
-  const phase = distance / 18;
+/** One frame of walking: the cycle comes from `gait` (cadence and step scaled by the context); a cat trots with its tail up. */
+export function walkPose(figure: Phaser.GameObjects.Container, actor: Actor, scale: number, reduced: boolean) {
+  const pose = figure.getByName<Phaser.GameObjects.Container>('pose'), distance = figure.getData('distance') ?? 0, direction = figure.getData('direction') ?? 0;
+  if (actor.kind === 'cat') { const trot = catTrot(distance, scale, reduced); pose.y -= trot.bob; pose.getByName<Phaser.GameObjects.Image>('tail').rotation = trot.tail; return; }
+  const gait = gaitFrame(distance, scale, direction, figure.getData('gait')?.acceleration ?? 0, reduced);
   if (reduced) return;
-  pose.y -= Math.abs(Math.sin(phase)) * 2; pose.rotation += direction * .025;
+  pose.y -= gait.bob; pose.rotation += gait.lean;
   pose.getByName<Phaser.GameObjects.Image>('eyes').setX(direction * 1.5);
   pose.getByName<Phaser.GameObjects.Image>('lids').setX(direction * 1.5);
-  const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
-  knees?.list.forEach(part => {
-    const leg = part as Phaser.GameObjects.Image;
-    const stride = Math.sin(phase + Number(leg.getData('side')) * Math.PI);
-    leg.y = 60 - Math.max(0, stride) * 8; leg.x = stride * 3;
+  pose.getByName<Phaser.GameObjects.Container>('knees')?.list.forEach(part => {
+    const leg = part as Phaser.GameObjects.Image, step = gait.legs[Number(leg.getData('side'))]!;
+    leg.y = 60 - step.lift; leg.x = step.x;
   });
 }
 export function gazePose(figure: Phaser.GameObjects.Container, direction: number) {

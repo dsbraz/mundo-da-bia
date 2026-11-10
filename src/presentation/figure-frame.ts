@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import type { Actor, ActorId, World } from '../domain/types';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { animateActor, gazePose, walkPose } from './art';
-import { handAnchor } from './pose';
+import { contextScale, handAnchor, visualContext } from './pose';
 import { glanceDirection, lifePose } from './life-pose';
 import { expressionOf, type Expression, type faces } from './expression';
 
@@ -16,6 +16,8 @@ export interface FrameContext {
   walking: (figure: Container, actor: Actor) => boolean;
   /** Collects the ambient behaviours shown this frame. */
   life: { mark: (names: string[]) => void };
+  /** Collects `id:gait` for every figure that walks, trots or is carried this frame (the scene's `data-gait`). */
+  gaits: string[];
 }
 /** Blinks keep their real rhythm also with reduced motion (the only idle motion left there). */
 export const blinking = (time: number, index: number) => (time + index * 530) % 3900 < 130;
@@ -25,9 +27,9 @@ export function animateFigure(ctx: FrameContext, figure: Container, actor: Actor
   const face = faceFrame(ctx, actor, posed, walking, time, index, reduced);
   animateActor(figure, posed, reduced ? 500 : time, index, !reduced && ctx.world.show, reduced, face);
   const pose = figure.getByName<Container>('pose');
-  if (walking) walkPose(figure, figure.getData('distance') ?? 0, reduced, figure.getData('direction'));
-  else gazePose(figure, face.look);
+  if (!walking) gazePose(figure, face.look);
   ctx.life.mark([...(face.blinked ? ['blink'] : []), ...(face.glance ? ['glance'] : []), ...lifePose(pose, posed, time, reduced, !walking && !seated)]);
+  if (walking) { walkPose(figure, actor, contextScale(visualContext(ctx.world)), reduced); ctx.gaits.push(`${actor.id}:${actor.kind === 'cat' ? 'trot' : 'walk'}`); }
   animateSwing(ctx, pose, actor, time, reduced);
   const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
   ctx.world.items.filter(i => i.holder === actor.id).forEach(i => ctx.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));

@@ -1,6 +1,8 @@
 import type { ActorId, Point, World } from '../domain/types';
 import { walkTarget } from './walk-target';
 import { reducedMotion } from './motion';
+import { gaitSpeed } from './gait';
+import { contextScale, visualContext } from './pose';
 interface Actions {
   state: () => World; selected: () => ActorId; preview: (id: ActorId | null, point: Point | null) => void;
   reject?: (point: Point) => void;
@@ -25,12 +27,13 @@ export function walking(actions: Actions) {
     const { point: stop, path } = target;
     const current = command;
     actor = id; position = { x: origin.x, y: origin.y }; let last = performance.now(), speed = continuingSpeed;
+    const gait = gaitSpeed(contextScale(visualContext(world)), false);
     function tick(now: number) {
       if (current !== command || !position) return;
       const elapsed = Math.min(50, now - last); last = now;
       const remaining = routeLength(position, path);
       if (remaining < .01) { finish(); return; }
-      speed = Math.min(.24, speed + elapsed * .0012, Math.sqrt(2 * .0012 * remaining));
+      speed = Math.min(gait.top, speed + elapsed * gait.acceleration, Math.sqrt(2 * gait.acceleration * remaining));
       velocity = speed; let distance = speed * elapsed;
       while (path.length && distance > 0) {
         const target = path[0]!, length = Math.hypot(target.x - position.x, target.y - position.y);

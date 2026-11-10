@@ -31,6 +31,7 @@ import { drawRoom } from './room';
 import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
 import { actorAt, handPoint, previewPoint, itemPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
+import { trackGait } from './gait';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 import { pokeFigure, refuseAt } from './feedback';
@@ -189,7 +190,8 @@ export class PlayScene extends Phaser.Scene {
   private trackSteps(figure: Phaser.GameObjects.Container | undefined, point: Point | null) {
     if (!figure || !point) return;
     figure.setData('direction', Math.sign(point.x - figure.x)); this.gaze.delete(figure.name as ActorId);
-    figure.setData('distance', (figure.getData('distance') ?? 0) + Math.hypot(point.x - figure.x, point.y - figure.y));
+    const distance = (figure.getData('distance') ?? 0) + Math.hypot(point.x - figure.x, point.y - figure.y);
+    figure.setData('distance', distance).setData('gait', trackGait(figure.getData('gait'), performance.now(), distance));
   }
   walkToDoor(id: ActorId, x: number, duration: number): Promise<void> {
     const actor = this.world.actors.find(a => a.id === id)!;
@@ -263,9 +265,10 @@ export class PlayScene extends Phaser.Scene {
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   private get frameContext(): FrameContext {
-    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.life,
+    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.life, gaits: [],
       swingRig: () => this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null, walking: (f, a) => this.walking(f, a) };
   }
+  private mark(key: string, value: string) { if (this.game.canvas.dataset[key] !== value) this.game.canvas.dataset[key] = value; }
   update(time: number) {
     const reduced = reducedMotion(), ctx = this.frameContext, shown: string[] = [];
     this.life.tick(this.world, this.selected, ctx.now, !reduced && !this.building && !this.wardrobe && !this.moving && !this.gameArt?.active() && !this.game.canvas.dataset.strolling);
@@ -274,8 +277,8 @@ export class PlayScene extends Phaser.Scene {
       shown.push(`${actor.id}:${animateFigure(ctx, figure, actor, time, index, reduced)}`);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
-    this.life.flush();
-    if (this.game.canvas.dataset.faces !== shown.join(' ')) this.game.canvas.dataset.faces = shown.join(' ');
+    this.life.flush(); this.mark('gait', ctx.gaits.join(' '));
+    this.mark('faces', shown.join(' '));
     this.sky?.(time, reduced);
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }

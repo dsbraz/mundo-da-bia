@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { walking } from './walking';
+import { gaitSpeed } from './gait';
 import { initialWorld } from '../domain/world';
 function setup() {
   let now = 0; const frames = new Map<number, FrameRequestCallback>(); let serial = 0;
@@ -64,5 +65,13 @@ it('um novo destino durante a caminhada preserva a velocidade já adquirida', ()
   const before = s.preview.mock.calls.at(-1)![1];
   s.walk.start({ x: 850, y: 530 }); s.advance();
   const after = s.preview.mock.calls.at(-1)![1];
-  expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeGreaterThan(10);
+  // Full speed carries over (a restart from rest would cover only 3 px in this 50 ms frame).
+  expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeCloseTo(gaitSpeed(1, false).top * 50);
+});
+it('on the street the walk is scaled like the figure: 0.6 of the indoor speed', () => {
+  const s = setup(); s.state.streetWidth = 3000;
+  s.walk.start({ x: 950, y: 530 });
+  for (let n = 0; n < 12; n++) s.advance();
+  const [a, b] = s.preview.mock.calls.slice(-2).map(call => call[1]);
+  expect(b.x - a.x).toBeCloseTo(gaitSpeed(.6, false).top * 50);
 });
