@@ -1,5 +1,5 @@
 /** One game jump, drawn in the scene only: a short crouch, the arc (the shadow shrinks in the air) and a landing squash with a puff of dust.
- *  It lasts as long as the jump lock (400 ms); the landing squash and dust come after it and never hold input. */
+ *  It lasts 400 ms; a jump pressed meanwhile is kept and played when it ends, and the landing squash and dust never hold input. */
 export const jumpMs = 400;
 const crouchMs = 90, landMs = 160, height = 28, crouchSquash = -.08;
 export type JumpPhase = 'crouch' | 'air' | 'land' | 'still';

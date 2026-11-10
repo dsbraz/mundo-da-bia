@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, readTown, tray, closeTray, point, bringHere } from './helpers';
+import { ready, readTown, tray, closeTray, point, bringHere, playUntil } from './helpers';
 import { initialWorld } from '../src/domain/world';
 import { hopPosition, hopTiles } from '../src/presentation/game-space';
 import { initialAlbum } from '../src/domain/houses';
@@ -98,6 +98,23 @@ test('com um gato escolhido, a brincadeira passa para a criança mais perto', as
   await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   await expect(page.locator('#game-choice-message')).toBeEmpty(); await expect(page.locator('#selected')).not.toHaveText('Mimi');
+});
+
+test('amarelinha: um segundo pulo 350 ms depois do primeiro é aceito ao fim do pulo, sem desabilitar o botão', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 }); await playground(page);
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') }); await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
+  await playUntil(page, () => page.locator('#game-panel').getAttribute('data-phase'), 'playing', 250);
+  const jump = page.locator('#game-jump');
+  await page.keyboard.press('Space'); await expect(jump).toHaveText('Pular para 2');
+  // Mid-jump the button stays enabled and a press is kept, then played once the 400 ms jump ends.
+  await page.clock.runFor(350); await expect(jump).toBeEnabled();
+  await page.keyboard.press('Space');
+  await page.clock.runFor(100); await expect(jump).toHaveText('Pular para 3 e 4');
+  // A tap on the button works the same way.
+  await page.clock.runFor(350); await expect(jump).toBeEnabled(); await jump.tap();
+  await page.clock.runFor(100); await expect(jump).toHaveText('Pular para 5');
 });
 
 test('corda tem indicação de ritmo e novas tentativas por toque com movimento reduzido', async ({ page }) => {

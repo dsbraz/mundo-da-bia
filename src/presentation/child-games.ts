@@ -6,6 +6,7 @@ import { gameControls } from './game-controls';
 import type { GamePreview } from './child-game-art';
 import { gamePosition } from './child-game-art';
 import { reducedMotion } from './motion';
+import { jumpMs } from './jump-motion';
 import { gameReactions, spectatorAt, type GameReaction } from './game-cheers';
 import { gameLines, type ReactionPose } from '../content/personalities';
 import { nameOf, say } from '../content/feedback-text';
@@ -20,10 +21,10 @@ interface Actions {
   react: (actor: ActorId, pose: ReactionPose, line: string) => void;
 }
 export function childGames(root: HTMLElement, actions: Actions) {
-  let session: GamePreview | null = null, frame = 0, pending = false, command = 0, playing: ActorId | null = null;
+  let session: GamePreview | null = null, frame = 0, pending = false, command = 0, playing: ActorId | null = null, queued: { cell: number | undefined } | null = null;
   const view = gameControls(root, { start, jump, cancel, tap });
   function cancel() {
-    command++; const active = session, wasPending = pending; session = null; pending = false;
+    command++; const active = session, wasPending = pending; session = null; pending = false; queued = null;
     cancelAnimationFrame(frame); view.close(); actions.preview(null);
     if (wasPending) actions.stopWalk();
     if (active) actions.commit(active.actor, gamePosition(active, performance.now(), reducedMotion()));
@@ -49,7 +50,9 @@ export function childGames(root: HTMLElement, actions: Actions) {
     });
   }
   function jump(cell?: number) {
-    if (!session || performance.now() - session.jumpedAt < 400) return;
+    if (!session) return;
+    // A jump pressed during the current one is kept and played as soon as it lands (in `tick`), never dropped.
+    if (performance.now() - session.jumpedAt < jumpMs) { queued = { cell }; return; }
     const now = performance.now(), before = session.game;
     const next = before.kind === 'rope' ? ropeStep(before, now) : hopStep(before, cell ?? hopCells(before)[0]!);
     if (next === before) return;
@@ -67,7 +70,9 @@ export function childGames(root: HTMLElement, actions: Actions) {
   }
   function tick() {
     if (!session) return;
-    const now = performance.now(); render(view, session, now);
+    const now = performance.now();
+    if (queued && now - session.jumpedAt >= jumpMs) { const { cell } = queued; queued = null; jump(cell); }
+    render(view, session, now);
     follow(actions, session.game.kind, session.origin, gamePosition(session, now, reducedMotion()));
     frame = requestAnimationFrame(tick);
   }
@@ -76,13 +81,13 @@ export function childGames(root: HTMLElement, actions: Actions) {
 
 /** The panel mirrors the scene: the label of the jump, a short line and, for the rope, the beat. */
 function render(view: ReturnType<typeof gameControls>, value: GamePreview, now: number) {
-  const cells = hopCells(value.game), landing = now - value.jumpedAt < 400;
+  const cells = hopCells(value.game);
   if (value.game.kind === 'rope') {
     const message = { ready: 'Espere a corda chegar.', jump: 'Isso! Continue no seu ritmo.', again: 'Tente no próximo “Agora!”.' }[value.game.feedback];
     view.update('playing', 'Pular', message, false, ropeCue(value.game, now) ? 'Agora!' : 'Prepare…');
   } else {
     const done = !cells.length;
-    view.update(done ? 'complete' : 'playing', `Pular para ${cells.join(' e ')}`, done ? 'Ida e volta! De novo?' : cells.length === 2 ? 'Dois pés nas casas iluminadas.' : 'Um pé na casa iluminada.', landing);
+    view.update(done ? 'complete' : 'playing', `Pular para ${cells.join(' e ')}`, done ? 'Ida e volta! De novo?' : cells.length === 2 ? 'Dois pés nas casas iluminadas.' : 'Um pé na casa iluminada.', false);
   }
 }
 /** Someone watching claps when touched (true); the game goes on. */
