@@ -52,8 +52,12 @@ it('quem esconderia uma casa dá um passo para trás do tabuleiro; quem está lo
   expect(moves.length).toBeGreaterThan(0); expect(moves.some(m => m.actor === 'bia')).toBe(false);
   for (const m of moves) {
     const actor = world.actors.find(a => a.id === m.actor)!;
-    expect(m.point.x).toBe(actor.x); expect(m.point.y).toBeLessThan(board.top);
+    expect(m.point.y).toBeLessThan(board.top); expect(Math.abs(m.point.x - actor.x)).toBeLessThanOrEqual(200);
+    // Beside the board when a free spot is a short step away; behind it, where it stood, otherwise.
+    expect(m.point.x === actor.x || m.point.x < board.left - 35 || m.point.x > board.right + 35).toBe(true);
   }
+  expect(moves.some(m => m.point.x !== world.actors.find(a => a.id === m.actor)!.x)).toBe(true);
+  const xs = moves.map(m => m.point.x); for (const x of xs) expect(xs.filter(y => Math.abs(y - x) < 55)).toHaveLength(1);
   const moved = { ...world, actors: world.actors.map(a => { const m = moves.find(n => n.actor === a.id); return m ? { ...a, ...m.point, seat: null } : a; }) };
   expect(stepAside(moved, bia, origin)).toEqual([]);
   const far = { ...world, actors: world.actors.map(a => a.id === 'bia' ? a : { ...a, x: 100, seat: null }) };

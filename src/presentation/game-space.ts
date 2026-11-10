@@ -1,5 +1,5 @@
 import type { GameKind } from '../domain/child-games';
-import { roomWidth } from '../domain/geometry';
+import { roomWidth, validPoint } from '../domain/geometry';
 import { footprint, overlap } from '../domain/placement';
 import type { Actor, ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
@@ -10,11 +10,21 @@ export const hopTiles = rows.flatMap((cells, row) => cells.map((cell, index) => 
 export const hopBoard = (origin: Point) => ({ left: origin.x - 47, right: origin.x + 257, top: origin.y - 122, bottom: origin.y - 2 });
 /** Where the camera looks to frame the whole board (its middle, at floor level). */
 export const hopFocus = (origin: Point): Point => ({ x: origin.x + 105, y: origin.y });
-/** Hopscotch: everyone else whose body would hide a square (standing on or in front of the chalk) steps back behind the board. */
-export function stepAside(world: World, player: Actor, origin: Point): { actor: ActorId; point: Point }[] {
-  const board = hopBoard(origin), behind = board.top - 13;
-  return world.actors.filter(a => a.id !== player.id && a.room === world.room && hides(a, board))
-    .map(a => ({ actor: a.id, point: { x: a.x, y: behind } }));
+type Move = { actor: ActorId; point: Point };
+/** Hopscotch: everyone else whose body would hide a square (standing on or in front of the chalk) steps back behind the board,
+ *  and, when there is a free spot a short step away, beside it too, out of the jumping child's way. */
+export function stepAside(world: World, player: Actor, origin: Point): Move[] {
+  const board = hopBoard(origin), behind = board.top - 13, moves: Move[] = [];
+  for (const a of world.actors.filter(a => a.id !== player.id && a.room === world.room && hides(a, board))) moves.push({ actor: a.id, point: { x: aside(world, a, board, moves), y: behind } });
+  return moves;
+}
+/** The nearest free x just past either end of the board, at most 200 away; where it stood if none. */
+function aside(world: World, actor: Actor, board: ReturnType<typeof hopBoard>, taken: Move[]) {
+  const half = actor.kind === 'cat' ? 41 : 48, ends = [board.left - half, board.right + half];
+  const others = world.actors.filter(o => o.id !== actor.id && o.room === world.room && !taken.some(m => m.actor === o.id)).map(o => o.x).concat(taken.map(m => m.point.x));
+  const free = (x: number) => validPoint({ x, y: 400 }, roomWidth(world)) && Math.abs(x - actor.x) <= 200 && others.every(o => Math.abs(o - x) >= 55);
+  return ends.flatMap((end, side) => [0, 1].map(step => end + (side ? 90 : -90) * step)).filter(free)
+    .sort((a, b) => Math.abs(a - actor.x) - Math.abs(b - actor.x))[0] ?? actor.x;
 }
 function hides(actor: Actor, board: ReturnType<typeof hopBoard>) {
   const half = actor.kind === 'cat' ? 35 : 42, height = actor.kind === 'cat' ? 94 : 189, foot = actor.y + (actor.seat ? 19 : 0);
