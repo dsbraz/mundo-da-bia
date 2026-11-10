@@ -31,6 +31,7 @@
 @media(max-width:600px) { #room-dialog { padding:16px; } #room-map { gap:6px; padding:12px 5px; } #room-map .room-card { padding:2px; border-radius:10px; } #room-map .room-picture { height:70px; } #room-map button { font-size:.8rem; padding:6px 2px; } #room-map .room-card small { font-size:.65rem; padding:4px 1px; } }
 
 #room-dialog .home-tabs button { padding:10px 8px; min-width:0; }
+#room-dialog .home-tabs button.illustrated { flex-direction:row; }
 #room-map .room-card > button { touch-action:pan-y; font-size:.95rem; }
 #room-dialog[data-home-tab="organize"] #room-map .room-card > button { touch-action:none; }
 #room-map .room-picture img { max-height:90px; }

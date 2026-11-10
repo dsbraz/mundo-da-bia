@@ -10,8 +10,8 @@
 #app .choices button,#app .catalog-piece { min-height:104px; }
 #app #bring-here { width:auto; min-width:160px; }
 #app #play-hint,#app #actor-context,#app #build-inspector,#app #game-panel { position:absolute; inset:auto 0 var(--footer-height)!important; width:100%; height:var(--dock-height); min-width:0; max-width:none; max-height:none; padding:12px 18px; border:0; border-top:1px solid #cec5b5; border-radius:0; background:#f9f3e7; box-shadow:none; overflow:auto; }
-#app #actor-context .actions { display:grid; grid-template-columns:repeat(auto-fill,64px); gap:6px; margin:0 0 6px; }
-#app #actor-context .panel-button { width:64px; min-width:64px; height:78px; margin:0; padding:4px 2px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:12px; line-height:1.1; }
+#app #actor-context .actions { display:grid; grid-template-columns:repeat(auto-fill,80px); gap:6px; margin:0 0 6px; }
+#app #actor-context .panel-button { width:80px; min-width:80px; height:80px; margin:0; padding:4px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:16px; line-height:1.1; letter-spacing:-.02em; }
 #app #actor-context .panel-button img { width:40px; height:40px; pointer-events:none; }
 #app #actor-context .panel-button:disabled { opacity:.35; filter:grayscale(.6); }
 #app #actor-context .status-badges { display:flex; gap:6px; min-height:28px; }
@@ -27,7 +27,7 @@
 #app #build-history button { width:56px; height:56px; min-width:56px; min-height:56px; padding:0; border-radius:50%; font-size:0; }
 #app #build-history button.illustrated::before { width:30px; height:30px; flex-basis:30px; }
 #app .catalog-categories { flex-wrap:wrap; }
-#app .catalog-categories button { flex:1 0 84px; min-width:0; overflow-wrap:anywhere; }
+#app .catalog-categories button { flex:1 0 112px; min-width:0; overflow-wrap:anywhere; }
 #app .catalog-piece[data-unavailable=true] { opacity:.45; filter:grayscale(.5); }
 #app #orientation-dock { display:none; }
 #app dialog { border-width:1.5px; border-radius:16px; }
@@ -60,3 +60,7 @@
 #app.actor-chosen #play-hint,#app.building #play-hint,#app.tray-open #play-hint,#app.playing-game #play-hint { display:none; }
 #play-hint h2 { font-size:20px; color:#547363; }
 #play-hint p { max-width:360px; line-height:1.6; }
+
+/* Gate W1: no button or tab label under 16 px at any breakpoint (icon-only buttons carry an aria-label and no text). */
+button,summary { font-size:16px!important; }
+.game-choices button,.remove-house .keep-house { font-size:18px!important; }
