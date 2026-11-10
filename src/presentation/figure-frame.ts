@@ -5,6 +5,7 @@ import { animateActor, gazePose, walkPose } from './art';
 import { contextScale, handAnchor, visualContext } from './pose';
 import { glanceDirection, lifePose } from './life-pose';
 import { expressionOf, type Expression, type faces } from './expression';
+import type { weightFigures } from './weight-figures';
 
 type Container = Phaser.GameObjects.Container;
 /** What one frame of a figure needs from the scene. */
@@ -18,6 +19,8 @@ export interface FrameContext {
   life: { mark: (names: string[]) => void };
   /** Collects `id:gait` for every figure that walks, trots or is carried this frame (the scene's `data-gait`). */
   gaits: string[];
+  /** Carried by the finger or just let go. */
+  weight: ReturnType<typeof weightFigures>;
 }
 /** Blinks keep their real rhythm also with reduced motion (the only idle motion left there). */
 export const blinking = (time: number, index: number) => (time + index * 530) % 3900 < 130;
@@ -29,11 +32,18 @@ export function animateFigure(ctx: FrameContext, figure: Container, actor: Actor
   const pose = figure.getByName<Container>('pose');
   if (!walking) gazePose(figure, face.look);
   ctx.life.mark([...(face.blinked ? ['blink'] : []), ...(face.glance ? ['glance'] : []), ...lifePose(pose, posed, time, reduced, !walking && !seated)]);
-  if (walking) { walkPose(figure, actor, contextScale(visualContext(ctx.world)), reduced); ctx.gaits.push(`${actor.id}:${actor.kind === 'cat' ? 'trot' : 'walk'}`); }
+  moveLayers(ctx, figure, actor, walking, reduced);
   animateSwing(ctx, pose, actor, time, reduced);
   const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
   ctx.world.items.filter(i => i.holder === actor.id).forEach(i => ctx.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));
   return face.expression;
+}
+/** Carried, just let go, walking or trotting: layers it on the pose and lists it in `ctx.gaits`. */
+function moveLayers(ctx: FrameContext, figure: Container, actor: Actor, walking: boolean, reduced: boolean) {
+  const scale = contextScale(visualContext(ctx.world)), held = ctx.weight.pose(figure.getByName<Container>('pose'), actor, ctx.now, scale, reduced);
+  if (walking) walkPose(figure, actor, scale, reduced);
+  const gait = held || (walking ? (actor.kind === 'cat' ? 'trot' : 'walk') : '');
+  if (gait) ctx.gaits.push(`${actor.id}:${gait}`);
 }
 function posture(ctx: FrameContext, figure: Container, actor: Actor) {
   const seated = [ctx.town?.outdoor.bench, ctx.town?.outdoor.swing].includes(actor.id), walking = ctx.walking(figure, actor);

@@ -32,6 +32,9 @@ import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './pi
 import { actorAt, handPoint, previewPoint, itemPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
 import { trackGait } from './gait';
+import { weightFigures } from './weight-figures';
+import { objectFall } from './weight';
+import { placeTransfer, transferPreview } from './transfer-preview';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 import { pokeFigure, refuseAt } from './feedback';
@@ -61,6 +64,7 @@ export class PlayScene extends Phaser.Scene {
   private faces = faces();
   private life = ambientLife(() => this.game.canvas);
   private strolls = strollFigures(() => this.game.canvas);
+  private weight = weightFigures();
   private pieces = new Map<number, Phaser.GameObjects.Container>();
   private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
   private transferRoom: RoomId | null = null;
@@ -143,17 +147,10 @@ export class PlayScene extends Phaser.Scene {
     if (!this.ready) return;
     if (!room || !point) { if (this.transferRoom) this.paint(this.world, this.selected); return; }
     if (this.transferRoom !== room) {
-      this.children.removeAll(true); this.figures = []; this.pieces.clear(); this.objects = []; this.ghost = null;
-      roomPreview(this, enterRoom(this.world, room), this.selected, this.building); this.transferRoom = room;
-      if (actor) {
-        const value = this.world.actors.find(a => a.id === actor)!;
-        this.figures = [drawActor(this, { ...value, seat: null, resting: false }, true).setDepth(750)];
-        this.world.items.filter(i => i.holder === actor).forEach(i => this.objects.push(this.add.image(0, 0, itemKind(i)).setDisplaySize(40, 40).setDepth(751)));
-      } else if (item) this.ghost = this.add.image(0, 0, itemKind(this.world.items.find(i => i.id === item)!)).setDisplaySize(40, 40).setDepth(750);
+      this.children.removeAll(true); this.pieces.clear(); this.transferRoom = room;
+      ({ figures: this.figures, objects: this.objects, ghost: this.ghost } = transferPreview(this, this.world, room, this.selected, this.building, actor, item));
     }
-    const x = point.x * logicalWidth(this) / roomWidth(this.world, room);
-    this.figures[0]?.setPosition(x, point.y);
-    this.objects.forEach(o => o.setPosition(x + 28, point.y - 55)); this.ghost?.setPosition(x, point.y - 28);
+    placeTransfer({ figures: this.figures, objects: this.objects, ghost: this.ghost }, point.x * logicalWidth(this) / roomWidth(this.world, room), point.y);
   }
   previewLayout(state: World) {
     state.layout.pieces.forEach(piece => this.pieces.get(piece.id)?.setPosition(piece.x, piece.y).setDepth(pieceDepth(piece)));
@@ -170,7 +167,9 @@ export class PlayScene extends Phaser.Scene {
     this.game.canvas.dataset.blink = kind; this.tweens.killTweensOf(target); target.setAlpha(1);
     this.tweens.add({ targets: target, alpha: .35, duration: reducedMotion() ? reducedFadeMs : 160, yoyo: true, repeat: reducedMotion() ? 0 : 2, onComplete: () => target.setAlpha(1) });
   }
-  previewActor(id: ActorId | null, point: Point | null) {
+  /** `carried`: the finger drags the figure (it hangs, never walks); without `id` whoever moved is let go. */
+  previewActor(id: ActorId | null, point: Point | null, carried = false) {
+    this.weight.follow(id, point, carried, performance.now());
     const active = id ?? this.moving; if (!active) return;
     const actor = this.world.actors.find(a => a.id === active)!;
     const destination = point ?? supportedActor(this.world, actor);
@@ -178,7 +177,7 @@ export class PlayScene extends Phaser.Scene {
     const depth = actorDepth(this.world, preview);
     const figure = this.figures.find(f => f.name === active);
     if (figure) this.tweens.killTweensOf(figure);
-    this.trackSteps(figure, point);
+    this.trackSteps(figure, carried ? null : point);
     figure?.setPosition(destination.x, destination.y).setDepth(depth);
     this.moving = id; this.game.canvas.dataset.walking = id ?? '';
     this.game.canvas.dataset.walkX = String(destination.x); this.game.canvas.dataset.walkY = String(destination.y);
@@ -201,10 +200,10 @@ export class PlayScene extends Phaser.Scene {
   }
   /** Whoever moves for a game walks there (fades with reduced motion); call it before committing the moves. */
   stroll(moves: { actor: ActorId; point: Point }[]) { this.strolls.start(this.figures, moves); }
-  private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.strolls.step(figure, actor, this.world) || this.life.step(figure, actor, this.world, performance.now()) || this.moving === actor.id; }
+  private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.strolls.step(figure, actor, this.world) || this.life.step(figure, actor, this.world, performance.now()) || (this.moving === actor.id && !this.weight.carrying(actor.id)); }
   captureMotion() {
-    const settle = captureMotion(this, this.figures, [...this.objects, ...(this.ghost ? [this.ghost] : [])], this.world.room);
-    return () => settle(this.figures, this.objects, this.world.room);
+    const settle = captureMotion(this, this.figures, [...this.objects, ...(this.ghost ? [this.ghost] : [])], this.world.room), name = this.ghost?.name;
+    return () => settle(this.figures, this.objects, this.world.room, this.world.items.some(i => i.id === name && !i.holder) ? { name: name!, fall: objectFall(contextScale(visualContext(this.world))) } : null);
   }
   visibleWorld(): VisibleWorld {
     return shownWorld({ world: this.world, figures: this.figures, objects: this.objects, moving: this.moving, pickPiece: p => this.pickPiece(p), actorHit: (actor, point) => this.actorHit(actor, point) });
@@ -266,7 +265,7 @@ export class PlayScene extends Phaser.Scene {
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   private get frameContext(): FrameContext {
     return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.life, gaits: [],
-      swingRig: () => this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null, walking: (f, a) => this.walking(f, a) };
+      swingRig: () => this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null, walking: (f, a) => this.walking(f, a), weight: this.weight };
   }
   private mark(key: string, value: string) { if (this.game.canvas.dataset[key] !== value) this.game.canvas.dataset[key] = value; }
   update(time: number) {
