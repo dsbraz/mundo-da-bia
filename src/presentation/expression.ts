@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import type { ActorId, PresentationEvent, World } from '../domain/types';
 import type { ReactionPose } from '../content/personalities';
 /** Faces drawn from events that already exist (entering a room, the show, a poke, waking up, a glance); never saved. */
-export type Expression = 'neutral' | 'happy' | 'laugh' | 'surprise' | 'sleepy' | 'curious';
+export type Expression = 'neutral' | 'happy' | 'laugh' | 'surprise' | 'sleepy' | 'curious' | 'silly';
 export interface FaceLook { eyes: string[]; brows?: string; mouth?: string }
 export const surpriseMs = 1200;
 export const faceLayers: Record<'human' | 'cat', Record<Expression, FaceLook>> = {
@@ -13,10 +13,12 @@ export const faceLayers: Record<'human' | 'cat', Record<Expression, FaceLook>> =
     surprise: { eyes: ['eyes'], brows: 'brows-up', mouth: 'mouth-o' },
     sleepy: { eyes: ['eyes', 'lids-half'], brows: 'brows', mouth: 'mouth' },
     curious: { eyes: ['eyes'], brows: 'brows-curious', mouth: 'mouth-curious' },
+    // A funny face after a miss: squinting eyes, one brow up and an "o" mouth.
+    silly: { eyes: ['eyes-laugh'], brows: 'brows-curious', mouth: 'mouth-o' },
   },
   cat: {
     neutral: { eyes: ['eyes'] }, happy: { eyes: ['eyes-happy'] }, laugh: { eyes: ['eyes-happy'], mouth: 'mouth-open' },
-    surprise: { eyes: ['eyes-wide'], mouth: 'mouth-open' }, sleepy: { eyes: ['lids'] }, curious: { eyes: ['eyes-wide'] },
+    surprise: { eyes: ['eyes-wide'], mouth: 'mouth-open' }, sleepy: { eyes: ['lids'] }, curious: { eyes: ['eyes-wide'] }, silly: { eyes: ['eyes-happy', 'lids'], mouth: 'mouth-open' },
   },
 };
 const layersOf = (looks: Record<Expression, FaceLook>) => [...new Set(Object.values(looks).flatMap(l => [...l.eyes, l.brows, l.mouth].filter((p): p is string => !!p)).concat('lids'))];
@@ -52,4 +54,4 @@ export function faceEvents(store: ReturnType<typeof faces>, events: Presentation
   }
 }
 /** A poke that tickles or makes them hop gets a laugh; the others a happy face. */
-export const pokeFace = (pose: ReactionPose): Expression => pose === 'hop' || pose === 'wiggle' ? 'laugh' : 'happy';
+export const pokeFace = (pose: ReactionPose): Expression => pose === 'goof' ? 'silly' : ['hop', 'wiggle', 'clap', 'cheer'].includes(pose) ? 'laugh' : 'happy';

@@ -56,20 +56,40 @@ export function refuseAt(scene: Phaser.Scene, point: Point, text: string, figure
   scene.tweens.add({ targets: state, x: 1, duration: 70, yoyo: true, repeat: 2, onUpdate: () => figure.setData('shake', state.x * 4), onComplete: () => figure.setData('shake', 0) });
 }
 
-const poses: Record<ReactionPose, (t: number) => { hop?: number; tilt?: number; shake?: number; squash?: number }> = {
+type PoseFrame = { hop?: number; tilt?: number; shake?: number; squash?: number; arms?: number };
+const poses: Record<ReactionPose, (t: number) => PoseFrame> = {
   hop: t => ({ hop: -Math.sin(t * Math.PI) * 22, squash: Math.sin(t * Math.PI * 2) * .06 }),
   wiggle: t => ({ tilt: Math.sin(t * Math.PI * 4) * .12 * (1 - t) }),
   stretch: t => ({ squash: Math.sin(t * Math.PI) * .08 }),
   purr: t => ({ shake: Math.sin(t * Math.PI * 16) * 1.5, tilt: Math.sin(t * Math.PI) * .05 }),
+  // A spectator claps: three small bounces with the hands up.
+  clap: t => ({ hop: -Math.abs(Math.sin(t * Math.PI * 3)) * 8, arms: 1 }),
+  // The end of the hopscotch: arms up and one big jump.
+  cheer: t => ({ hop: -Math.sin(t * Math.PI) * 26, squash: Math.sin(t * Math.PI * 2) * .05, arms: 1 }),
+  // A funny face after a miss: a wobbly shake of the head.
+  goof: t => ({ tilt: Math.sin(t * Math.PI * 6) * .1 * (1 - t), shake: Math.sin(t * Math.PI * 10) * 2 * (1 - t) }),
 };
-/** Presentation-only touch reaction: no dispatch, nothing saved, walking untouched. */
+const poseMs: Partial<Record<ReactionPose, number>> = { clap: 700, cheer: 900, goof: 600 };
+const frameKeys = ['hop', 'tilt', 'shake', 'squash', 'arms'] as const;
+/** Presentation-only touch reaction: no dispatch, nothing saved, walking untouched. With reduced motion only the bubble (and the face)
+ *  shows, and a cheer keeps the arms up for a moment, without moving. */
 export function pokeFigure(scene: Phaser.Scene, figure: Container, pose: ReactionPose, line: string, height: number) {
   scene.game.canvas.dataset.reaction = `${figure.name}:${line}`;
   if (line) speechBubble(scene, { x: figure.x, y: figure.y - height - 8 }, line, figure.name);
-  if (reducedMotion()) return;
+  const write = (value: PoseFrame) => frameKeys.forEach(k => figure.setData(k, value[k] ?? 0));
+  const duration = poseMs[pose] ?? 360;
+  if (reducedMotion()) { if (pose === 'cheer') { write({ arms: 1 }); scene.time.delayedCall(duration, () => write({})); } return; }
   const state = { t: 0 };
-  const write = (value: ReturnType<typeof poses.hop>) => ['hop', 'tilt', 'shake', 'squash'].forEach(k => figure.setData(k, value[k as keyof typeof value] ?? 0));
-  scene.tweens.add({ targets: state, t: 1, duration: 360, ease: 'Sine.Out', onUpdate: () => write(poses[pose](state.t)), onComplete: () => write({}) });
+  scene.tweens.add({ targets: state, t: 1, duration, ease: 'Sine.Out', onUpdate: () => write(poses[pose](state.t)), onComplete: () => write({}) });
+  if (pose === 'cheer') chalkConfetti(scene, { x: figure.x, y: figure.y - height }, duration);
+}
+const chalk = [0xe8735a, 0x2ba8a0, 0x3f6fc4, 0x6dae4f, 0x9b7bd0, 0xf2b630];
+/** Chalk confetti over a celebrating child (never with reduced motion: no particles). */
+function chalkConfetti(scene: Phaser.Scene, top: Point, duration: number) {
+  const bits = scene.add.graphics({ x: top.x, y: top.y }).setDepth(1095);
+  for (let i = 0; i < 14; i++) bits.fillStyle(chalk[i % chalk.length]!).fillRect(Math.cos(i * 2.4) * (30 + i * 4), -10 - (i % 4) * 12, 7, 4);
+  scene.game.canvas.dataset.confetti = 'on';
+  scene.tweens.add({ targets: bits, y: top.y + 90, alpha: 0, duration, ease: 'Sine.In', onComplete: () => { bits.destroy(); scene.game.canvas.dataset.confetti = ''; } });
 }
 
 /** Called every frame after the base pose is set: layers the touch reaction or shake on top. */
@@ -80,4 +100,5 @@ export function applyReaction(figure: Container, pose: Container) {
   pose.x += Number(figure.getData('shake') ?? 0);
   pose.y += Number(figure.getData('hop') ?? 0);
   pose.rotation += Number(figure.getData('tilt') ?? 0);
+  pose.getByName<Phaser.GameObjects.Image>('hands')?.setFlipY(Number(figure.getData('arms') ?? 0) > .5);
 }

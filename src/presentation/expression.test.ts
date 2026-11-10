@@ -15,14 +15,14 @@ it('cada estado vira uma expressão, nesta prioridade: sono, surpresa, risada, a
   expect(expressionOf(calm, 'laugh')).toBe('laugh');
   expect(expressionOf(calm, 'sleepy')).toBe('sleepy');
 });
-it('as cinco expressões usam camadas que existem na arte, para humanos e gatos', () => {
+it('as cinco expressões e a careta usam camadas que existem na arte, para humanos e gatos', () => {
   const ids = (svg: string) => new Set([...svg.matchAll(/id="([^"]+)"/g)].map(m => m[1]));
   for (const [kind, svg] of [['human', human], ['cat', cat]] as const) {
     const present = ids(svg);
-    expect(Object.keys(faceLayers[kind]).sort()).toEqual(['curious', 'happy', 'laugh', 'neutral', 'sleepy', 'surprise']);
+    expect(Object.keys(faceLayers[kind]).sort()).toEqual(['curious', 'happy', 'laugh', 'neutral', 'silly', 'sleepy', 'surprise']);
     for (const part of faceParts[kind]) expect(present.has(part), `${kind}: ${part}`).toBe(true);
     const looks = new Set(Object.values(faceLayers[kind]).map(l => JSON.stringify(l)));
-    expect(looks.size).toBe(6);
+    expect(looks.size).toBe(7);
   }
 });
 it('olhos 1,4 vez maiores que antes (humano 3 × 4,6 e gato 2,8 × 4)', () => {
@@ -52,4 +52,9 @@ it('eventos que já existem disparam rostos: entrar surpreende, acordar dá sono
   expect(store.of('bia', 6900)).toBe('sleepy'); expect(store.of('bia', 7100)).toBeNull();
   expect(pokeFace('hop')).toBe('laugh'); expect(pokeFace('wiggle')).toBe('laugh');
   expect(pokeFace('purr')).toBe('happy'); expect(pokeFace('stretch')).toBe('happy');
+});
+it('a careta engraçada vem de errar na brincadeira; palmas e comemoração riem', () => {
+  expect(pokeFace('goof')).toBe('silly');
+  expect(pokeFace('clap')).toBe('laugh'); expect(pokeFace('cheer')).toBe('laugh');
+  expect(pokeFace('stretch')).toBe('happy');
 });

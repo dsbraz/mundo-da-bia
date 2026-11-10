@@ -16,11 +16,12 @@ export function gamePosition(value: GamePreview, now: number, reduced: boolean) 
 export function childGameArt(scene: Phaser.Scene) {
   let current: GamePreview | null = null;
   let dust: Phaser.GameObjects.Graphics | null = null;
-  let ground: Phaser.GameObjects.Container | null = null, rope: Phaser.GameObjects.Graphics | null = null, glow: Phaser.GameObjects.Graphics | null = null;
+  let ground: Phaser.GameObjects.Container | null = null, rope: Phaser.GameObjects.Graphics | null = null, glow: Phaser.GameObjects.Graphics | null = null, floor: Phaser.GameObjects.Graphics | null = null;
   function paint(value: GamePreview | null) {
-    ground?.destroy(); rope?.destroy(); dust?.destroy(); ground = null; rope = null; glow = null; dust = null; current = value;
+    ground?.destroy(); rope?.destroy(); dust?.destroy(); floor?.destroy(); ground = null; rope = null; glow = null; dust = null; floor = null; current = value;
+    scene.game.canvas.dataset.ropeCue = '';
     if (!value) return;
-    if (value.game.kind === 'rope') { rope = scene.add.graphics().setDepth(value.point.y + 1); return; }
+    if (value.game.kind === 'rope') { rope = scene.add.graphics().setDepth(value.point.y + 1); floor = scene.add.graphics().setDepth(5); return; }
     ground = scene.add.container(value.origin.x, value.origin.y).setDepth(5);
     const active = hopCells(value.game), chalk = scene.add.graphics(); glow = scene.add.graphics(); ground.add([glow, chalk]);
     hopTiles.forEach(tile => {
@@ -52,6 +53,7 @@ export function childGameArt(scene: Phaser.Scene) {
       if (value.game.kind === 'hopscotch' && value.feet === 1 && side === 1) leg.y -= 12;
     });
     if (rope) drawRope(rope, value, now, pose.y, reduced);
+    if (floor) floorCue(scene, floor, value, now, reduced);
   }
   return { paint, animate, active: () => current !== null };
 }
@@ -87,4 +89,12 @@ function drawRope(rope: Phaser.GameObjects.Graphics, value: GamePreview, now: nu
     rope.lineTo(center.x - Math.cos(angle) * 43, center.y + Math.sin(angle) * reach);
   }
   rope.strokePath();
+}
+/** "Now!" in the scene, readable without the panel: the floor under the feet flashes sun (steady with reduced motion) while the rope is green. */
+function floorCue(scene: Phaser.Scene, floor: Phaser.GameObjects.Graphics, value: GamePreview, now: number, reduced: boolean) {
+  const cue = ropeCue(value.game, now), mark = cue ? 'now' : '';
+  if (scene.game.canvas.dataset.ropeCue !== mark) scene.game.canvas.dataset.ropeCue = mark;
+  floor.clear(); if (!cue) return;
+  floor.fillStyle(0xf2b630, reduced ? .75 : .5 + .3 * Math.sin(now / 60)).fillEllipse(value.point.x, value.point.y + 2, 110, 26);
+  floor.lineStyle(3, 0x5a4a3d, .6).strokeEllipse(value.point.x, value.point.y + 2, 110, 26);
 }

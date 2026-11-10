@@ -6,6 +6,9 @@ import { gameControls } from './game-controls';
 import type { GamePreview } from './child-game-art';
 import { gamePosition } from './child-game-art';
 import { reducedMotion } from './motion';
+import { gameReactions, spectatorAt, type GameReaction } from './game-cheers';
+import { gameLines, type ReactionPose } from '../content/personalities';
+import { nameOf, say } from '../content/feedback-text';
 interface Actions {
   world: () => World; selected: () => ActorId; prepare: () => void; stopWalk: () => void;
   walk: (point: Point, done: () => void) => void;
@@ -13,9 +16,11 @@ interface Actions {
   follow: (point: Point, slack?: number) => void; select: (actor: ActorId) => void; drop: (actor: ActorId) => void;
   /** Draws the moves as short walks (fades with reduced motion); called before they are committed. */
   stroll: (moves: { actor: ActorId; point: Point }[]) => void;
+  /** A reaction drawn in the scene only (pose, face, bubble): cheering, clapping or a funny face. */
+  react: (actor: ActorId, pose: ReactionPose, line: string) => void;
 }
 export function childGames(root: HTMLElement, actions: Actions) {
-  let session: GamePreview | null = null, frame = 0, pending = false, command = 0;
+  let session: GamePreview | null = null, frame = 0, pending = false, command = 0, playing: ActorId | null = null;
   const view = gameControls(root, { start, jump, cancel, tap });
   function cancel() {
     command++; const active = session, wasPending = pending; session = null; pending = false;
@@ -28,6 +33,7 @@ export function childGames(root: HTMLElement, actions: Actions) {
     const actor = player(actions.world(), actions.selected());
     if (!actor) { view.error('Chame uma criança para brincar aqui!'); return; }
     if (actor.id !== actions.selected()) actions.select(actor.id);
+    playing = actor.id;
     if (actions.world().items.some(i => i.holder === actor.id)) actions.drop(actor.id);
     // Short on space, the game still starts: the child walks (and the camera follows) to the freest reachable floor.
     const origin = gameSpace(actions.world(), actor, kind) ?? freestFloor(actions.world(), actor, kind);
@@ -49,33 +55,49 @@ export function childGames(root: HTMLElement, actions: Actions) {
     if (next === before) return;
     const cells = hopCells(before);
     session = { ...session, game: next, from: session.point, point: before.kind === 'rope' ? session.point : hopPosition(session.origin, cells[0]!), jumpedAt: now, feet: before.kind === 'rope' ? 2 : cells.length };
-    actions.preview(session); render(now);
+    actions.preview(session); render(view, session, now);
+    cheer(actions, session.actor, gameReactions(before, next, nameOf(actions.world().actors.find(a => a.id === session!.actor)!)));
   }
   function tap(point: Point) {
+    if ((session || pending) && playing && clap(actions, playing, point)) return;
     if (!session) return;
     if (session.game.kind === 'rope') { jump(); return; }
     const tile = hopTileAt(session.origin, point);
     if (tile) jump(tile.cell);
   }
-  function render(now: number) {
-    const value = session!, cells = hopCells(value.game), landing = now - value.jumpedAt < 400;
-    if (value.game.kind === 'rope') {
-      const message = { ready: 'Espere a corda chegar.', jump: 'Isso! Continue no seu ritmo.', again: 'Tente no próximo “Agora!”.' }[value.game.feedback];
-      view.update('playing', 'Pular', message, false, ropeCue(value.game, now) ? 'Agora!' : 'Prepare…');
-    } else {
-      const done = !cells.length;
-      view.update(done ? 'complete' : 'playing', `Pular para ${cells.join(' e ')}`, done ? 'Ida e volta! De novo?' : cells.length === 2 ? 'Dois pés nas casas iluminadas.' : 'Um pé na casa iluminada.', landing);
-    }
-  }
   function tick() {
     if (!session) return;
-    const now = performance.now(); render(now);
+    const now = performance.now(); render(view, session, now);
     follow(actions, session.game.kind, session.origin, gamePosition(session, now, reducedMotion()));
     frame = requestAnimationFrame(tick);
   }
   return { cancel, open: view.open };
 }
 
+/** The panel mirrors the scene: the label of the jump, a short line and, for the rope, the beat. */
+function render(view: ReturnType<typeof gameControls>, value: GamePreview, now: number) {
+  const cells = hopCells(value.game), landing = now - value.jumpedAt < 400;
+  if (value.game.kind === 'rope') {
+    const message = { ready: 'Espere a corda chegar.', jump: 'Isso! Continue no seu ritmo.', again: 'Tente no próximo “Agora!”.' }[value.game.feedback];
+    view.update('playing', 'Pular', message, false, ropeCue(value.game, now) ? 'Agora!' : 'Prepare…');
+  } else {
+    const done = !cells.length;
+    view.update(done ? 'complete' : 'playing', `Pular para ${cells.join(' e ')}`, done ? 'Ida e volta! De novo?' : cells.length === 2 ? 'Dois pés nas casas iluminadas.' : 'Um pé na casa iluminada.', landing);
+  }
+}
+/** Someone watching claps when touched (true); the game goes on. */
+function clap(actions: Actions, player: ActorId, point: Point) {
+  const watcher = spectatorAt(actions.world(), player, point); if (!watcher) return false;
+  actions.react(watcher, 'clap', say(gameLines.clap, nameOf(actions.world().actors.find(a => a.id === player)!))); return true;
+}
+/** The child's reaction, and the others in the room clapping (only the first one speaks). */
+function cheer(actions: Actions, player: ActorId, reactions: GameReaction[]) {
+  const world = actions.world(), watchers = world.actors.filter(a => a.id !== player && a.kind === 'human' && a.room === world.room);
+  for (const r of reactions) {
+    if (r.who === 'player') actions.react(player, r.pose, r.line);
+    else watchers.forEach((w, i) => actions.react(w.id, r.pose, i ? '' : r.line));
+  }
+}
 /** Hopscotch: whoever stands over the board walks a few steps off it, and the camera frames the whole board. */
 function makeRoom(actions: Actions, kind: GameKind, actor: Actor, origin: Point) {
   const moves = kind === 'hopscotch' ? stepAside(actions.world(), actor, origin) : [];
