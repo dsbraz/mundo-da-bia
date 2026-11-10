@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
-import { gameSpace, hopPosition, hopTiles } from './game-space';
+import { freestFloor, gameSpace, hopPosition, hopTiles } from './game-space';
 
 it('mantém todas as casas no piso, com profundidade e pares de pés na mesma linha', () => {
   const origin = { x: 650, y: 530 };
@@ -25,4 +25,15 @@ it('quintal novo conserva espaço para amarelinha com toda a mobília', async ()
   world.actors = [{ ...world.actors[0]!, room: world.room, x: 650, y: 530 }]; world.items = [];
   expect(world.layout.pieces.filter(p => p.room === world.room)).toHaveLength(3);
   expect(gameSpace(world, world.actors[0]!, 'hopscotch')).not.toBeNull();
+});
+
+it('sem espaço totalmente livre, escolhe o chão mais livre e alcançável em vez de recusar', () => {
+  const world = initialWorld(), bia = world.actors[0]!;
+  expect(gameSpace(world, bia, 'hopscotch')).toBeNull();
+  const point = freestFloor(world, bia, 'hopscotch')!;
+  expect(point.y).toBe(530); expect(point.x).toBeGreaterThanOrEqual(130); expect(point.x).toBeLessThanOrEqual(870);
+  const crowded = { ...world, layout: { ...world.layout, pieces: [] } };
+  expect(gameSpace(crowded, bia, 'hopscotch')).toBeNull();
+  expect(freestFloor(crowded, bia, 'hopscotch')).toEqual({ x: 530, y: 530 });
+  expect(freestFloor({ ...world, streetWidth: 3000 }, bia, 'rope')).toBeNull();
 });

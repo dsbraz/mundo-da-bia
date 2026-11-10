@@ -1,7 +1,7 @@
 import { hopCells, hopStep, ropeCue, ropeStep, startGame } from '../domain/child-games';
 import type { GameKind } from '../domain/child-games';
 import type { Actor, ActorId, Point, World } from '../domain/types';
-import { gameSpace, hopPosition, hopTileAt } from './game-space';
+import { freestFloor, gameSpace, hopPosition, hopTileAt } from './game-space';
 import { gameControls } from './game-controls';
 import type { GamePreview } from './child-game-art';
 import { gamePosition } from './child-game-art';
@@ -27,7 +27,8 @@ export function childGames(root: HTMLElement, actions: Actions) {
     if (!actor) { view.error('Chame uma criança para brincar aqui!'); return; }
     if (actor.id !== actions.selected()) actions.select(actor.id);
     if (actions.world().items.some(i => i.holder === actor.id)) actions.drop(actor.id);
-    const origin = gameSpace(actions.world(), actor, kind);
+    // Short on space, the game still starts: the child walks (and the camera follows) to the freest reachable floor.
+    const origin = gameSpace(actions.world(), actor, kind) ?? freestFloor(actions.world(), actor, kind);
     if (!origin) { view.error('Está apertado aqui. Que tal o quintal?'); return; }
     actions.follow(origin);
     view.start(kind); view.update('walking', 'Chegando…', 'Indo até um espaço livre.', true); pending = true;

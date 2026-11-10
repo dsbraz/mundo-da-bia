@@ -155,3 +155,19 @@ test('quintal pronto permite corda e amarelinha sem retirar a mobília', async (
     await page.getByRole('button', { name: 'Encerrar brincadeira', exact: true }).click();
   }
 });
+
+test('sem espaço livre na sala inicial, a amarelinha leva a criança e a câmera ao chão mais livre, sem texto', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
+  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing', { timeout: 15_000 });
+  await expect(page.locator('#game-chooser')).toBeHidden(); await expect(page.locator('#game-choice-message')).toHaveText('');
+  const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!, scene = (await page.locator('#world').boundingBox())!;
+  const feet = await page.locator('canvas').evaluate((c, [x, y]) => {
+    const box = c.getBoundingClientRect(), d = (c as HTMLCanvasElement).dataset, scale = box.width / Number(d.viewWidth);
+    return { x: box.x + (x - Number(d.viewX) - Number(d.cameraX)) * scale, y: box.y + (y - Number(d.viewY)) * scale };
+  }, [bia.x, bia.y]);
+  expect(feet.x).toBeGreaterThan(scene.x); expect(feet.x).toBeLessThan(scene.x + scene.width);
+  await page.screenshot({ path: 'reports/hopscotch-crowded-768.png' });
+});
