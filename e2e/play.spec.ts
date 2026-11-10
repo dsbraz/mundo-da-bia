@@ -22,8 +22,10 @@ test('móveis, alimentação e guardar objeto continuam respondendo na cena', as
   await drag(page, await onPiece(page, 'fridge', 680, 282), await onPiece(page, 'table', 260, 450)); expect((await read(page)).items[0]!.spot).toBe('table');
   await drag(page, await onPiece(page, 'table', 260, 447), [150, 350]); expect((await read(page)).actors[0]!.fed).toBe(true);
   await drag(page, await onPiece(page, 'fridge', 680, 332), [335, 515]); expect((await read(page)).actors[4]!.fed).toBe(true);
+  // Whoever opens the drawer now stands on the floor in front of it, so the teddy is first moved out from under their feet.
+  await drag(page, [350, 382], [640, 430]);
   await tap(page, ...await onPiece(page, 'wardrobe', 380, 365)); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(true);
-  await drag(page, [350, 382], await onPiece(page, 'wardrobe', 355, 370)); expect((await read(page)).items[3]!.spot).toBe('drawer');
+  await drag(page, [640, 430], await onPiece(page, 'wardrobe', 460, 370)); expect((await read(page)).items[3]!.spot).toBe('drawer');
   await tap(page, ...await onPiece(page, 'wardrobe', 320, 390)); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(false);
 });
 test('microfone e luminária respondem com as ações recolhidas', async ({ page }) => {

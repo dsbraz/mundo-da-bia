@@ -99,6 +99,9 @@ test('amarelinha por toque mantém os controles abaixo da cena no retrato e canc
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   const actor = (await readTown(page)).actors[0]!;
+  // The camera glides to frame the board after play starts: tap only once the square's screen point stops moving.
+  let previous = '';
+  await expect.poll(async () => { const now = JSON.stringify(await point(page, actor.x, actor.y - 12)); const settled = now === previous; previous = now; return settled; }).toBe(true);
   const target = await point(page, actor.x, actor.y - 12); await page.touchscreen.tap(target.x, target.y);
   await expect(page.locator('#game-jump')).toHaveText('Pular para 2');
   const world = (await page.locator('#world').boundingBox())!, panel = (await page.locator('#game-panel').boundingBox())!;

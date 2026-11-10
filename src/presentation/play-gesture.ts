@@ -6,6 +6,7 @@ import { roomWidth, validPoint } from '../domain/geometry';
 import { furnitureAt, seatAt, surfaceAt, usableAt, wardrobeHit } from './furniture-targets';
 import { actorAt, sourceAt } from './targets';
 import type { DragPreview, DragToken } from './targets';
+import { floorTop } from './floor-band';
 export interface PlayInput {
   hover?: (point: Point | null) => void;
   pickup?: (item: ItemId) => void; screenScale?: () => Point;
@@ -48,7 +49,7 @@ export function createPlayGesture(getState: () => World, select: (id: ActorId) =
   };
 }
 function destination(active: Active, point: Point, state: World): Point {
-  const position = { x: point.x + active.offset.x, y: point.y + active.offset.y };
+  const position = { x: point.x + active.offset.x, y: Math.max(floorTop(state), point.y + active.offset.y) };
   return validPoint(position, roomWidth(state)) ? position : active.last;
 }
 function finish(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {

@@ -29,7 +29,7 @@ it('cancel confirms the visible position once; inaccessible destinations do not 
 it('a tap on the wall walks to the baseboard and looks at the tapped point', () => {
   const s = setup(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
   s.walk.start({ x: 500, y: 20 });
-  expect(s.commit).toHaveBeenCalledExactlyOnceWith('bia', { x: 500, y: 280 }); expect(s.hint).not.toHaveBeenCalled();
+  expect(s.commit).toHaveBeenCalledExactlyOnceWith('bia', { x: 500, y: 410 }); expect(s.hint).not.toHaveBeenCalled();
   expect(s.face).toHaveBeenCalledWith('bia', { x: 500, y: 20 });
 });
 it('a tap right against furniture walks to its side instead of refusing', () => {

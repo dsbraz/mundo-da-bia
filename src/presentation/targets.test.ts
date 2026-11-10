@@ -4,9 +4,9 @@ import { itemPoint, sourceAt } from './targets';
 import { createPlayGesture } from './play-gesture';
 
 it('um objeto na mão aparece sobre a roupa do armário e deve receber o toque', () => {
-  let state = transition(initialWorld(), { type: 'move', actor: 'bia', point: { x: 392, y: 280 } }).state;
+  let state = transition(initialWorld(), { type: 'move', actor: 'bia', point: { x: 392, y: 410 } }).state;
   state = transition(state, { type: 'pick', actor: 'bia', item: 'microfone' }).state;
-  expect(sourceAt(state, { x: 420, y: 225 }, true)).toEqual({ kind: 'item', id: 'microfone' });
+  expect(sourceAt(state, { x: 420, y: 355 }, true)).toEqual({ kind: 'item', id: 'microfone' });
 });
 
 it('um personagem na frente do armário não deixa pegar uma roupa atrás dele', () => {
@@ -44,6 +44,6 @@ it('objetos na mesma profundidade seguem a ordem de desenho, do último para o p
 it('a floor object saved outside the floor band is drawn resting on the floor without changing the save', () => {
   const world = initialWorld();
   world.items = world.items.map(i => i.id === 'ursinho' ? { ...i, spot: 'floor', x: 350, y: 120 } : i);
-  expect(itemPoint(world, world.items.find(i => i.id === 'ursinho')!)).toEqual({ x: 350, y: 280 - 28 });
+  expect(itemPoint(world, world.items.find(i => i.id === 'ursinho')!)).toEqual({ x: 350, y: 410 - 28 });
   expect(world.items.find(i => i.id === 'ursinho')!.y).toBe(120);
 });

@@ -5,6 +5,7 @@ import type Phaser from 'phaser';
 import { fixture, pieceBounds } from '../domain/layout';
 import type { Actor, Piece, World } from '../domain/types';
 import { slotsFor } from './targets';
+import { floorTop } from './floor-band';
 export function orderedPieces(state: World) {
   return state.layout.pieces.filter(p => p.room === state.room).sort((a, b) => pieceDepth(a) - pieceDepth(b));
 }
@@ -65,7 +66,7 @@ export function pickPiece(scene: Phaser.Scene, state: World, point: { x: number;
 
 export function actorDepth(state: World, actor: Actor) {
   const support = actor.seat && fixture(state, seatKind(actor.seat));
-  return support ? pieceDepth(support) + 1 : actor.y;
+  return support ? pieceDepth(support) + 1 : Math.max(floorTop(state), actor.y);
 }
 
 export function objectDepth(state: World, item: import('../domain/types').Item) {

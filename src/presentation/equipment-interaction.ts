@@ -1,8 +1,8 @@
 import { pieceBounds, fixture } from '../domain/layout';
 import { seatPoint } from '../domain/furniture';
-import { roomWidth } from '../domain/geometry';
 import type { Action, ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
+import { onFloor } from './floor-band';
 import { furnitureAt, seatAt, stageHit, usableAt, wardrobeHit } from './furniture-targets';
 export function equipmentAction(world: World, actor: ActorId, point: Point): Action | 'wardrobe' | null {
   if (wardrobeHit(world, point)) return 'wardrobe';
@@ -26,9 +26,7 @@ function targetPoint(world: World, action: Action): Point | null {
 }
 
 export function nearestApproach(world: World, start: Point, anchor: Point): Point | null {
-  const candidates = [0, 40, 80].flatMap(dy => [0, -50, 50, -100, 100].map(dx => ({
-    x: Math.max(60, Math.min(roomWidth(world) - 60, anchor.x + dx)), y: Math.max(280, Math.min(540, anchor.y + dy)),
-  })));
+  const candidates = [0, 40, 80].flatMap(dy => [0, -50, 50, -100, 100].map(dx => onFloor(world, { x: anchor.x + dx, y: anchor.y + dy })));
   const routes = candidates.map(point => ({ point, path: walkingPath(world, start, point) })).filter(route => route.path);
   routes.sort((a, b) => pathLength(start, a.path!) - pathLength(start, b.path!));
   return routes[0]?.point ?? null;

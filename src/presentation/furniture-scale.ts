@@ -1,6 +1,7 @@
 import { pieceBounds, fixture } from '../domain/layout';
 import { seatKind } from '../domain/furniture';
 import type { Actor, Piece, PieceKind, Point, World } from '../domain/types';
+import { floorTop } from './floor-band';
 const scales: Record<PieceKind, readonly [number, number]> = {
   sofa: [.94, .82], armchair: [.9, .84], bed: [.92, .8], 'cat-bed': [.78, .8],
   wardrobe: [.94, .84], fridge: [.96, .92], lamp: [.85, .84], 'reading-lamp': [.88, .92],
@@ -27,5 +28,5 @@ export function furnitureTransform(kind: PieceKind) {
 }
 export function supportedActor(world: World, actor: Actor): Actor {
   const piece = actor.seat && fixture(world, seatKind(actor.seat), actor.room);
-  return piece ? { ...actor, ...visualPiecePoint(piece, actor) } : actor;
+  return piece ? { ...actor, ...visualPiecePoint(piece, actor) } : { ...actor, y: Math.max(floorTop(world), actor.y) };
 }

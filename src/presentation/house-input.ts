@@ -6,6 +6,7 @@ import { neighbor } from '../domain/doors';
 import { actorAt, sourceAt } from './targets';
 import { navigation } from './navigation';
 import { edgeTransfer } from './edge-transfer';
+import { floorTop } from './floor-band';
 export interface HouseInput {
   view?: { background: (p: Point) => boolean; pan: (dx: number, dy: number) => void };
   camera?: () => number; setCamera?: (x: number) => void;
@@ -21,7 +22,7 @@ export function houseInput(canvas: HTMLCanvasElement, state: () => World, curren
   const nav = navigation({ width, neighbor: d => state().streetWidth ? undefined : neighbor(state(), d), preview: actions.pan, visit: room => actions.dispatch({ type: 'room', room }) });
   const street = streetPan(() => actions.camera?.() ?? 0, x => actions.setCamera?.(x), () => (state().streetWidth ?? 1000) - 1000, width);
   const navigationGesture = { start: (id: number, p: Point) => (state().streetWidth ? street : nav).start(id, p), update: (id: number, p: Point) => (state().streetWidth ? street : nav).update(id, p), end: (id: number, p: Point) => (state().streetWidth ? street : nav).end(id, p), cancel: () => { street.cancel(); nav.cancel(); } };
-  const position = (p: Point, room: RoomId): Point => ({ x: Math.max(60, Math.min(roomWidth(state(), room) - 60, p.x / width() * roomWidth(state(), room))), y: Math.max(280, Math.min(540, p.y)) });
+  const position = (p: Point, room: RoomId): Point => ({ x: Math.max(60, Math.min(roomWidth(state(), room) - 60, p.x / width() * roomWidth(state(), room))), y: Math.max(floorTop(state()), Math.min(540, p.y)) });
   const edge = edgeTransfer({ width, neighbor: d => state().streetWidth ? undefined : neighbor(state(), d), progress: actions.progress,
     preview: (room, p) => actions.transfer(room, active?.actor ?? null, active?.item ?? null, room && p ? position(p, room) : null),
     commit: (room, p) => commitTransfer(room, position(p, room)),

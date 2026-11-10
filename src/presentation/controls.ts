@@ -12,6 +12,7 @@ import { actors, looks } from '../content/catalog';
 import { actorIds, lookIds } from '../domain/types';
 import type { Action, Actor, ActorId, World } from '../domain/types';
 import { uiText } from '../content/ui-text';
+import { onFloor } from './floor-band';
 
 function button(label: string, run: () => void, className = ''): HTMLButtonElement {
   const element = document.createElement('button');
@@ -36,7 +37,7 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
   root.querySelector('#cast')!.append(...cast.map((card, i) => { const group = document.createElement('article'); group.className = 'character-card'; const rename = button('', () => name(actorIds[i]!), 'rename illustrated'); rename.style.setProperty('--button-icon', "url('/icons/ui-pencil.svg')"); group.append(card, rename); return group; }));
   cast.forEach((b, index) => trayDrag(b, () => roomWidth(getState()), p => {
     const actor = actorIds[index]!; select(actor); dispatch({ type: 'travel', actor, room: getState().room });
-    dispatch({ type: 'move', actor, point: { x: Math.max(60, Math.min(roomWidth(getState()) - 60, p.x)), y: Math.max(280, Math.min(540, p.y)) } });
+    dispatch({ type: 'move', actor, point: onFloor(getState(), p) });
   }, () => !building()));
   const wardrobe = lookIds.map(look => button(looks[look].name, () => dispatch({ type: 'dress', actor: selected, look })));
   wardrobe.forEach((b, index) => {

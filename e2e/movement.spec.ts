@@ -55,7 +55,7 @@ test('an occupied hand lets go by itself, without an order, and cancels an older
   await tap(page, 700, 502);
   await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBe('bia');
   await tap(page, 930, 530); await expect(page.locator('canvas')).toHaveAttribute('data-walking', 'bia');
-  await tap(page, 560, 272);
+  await tap(page, 560, 382);
   await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBeNull();
   await expect(page.locator('#announcement')).not.toHaveText(/Mãos cheias|Larga/);
   await expect(page.locator('canvas')).not.toHaveAttribute('data-said', /Mãos cheias|Larga/);
@@ -66,6 +66,6 @@ test('an occupied hand lets go by itself, without an order, and cancels an older
 test('tapping the wall walks to the baseboard instead of refusing', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await tap(page, 700, 150);
-  await expect.poll(async () => { const a = (await read(page)).actors[0]!; return [Math.round(a.x), a.y]; }).toEqual([700, 280]);
+  await expect.poll(async () => { const a = (await read(page)).actors[0]!; return [Math.round(a.x), a.y]; }).toEqual([700, 410]);
   await expect(page.locator('canvas')).not.toHaveAttribute('data-said', /.+/);
 });

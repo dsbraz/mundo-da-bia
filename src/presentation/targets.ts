@@ -5,6 +5,7 @@ import { fixture, fromPiece } from '../domain/layout';
 import { availableSpot, spotKind } from '../domain/furniture';
 import { lookIds } from '../domain/types';
 import type { Actor, Item, ItemId, LookId, Point, World } from '../domain/types';
+import { floorTop } from './floor-band';
 export type VisibleWorld = World & {
   visibleItems?: ReadonlyMap<ItemId, Point>; visibleDepth?: ReadonlyMap<string, number>;
   occludingDepth?: (point: Point) => number; itemDepth?: ReadonlyMap<ItemId, number>;
@@ -33,7 +34,7 @@ export function itemPoint(state: VisibleWorld, item: Item): Point | null {
   return support ? visualPiecePoint(support, point) : point;
 }
 /** Floor objects saved outside the floor band are drawn resting on it; the save keeps its value. */
-function restingY(state: World, item: Item) { return item.spot === 'floor' && !state.streetWidth ? Math.max(280, Math.min(540, item.y)) : item.y; }
+function restingY(state: World, item: Item) { return item.spot === 'floor' && !state.streetWidth ? Math.max(floorTop(state), Math.min(540, item.y)) : item.y; }
 export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): DragToken | undefined {
   const foreground = foregroundDepth(state, p);
   const item = [...state.items].reverse().sort((a, b) => (state.itemDepth?.get(b.id) ?? b.y) - (state.itemDepth?.get(a.id) ?? a.y)).find(i => {
