@@ -105,7 +105,8 @@ test('corda tem indicação de ritmo e novas tentativas por toque com movimento 
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') }); await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
   await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
-  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+  // With reduced motion the walk to the rope is slow, not instant: play begins on arrival.
+  await expect.poll(async () => { await page.clock.runFor(250); return page.locator('#game-panel').getAttribute('data-phase'); }).toBe('playing');
   await page.evaluate(() => {
     Reflect.set(window, 'gameAnnouncements', 0);
     new MutationObserver(() => Reflect.set(window, 'gameAnnouncements', Reflect.get(window, 'gameAnnouncements') + 1)).observe(document.querySelector('#game-message')!, { childList: true });

@@ -1,7 +1,7 @@
 /** The walk cycle, scaled by the visual context (1 indoors, 0.6 on the street) so a smaller figure takes smaller steps and never skates.
  *  One step is half a leg cycle (π of phase); at full speed there are about 2.5 steps per second in any context. */
 export const stepPx = 80;
-const topSpeed = .2, acceleration = .0012, reducedSpeed = .07, bobPx = 5, legPx = 9, liftPx = 6, leanPerAccel = 40, maxLean = .055, baseLean = .025;
+const topSpeed = .2, acceleration = .0012, reducedSpeed = .12, bobPx = 5, legPx = 9, liftPx = 6, leanPerAccel = 40, maxLean = .055, baseLean = .025;
 /** px/ms and px/ms² for this scale; with reduced motion the walk is slow (it still walks, never teleports). */
 export function gaitSpeed(scale: number, reduced: boolean) {
   return { top: (reduced ? reducedSpeed : topSpeed) * scale, acceleration: acceleration * scale };

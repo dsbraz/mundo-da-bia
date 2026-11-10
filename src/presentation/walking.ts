@@ -27,7 +27,7 @@ export function walking(actions: Actions) {
     const { point: stop, path } = target;
     const current = command;
     actor = id; position = { x: origin.x, y: origin.y }; let last = performance.now(), speed = continuingSpeed;
-    const gait = gaitSpeed(contextScale(visualContext(world)), false);
+    const gait = gaitSpeed(contextScale(visualContext(world)), reducedMotion());
     function tick(now: number) {
       if (current !== command || !position) return;
       const elapsed = Math.min(50, now - last); last = now;
@@ -45,8 +45,7 @@ export function walking(actions: Actions) {
       else finish();
     }
     function finish() { clear(); actions.commit(id, stop); actions.face?.(id, destination); actions.preview(null, null); if (current === command) complete(); }
-    if (reducedMotion()) finish();
-    else frame = requestAnimationFrame(tick);
+    frame = requestAnimationFrame(tick);
   }
   return { start, cancel };
 }

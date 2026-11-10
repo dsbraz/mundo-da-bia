@@ -29,22 +29,29 @@ it('cancel confirms the visible position once; inaccessible destinations do not 
 });
 it('a tap on the wall walks to the baseboard and looks at the tapped point', () => {
   const s = setup(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
-  s.walk.start({ x: 500, y: 20 });
+  s.walk.start({ x: 500, y: 20 }); for (let n = 0; n < 300; n++) s.advance();
   expect(s.commit).toHaveBeenCalledExactlyOnceWith('bia', { x: 500, y: 410 }); expect(s.hint).not.toHaveBeenCalled();
   expect(s.face).toHaveBeenCalledWith('bia', { x: 500, y: 20 });
 });
 it('a tap right against furniture walks to its side instead of refusing', () => {
   const s = setup(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
   s.state.layout.pieces = [{ id: 1, kind: 'table', room: 'sala', x: 250, y: 350, flipped: false, color: 'original' }];
-  s.walk.start({ x: 350, y: 450 });
+  s.walk.start({ x: 350, y: 450 }); for (let n = 0; n < 300; n++) s.advance();
   expect(s.hint).not.toHaveBeenCalled(); expect(s.commit).toHaveBeenCalledOnce();
   const stop = s.commit.mock.calls[0]![1];
   expect(Math.abs(stop.x - 350)).toBeLessThanOrEqual(150); expect(stop).not.toEqual({ x: 350, y: 450 });
   expect(s.face).toHaveBeenCalledWith('bia', { x: 350, y: 450 });
 });
-it('reduced motion confirms immediately and equipment completes once', () => {
+it('with reduced motion the walk is slow but still a walk: no teleport, then equipment completes once', () => {
   const s = setup(), complete = vi.fn(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
-  s.walk.start({ x: 600, y: 500 }, complete); expect(s.commit).toHaveBeenCalledOnce(); expect(complete).toHaveBeenCalledOnce();
+  const from = s.state.actors[0]!.x;
+  s.walk.start({ x: from + 200, y: 530 }, complete); expect(s.commit).not.toHaveBeenCalled();
+  for (let n = 0; n < 20; n++) s.advance();
+  const [a, b] = s.preview.mock.calls.slice(-2).map(call => call[1]);
+  expect(b.x - a.x).toBeGreaterThan(0); expect(b.x - a.x).toBeLessThanOrEqual(gaitSpeed(1, true).top * 50 + 1e-9);
+  expect(complete).not.toHaveBeenCalled();
+  for (let n = 0; n < 200; n++) s.advance();
+  expect(s.commit).toHaveBeenCalledOnce(); expect(complete).toHaveBeenCalledOnce();
 });
 
 it('an invalid replacement stops the previous command without completing its action', () => {

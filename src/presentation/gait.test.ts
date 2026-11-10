@@ -25,7 +25,7 @@ it('bobs 5 px times the scale once per step, swings the legs ±9 px and leans wi
   expect(Math.abs(gaitFrame(10, 1, 1, 1, false).lean)).toBeLessThanOrEqual(.08);
 });
 it('with reduced motion the walk is slow and still: no bob, no legs, no lean', () => {
-  expect(gaitSpeed(1, true).top).toBeLessThan(gaitSpeed(1, false).top / 2);
+  expect(gaitSpeed(1, true).top).toBeLessThanOrEqual(gaitSpeed(1, false).top * .6);
   expect(gaitSpeed(1, true).top).toBeGreaterThan(0);
   const frame = gaitFrame(stepPx / 2, 1, 1, .001, true);
   expect(frame.bob).toBe(0); expect(frame.lean).toBe(0); expect(frame.legs.every(l => l.x === 0 && l.lift === 0)).toBe(true);

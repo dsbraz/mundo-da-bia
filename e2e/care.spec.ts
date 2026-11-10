@@ -39,6 +39,8 @@ test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar',
   await page.getByRole('button', { name: 'Acordar', exact: true }).click();
   expect((await read(page)).actors[0]!.resting).toBe(false);
   await page.getByRole('button', { name: 'Deitar', exact: true }).click();
+  // With reduced motion the short walk to the pillow is slow, not instant: lying down happens when it arrives.
+  await expect.poll(async () => (await read(page)).actors[0]).toMatchObject({ seat: 'bed', resting: true });
   const state = await read(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
   expect(await read(page)).toEqual(state);
 });

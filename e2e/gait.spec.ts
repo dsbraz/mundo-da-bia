@@ -39,3 +39,18 @@ test('o gato trota com a cauda erguida', async ({ page }) => {
   await page.clock.runFor(500); await expect(page.locator('canvas')).toHaveAttribute('data-gait', /mimi:trot/);
   await page.screenshot({ path: 'reports/gait-cat-trot.png', clip: await clip(page, await walkX(page), 530, 100) });
 });
+
+test('com movimento reduzido a caminhada é lenta, sem balanço e sem teleporte', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await street(page);
+  await tap(page, 940, 520);
+  await page.clock.runFor(600); await expect(page.locator('canvas')).toHaveAttribute('data-gait', /bia:walk/);
+  const from = await walkX(page);
+  expect(from).toBeGreaterThan(700); expect(from).toBeLessThan(770);
+  await page.clock.runFor(500);
+  // Reduced full speed on the street: 0.6 × 0.12 px/ms, 36 px in 500 ms (60 px without reduced motion).
+  expect(await walkX(page) - from).toBeGreaterThan(30); expect(await walkX(page) - from).toBeLessThan(42);
+  await page.screenshot({ path: 'reports/gait-street-walk-reduced.png', clip: await clip(page, await walkX(page), 520, 160) });
+  // The rest of the way is walked at that pace, and she arrives (at most 8 s of scene time).
+  for (let t = 0; t < 8000 && await page.locator('canvas').getAttribute('data-walking'); t += 500) await page.clock.runFor(500);
+  await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
+});

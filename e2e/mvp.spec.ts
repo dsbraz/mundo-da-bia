@@ -27,21 +27,26 @@ test('trackpad, navigation strip and modular construction preserve the world', a
   expect(await readTown(page)).toEqual(town); expect(errors).toEqual([]);
 });
 test('tap walks, dragging the background does not, and the square saves equipment and ball', async ({ page }) => {
-  await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' });
-  await tap(page, 650, 530); await expect.poll(async () => (await readTown(page)).actors[0]!.x).toBeCloseTo(650, 0);
+  // With reduced motion walks are slow, not instant: scene time is played ahead in 50 ms frames (a walk step's cap) while waiting for each arrival.
+  await page.clock.install(); await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' });
+  const soon = async <T>(value: () => Promise<T>, done: (v: T) => boolean) => {
+    for (let t = 0; t < 15000 && !done(await value()); t += 50) await page.clock.fastForward(50);
+    return expect(await value());
+  };
+  await tap(page, 650, 530); (await soon(async () => (await readTown(page)).actors[0]!.x, x => Math.abs(x - 650) < .5)).toBeCloseTo(650, 0);
   const before = await readTown(page), a = await point(page, 300, 50), b = await point(page, 650, 50);
   await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y); await page.mouse.up(); expect(await readTown(page)).toEqual(before);
   await tray(page, 'Turma'); await page.locator('#cast button').first().click(); await closeTray(page);
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#close-map').click();
   await tap(page, 180, 420);
-  await expect.poll(async () => (await readTown(page)).outdoor.bench).toBe('bia');
+  (await soon(async () => (await readTown(page)).outdoor.bench, v => v === 'bia')).toBe('bia');
   await tap(page, 180, 420);
-  await expect.poll(async () => (await readTown(page)).outdoor.bench).toBeNull();
+  (await soon(async () => (await readTown(page)).outdoor.bench, v => v === null)).toBeNull();
   await tap(page, 560, 470);
-  await expect.poll(async () => (await readTown(page)).outdoor.watered).toBe(true);
+  (await soon(async () => (await readTown(page)).outdoor.watered, v => v)).toBe(true);
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Bola da praça', exact: true }).click(); await closeTray(page);
-  expect((await readTown(page)).items.find(i => i.kind === 'bola')!.holder).toBe('bia');
+  (await soon(async () => (await readTown(page)).items.find(i => i.kind === 'bola')!.holder, v => v === 'bia')).toBe('bia');
   for (const width of [1024, 768]) { await page.setViewportSize({ width, height: width === 1024 ? 768 : 1024 }); await page.screenshot({ path: `reports/mvp-square-${width}.png` }); }
   const town = await readTown(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
 });
