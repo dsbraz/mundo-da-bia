@@ -92,3 +92,24 @@ test('a Turma inteira cabe sem rolagem a 768 px, com o lápis só no cartão esc
   expect(await page.locator('#play-tray').evaluate(n => n.scrollHeight <= n.clientHeight + 1)).toBe(true);
   await page.screenshot({ path: 'reports/cast-768.png' });
 });
+
+test('nenhum ícone se repete entre botões visíveis ao mesmo tempo', async ({ page }) => {
+  const repeated = () => page.evaluate(() => {
+    const seen = new Map<string, string[]>();
+    document.querySelectorAll<HTMLButtonElement>('button').forEach(button => {
+      if (!button.checkVisibility() || button.closest('[inert]')) return;
+      const icon = getComputedStyle(button, '::before').backgroundImage, image = button.querySelector('img')?.getAttribute('src');
+      for (const key of [icon !== 'none' ? icon : null, image].filter(Boolean) as string[]) seen.set(key, [...seen.get(key) ?? [], button.textContent!.trim() || button.getAttribute('aria-label')!]);
+    });
+    return seen.size > 4 ? [...seen.values()].filter(names => names.length > 1) : [['poucos ícones vistos', String(seen.size)]];
+  });
+  await ready(page); await page.locator('#tray-toggle').click();
+  for (const tab of ['Turma', 'Looks', 'Objetos']) { await tray(page, tab); expect(await repeated()).toEqual([]); }
+  await tray(page, 'Turma'); await page.locator('#cast .character').first().click(); await closeTray(page);
+  await expect(page.locator('#actor-context')).toBeVisible(); expect(await repeated()).toEqual([]);
+  await page.locator('#build-toggle').click(); expect(await repeated()).toEqual([]);
+  await page.locator('#construct-mode').click(); expect(await repeated()).toEqual([]);
+  await page.locator('#map-toggle').click(); expect(await repeated()).toEqual([]);
+  await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click(); expect(await repeated()).toEqual([]);
+  await page.locator('#play-mode').click(); expect(await repeated()).toEqual([]);
+});
