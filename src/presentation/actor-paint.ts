@@ -30,5 +30,5 @@ export function actorSource(id: ActorId, look?: LookId) {
 }
 export function portraitParts(id: ActorId, look: LookId): string[] {
   if (isCat(id)) return ['tail', 'body', 'eyes'];
-  return [...(look === 'superman' ? ['cape-superman'] : []), masculine(id) ? 'hair-back-short' : 'hair-back', 'legs', 'hands', outfitLayer(look, masculine(id)), 'face', `hair-${id}`, 'eyes', 'mouth', ...(look === 'spiderman' ? ['mask-spiderman'] : [])];
+  return [...(look === 'superman' ? ['cape-superman'] : []), masculine(id) ? 'hair-back-short' : 'hair-back', 'legs', 'hands', outfitLayer(look, masculine(id)), 'face', `hair-${id}`, 'brows', 'eyes', 'mouth', ...(look === 'spiderman' ? ['mask-spiderman'] : [])];
 }

@@ -10,10 +10,11 @@ import type Phaser from 'phaser';
 import { actorIds, lookIds } from '../domain/types';
 import type { ActorId, LookId, World } from '../domain/types';
 import { actorSource, lookSource } from './actor-paint';
+import { faceParts } from './expression';
 
 export const roomLayers = ['wardrobe-closed', 'wardrobe-open', 'drawer-closed', 'drawer-open', 'fridge-closed', 'fridge-open', 'lamp-on', 'lamp-off'] as const;
-export const humanLayers = ['hair-back', 'legs', 'hands', 'face', 'eyes', 'lids', 'mouth', 'mouth-happy'] as const;
-export const catLayers = ['tail', 'body', 'eyes', 'lids'] as const;
+export const humanLayers = ['hair-back', 'legs', 'hands', 'face', ...faceParts.human];
+export const catLayers = ['tail', 'body', ...faceParts.cat];
 
 const layer = (source: string, id: string) => svgFragment(source, [id]);
 function loadActor(scene: Phaser.Scene, id: ActorId, index: number, current: LookId) {

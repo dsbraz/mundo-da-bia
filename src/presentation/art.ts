@@ -7,6 +7,7 @@ import { drawSelection } from './selection-art';
 import { selectionPulse } from './motion';
 import { actors } from '../content/catalog';
 import { contactShadow } from './contact-shadow';
+import { expressionOf, faceParts, paintFace, type Expression } from './expression';
 import type { Actor } from '../domain/types';
 
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, context?: VisualContext): Phaser.GameObjects.Container {
@@ -17,9 +18,7 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
   container.add(pose);
-  const parts = actor.kind === 'human'
-    ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', 'eyes', 'lids', 'mouth', 'mouth-happy']
-    : ['tail', 'body', 'eyes', 'lids'];
+  const parts = actor.kind === 'human' ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', ...faceParts.human] : ['tail', 'body', ...faceParts.cat];
   heroLayer(scene, pose, actor, 'back');
   parts.forEach(part => addPart(scene, pose, actor, part));
   heroLayer(scene, pose, actor, 'front');
@@ -30,25 +29,26 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   if (actor.fed) container.add(scene.add.text(-48, -100, '♥', textStyle('heart')));
   return container;
 }
-export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false) {
+/** The face this frame: an expression (from events) and whether the eyes blink. */
+export interface FaceFrame { expression: Expression; blink: boolean }
+export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false, face?: FaceFrame) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
   figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(actor.seat === 'bed' && actor.resting);
   pose.x = 0; pose.y = 0;
-  pose.getByName<Phaser.GameObjects.Image>('eyes').setX(0); pose.getByName<Phaser.GameObjects.Image>('lids').setX(0);
-  const blink = actor.resting || (time + index * 530) % 3900 < 130;
-  pose.getByName<Phaser.GameObjects.Image>('eyes').setVisible(!blink);
-  pose.getByName<Phaser.GameObjects.Image>('lids').setVisible(blink);
-  if (actor.kind === 'human') {
-    pose.getByName<Phaser.GameObjects.Image>('mouth').setVisible(!actor.fed);
-    pose.getByName<Phaser.GameObjects.Image>('mouth-happy').setVisible(actor.fed);
-    seatLayers(pose, actor, reduced);
-  } else pose.getByName<Phaser.GameObjects.Image>('tail').rotation = actor.resting ? 0 : Math.sin(time / 700 + index) * 0.04;
+  shiftFace(pose, 0);
+  const shown = face ?? { expression: expressionOf({ ...actor, show: false }, null), blink: false };
+  paintFace(pose, actor.kind, shown.expression, shown.blink);
+  bodyLayers(pose, actor, time, index, reduced);
   const angle = actor.seat === 'bed' ? -Math.PI / 2 : 0;
   const restingAngle = settlePose(pose.getData('restingAngle') ?? angle, angle, reduced);
   pose.setData('restingAngle', restingAngle);
   pose.rotation = restingAngle + danceAngle(time, index, show && !actor.resting);
   applyReaction(figure, pose);
   pulseStar(figure, time, reduced);
+}
+function bodyLayers(pose: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, reduced: boolean) {
+  if (actor.kind === 'human') seatLayers(pose, actor, reduced);
+  else pose.getByName<Phaser.GameObjects.Image>('tail').rotation = actor.resting ? 0 : Math.sin(time / 700 + index) * 0.04;
 }
 function pulseStar(figure: Phaser.GameObjects.Container, time: number, reduced: boolean) {
   const star = figure.getByName<Phaser.GameObjects.Graphics>('selection-star');
@@ -118,7 +118,8 @@ export function walkPose(figure: Phaser.GameObjects.Container, distance: number,
   });
 }
 export function gazePose(figure: Phaser.GameObjects.Container, direction: number) {
-  const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
-  pose.getByName<Phaser.GameObjects.Image>('eyes').setX(direction * 2);
-  pose.getByName<Phaser.GameObjects.Image>('lids').setX(direction * 2);
+  shiftFace(figure.getByName<Phaser.GameObjects.Container>('pose'), direction * 2);
 }
+/** Eyes, brows and mouth look sideways together. */
+function shiftFace(pose: Phaser.GameObjects.Container, x: number) { allFaceParts.forEach(part => pose.getByName<Phaser.GameObjects.Image>(part)?.setX(x)); }
+const allFaceParts = [...new Set([...faceParts.human, ...faceParts.cat])];

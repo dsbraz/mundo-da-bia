@@ -25,6 +25,7 @@ import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
 import { drawActor } from './art';
 import { animateFigure, type FrameContext } from './figure-frame';
+import { faceEvents, faces, pokeFace } from './expression';
 import { drawRoom } from './room';
 import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
 import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
@@ -48,12 +49,13 @@ export class PlayScene extends Phaser.Scene {
     this.cameras.main.setScroll(x + (this.world.streetWidth ? this.cameraX : 0), y);
   }
   neighborhood(town: Neighborhood) { this.town = town; }
-  arrive(previous: Location) { if (this.ready && this.town) doorEffect(this, this.town, previous); }
+  arrive(previous: Location) { this.faces.trigger(this.selected, 'surprise', performance.now()); if (this.ready && this.town) doorEffect(this, this.town, previous); }
   outdoorReaction(action: OutdoorAction) { if (this.ready && this.town) outdoorEffect(this, this.town, action); }
   camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x + Number(this.game.canvas.dataset.viewX ?? 0); this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private gaze = new Map<ActorId, number>();
+  private faces = faces();
   private strolls = strollFigures(() => this.game.canvas);
   private pieces = new Map<number, Phaser.GameObjects.Container>();
   private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
@@ -223,7 +225,7 @@ export class PlayScene extends Phaser.Scene {
     const target = piece && this.pieces.get(piece.id);
     if (target) { const bounds = target.getBounds(); this.hint.lineStyle(2, 0x477e86, .55).strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, 8); }
   }
-  face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) this.gaze.set(id, Math.sign(point.x - actor.x)); }
+  face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) { this.gaze.set(id, Math.sign(point.x - actor.x)); this.faces.trigger(id, 'curious', performance.now()); } }
   /** With `face` (who is there), the bubble points at that character's head from above, never over the face. */
   refuse(point: Point, text: string, face?: ActorId) {
     if (!this.ready) return;
@@ -231,13 +233,14 @@ export class PlayScene extends Phaser.Scene {
     refuseAt(this, head ? { x: head.centerX, y: head.top - 6 } : point, text, this.figures.find(f => f.name === this.selected), face);
   }
   poke(id: ActorId, pose: ReactionPose, line: string) {
+    this.faces.trigger(id, pokeFace(pose), performance.now(), 900);
     const figure = this.figures.find(f => f.name === id), actor = this.world.actors.find(a => a.id === id);
     if (this.ready && figure && actor) pokeFigure(this, figure, pose, line, (actor.kind === 'cat' ? 100 : 196) * contextScale(visualContext(this.world)));
   }
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }
-  react(events: PresentationEvent[]) { if (this.ready) react(this, this.world, events); }
+  react(events: PresentationEvent[]) { faceEvents(this.faces, events, this.world, this.selected, performance.now()); if (this.ready) react(this, this.world, events); }
   preview(drag: DragPreview | null) {
     if (!this.ready) return;
     this.objects.forEach(o => o.setAlpha(drag?.kind === 'item' && o.name === drag.id ? .25 : 1));
@@ -266,16 +269,17 @@ export class PlayScene extends Phaser.Scene {
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   private get frameContext(): FrameContext {
-    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects,
+    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(),
       swingRig: () => this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null, walking: (f, a) => this.walking(f, a) };
   }
   update(time: number) {
-    const reduced = reducedMotion(), ctx = this.frameContext;
+    const reduced = reducedMotion(), ctx = this.frameContext, shown: string[] = [];
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
-      animateFigure(ctx, figure, actor, time, index, reduced);
+      shown.push(`${actor.id}:${animateFigure(ctx, figure, actor, time, index, reduced)}`);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
+    if (this.game.canvas.dataset.faces !== shown.join(' ')) this.game.canvas.dataset.faces = shown.join(' ');
     this.sky?.(time, reduced);
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }
