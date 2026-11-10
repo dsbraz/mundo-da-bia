@@ -11,7 +11,9 @@ type Container = Phaser.GameObjects.Container;
 /** What one frame of a figure needs from the scene. */
 export interface FrameContext {
   world: World; town: Neighborhood | null; moving: ActorId | null; gaze: Map<ActorId, number>;
-  objects: Phaser.GameObjects.Image[]; swingRig: () => Container | null;
+  objects: Phaser.GameObjects.Image[];
+  /** The plaza swing this frame (from `swing-motion`): its angle and how the rider's legs stretch (-1..1). */
+  swing: { angle: number; legs: number };
   /** Short expressions from events, and the performance clock they are timed by. */
   faces: ReturnType<typeof faces>; now: number;
   walking: (figure: Container, actor: Actor) => boolean;
@@ -33,7 +35,7 @@ export function animateFigure(ctx: FrameContext, figure: Container, actor: Actor
   if (!walking) gazePose(figure, face.look);
   ctx.life.mark([...(face.blinked ? ['blink'] : []), ...(face.glance ? ['glance'] : []), ...lifePose(pose, posed, time, reduced, !walking && !seated)]);
   moveLayers(ctx, figure, actor, walking, reduced);
-  animateSwing(ctx, pose, actor, time, reduced);
+  animateSwing(ctx, pose, actor);
   const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
   ctx.world.items.filter(i => i.holder === actor.id).forEach(i => ctx.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));
   return face.expression;
@@ -58,10 +60,10 @@ function faceFrame(ctx: FrameContext, actor: Actor, posed: Actor, walking: boole
   // Asleep, the eyes stay shut; `blinked` is only the blink itself.
   return { expression, blink: posed.resting || blink, blinked: blink, glance, look: looked || glance };
 }
-function animateSwing(ctx: FrameContext, pose: Container, actor: Actor, time: number, reduced: boolean) {
+function animateSwing(ctx: FrameContext, pose: Container, actor: Actor) {
   if (ctx.town?.outdoor.swing !== actor.id || ctx.moving === actor.id) return;
-  const angle = reduced ? 0 : Math.sin(time / 600) * .08;
-  ctx.swingRig()?.setRotation(angle);
+  const { angle, legs } = ctx.swing, knees = pose.getByName<Container>('knees');
+  knees?.setRotation(knees.rotation - .3 * legs);
   pose.x = -Math.sin(angle) * 126;
   pose.y += (Math.cos(angle) - 1) * 126;
   pose.rotation = angle;

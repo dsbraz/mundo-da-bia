@@ -34,6 +34,7 @@ import { hoverHint, shownWorld } from './scene-view';
 import { trackGait } from './gait';
 import { weightFigures } from './weight-figures';
 import { objectFall } from './weight';
+import { swingMotion } from './swing-motion';
 import { placeTransfer, transferPreview } from './transfer-preview';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
@@ -56,7 +57,7 @@ export class PlayScene extends Phaser.Scene {
   }
   neighborhood(town: Neighborhood) { this.town = town; }
   arrive(previous: Location) { this.faces.trigger(this.selected, 'surprise', performance.now()); if (this.ready && this.town) doorEffect(this, this.town, previous); }
-  outdoorReaction(action: OutdoorAction) { if (this.ready && this.town) outdoorEffect(this, this.town, action); }
+  outdoorReaction(action: OutdoorAction) { if (action.target === 'swing') this.pushSwing(action.actor); if (this.ready && this.town) outdoorEffect(this, this.town, action); }
   camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x + Number(this.game.canvas.dataset.viewX ?? 0); this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
@@ -65,6 +66,9 @@ export class PlayScene extends Phaser.Scene {
   private life = ambientLife(() => this.game.canvas);
   private strolls = strollFigures(() => this.game.canvas);
   private weight = weightFigures();
+  private swing = swingMotion();
+  /** A touch on the swing (or its rider, or sitting down on it): a push, and the rider laughs. */
+  pushSwing(rider: ActorId) { this.faces.trigger(rider, 'laugh', performance.now(), 900); this.swing.push(performance.now(), reducedMotion()); }
   private pieces = new Map<number, Phaser.GameObjects.Container>();
   private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
   private transferRoom: RoomId | null = null;
@@ -265,11 +269,12 @@ export class PlayScene extends Phaser.Scene {
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   private get frameContext(): FrameContext {
     return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.life, gaits: [],
-      swingRig: () => this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null, walking: (f, a) => this.walking(f, a), weight: this.weight };
+      swing: { angle: this.swing.angle(), legs: this.swing.legs() }, walking: (f, a) => this.walking(f, a), weight: this.weight };
   }
   private mark(key: string, value: string) { if (this.game.canvas.dataset[key] !== value) this.game.canvas.dataset[key] = value; }
   update(time: number) {
-    const reduced = reducedMotion(), ctx = this.frameContext, shown: string[] = [];
+    const reduced = reducedMotion(); this.swing.step(performance.now(), reduced);
+    const ctx = this.frameContext, shown: string[] = [];
     this.life.tick(this.world, this.selected, ctx.now, !reduced && !this.building && !this.wardrobe && !this.moving && !this.gameArt?.active() && !this.game.canvas.dataset.strolling);
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
@@ -278,7 +283,8 @@ export class PlayScene extends Phaser.Scene {
     });
     this.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
-    this.sky?.(time, reduced);
+    this.sky?.(time, reduced); (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(this.swing.angle());
+    if (this.sky) this.mark('swing', this.swing.amplitude().toFixed(2));
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }
 }

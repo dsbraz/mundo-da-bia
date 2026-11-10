@@ -116,7 +116,7 @@ for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768
   expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('luna');
 });
 
-test('a praça responde no desenho: sem lista de botões no painel e tocar no balanço faz descer', async ({ page }) => {
+test('a praça responde no desenho: sem lista de botões no painel, tocar no balanço dá impulso e o botão Descer faz descer', async ({ page }) => {
   const town = spreadTown();
   town.location = { kind: 'street' };
   town.actors = town.actors.map(a => a.id === 'bia' ? { ...a, location: { kind: 'street' }, x: 400, y: 445 } : a);
@@ -125,6 +125,11 @@ test('a praça responde no desenho: sem lista de botões no painel e tocar no ba
   await expect(page.locator('#actor-context button', { hasText: /balanço|banco|Regar|Campainha|Correio|Sair do equipamento/i })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Descer do balanço', exact: true })).toHaveCount(1);
   await page.screenshot({ path: 'reports/plaza-swing.png' });
+  // A tap on the rider is a push now: she laughs and stays on (with reduced motion the seat stays still).
   await tap(page, 400, 400);
+  await expect(page.locator('canvas')).toHaveAttribute('data-faces', /bia:laugh/);
+  expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('bia');
+  // The invisible button (keyboard and screen readers) still gets her down.
+  await page.getByRole('button', { name: 'Descer do balanço', exact: true }).focus(); await page.keyboard.press('Enter');
   await expect.poll(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBeNull();
 });
