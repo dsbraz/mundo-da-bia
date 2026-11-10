@@ -282,7 +282,7 @@ export class PlayScene extends Phaser.Scene {
     this.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
     this.sky?.(time, reduced); (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(this.swing.angle());
-    if (this.sky) this.mark('swing', this.swing.amplitude().toFixed(2));
+    if (this.sky) { this.mark('swing', this.swing.amplitude().toFixed(2)); this.mark('swingAngle', this.swing.angle().toFixed(2)); }
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }
 }

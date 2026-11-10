@@ -23,7 +23,7 @@ async function clip(page: Page) {
 /** Three taps in a row on the swing, 0.8 s apart; returns how wide it swings after each. */
 async function pushThrice(page: Page) {
   const sizes: number[] = [];
-  for (let n = 0; n < 3; n++) { await tap(page, 400, 470); await page.clock.runFor(50); sizes.push(await swing(page)); await page.clock.runFor(750); }
+  for (let n = 0; n < 3; n++) { await tap(page, 400, 470); await page.clock.runFor(50); sizes.push(await swing(page)); if (n < 2) await page.clock.runFor(750); }
   return sizes;
 }
 
@@ -33,7 +33,13 @@ test('três toques seguidos levam o balanço mais alto; quem sai deixa o assento
   const sizes = await pushThrice(page);
   expect(sizes[0]).toBeGreaterThan(.1); expect(sizes[1]).toBeGreaterThan(sizes[0]! * 1.3); expect(sizes[2]).toBeGreaterThan(sizes[1]! * 1.15);
   await expect(page.locator('canvas')).toHaveAttribute('data-faces', /bia:laugh/);
+  // Captured at the top of a swing (legs stretched or folded) and at the bottom crossing.
+  const angle = async () => Number(await page.locator('canvas').getAttribute('data-swing-angle'));
+  for (let t = 0; t < 2400 && Math.abs(await angle()) < await swing(page) * .9; t += 25) await page.clock.runFor(25);
+  expect(Math.abs(await angle())).toBeGreaterThan(.25);
   await page.screenshot({ path: 'reports/swing-high.png', clip: await clip(page) });
+  for (let t = 0; t < 2400 && Math.abs(await angle()) > .04; t += 25) await page.clock.runFor(25);
+  await page.screenshot({ path: 'reports/swing-bottom.png', clip: await clip(page) });
   expect((await readTown(page)).outdoor.swing).toBe('bia');
   // Getting down without reading: a tap on the floor walks away from the swing.
   await tap(page, 250, 520);
