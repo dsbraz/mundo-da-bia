@@ -4,11 +4,11 @@ import { bubbleDuration, pokeFigure, refuseAt, speechBubble } from './feedback';
 afterEach(() => vi.unstubAllGlobals());
 
 function fakeScene() {
-  const tweens: Record<string, unknown>[] = [], destroyed: string[] = [], texts: { text: string; style: Record<string, unknown> }[] = [];
+  const tweens: Record<string, unknown>[] = [], destroyed: string[] = [], texts: { text: string; style: Record<string, unknown> }[] = [], images: string[] = [];
   const canvas = { dataset: {} as Record<string, string> };
   const object = (name = '') => {
     const o: Record<string, unknown> = { x: 0, y: 0, active: true, width: 100, height: 30, scaleX: 1, scaleY: 1, data: {} as Record<string, unknown> };
-    for (const m of ['setOrigin', 'setDepth', 'setScale', 'setName', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'lineStyle', 'strokeRoundedRect', 'add']) o[m] = () => o;
+    for (const m of ['setOrigin', 'setDepth', 'setScale', 'setName', 'setDisplaySize', 'setX', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'lineStyle', 'strokeRoundedRect', 'add']) o[m] = () => o;
     o.destroy = () => { o.active = false; destroyed.push(name); };
     o.setData = (k: string, v: unknown) => { (o.data as Record<string, unknown>)[k] = v; return o; };
     o.getData = (k: string) => (o.data as Record<string, unknown>)[k];
@@ -19,11 +19,13 @@ function fakeScene() {
     game: { canvas },
     add: {
       text: (_x: number, _y: number, text: string, style: Record<string, unknown>) => { texts.push({ text, style }); return object(text); },
+      image: (_x: number, _y: number, key: string) => { images.push(key); return object(key); },
       graphics: () => object('graphics'), container: (x: number, y: number) => Object.assign(object('bubble'), { x, y }),
     },
     tweens: { add: (config: Record<string, unknown>) => { tweens.push(config); }, killTweensOf() {} },
+    textures: { exists: (key: string) => key.startsWith('face-') },
   };
-  return { scene: scene as unknown as Phaser.Scene, tweens, destroyed, texts, canvas, object };
+  return { scene: scene as unknown as Phaser.Scene, tweens, destroyed, texts, images, canvas, object };
 }
 
 it('o balão dura 1800 ms mais 60 ms por caractere', () => {
@@ -59,6 +61,15 @@ it('recusa é um tremor suave com balão neutro perto do alvo', () => {
   expect(s.canvas.dataset.said).toBe('Lia está aqui agora!');
   expect(s.tweens.some(t => t.targets !== undefined && JSON.stringify(t).includes('"yoyo":true'))).toBe(true);
   expect(s.texts[0]!.style.color).not.toBe('#a25240');
+});
+
+it('recusa no lugar ocupado mostra o rosto de quem está lá, dentro do balão', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const s = fakeScene();
+  refuseAt(s.scene, { x: 400, y: 380 }, 'Luna está aqui agora!', undefined, 'luna');
+  expect(s.images).toEqual(['face-luna']); expect(s.canvas.dataset.saidFace).toBe('luna');
+  refuseAt(s.scene, { x: 400, y: 380 }, 'Hmm, por aqui não passa.');
+  expect(s.images).toEqual(['face-luna']); expect(s.canvas.dataset.saidFace).toBe('');
 });
 
 it('o toque de reação anima a pose, fala e marca a reação no canvas', () => {

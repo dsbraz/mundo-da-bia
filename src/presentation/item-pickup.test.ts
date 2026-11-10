@@ -13,10 +13,12 @@ it('walks before picking up and rechecks the object on arrival', () => {
   const s = setup(); s.pickup(); expect(s.dispatch).not.toHaveBeenCalled(); expect(s.start).toHaveBeenCalledOnce();
   s.item.holder = 'luna'; s.arrive(); expect(s.dispatch).not.toHaveBeenCalled(); expect(s.hint).toHaveBeenCalled();
 });
-it('does not replace a held object, including when the hand fills during walking', () => {
+it('a full hand lets go by itself, without an order, including when it fills during walking', () => {
   const s = setup(); s.pickup(); s.world.items.find(i => i.id === 'ursinho')!.holder = 'bia'; s.arrive();
-  expect(s.dispatch).not.toHaveBeenCalled(); expect(s.hint).toHaveBeenLastCalledWith('Mãos cheias! Larga um antes.');
-  s.pickup(); expect(s.start).toHaveBeenCalledOnce(); expect(s.cancel).toHaveBeenCalledTimes(2);
+  expect(s.dispatch.mock.calls).toEqual([[{ type: 'drop', actor: 'bia' }], [{ type: 'pick', actor: 'bia', item: 'microfone' }]]);
+  s.dispatch.mockClear(); s.pickup();
+  expect(s.dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'drop', actor: 'bia' }); expect(s.start).toHaveBeenCalledTimes(2); expect(s.cancel).toHaveBeenCalledTimes(2);
+  expect(s.hint).not.toHaveBeenCalled();
 });
 it('uses the existing pickup action once it arrives', () => {
   const s = setup(); s.pickup(); s.arrive(); expect(s.dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'pick', actor: 'bia', item: 'microfone' });

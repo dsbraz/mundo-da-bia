@@ -20,10 +20,10 @@ export function sceneFeedback(deps: Deps) {
       const line = event && eventLine(event.type, who || undefined, who ? who.kind === 'cat' : false);
       if (line) announce(line);
     },
-    refuse(text: string, point?: Point) {
+    refuse(text: string, point?: Point, face?: ActorId) {
       const self = actor(deps.selected());
       announce(text); sound.cue('refuse');
-      deps.scene.refuse(point ?? { x: self?.x ?? 500, y: (self?.y ?? 520) - 200 }, text);
+      deps.scene.refuse(point ?? { x: self?.x ?? 500, y: (self?.y ?? 520) - 200 }, text, face);
     },
     poke(id: ActorId) {
       const who = actor(id); if (!who) return;

@@ -99,8 +99,10 @@ test('tocar no balanço ocupado mostra quem está nele, junto do balanço', asyn
   await seed(page, town);
   await tap(page, 400, 490);
   await expect(page.locator('canvas')).toHaveAttribute('data-said', /Luna/);
+  await expect(page.locator('canvas')).toHaveAttribute('data-said-face', 'luna');
   await expect(page.locator('#announcement')).toHaveText(/Luna/);
   expect(Math.abs(Number(await page.locator('canvas').getAttribute('data-said-x')) - 400)).toBeLessThan(60);
+  await page.screenshot({ path: 'reports/plaza-swing-occupied.png' });
   expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('luna');
 });
 

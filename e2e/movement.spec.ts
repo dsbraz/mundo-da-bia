@@ -51,15 +51,17 @@ test('walk, pick up, sit, leave, travel, drop and reload preserve the object', a
   expect(state.items.find(i => i.id.endsWith('ursinho'))).toMatchObject({ holder: null, room: 'quarto' });
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await read(page)).toEqual(state);
 });
-test('an occupied hand explains the refusal and cancels an older destination', async ({ page }) => {
+test('an occupied hand lets go by itself, without an order, and cancels an older destination', async ({ page }) => {
   await tap(page, 700, 502);
   await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBe('bia');
   await tap(page, 930, 530); await expect(page.locator('canvas')).toHaveAttribute('data-walking', 'bia');
   await tap(page, 560, 272);
-  await expect(page.locator('#announcement')).toHaveText('Mãos cheias! Larga um antes.');
-  await expect(page.locator('canvas')).toHaveAttribute('data-said', 'Mãos cheias! Larga um antes.');
+  await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBeNull();
+  await expect(page.locator('#announcement')).not.toHaveText(/Mãos cheias|Larga/);
+  await expect(page.locator('canvas')).not.toHaveAttribute('data-said', /Mãos cheias|Larga/);
+  await expect.poll(async () => (await read(page)).items.filter(i => i.holder === 'bia').map(i => i.id)).toEqual(['1:microfone']);
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
-  expect((await read(page)).items.filter(i => i.holder === 'bia').map(i => i.id)).toEqual(['1:ursinho']);
+  expect(Math.round((await read(page)).actors[0]!.x)).toBeLessThan(930);
 });
 test('tapping the wall walks to the baseboard instead of refusing', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });

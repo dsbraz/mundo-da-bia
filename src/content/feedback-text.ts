@@ -11,7 +11,7 @@ const humanLines: Partial<Record<PresentationEvent['type'], string>> = {
   fed: 'Hummm! {nome} adorou!', rested: '{nome} está descansando.', named: 'Oi! Agora sou {nome}!',
 };
 const catLines: Partial<Record<PresentationEvent['type'], string>> = {
-  dressed: 'Miau! ({nome} se achou lindo)', picked: 'Miau? ({nome} quer brincar)', dropped: 'Miau! ({nome} largou)',
+  dressed: 'Miau! ({nome} amou o look)', picked: 'Miau? ({nome} quer brincar)', dropped: 'Miau! ({nome} largou)',
   fed: 'Miau! ({nome}: tem mais peixinho?)', rested: 'Rrrron… {nome} cochila.', named: 'Miau! ({nome} gostou do nome)',
 };
 const sceneLines: Partial<Record<PresentationEvent['type'], string>> = {
@@ -24,10 +24,10 @@ export function eventLine(type: PresentationEvent['type'], actor: { id: ActorId;
   return sceneLines[type] ?? null;
 }
 
-export type Refusal = 'outdoor' | 'blocked' | 'walk' | 'hand' | 'edit';
+export type Refusal = 'outdoor' | 'blocked' | 'walk' | 'edit';
 const refusals: Record<Refusal, string> = {
   outdoor: '{nome} está aqui agora!', blocked: 'Hmm, por aqui não passa.', walk: 'Ali não cabe. Que tal aqui?',
-  hand: 'Mãos cheias! Larga um antes.', edit: 'Aqui não cabe. Tenta outro cantinho?',
+  edit: 'Aqui não cabe. Tenta outro cantinho?',
 };
 export const refusal = (kind: Refusal, name: string) => say(refusals[kind], name);
 

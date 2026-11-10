@@ -25,10 +25,15 @@ it('o evento moved não gera fala e as outras falas da cena cabem em 6 palavras'
 it('recusas dizem quem está no lugar e oferecem alternativa sem culpa', () => {
   const swing = refusal('outdoor', 'Maria Clara');
   expect(swing).toContain('Maria Clara');
-  for (const kind of ['outdoor', 'blocked', 'walk', 'hand', 'edit'] as const) {
+  for (const kind of ['outdoor', 'blocked', 'walk', 'edit'] as const) {
     const line = refusal(kind, 'Maria Clara');
     expect(words(line), line).toBeLessThanOrEqual(6); expect(line).not.toMatch(banned);
   }
+});
+
+it('o gato fala sem gênero ao vestir', () => {
+  expect(eventLine('dressed', { id: 'mimi' }, true)).toBe('Miau! (Mimi amou o look)');
+  for (const type of types) expect(eventLine(type, { id: 'nino', name: 'Tom' }, true) ?? '').not.toMatch(/\b(lindo|linda|bonito|bonita)\b/);
 });
 
 it('falas da praça e de modo seguem o tom do guia', () => {

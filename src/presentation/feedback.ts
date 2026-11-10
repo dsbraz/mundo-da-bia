@@ -10,27 +10,33 @@ const bubbles = new WeakMap<Phaser.Scene, Map<string, Container>>();
 export const bubbleDuration = (text: string) => 1800 + 60 * text.length;
 
 /** The single speech bubble of `owner` (an actor id or a place), drawn near the touch. */
-export function speechBubble(scene: Phaser.Scene, anchor: Point, text: string, owner: string, tone: 'happy' | 'neutral' = 'happy') {
+const tones = { happy: { color: palette.plum, fill: 'bubbleBg' }, neutral: { color: palette.chalk, fill: 'card' } } as const;
+const facePortrait = (scene: Phaser.Scene, face?: string) => face && scene.textures.exists(`face-${face}`) ? scene.add.image(0, -34, `face-${face}`).setDisplaySize(56, 56) : null;
+/** `face` (an actor id) puts that character's portrait at the start of the bubble: "who is there" without reading. */
+export function speechBubble(scene: Phaser.Scene, anchor: Point, text: string, owner: string, tone: 'happy' | 'neutral' = 'happy', face?: string) {
   const owned = bubbles.get(scene) ?? new Map<string, Container>(); bubbles.set(scene, owned);
   const previous = owned.get(owner);
   if (previous?.active) previous.destroy();
-  const label = scene.add.text(0, -34, text, textStyle('bubble', { color: tone === 'happy' ? palette.plum : palette.chalk, wordWrap: { width: 340 } })).setOrigin(.5);
-  const width = label.width + 32, height = label.height + 18, fill = tone === 'happy' ? 'bubbleBg' : 'card';
+  const look = tones[tone];
+  const label = scene.add.text(0, -34, text, textStyle('bubble', { color: look.color, wordWrap: { width: 340 } })).setOrigin(.5);
+  const portrait = facePortrait(scene, face), room = portrait ? 64 : 0;
+  const width = label.width + 32 + room, height = Math.max(label.height, room) + 18;
+  if (portrait) { portrait.setX(-width / 2 + 44); label.setX(room / 2); }
   const shape = scene.add.graphics();
-  shape.fillStyle(hex(fill)).fillRoundedRect(-width / 2, -34 - height / 2, width, height, 18).fillTriangle(-10, -36 + height / 2, 10, -36 + height / 2, 0, -6);
+  shape.fillStyle(hex(look.fill)).fillRoundedRect(-width / 2, -34 - height / 2, width, height, 18).fillTriangle(-10, -36 + height / 2, 10, -36 + height / 2, 0, -6);
   shape.lineStyle(1.5, hex('outline'), .6).strokeRoundedRect(-width / 2, -34 - height / 2, width, height, 18);
-  const bubble = scene.add.container(anchor.x, anchor.y, [shape, label]).setDepth(1100);
+  const bubble = scene.add.container(anchor.x, anchor.y, portrait ? [shape, portrait, label] : [shape, label]).setDepth(1100);
   owned.set(owner, bubble);
   const reduced = reducedMotion();
   if (!reduced) scene.tweens.add({ targets: bubble, scaleX: { from: .6, to: 1 }, scaleY: { from: .6, to: 1 }, duration: 160, ease: 'Back.Out' });
   scene.tweens.add({ targets: bubble, ...bubbleExit(anchor.y, 18, bubbleDuration(text), reduced), onComplete: () => bubble.destroy() });
-  Object.assign(scene.game.canvas.dataset, { said: text, saidX: String(Math.round(anchor.x)) });
+  Object.assign(scene.game.canvas.dataset, { said: text, saidX: String(Math.round(anchor.x)), saidFace: portrait ? face : '' });
   return bubble;
 }
 
 /** A refusal: gentle shake of whoever tried, and a neutral bubble near the target. Never a red "×". */
-export function refuseAt(scene: Phaser.Scene, point: Point, text: string, figure?: Container) {
-  speechBubble(scene, point, text, 'refusal', 'neutral');
+export function refuseAt(scene: Phaser.Scene, point: Point, text: string, figure?: Container, face?: string) {
+  speechBubble(scene, point, text, 'refusal', 'neutral', face);
   if (!figure || reducedMotion()) return;
   const state = { x: -1 };
   scene.tweens.add({ targets: state, x: 1, duration: 70, yoyo: true, repeat: 2, onUpdate: () => figure.setData('shake', state.x * 4), onComplete: () => figure.setData('shake', 0) });

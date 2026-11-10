@@ -94,14 +94,39 @@ test('a Turma inteira cabe sem rolagem a 768 px, com o lápis só no cartão esc
 });
 
 test('nenhum ícone se repete entre botões visíveis ao mesmo tempo', async ({ page }) => {
-  const repeated = () => page.evaluate(() => {
-    const seen = new Map<string, string[]>();
-    document.querySelectorAll<HTMLButtonElement>('button').forEach(button => {
-      if (!button.checkVisibility() || button.closest('[inert]')) return;
-      const icon = getComputedStyle(button, '::before').backgroundImage, image = button.querySelector('img')?.getAttribute('src');
-      for (const key of [icon !== 'none' ? icon : null, image].filter(Boolean) as string[]) seen.set(key, [...seen.get(key) ?? [], button.textContent!.trim() || button.getAttribute('aria-label')!]);
-    });
-    return seen.size > 4 ? [...seen.values()].filter(names => names.length > 1) : [['poucos ícones vistos', String(seen.size)]];
+  // Compares the drawing as rendered: each icon is rasterized with its computed transform. Two drawings repeat when
+  // their silhouettes match and either both are one-colour icons (a mirrored or recoloured copy) or their colours match too.
+  const repeated = () => page.evaluate(async () => {
+    const size = 64, drawings: { name: string; rgba: Uint8ClampedArray; mono: boolean }[] = [];
+    const raster = async (url: string, transform: string) => {
+      const image = new Image(); image.src = url; await image.decode();
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = size;
+      const context = canvas.getContext('2d')!, m = transform === 'none' ? new DOMMatrix() : new DOMMatrix(transform);
+      context.translate(size / 2, size / 2); context.transform(m.a, m.b, m.c, m.d, 0, 0); context.translate(-size / 2, -size / 2);
+      context.drawImage(image, 0, 0, size, size);
+      const rgba = context.getImageData(0, 0, size, size).data, colours = new Map<number, number>();
+      for (let i = 0; i < rgba.length; i += 4) if (rgba[i + 3]! > 96) { const key = (rgba[i]! >> 5) << 6 | (rgba[i + 1]! >> 5) << 3 | rgba[i + 2]! >> 5; colours.set(key, (colours.get(key) ?? 0) + 1); }
+      const opaque = [...colours.values()].reduce((a, b) => a + b, 0);
+      return { rgba, mono: Math.max(...colours.values()) >= opaque * .9 };
+    };
+    for (const button of document.querySelectorAll<HTMLButtonElement>('button')) {
+      if (!button.checkVisibility() || button.closest('[inert]')) continue;
+      const before = getComputedStyle(button, '::before'), url = /url\("?(.+?)"?\)/.exec(before.backgroundImage)?.[1], image = button.querySelector('img');
+      const name = button.textContent!.trim() || button.getAttribute('aria-label')!;
+      if (url) drawings.push({ name, ...await raster(url, before.transform) });
+      if (image?.src) drawings.push({ name, ...await raster(image.src, getComputedStyle(image).transform) });
+    }
+    const same = (a: typeof drawings[number], b: typeof drawings[number]) => {
+      let union = 0, both = 0, difference = 0;
+      for (let i = 3; i < a.rgba.length; i += 4) {
+        const on = a.rgba[i]! > 96, other = b.rgba[i]! > 96;
+        if (on || other) union++;
+        if (on && other) { both++; if ([3, 2, 1].some(c => Math.abs(a.rgba[i - c]! - b.rgba[i - c]!) > 40)) difference++; }
+      }
+      return union > 0 && both / union > .9 && (a.mono && b.mono || difference / both < .005);
+    };
+    const repeats = drawings.flatMap((a, i) => drawings.slice(i + 1).filter(b => same(a, b)).map(b => [a.name, b.name]));
+    return drawings.length > 4 ? repeats : [['poucos ícones vistos', String(drawings.length)]];
   });
   await ready(page); await page.locator('#tray-toggle').click();
   for (const tab of ['Turma', 'Looks', 'Objetos']) { await tray(page, tab); expect(await repeated()).toEqual([]); }
