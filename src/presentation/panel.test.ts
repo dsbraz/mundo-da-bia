@@ -24,7 +24,9 @@ it('dims instead of hiding: drop and eat only light up with the right food in ha
   expect(enabled(snack, 'bia')).toMatchObject({ drop: true, eat: true });
   const fish = transition(start, { type: 'pick', actor: 'bia', item: 'peixe' }).state;
   expect(enabled(fish, 'bia')).toMatchObject({ drop: true, eat: false });
-  expect(enabled(start, 'mimi')).toMatchObject({ wear: false, play: false, eat: false });
+  expect(enabled(start, 'mimi')).toMatchObject({ wear: false, play: true, eat: false });
+  const alone = { ...start, actors: start.actors.map(a => a.kind === 'human' ? { ...a, room: 'quarto' as const } : a) };
+  expect(enabled(alone, 'mimi')).toMatchObject({ play: false });
   expect(panelButtons(start, actor(start, 'mimi'))[4]!.icon).toBe('/icons/peixe.svg');
   expect(panelButtons(start, actor(start, 'bia'))[4]!.icon).toBe('/icons/lanche.svg');
 });

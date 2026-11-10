@@ -1,6 +1,6 @@
 import { hopCells, hopStep, ropeCue, ropeStep, startGame } from '../domain/child-games';
 import type { GameKind } from '../domain/child-games';
-import type { ActorId, Point, World } from '../domain/types';
+import type { Actor, ActorId, Point, World } from '../domain/types';
 import { gameSpace, hopPosition, hopTileAt } from './game-space';
 import { gameControls } from './game-controls';
 import type { GamePreview } from './child-game-art';
@@ -10,7 +10,7 @@ interface Actions {
   world: () => World; selected: () => ActorId; prepare: () => void; stopWalk: () => void;
   walk: (point: Point, done: () => void) => void;
   commit: (actor: ActorId, point: Point) => void; preview: (value: GamePreview | null) => void;
-  follow: (point: Point) => void;
+  follow: (point: Point) => void; select: (actor: ActorId) => void; drop: (actor: ActorId) => void;
 }
 export function childGames(root: HTMLElement, actions: Actions) {
   let session: GamePreview | null = null, frame = 0, pending = false, command = 0;
@@ -23,11 +23,13 @@ export function childGames(root: HTMLElement, actions: Actions) {
   }
   function start(kind: GameKind) {
     cancel(); actions.prepare();
-    const world = actions.world(), actor = world.actors.find(a => a.id === actions.selected())!;
-    if (actor.kind !== 'human' || actor.room !== world.room) { view.error('Escolha uma criança que esteja neste lugar.'); return; }
-    if (world.items.some(i => i.holder === actor.id)) { view.error('Solte o objeto que está na mão antes de brincar.'); return; }
-    const origin = gameSpace(world, actor, kind);
-    if (!origin) { view.error('Precisamos de espaço livre no chão. Experimente um cômodo vazio ou um quintal.'); return; }
+    const actor = player(actions.world(), actions.selected());
+    if (!actor) { view.error('Chame uma criança para brincar aqui!'); return; }
+    if (actor.id !== actions.selected()) actions.select(actor.id);
+    if (actions.world().items.some(i => i.holder === actor.id)) actions.drop(actor.id);
+    const origin = gameSpace(actions.world(), actor, kind);
+    if (!origin) { view.error('Está apertado aqui. Que tal o quintal?'); return; }
+    actions.follow(origin);
     view.start(kind); view.update('walking', 'Chegando…', 'Indo até um espaço livre.', true); pending = true;
     const token = command;
     actions.walk(origin, () => {
@@ -56,7 +58,7 @@ export function childGames(root: HTMLElement, actions: Actions) {
     const value = session!, cells = hopCells(value.game), landing = now - value.jumpedAt < 400;
     if (value.game.kind === 'rope') {
       const message = { ready: 'Espere a corda chegar.', jump: 'Isso! Continue no seu ritmo.', again: 'Tente no próximo “Agora!”.' }[value.game.feedback];
-      view.update('playing', 'Pular', message, landing, ropeCue(value.game, now) ? 'Agora!' : 'Prepare…');
+      view.update('playing', 'Pular', message, false, ropeCue(value.game, now) ? 'Agora!' : 'Prepare…');
     } else {
       const done = !cells.length;
       view.update(done ? 'complete' : 'playing', `Pular para ${cells.join(' e ')}`, done ? 'Ida e volta! Quer brincar de novo?' : cells.length === 2 ? 'Dois pés nas casas iluminadas.' : 'Um pé na casa iluminada.', landing);
@@ -69,4 +71,12 @@ export function childGames(root: HTMLElement, actions: Actions) {
     frame = requestAnimationFrame(tick);
   }
   return { cancel, open: view.open };
+}
+
+/** Who plays: the selected child, or, if a cat is selected, the child nearest to it. */
+export function player(world: World, selected: ActorId): Actor | undefined {
+  const chosen = world.actors.find(a => a.id === selected)!;
+  if (chosen.kind === 'human' && chosen.room === world.room) return chosen;
+  return world.actors.filter(a => a.kind === 'human' && a.room === world.room)
+    .sort((a, b) => Math.hypot(a.x - chosen.x, a.y - chosen.y) - Math.hypot(b.x - chosen.x, b.y - chosen.y))[0];
 }

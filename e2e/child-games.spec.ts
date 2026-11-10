@@ -57,15 +57,20 @@ test('corda: interrupção ao trocar personagem, escapar e perder foco', async (
   }
 });
 
-test('mão ocupada explica a recusa e preserva o objeto', async ({ page }) => {
-  await playground(page, true); const original = await readTown(page);
+test('mão ocupada solta o objeto no chão e a corda começa', async ({ page }) => {
+  await playground(page, true); const held = (await readTown(page)).items.find(i => i.holder === 'bia')!;
   await page.getByRole('button', { name: 'Jogar', exact: true }).click();
-  for (const name of ['Pular corda', 'Amarelinha']) {
-    await page.getByRole('button', { name, exact: true }).click();
-    await expect(page.locator('#game-choice-message')).toContainText('Solte o objeto');
-    await expect(page.locator('#game-panel')).toBeHidden();
-    expect(await readTown(page)).toEqual(original);
-  }
+  await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
+  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+  expect((await readTown(page)).items.find(i => i.id === held.id)).toMatchObject({ holder: null, spot: 'floor' });
+});
+
+test('com um gato escolhido, a brincadeira passa para a criança mais perto', async ({ page }) => {
+  await playground(page); await tray(page, 'Turma'); await page.getByRole('button', { name: 'Mimi', exact: true }).click(); await closeTray(page);
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
+  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+  await expect(page.locator('#game-choice-message')).toBeEmpty(); await expect(page.locator('#selected')).not.toHaveText('Mimi');
 });
 
 test('corda tem indicação de ritmo e novas tentativas por toque com movimento reduzido', async ({ page }) => {
@@ -98,6 +103,10 @@ test('amarelinha por toque mantém os controles abaixo da cena no retrato e canc
   const world = (await page.locator('#world').boundingBox())!, panel = (await page.locator('#game-panel').boundingBox())!;
   expect(panel.y).toBeGreaterThanOrEqual(world.y + world.height - 1);
   await page.screenshot({ path: 'reports/hopscotch-portrait.png' });
+  const vision = await page.context().newCDPSession(page);
+  await vision.send('Emulation.setEmulatedVisionDeficiency', { type: 'deuteranopia' });
+  await page.screenshot({ path: 'reports/hopscotch-portrait-deuteranopia.png' });
+  await vision.send('Emulation.setEmulatedVisionDeficiency', { type: 'none' }); await vision.detach();
   await page.setViewportSize({ width: 1024, height: 768 });
   await expect(page.locator('#game-jump')).toBeVisible();
   await page.locator('#build-toggle').click(); await expect(page.locator('#game-panel')).toBeHidden();

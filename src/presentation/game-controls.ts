@@ -4,7 +4,7 @@ import type { Point } from '../domain/types';
 
 export function gameControls(root: HTMLElement, actions: { start: (kind: GameKind) => void; jump: (cell?: number) => void; cancel: () => void; tap: (point: Point) => void }) {
   const chooser = document.createElement('dialog'); chooser.id = 'game-chooser'; chooser.setAttribute('aria-labelledby', 'game-title');
-  chooser.innerHTML = '<h2 id="game-title">Vamos brincar?</h2><p>Escolha uma criança com as mãos livres. Use um cômodo ou quintal com espaço no chão.</p><div class="game-choices"><button data-game="rope">Pular corda</button><button data-game="hopscotch">Amarelinha</button></div><p id="game-choice-message" role="status"></p><button id="game-close">Voltar</button>';
+  chooser.innerHTML = '<h2 id="game-title">Vamos brincar?</h2><p>Qual vai ser?</p><div class="game-choices"><button data-game="rope">Pular corda</button><button data-game="hopscotch">Amarelinha</button></div><p id="game-choice-message" role="status"></p><button id="game-close">Voltar</button>';
   const panel = document.createElement('section'); panel.id = 'game-panel'; panel.hidden = true; panel.setAttribute('aria-label', 'Brincadeira em andamento');
   panel.innerHTML = '<h2 id="game-name"></h2><p id="game-instruction"></p><p id="game-cue" aria-hidden="true"></p><p id="game-message" role="status"></p><button id="game-jump">Pular</button><button id="game-restart" hidden>Brincar de novo</button><button id="game-stop">Encerrar brincadeira</button>';
   root.append(chooser, panel);
