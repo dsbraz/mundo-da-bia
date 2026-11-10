@@ -29,7 +29,8 @@ import { faceEvents, faces, pokeFace } from './expression';
 import { ambientLife } from './ambient';
 import { drawRoom } from './room';
 import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
-import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
+import { actorAt, handPoint, previewPoint, itemPoint } from './targets';
+import { hoverHint, shownWorld } from './scene-view';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 import { pokeFigure, refuseAt } from './feedback';
@@ -204,11 +205,7 @@ export class PlayScene extends Phaser.Scene {
     return () => settle(this.figures, this.objects, this.world.room);
   }
   visibleWorld(): VisibleWorld {
-    return { ...this.world, occludingDepth: p => { const piece = this.pickPiece(p); return piece ? pieceDepth(piece) : 0; }, itemDepth: new Map(this.objects.map(o => [o.name as ItemId, o.depth])), actorHit: (actor, point) => this.actorHit(actor, point), visibleDepth: new Map(this.figures.map(f => [f.name, f.depth])), visibleItems: new Map(this.objects.map(o => [o.name as ItemId, { x: o.x, y: o.y }])), actors: this.world.actors.map(actor => {
-      const figure = this.figures.find(f => f.name === actor.id);
-      if (!figure) return actor;
-      return { ...actor, x: figure.x, y: figure.y, seat: this.moving === actor.id ? null : actor.seat };
-    }) };
+    return shownWorld({ world: this.world, figures: this.figures, objects: this.objects, moving: this.moving, pickPiece: p => this.pickPiece(p), actorHit: (actor, point) => this.actorHit(actor, point) });
   }
   private actorHit(actor: Actor, point: Point) {
     const pose = this.figures.find(f => f.name === actor.id)?.getByName<Phaser.GameObjects.Container>('pose');
@@ -219,14 +216,8 @@ export class PlayScene extends Phaser.Scene {
     this.hint?.clear();
     if (!point || this.building) return;
     if (!this.hint) this.hint = this.add.graphics().setDepth(999);
-    const world = this.visibleWorld(), token = sourceAt(world, point, false);
-    const object = token && this.objects.find(o => o.name === token.id);
-    if (object) { this.hint.lineStyle(2, 0x477e86, .8).strokeRoundedRect(object.x - 23, object.y - 23, 46, 46, 8); return; }
-    const actor = actorAt(world, point);
-    if (actor) { this.highlight(actor); return; }
     const piece = this.pickPiece(point);
-    const target = piece && this.pieces.get(piece.id);
-    if (target) { const bounds = target.getBounds(); this.hint.lineStyle(2, 0x477e86, .55).strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, 8); }
+    hoverHint(this.hint, this.visibleWorld(), this.objects, piece && this.pieces.get(piece.id), point, actor => this.highlight(actor));
   }
   face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) { this.gaze.set(id, Math.sign(point.x - actor.x)); this.faces.trigger(id, 'curious', performance.now()); } }
   /** With `face` (who is there), the bubble points at that character's head from above, never over the face. */
