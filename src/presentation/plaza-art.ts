@@ -7,7 +7,7 @@ export function drawPlaza(scene: Phaser.Scene, town: Neighborhood) {
   g.fillStyle(0xa9c39d).fillEllipse(75, 160, 220, 210); g.fillStyle(0xbfd1a6).fillEllipse(28, 115, 180, 120);
   g.fillStyle(0xcbd8ad).fillEllipse(330, 435, 620, 85);
   const bench = scene.add.graphics({ x: 72, y: 178 }).setScale(.6);
-  bench.fillStyle(0x7c7764, .1).fillEllipse(180, 452, 215, 18);
+  bench.fillStyle(0x7c7764, .2).fillEllipse(180, 452, 215, 18).fillStyle(0x7c7764, .16).fillEllipse(180, 452, 118, 11);
   bench.lineStyle(7, 0x778979).lineBetween(100, 411, 100, 453).lineBetween(258, 411, 258, 453);
   for (let y = 367; y <= 415; y += 16) { bench.fillStyle(0xcba881).fillRoundedRect(85, y, 190, 12, 3); bench.lineStyle(1, 0x8b7865).strokeRoundedRect(85, y, 190, 12, 3); }
   bench.fillStyle(0xd4b38a).fillRoundedRect(80, 423, 200, 14, 4);

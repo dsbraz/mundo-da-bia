@@ -6,13 +6,14 @@ import { applyReaction } from './feedback';
 import { drawSelection } from './selection-art';
 import { selectionPulse } from './motion';
 import { actors } from '../content/catalog';
+import { contactShadow } from './contact-shadow';
 import type { Actor } from '../domain/types';
 
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, context?: VisualContext): Phaser.GameObjects.Container {
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
   const labelX = actor.seat === 'bed' ? -80 : 0;
-  const shadow = scene.add.ellipse(labelX, 2, actor.seat === 'bed' ? 140 : 56, 7, 0x716858, 0.08);
-  shadow.setScale(contextScale(context));
+  const shadow = contactShadow(scene, labelX, 2, actor.seat === 'bed' ? 140 : 56, 8, 0x716858).setScale(contextScale(context));
+  shadow.setData('base', shadow.scaleX);
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
   container.add(pose);

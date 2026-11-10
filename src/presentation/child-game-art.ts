@@ -4,20 +4,21 @@ import { hopCells, ropeCue } from '../domain/child-games';
 import type { ChildGame } from '../domain/child-games';
 import type { ActorId, Point } from '../domain/types';
 import { hopTiles } from './game-space';
+import { jumpFrame, type JumpFrame } from './jump-motion';
 const chalkOutlines = [0xe8735a, 0x2ba8a0, 0x3f6fc4, 0x6dae4f, 0x9b7bd0];
 const tileCorners = (tile: { x: number; y: number }) => [{ x: tile.x - 47, y: tile.y + 10 }, { x: tile.x + 5, y: tile.y + 10 }, { x: tile.x + 47, y: tile.y - 10 }, { x: tile.x - 5, y: tile.y - 10 }];
 export interface GamePreview { actor: ActorId; game: ChildGame; origin: Point; from: Point; point: Point; jumpedAt: number; feet: number }
 export function gamePosition(value: GamePreview, now: number, reduced: boolean) {
-  const progress = Math.min(1, Math.max(0, (now - value.jumpedAt) / 400));
-  const t = reduced ? 1 : progress * progress * (3 - 2 * progress);
+  const t = jumpFrame(now - value.jumpedAt, reduced).travel;
   return { x: value.from.x + (value.point.x - value.from.x) * t, y: value.from.y + (value.point.y - value.from.y) * t };
 }
 
 export function childGameArt(scene: Phaser.Scene) {
   let current: GamePreview | null = null;
+  let dust: Phaser.GameObjects.Graphics | null = null;
   let ground: Phaser.GameObjects.Container | null = null, rope: Phaser.GameObjects.Graphics | null = null, glow: Phaser.GameObjects.Graphics | null = null;
   function paint(value: GamePreview | null) {
-    ground?.destroy(); rope?.destroy(); ground = null; rope = null; glow = null; current = value;
+    ground?.destroy(); rope?.destroy(); dust?.destroy(); ground = null; rope = null; glow = null; dust = null; current = value;
     if (!value) return;
     if (value.game.kind === 'rope') { rope = scene.add.graphics().setDepth(value.point.y + 1); return; }
     ground = scene.add.container(value.origin.x, value.origin.y).setDepth(5);
@@ -33,14 +34,17 @@ export function childGameArt(scene: Phaser.Scene) {
   }
   function animate(figure: Phaser.GameObjects.Container, now: number, reduced: boolean) {
     if (!current || figure.name !== current.actor) return;
-    const value = current, progress = Math.min(1, Math.max(0, (now - value.jumpedAt) / 400));
+    const value = current, jump = jumpFrame(now - value.jumpedAt, reduced);
     const position = gamePosition(value, now, reduced);
     glow?.setAlpha(reduced ? .8 : .45 + .45 * Math.sin(now / 180));
     figure.setPosition(position.x, position.y);
     figure.setDepth(figure.y + 1);
     const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
     pose.rotation = 0;
-    pose.y = reduced ? 0 : -Math.sin(progress * Math.PI) * 28;
+    pose.y = -jump.lift;
+    jumpBody(figure, pose, jump);
+    scene.game.canvas.dataset.jump = jump.phase;
+    dust = drawDust(scene, dust, position, jump);
     const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
     knees.list.forEach(part => {
       const leg = part as Phaser.GameObjects.Image, side = Number(leg.getData('side'));
@@ -50,6 +54,22 @@ export function childGameArt(scene: Phaser.Scene) {
     if (rope) drawRope(rope, value, now, pose.y, reduced);
   }
   return { paint, animate };
+}
+
+/** Crouch and landing squash (at most 10%) on the pose, and the contact shadow shrinking while in the air. */
+function jumpBody(figure: Phaser.GameObjects.Container, pose: Phaser.GameObjects.Container, jump: JumpFrame) {
+  const base = Number(pose.getData('baseScale') ?? pose.scaleX);
+  pose.setScale(base * (1 - jump.squash / 2), base * (1 + jump.squash));
+  const shadow = figure.getByName<Phaser.GameObjects.Container>('shadow'), size = Number(shadow?.getData('base') ?? 1);
+  shadow?.setScale(size * jump.shadow).setAlpha(.6 + .4 * jump.shadow);
+}
+/** Two little chalk puffs beside the feet that grow and fade after landing (never with reduced motion: dust stays 0). */
+function drawDust(scene: Phaser.Scene, dust: Phaser.GameObjects.Graphics | null, feet: Point, jump: JumpFrame) {
+  if (!jump.dust) { dust?.clear(); return dust; }
+  const g = dust ?? scene.add.graphics(), spread = 14 + 16 * jump.dust;
+  g.clear().setDepth(feet.y + 2).fillStyle(0xfbf8ee, .85 * (1 - jump.dust));
+  for (const side of [-1, 1]) g.fillCircle(feet.x + side * spread, feet.y - 3 - 4 * jump.dust, 4 + 4 * jump.dust).fillCircle(feet.x + side * (spread + 9), feet.y - 1, 3 + 2 * jump.dust);
+  return g;
 }
 
 function drawRope(rope: Phaser.GameObjects.Graphics, value: GamePreview, now: number, rise: number, reduced: boolean) {
