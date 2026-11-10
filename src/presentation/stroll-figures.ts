@@ -5,7 +5,7 @@ import { reducedMotion } from './motion';
 import { stroll, strollAt, type Stroll } from './stroll';
 
 /** Short walks drawn over repaints (the save already holds where they end), e.g. bystanders stepping off the hopscotch board.
- *  `canvas.dataset.strolling` lists who is still walking. */
+ *  `canvas.dataset.strolling` lists who is still walking; `strolled`, who set off in the latest call. */
 export function strollFigures(canvas: () => HTMLCanvasElement) {
   const strolls = new Map<ActorId, Stroll>();
   const mark = () => { canvas().dataset.strolling = [...strolls.keys()].join(' '); };
@@ -14,7 +14,7 @@ export function strollFigures(canvas: () => HTMLCanvasElement) {
     start(figures: Phaser.GameObjects.Container[], moves: { actor: ActorId; point: Point }[]) {
       const now = performance.now();
       for (const m of moves) { const f = figures.find(f => f.name === m.actor); if (f) strolls.set(m.actor, stroll({ x: f.x, y: f.y }, m.point, now, reducedMotion())); }
-      mark();
+      canvas().dataset.strolled = moves.filter(m => strolls.has(m.actor)).map(m => m.actor).join(' '); mark();
     },
     /** Draws this frame of the actor's walk, if it has one; true while it walks (the caller poses the legs). */
     step(figure: Phaser.GameObjects.Container, actor: Actor, world: World): boolean {

@@ -223,12 +223,15 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     await page.setViewportSize(viewport); await ready(page);
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
     await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+    const before = (await readTown(page)).actors;
     await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
-    // Whoever stood over the board walks off it (a short walk drawn in the scene), then stands still.
-    await expect(page.locator('canvas')).not.toHaveAttribute('data-strolling', '');
     await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+    // Whoever stood over the board walked off it (a short walk drawn in the scene, never a jump), then stands still.
     await expect(page.locator('canvas')).toHaveAttribute('data-strolling', '');
     const town = await readTown(page), origin = town.actors.find(a => a.id === 'bia')!, scene = (await page.locator('#world').boundingBox())!;
+    const moved = town.actors.filter(a => a.id !== 'bia' && before.some(b => b.id === a.id && (b.x !== a.x || b.y !== a.y))).map(a => a.id).sort();
+    expect(moved.length).toBeGreaterThan(0);
+    expect(((await page.locator('canvas').getAttribute('data-strolled')) ?? '').split(' ').filter(Boolean).sort()).toEqual(moved);
     const inside = async () => (await squareCentres(page, origin)).every(p => p.x > scene.x && p.x < scene.x + scene.width && p.y > scene.y && p.y < scene.y + scene.height);
     await expect.poll(inside).toBe(true);
     // Nobody else on the chalk: no foot inside a square and no body standing in front of a square's centre.
@@ -248,3 +251,19 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     await page.screenshot({ path: `reports/hopscotch-board-${viewport.width}.png` });
   });
 }
+
+test('com movimento reduzido, quem sai do giz some e reaparece ao lado (fade), sem ficar transparente nem sobre o tabuleiro', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await page.setViewportSize({ width: 1024, height: 768 }); await ready(page);
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+  const before = (await readTown(page)).actors;
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
+  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+  await expect(page.locator('canvas')).toHaveAttribute('data-strolling', '');
+  const town = await readTown(page), origin = town.actors.find(a => a.id === 'bia')!;
+  const moved = town.actors.filter(a => a.id !== 'bia' && before.some(b => b.id === a.id && b.x !== a.x)).map(a => a.id).sort();
+  expect(moved.length).toBeGreaterThan(0);
+  expect(((await page.locator('canvas').getAttribute('data-strolled')) ?? '').split(' ').filter(Boolean).sort()).toEqual(moved);
+  for (const a of town.actors.filter(a => moved.includes(a.id))) expect(Math.abs(a.x - origin.x - 105) >= 152 + (a.kind === 'cat' ? 35 : 42), `${a.id} sobre o tabuleiro`).toBe(true);
+  await page.screenshot({ path: 'reports/hopscotch-reduced-1024.png' });
+});
