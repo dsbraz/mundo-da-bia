@@ -70,3 +70,11 @@ export function loadSoundOn(storage?: StoragePort): boolean {
 export function saveSoundOn(on: boolean, storage?: StoragePort): boolean {
   try { (storage ?? globalThis.localStorage).setItem(soundKey, on ? 'on' : 'off'); return true; } catch { return false; }
 }
+
+const firstTouchKey = 'mundo-da-bia:first-touch';
+export function loadFirstTouchSeen(storage?: StoragePort): boolean {
+  try { return (storage ?? globalThis.localStorage).getItem(firstTouchKey) === 'seen'; } catch { return false; }
+}
+export function saveFirstTouchSeen(storage?: StoragePort): boolean {
+  try { (storage ?? globalThis.localStorage).setItem(firstTouchKey, 'seen'); return true; } catch { return false; }
+}

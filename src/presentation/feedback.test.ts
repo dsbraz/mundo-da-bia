@@ -80,3 +80,12 @@ it('com movimento reduzido a reação só fala, sem pulos', () => {
   expect(s.canvas.dataset.reaction).toBe('mimi:Rrrron…');
   expect(s.tweens).toHaveLength(1);
 });
+
+it('um aceno sem fala só pula: nenhum balão e nada dito no canvas', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const s = fakeScene(), figure = Object.assign(s.object('figure'), { name: 'luna', x: 300, y: 520 });
+  pokeFigure(s.scene, figure as unknown as Phaser.GameObjects.Container, 'hop', '', 196);
+  expect(s.texts).toHaveLength(0);
+  expect(s.canvas.dataset.said).toBeUndefined();
+  expect(s.tweens).toHaveLength(1);
+});

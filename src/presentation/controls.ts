@@ -22,7 +22,7 @@ function button(label: string, run: () => void, className = ''): HTMLButtonEleme
 function illustratedButton(id: string, label: string, run: () => void, className = ''): HTMLButtonElement {
   const element = button(label, run, className);
   const icon = document.createElement('img');
-  icon.src = actorIds.includes(id as ActorId) ? portrait(id as ActorId) : `/icons/${id}.svg`; icon.alt = ''; icon.width = 26; icon.height = 26;
+  icon.src = actorIds.includes(id as ActorId) ? portrait(id as ActorId) : `/icons/${id}.svg`; icon.alt = ''; icon.width = 26; icon.height = 26; icon.draggable = false;
   element.prepend(icon);
   return element;
 }
@@ -30,6 +30,8 @@ export interface PanelActions { looks: () => void; games: () => void }
 export function createControls(root: HTMLElement, dispatch: (action: Action) => void, select: (id: ActorId) => void, getState: () => World, building: () => boolean, panelActions: PanelActions) {
   let selected: ActorId = 'bia';
   const cast = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id), 'character'));
+  const faces = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id)));
+  root.querySelector('#play-hint .hint-cast')!.append(...faces);
   const name = actorNames(root, dispatch, getState);
   root.querySelector('#cast')!.append(...cast.map((card, i) => { const group = document.createElement('article'); group.className = 'character-card'; const rename = button('', () => name(actorIds[i]!), 'rename illustrated'); rename.style.setProperty('--button-icon', "url('/icons/ui-pencil.svg')"); group.append(card, rename); return group; }));
   cast.forEach((b, index) => trayDrag(b, () => roomWidth(getState()), p => {
@@ -55,7 +57,8 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
       const member = state.actors.find(a => a.id === actorIds[i])!, picture = portrait(member.id, member.look), image = b.querySelector('img')!;
       b.setAttribute('aria-pressed', String(member.id === id)); b.lastChild!.textContent = member.name ?? actors[member.id].name;
       b.nextElementSibling!.setAttribute('aria-label', uiText.name.rename(member.name ?? actors[member.id].name));
-      if (image.getAttribute('src') !== picture) image.src = picture;
+      if (image.getAttribute('src') !== picture) { image.src = picture; faces[i]!.querySelector('img')!.src = picture; }
+      faces[i]!.lastChild!.textContent = member.name ?? actors[member.id].name;
     });
     wardrobe.forEach((b, i) => { b.querySelector('img')!.src = lookImage(lookIds[i]!, id === 'leo' || id === 'rui'); b.disabled = !state.actors.some(a => a.kind === 'human' && a.room === state.room); b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
     refreshObjects();

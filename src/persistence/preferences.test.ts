@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { loadSoundOn, saveSoundOn } from './storage';
+import { loadFirstTouchSeen, loadSoundOn, saveFirstTouchSeen, saveSoundOn } from './storage';
 const key = 'mundo-da-bia:sound';
 function storage(entries: [string, string][] = [], failing = false) {
   const map = new Map(entries);
@@ -28,5 +28,21 @@ it('sem porta explícita usa o localStorage do navegador', () => {
   vi.stubGlobal('localStorage', port);
   expect(saveSoundOn(false)).toBe(true);
   expect(loadSoundOn()).toBe(false);
+  vi.unstubAllGlobals();
+});
+
+it('a mão-fantasma do primeiro toque aparece até ser dispensada, numa chave própria', () => {
+  const port = storage();
+  expect(loadFirstTouchSeen(port)).toBe(false);
+  expect(saveFirstTouchSeen(port)).toBe(true);
+  expect([...port.map.keys()]).toEqual(['mundo-da-bia:first-touch']);
+  expect(loadFirstTouchSeen(port)).toBe(true);
+});
+it('sem armazenamento a mão aparece e dispensar não quebra', () => {
+  expect(loadFirstTouchSeen(storage([], true))).toBe(false);
+  expect(saveFirstTouchSeen(storage([], true))).toBe(false);
+  const port = storage();
+  vi.stubGlobal('localStorage', port);
+  expect(saveFirstTouchSeen()).toBe(true); expect(loadFirstTouchSeen()).toBe(true);
   vi.unstubAllGlobals();
 });

@@ -45,7 +45,7 @@ const poses: Record<ReactionPose, (t: number) => { hop?: number; tilt?: number; 
 /** Presentation-only touch reaction: no dispatch, nothing saved, walking untouched. */
 export function pokeFigure(scene: Phaser.Scene, figure: Container, pose: ReactionPose, line: string, height: number) {
   scene.game.canvas.dataset.reaction = `${figure.name}:${line}`;
-  speechBubble(scene, { x: figure.x, y: figure.y - height - 8 }, line, figure.name);
+  if (line) speechBubble(scene, { x: figure.x, y: figure.y - height - 8 }, line, figure.name);
   if (reducedMotion()) return;
   const state = { t: 0 };
   const write = (value: ReturnType<typeof poses.hop>) => ['hop', 'tilt', 'shake', 'squash'].forEach(k => figure.setData(k, value[k as keyof typeof value] ?? 0));

@@ -35,7 +35,8 @@ import { dragPreview, settleMove } from '../presentation/build-preview';
 import Phaser from 'phaser';
 import { loadFonts } from '../presentation/text-style';
 import { transition } from '../domain/world';
-import { loadNeighborhood, saveNeighborhood } from '../persistence/storage';
+import { loadFirstTouchSeen, loadNeighborhood, saveFirstTouchSeen, saveNeighborhood } from '../persistence/storage';
+import { firstTouch } from '../presentation/first-touch';
 import { createControls, positionContext } from '../presentation/controls';
 import { bindInput } from '../presentation/input';
 import { PlayScene } from '../presentation/scene';
@@ -218,6 +219,8 @@ void loadFonts().then(() => { game = new Phaser.Game({
     view.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state));
     new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); view?.render(); }).observe(root.querySelector('#world')!);
     renderControls();
+    firstTouch(root, { seen: loadFirstTouchSeen(), done: () => saveFirstTouchSeen(), target: () => { const bia = state.actors.find(a => a.id === selected)!; return { x: bia.x, y: bia.y - 90 }; },
+      wave: () => state.actors.filter(a => a.room === state.room).forEach(a => scene.poke(a.id, 'hop', '')) });
     cancelInput = bindInput(current.canvas, () => scene.visibleWorld(), play.select, point => dispatch({ type: 'move', actor: selected, point }), {
       walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) square.use(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, selected: () => selected, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
     }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, dropPiece, point => scene.pickPiece(point), () => screenScale(current.canvas)) }, {
