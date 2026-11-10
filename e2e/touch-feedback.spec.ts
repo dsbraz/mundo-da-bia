@@ -102,7 +102,7 @@ for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768
   await expect(page.locator('canvas')).toHaveAttribute('data-said-face', 'luna');
   await expect(page.locator('#announcement')).toHaveText(/Luna/);
   expect(Math.abs(Number(await page.locator('canvas').getAttribute('data-said-x')) - 400)).toBeLessThan(60);
-  // The bubble is whole inside the scene and entirely above Luna's head on the swing (seat at y 445, head well above y 400).
+  // The bubble is whole inside the scene and entirely above Luna on the swing: seat at y 445, the top of her hair about y 340-355, her face below.
   const box = await page.locator('canvas').evaluate(c => {
     const [x, y, w, h] = c.dataset.saidBox!.split(',').map(Number), r = c.getBoundingClientRect(), d = c.dataset, scale = r.width / Number(d.viewWidth);
     const at = (px: number, py: number) => ({ x: r.x + (px - Number(d.viewX) - Number(d.cameraX)) * scale, y: r.y + (py - Number(d.viewY)) * scale });
@@ -111,7 +111,7 @@ for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768
   const scene = (await page.locator('#world').boundingBox())!;
   expect(box.a.x).toBeGreaterThanOrEqual(scene.x); expect(box.b.x).toBeLessThanOrEqual(scene.x + scene.width);
   expect(box.a.y).toBeGreaterThanOrEqual(scene.y); expect(box.b.y).toBeLessThanOrEqual(scene.y + scene.height);
-  expect(box.bottom).toBeLessThan(445 - 60);
+  expect(box.bottom).toBeLessThanOrEqual(340);
   await page.screenshot({ path: `reports/plaza-swing-occupied-${viewport.width}.png` });
   expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('luna');
 });
