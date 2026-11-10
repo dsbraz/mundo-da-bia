@@ -1,8 +1,9 @@
 import type { GameKind } from '../domain/child-games';
-import { roomWidth, validPoint } from '../domain/geometry';
+import { roomWidth } from '../domain/geometry';
 import { footprint, overlap } from '../domain/placement';
 import type { Actor, ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
+import { onFloor, walkable } from './floor-band';
 
 const rows = [[1], [2], [3, 4], [5], [6, 7], [8]];
 export const hopTiles = rows.flatMap((cells, row) => cells.map((cell, index) => ({ cell, x: row * 42 + (cells.length === 2 ? index * 52 - 26 : 0), y: -12 - row * 20 })));
@@ -11,26 +12,26 @@ export const hopBoard = (origin: Point) => ({ left: origin.x - 47, right: origin
 /** Where the camera looks to frame the whole board (its middle, at floor level). */
 export const hopFocus = (origin: Point): Point => ({ x: origin.x + 105, y: origin.y });
 type Move = { actor: ActorId; point: Point };
-/** Hopscotch: everyone else whose body would hide a square (standing on or in front of the chalk) steps back to just behind the board,
- *  to a spot no furniture in front hides and nobody crowds, out of the jumping child's way when one is a short step away. */
+type Zone = { left: number; right: number };
+/** Hopscotch: the child sweeps the whole board, so everyone else standing over it (whatever their depth, their body would meet the child's
+ *  at some square or hide one) steps sideways off it, on the floor, to a spot no furniture in front hides and nobody crowds. */
 export function stepAside(world: World, player: Actor, origin: Point): Move[] {
-  const board = hopBoard(origin), behind = board.top - 2, moves: Move[] = [];
-  for (const a of world.actors.filter(a => a.id !== player.id && a.room === world.room && hides(a, board))) moves.push({ actor: a.id, point: { x: aside(world, player, a, board, behind, moves), y: behind } });
+  const zone = hopBoard(origin), moves: Move[] = [];
+  for (const a of world.actors.filter(a => a.id !== player.id && a.room === world.room && a.x + half(a) > zone.left && a.x - half(a) < zone.right)) {
+    const point = aside(world, player, a, zone, moves); if (point) moves.push({ actor: a.id, point });
+  }
   return moves;
 }
-/** Within 200 of where it stood: first spots off the child's path, then the nearest; where it stood if nothing is free. */
-function aside(world: World, player: Actor, actor: Actor, board: ReturnType<typeof hopBoard>, behind: number, taken: Move[]) {
-  const half = actor.kind === 'cat' ? 35 : 42, path = { left: board.left - 42, right: board.right + 42 };
-  const front = world.layout.pieces.filter(p => p.room === world.room).map(footprint).filter(b => !!b && b.bottom + 8 > behind);
-  const others = world.actors.filter(o => o.id !== actor.id && o.id !== player.id && o.room === world.room && !taken.some(m => m.actor === o.id)).map(o => o.x).concat(taken.map(m => m.point.x));
-  const free = (x: number) => validPoint({ x, y: behind }, roomWidth(world)) && others.every(o => Math.abs(o - x) >= 55) && front.every(b => x + half <= b!.left || x - half >= b!.right);
-  const onPath = (x: number) => Number(x + half > path.left && x - half < path.right);
-  return Array.from({ length: 41 }, (_, i) => actor.x - 200 + i * 10).filter(free)
-    .sort((a, b) => onPath(a) - onPath(b) || Math.abs(a - actor.x) - Math.abs(b - actor.x))[0] ?? actor.x;
-}
-function hides(actor: Actor, board: ReturnType<typeof hopBoard>) {
-  const half = actor.kind === 'cat' ? 35 : 42, height = actor.kind === 'cat' ? 94 : 189, foot = actor.y + (actor.seat ? 19 : 0);
-  return actor.x + half > board.left && actor.x - half < board.right && foot > board.top && foot - height < board.bottom;
+const half = (actor: Actor) => actor.kind === 'cat' ? 35 : 42;
+/** The nearest free floor spot off the board at the character's depth, first with nobody within 55 sideways, then with nobody close at that depth. */
+function aside(world: World, player: Actor, actor: Actor, zone: Zone, taken: Move[]): Point | undefined {
+  const y = onFloor(world, actor).y, w = half(actor), blocks = world.layout.pieces.filter(p => p.room === world.room).map(footprint).filter(b => !!b);
+  const others = world.actors.filter(o => o.id !== actor.id && o.id !== player.id && o.room === world.room && !taken.some(m => m.actor === o.id)).map(o => ({ x: o.x, y: o.y })).concat(taken.map(m => m.point));
+  const clear = (x: number) => walkable(world, { x, y }) && (x + w <= zone.left - 6 || x - w >= zone.right + 6)
+    && blocks.every(b => b.bottom + 8 <= y || x + w <= b.left || x - w >= b.right) && blocks.every(b => b.top > y + 4 || b.bottom < y - 4 || b.right <= Math.min(x, actor.x) - w || b.left >= Math.max(x, actor.x) + w);
+  const spots = Array.from({ length: Math.floor(roomWidth(world) / 10) + 1 }, (_, i) => i * 10).filter(clear).sort((a, b) => Math.abs(a - actor.x) - Math.abs(b - actor.x));
+  const x = spots.find(x => others.every(o => Math.abs(o.x - x) >= 55)) ?? spots.find(x => others.every(o => Math.abs(o.x - x) >= 55 || Math.abs(o.y - y) >= 60));
+  return x === undefined ? undefined : { x, y };
 }
 function candidates(world: World, actor: Actor, kind: GameKind) {
   const points: Point[] = [];

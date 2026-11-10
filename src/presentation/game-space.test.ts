@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
 import { footprint } from '../domain/placement';
+import { floorTop } from './floor-band';
 import { freestFloor, gameSpace, hopBoard, hopFocus, hopPosition, hopTiles, stepAside } from './game-space';
 
 it('mantém todas as casas no piso, com profundidade e pares de pés na mesma linha', () => {
@@ -47,13 +48,26 @@ it('o tabuleiro e o foco da câmera cobrem as 8 casas', () => {
   }
   expect(focus.x - board.left).toBeCloseTo(board.right - focus.x, 0);
 });
-it('quem esconderia uma casa dá um passo para trás do tabuleiro; quem está longe fica', () => {
+/** A character's drawn body (feet at its point; a seat raises the feet 19). */
+const body = (a: { kind: string; x: number; y: number; seat?: unknown }) => {
+  const half = a.kind === 'cat' ? 35 : 42, foot = a.y + (a.seat ? 19 : 0);
+  return { left: a.x - half, right: a.x + half, top: foot - (a.kind === 'cat' ? 94 : 189), bottom: foot };
+};
+const meets = (a: ReturnType<typeof body>, b: ReturnType<typeof body>) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+it('quem ficaria sobre o giz ou colado à criança em alguma casa dá passos para o lado, no chão, sem ficar atrás de móvel; quem está longe fica', () => {
   const world = initialWorld(), bia = world.actors[0]!, origin = freestFloor(world, bia, 'hopscotch')!;
   const moves = stepAside(world, bia, origin), board = hopBoard(origin);
   expect(moves.length).toBeGreaterThan(0); expect(moves.some(m => m.actor === 'bia')).toBe(false);
+  const moved = { ...world, actors: world.actors.map(a => { const m = moves.find(n => n.actor === a.id); return m ? { ...a, ...m.point, seat: null } : a; }) };
+  // Nobody's body touches the child's at any square, nor stands over the board.
+  const child = [origin, ...hopTiles.map(t => hopPosition(origin, t.cell))].map(p => body({ ...bia, ...p, seat: null }));
+  for (const a of moved.actors.filter(a => a.id !== 'bia' && a.room === world.room)) {
+    for (const [i, c] of child.entries()) expect(meets(body(a), c), `${a.id} colado à criança na posição ${i}`).toBe(false);
+    expect(body(a).right <= board.left || body(a).left >= board.right, `${a.id} sobre o tabuleiro`).toBe(true);
+  }
   for (const m of moves) {
     const actor = world.actors.find(a => a.id === m.actor)!;
-    expect(m.point.y).toBeLessThan(board.top); expect(Math.abs(m.point.x - actor.x)).toBeLessThanOrEqual(200);
+    expect(m.point.y).toBeGreaterThanOrEqual(floorTop(world)); expect(Math.abs(m.point.x - actor.x)).toBeLessThanOrEqual(260);
     // Never behind a piece drawn in front of the spot (the stage, the sofa).
     for (const piece of world.layout.pieces.filter(p => p.room === world.room)) {
       const b = footprint(piece); if (!b || b.bottom + 8 <= m.point.y) continue;
@@ -61,7 +75,6 @@ it('quem esconderia uma casa dá um passo para trás do tabuleiro; quem está lo
     }
   }
   const xs = moves.map(m => m.point.x); for (const x of xs) expect(xs.filter(y => Math.abs(y - x) < 55)).toHaveLength(1);
-  const moved = { ...world, actors: world.actors.map(a => { const m = moves.find(n => n.actor === a.id); return m ? { ...a, ...m.point, seat: null } : a; }) };
   expect(stepAside(moved, bia, origin)).toEqual([]);
   const far = { ...world, actors: world.actors.map(a => a.id === 'bia' ? a : { ...a, x: 100, seat: null }) };
   expect(stepAside(far, bia, { x: 600, y: 530 })).toEqual([]);
