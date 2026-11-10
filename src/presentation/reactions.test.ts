@@ -6,8 +6,8 @@ import { bubbleDuration } from './feedback';
 afterEach(() => vi.unstubAllGlobals());
 function scene() {
   const tweens: Record<string, unknown>[] = [], said: string[] = [];
-  const object = () => { const o: Record<string, unknown> = { width: 80, height: 30, active: true }; for (const m of ['setOrigin', 'setDepth', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'lineStyle', 'strokeRoundedRect', 'destroy']) o[m] = () => o; return o; };
-  const fake = { game: { canvas: { dataset: {} } }, add: { text: (_x: number, _y: number, text: string) => { said.push(text); return object(); }, graphics: object, container: object },
+  const object = () => { const o: Record<string, unknown> = { width: 80, height: 30, active: true }; for (const m of ['setOrigin', 'setDepth', 'setY', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'lineStyle', 'strokeRoundedRect', 'destroy']) o[m] = () => o; return o; };
+  const fake = { game: { canvas: { dataset: {} } }, cameras: { main: { scrollX: 0, scrollY: 0, width: 2000, height: 1200, zoom: 2 } }, add: { text: (_x: number, _y: number, text: string) => { said.push(text); return object(); }, graphics: object, container: object },
     tweens: { add: (config: Record<string, unknown>) => { tweens.push(config); } } };
   return { tweens, said, fake: fake as unknown as Phaser.Scene };
 }

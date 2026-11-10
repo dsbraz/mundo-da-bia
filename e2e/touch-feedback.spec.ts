@@ -91,18 +91,28 @@ test('o retorno vai para a cena: o anúncio é só para leitor de tela e não h�
   else expect(world.y + world.height).toBeCloseTo(viewport.height, 0);
 });
 
-test('tocar no balanço ocupado mostra quem está nele, junto do balanço', async ({ page }) => {
+for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768 }]) test(`tocar no balanço ocupado mostra quem está nele, junto do balanço, com o balão inteiro e acima do rosto a ${viewport.width}`, async ({ page }) => {
   const town = spreadTown();
   town.location = { kind: 'street' };
   town.actors = town.actors.map(a => a.id === 'luna' ? { ...a, location: { kind: 'street' }, x: 400, y: 445 } : a.id === 'bia' ? { ...a, location: { kind: 'street' }, x: 250, y: 520 } : a);
   town.outdoor.swing = 'luna';
-  await seed(page, town);
+  await page.setViewportSize(viewport); await seed(page, town);
   await tap(page, 400, 490);
   await expect(page.locator('canvas')).toHaveAttribute('data-said', /Luna/);
   await expect(page.locator('canvas')).toHaveAttribute('data-said-face', 'luna');
   await expect(page.locator('#announcement')).toHaveText(/Luna/);
   expect(Math.abs(Number(await page.locator('canvas').getAttribute('data-said-x')) - 400)).toBeLessThan(60);
-  await page.screenshot({ path: 'reports/plaza-swing-occupied.png' });
+  // The bubble is whole inside the scene and entirely above Luna's head on the swing (seat at y 445, head well above y 400).
+  const box = await page.locator('canvas').evaluate(c => {
+    const [x, y, w, h] = c.dataset.saidBox!.split(',').map(Number), r = c.getBoundingClientRect(), d = c.dataset, scale = r.width / Number(d.viewWidth);
+    const at = (px: number, py: number) => ({ x: r.x + (px - Number(d.viewX) - Number(d.cameraX)) * scale, y: r.y + (py - Number(d.viewY)) * scale });
+    return { a: at(x!, y!), b: at(x! + w!, y! + h!), bottom: y! + h! };
+  });
+  const scene = (await page.locator('#world').boundingBox())!;
+  expect(box.a.x).toBeGreaterThanOrEqual(scene.x); expect(box.b.x).toBeLessThanOrEqual(scene.x + scene.width);
+  expect(box.a.y).toBeGreaterThanOrEqual(scene.y); expect(box.b.y).toBeLessThanOrEqual(scene.y + scene.height);
+  expect(box.bottom).toBeLessThan(445 - 60);
+  await page.screenshot({ path: `reports/plaza-swing-occupied-${viewport.width}.png` });
   expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('luna');
 });
 

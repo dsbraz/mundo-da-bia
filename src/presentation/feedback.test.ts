@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
-import { bubbleDuration, pokeFigure, refuseAt, speechBubble } from './feedback';
+import { bubbleDuration, bubblePlace, pokeFigure, refuseAt, speechBubble } from './feedback';
 afterEach(() => vi.unstubAllGlobals());
 
 function fakeScene() {
@@ -8,7 +8,7 @@ function fakeScene() {
   const canvas = { dataset: {} as Record<string, string> };
   const object = (name = '') => {
     const o: Record<string, unknown> = { x: 0, y: 0, active: true, width: 100, height: 30, scaleX: 1, scaleY: 1, data: {} as Record<string, unknown> };
-    for (const m of ['setOrigin', 'setDepth', 'setScale', 'setName', 'setDisplaySize', 'setX', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'lineStyle', 'strokeRoundedRect', 'add']) o[m] = () => o;
+    for (const m of ['setOrigin', 'setDepth', 'setScale', 'setName', 'setDisplaySize', 'setX', 'setY', 'setPosition', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'lineStyle', 'strokeRoundedRect', 'add']) o[m] = () => o;
     o.destroy = () => { o.active = false; destroyed.push(name); };
     o.setData = (k: string, v: unknown) => { (o.data as Record<string, unknown>)[k] = v; return o; };
     o.getData = (k: string) => (o.data as Record<string, unknown>)[k];
@@ -16,7 +16,7 @@ function fakeScene() {
     return o;
   };
   const scene = {
-    game: { canvas },
+    game: { canvas }, cameras: { main: { scrollX: 0, scrollY: 0, width: 2000, height: 1200, zoom: 2 } },
     add: {
       text: (_x: number, _y: number, text: string, style: Record<string, unknown>) => { texts.push({ text, style }); return object(text); },
       image: (_x: number, _y: number, key: string) => { images.push(key); return object(key); },
@@ -99,4 +99,23 @@ it('um aceno sem fala só pula: nenhum balão e nada dito no canvas', () => {
   expect(s.texts).toHaveLength(0);
   expect(s.canvas.dataset.said).toBeUndefined();
   expect(s.tweens).toHaveLength(1);
+});
+
+it('o balão fica acima do ponto, inteiro na área visível, com o rabinho apontando para o ponto', () => {
+  const view = { left: 270, right: 770 };
+  const centred = bubblePlace({ x: 520, y: 360 }, 200, 80, view);
+  expect(centred).toEqual({ x: 520, base: 0, tip: 0, center: -14 - 40 });
+  const slid = bubblePlace({ x: 400, y: 360 }, 440, 82, view);
+  expect(slid.x - 220).toBeGreaterThanOrEqual(270); expect(slid.x + 220).toBeLessThanOrEqual(770);
+  expect(slid.x + slid.tip).toBe(400); expect(Math.abs(slid.base)).toBeLessThanOrEqual(220 - 24);
+  // The whole box is above the tip, so it never covers what the tip points at.
+  expect(slid.center + 41).toBeLessThanOrEqual(-14);
+  expect(bubblePlace({ x: 400, y: 360 }, 700, 82, view).x - 350).toBe(278);
+});
+it('o balão marca no canvas a sua caixa no mundo', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  const s = fakeScene();
+  speechBubble(s.scene, { x: 30, y: 400 }, 'Oi!', 'bia');
+  const [left, top, width, height] = s.canvas.dataset.saidBox!.split(',').map(Number);
+  expect(left).toBe(8); expect(width).toBe(132); expect(top! + height!).toBe(400 - 14);
 });

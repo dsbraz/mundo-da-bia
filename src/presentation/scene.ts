@@ -213,7 +213,12 @@ export class PlayScene extends Phaser.Scene {
     if (target) { const bounds = target.getBounds(); this.hint.lineStyle(2, 0x477e86, .55).strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, 8); }
   }
   face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) this.gaze.set(id, Math.sign(point.x - actor.x)); }
-  refuse(point: Point, text: string, face?: ActorId) { if (this.ready) refuseAt(this, point, text, this.figures.find(f => f.name === this.selected), face); }
+  /** With `face` (who is there), the bubble points at that character's head from above, never over the face. */
+  refuse(point: Point, text: string, face?: ActorId) {
+    if (!this.ready) return;
+    const owner = face && this.figures.find(f => f.name === face), head = owner ? owner.getBounds() : null;
+    refuseAt(this, head ? { x: head.centerX, y: head.top - 6 } : point, text, this.figures.find(f => f.name === this.selected), face);
+  }
   poke(id: ActorId, pose: ReactionPose, line: string) {
     const figure = this.figures.find(f => f.name === id), actor = this.world.actors.find(a => a.id === id);
     if (this.ready && figure && actor) pokeFigure(this, figure, pose, line, (actor.kind === 'cat' ? 100 : 196) * contextScale(visualContext(this.world)));
