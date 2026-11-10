@@ -1,7 +1,7 @@
 import { hopCells, hopStep, ropeCue, ropeStep, startGame } from '../domain/child-games';
 import type { GameKind } from '../domain/child-games';
 import type { Actor, ActorId, Point, World } from '../domain/types';
-import { freestFloor, gameSpace, hopPosition, hopTileAt } from './game-space';
+import { freestFloor, gameSpace, hopFocus, hopPosition, hopTileAt, stepAside } from './game-space';
 import { gameControls } from './game-controls';
 import type { GamePreview } from './child-game-art';
 import { gamePosition } from './child-game-art';
@@ -10,7 +10,7 @@ interface Actions {
   world: () => World; selected: () => ActorId; prepare: () => void; stopWalk: () => void;
   walk: (point: Point, done: () => void) => void;
   commit: (actor: ActorId, point: Point) => void; preview: (value: GamePreview | null) => void;
-  follow: (point: Point) => void; select: (actor: ActorId) => void; drop: (actor: ActorId) => void;
+  follow: (point: Point, slack?: number) => void; select: (actor: ActorId) => void; drop: (actor: ActorId) => void;
 }
 export function childGames(root: HTMLElement, actions: Actions) {
   let session: GamePreview | null = null, frame = 0, pending = false, command = 0;
@@ -30,7 +30,7 @@ export function childGames(root: HTMLElement, actions: Actions) {
     // Short on space, the game still starts: the child walks (and the camera follows) to the freest reachable floor.
     const origin = gameSpace(actions.world(), actor, kind) ?? freestFloor(actions.world(), actor, kind);
     if (!origin) { view.error('Está apertado aqui. Que tal o quintal?'); return; }
-    actions.follow(origin);
+    makeRoom(actions, kind, actor, origin);
     view.start(kind); view.update('walking', 'Chegando…', 'Indo até um espaço livre.', true); pending = true;
     const token = command;
     actions.walk(origin, () => {
@@ -68,12 +68,21 @@ export function childGames(root: HTMLElement, actions: Actions) {
   function tick() {
     if (!session) return;
     const now = performance.now(); render(now);
-    actions.follow(gamePosition(session, now, reducedMotion()));
+    follow(actions, session.game.kind, session.origin, gamePosition(session, now, reducedMotion()));
     frame = requestAnimationFrame(tick);
   }
   return { cancel, open: view.open };
 }
 
+/** Hopscotch: whoever would hide a square steps back behind the board, and the camera frames the whole board. */
+function makeRoom(actions: Actions, kind: GameKind, actor: Actor, origin: Point) {
+  if (kind === 'hopscotch') for (const move of stepAside(actions.world(), actor, origin)) actions.commit(move.actor, move.point);
+  follow(actions, kind, origin, origin);
+}
+/** Hopscotch frames the whole board (centred, no slack); the rope follows the child. */
+function follow(actions: Actions, kind: GameKind, origin: Point, child: Point) {
+  if (kind === 'hopscotch') actions.follow(hopFocus(origin), 0); else actions.follow(child);
+}
 /** Who plays: the selected child, or, if a cat is selected, the child nearest to it. */
 export function player(world: World, selected: ActorId): Actor | undefined {
   const chosen = world.actors.find(a => a.id === selected)!;

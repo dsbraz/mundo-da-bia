@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
-import { freestFloor, gameSpace, hopPosition, hopTiles } from './game-space';
+import { freestFloor, gameSpace, hopBoard, hopFocus, hopPosition, hopTiles, stepAside } from './game-space';
 
 it('mantém todas as casas no piso, com profundidade e pares de pés na mesma linha', () => {
   const origin = { x: 650, y: 530 };
@@ -36,4 +36,26 @@ it('sem espaço totalmente livre, escolhe o chão mais livre e alcançável em v
   expect(gameSpace(crowded, bia, 'hopscotch')).toBeNull();
   expect(freestFloor(crowded, bia, 'hopscotch')).toEqual({ x: 530, y: 530 });
   expect(freestFloor({ ...world, streetWidth: 3000 }, bia, 'rope')).toBeNull();
+});
+
+it('o tabuleiro e o foco da câmera cobrem as 8 casas', () => {
+  const origin = { x: 570, y: 530 }, board = hopBoard(origin), focus = hopFocus(origin);
+  for (const t of hopTiles) {
+    expect(origin.x + t.x - 47).toBeGreaterThanOrEqual(board.left); expect(origin.x + t.x + 47).toBeLessThanOrEqual(board.right);
+    expect(origin.y + t.y - 10).toBeGreaterThanOrEqual(board.top); expect(origin.y + t.y + 10).toBeLessThanOrEqual(board.bottom);
+  }
+  expect(focus.x - board.left).toBeCloseTo(board.right - focus.x, 0);
+});
+it('quem esconderia uma casa dá um passo para trás do tabuleiro; quem está longe fica', () => {
+  const world = initialWorld(), bia = world.actors[0]!, origin = freestFloor(world, bia, 'hopscotch')!;
+  const moves = stepAside(world, bia, origin), board = hopBoard(origin);
+  expect(moves.length).toBeGreaterThan(0); expect(moves.some(m => m.actor === 'bia')).toBe(false);
+  for (const m of moves) {
+    const actor = world.actors.find(a => a.id === m.actor)!;
+    expect(m.point.x).toBe(actor.x); expect(m.point.y).toBeLessThan(board.top);
+  }
+  const moved = { ...world, actors: world.actors.map(a => { const m = moves.find(n => n.actor === a.id); return m ? { ...a, ...m.point, seat: null } : a; }) };
+  expect(stepAside(moved, bia, origin)).toEqual([]);
+  const far = { ...world, actors: world.actors.map(a => a.id === 'bia' ? a : { ...a, x: 100, seat: null }) };
+  expect(stepAside(far, bia, { x: 600, y: 530 })).toEqual([]);
 });

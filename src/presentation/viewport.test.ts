@@ -67,6 +67,13 @@ describe('acompanhamento da câmera', () => {
     const afterPause = views.at(-1)!;
     expect(afterPause - views.at(-2)!).toBeCloseTo((350 - views.at(-2)!) * .12);
   });
+  it('sem folga, centra o ponto (a amarelinha enquadra o tabuleiro, não só a criança)', () => {
+    const { view, views } = camera(true);
+    view.follow({ x: 700, y: 430 }, 1000);
+    expect(views.at(-1)).toBe(0);
+    view.follow({ x: 700, y: 430 }, 1016, 0);
+    expect(views.at(-1)).toBe(200);
+  });
 });
 
 describe('onde o cômodo abre', () => {

@@ -1,11 +1,25 @@
 import type { GameKind } from '../domain/child-games';
 import { roomWidth } from '../domain/geometry';
 import { footprint, overlap } from '../domain/placement';
-import type { Actor, Point, World } from '../domain/types';
+import type { Actor, ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
 
 const rows = [[1], [2], [3, 4], [5], [6, 7], [8]];
 export const hopTiles = rows.flatMap((cells, row) => cells.map((cell, index) => ({ cell, x: row * 42 + (cells.length === 2 ? index * 52 - 26 : 0), y: -12 - row * 20 })));
+/** The drawn squares' bounding box from the board's origin (each square is 94 wide and 20 deep). */
+export const hopBoard = (origin: Point) => ({ left: origin.x - 47, right: origin.x + 257, top: origin.y - 122, bottom: origin.y - 2 });
+/** Where the camera looks to frame the whole board (its middle, at floor level). */
+export const hopFocus = (origin: Point): Point => ({ x: origin.x + 105, y: origin.y });
+/** Hopscotch: everyone else whose body would hide a square (standing on or in front of the chalk) steps back behind the board. */
+export function stepAside(world: World, player: Actor, origin: Point): { actor: ActorId; point: Point }[] {
+  const board = hopBoard(origin), behind = board.top - 13;
+  return world.actors.filter(a => a.id !== player.id && a.room === world.room && hides(a, board))
+    .map(a => ({ actor: a.id, point: { x: a.x, y: behind } }));
+}
+function hides(actor: Actor, board: ReturnType<typeof hopBoard>) {
+  const half = actor.kind === 'cat' ? 35 : 42, height = actor.kind === 'cat' ? 94 : 189, foot = actor.y + (actor.seat ? 19 : 0);
+  return actor.x + half > board.left && actor.x - half < board.right && foot > board.top && foot - height < board.bottom;
+}
 function candidates(world: World, actor: Actor, kind: GameKind) {
   const points: Point[] = [];
   for (let x = 130; x <= roomWidth(world) - 130; x += 40) points.push({ x, y: 530 });

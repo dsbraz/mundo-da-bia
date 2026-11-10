@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { ready, readTown, tray, closeTray, point, bringHere } from './helpers';
 import { initialWorld } from '../src/domain/world';
+import { hopTiles } from '../src/presentation/game-space';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { decodeNeighborhood, encodeNeighborhood } from '../src/persistence/neighborhood';
@@ -161,7 +162,7 @@ test('sem espaço livre na sala inicial, a amarelinha leva a criança e a câmer
   await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
   await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
-  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing', { timeout: 15_000 });
+  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   await expect(page.locator('#game-chooser')).toBeHidden(); await expect(page.locator('#game-choice-message')).toHaveText('');
   const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!, scene = (await page.locator('#world').boundingBox())!;
   const feet = await page.locator('canvas').evaluate((c, [x, y]) => {
@@ -170,7 +171,7 @@ test('sem espaço livre na sala inicial, a amarelinha leva a criança e a câmer
   }, [bia.x, bia.y]);
   expect(feet.x).toBeGreaterThan(scene.x); expect(feet.x).toBeLessThan(scene.x + scene.width);
   await page.screenshot({ path: 'reports/hopscotch-crowded-768.png' });
-  // Others may stand on the chalk (only furniture counts for the freest floor): a tap on a square still jumps, even under them.
+  // A tap on a drawn square jumps.
   for (const cells of ['1', '2', '3 e 4']) { await expect(page.locator('#game-jump')).toHaveText(`Pular para ${cells}`); await expect(page.locator('#game-jump')).toBeEnabled(); await page.locator('#game-jump').click(); }
   await expect(page.locator('#game-jump')).toHaveText('Pular para 5'); await expect(page.locator('#game-jump')).toBeEnabled();
   const square = await page.locator('canvas').evaluate((c, [x, y]) => {
@@ -180,3 +181,35 @@ test('sem espaço livre na sala inicial, a amarelinha leva a criança e a câmer
   await page.touchscreen.tap(square.x, square.y);
   await expect(page.locator('#game-jump')).toHaveText('Pular para 6 e 7');
 });
+
+/** Screen centres of the 8 drawn squares, from the player's position when the game starts (the board's origin). */
+async function squareCentres(page: import('@playwright/test').Page, origin: { x: number; y: number }) {
+  return page.locator('canvas').evaluate((c, points) => {
+    const box = c.getBoundingClientRect(), d = (c as HTMLCanvasElement).dataset, scale = box.width / Number(d.viewWidth);
+    return points.map(([x, y]) => ({ x: box.x + (x! - Number(d.viewX) - Number(d.cameraX)) * scale, y: box.y + (y! - Number(d.viewY)) * scale }));
+  }, hopTiles.map(t => [origin.x + t.x, origin.y + t.y]));
+}
+for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+  test(`amarelinha na sala inicial a ${viewport.width}: as 8 casas inteiras no quadro e ninguém sobre o giz`, async ({ page }) => {
+    await page.setViewportSize(viewport); await ready(page);
+    await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+    await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+    await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
+    await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
+    const town = await readTown(page), origin = town.actors.find(a => a.id === 'bia')!, scene = (await page.locator('#world').boundingBox())!;
+    const inside = async () => (await squareCentres(page, origin)).every(p => p.x > scene.x && p.x < scene.x + scene.width && p.y > scene.y && p.y < scene.y + scene.height);
+    await expect.poll(inside).toBe(true);
+    // Nobody else on the chalk: no foot inside a square and no body standing in front of a square's centre.
+    for (const a of town.actors.filter(a => a.id !== 'bia' && a.room === origin.room)) {
+      const half = a.kind === 'cat' ? 35 : 42, height = a.kind === 'cat' ? 94 : 189, foot = a.y + (a.seat ? 19 : 0);
+      for (const t of hopTiles) {
+        const cx = origin.x + t.x, cy = origin.y + t.y, dy = foot - cy;
+        expect(Math.abs(a.x - cx + dy * 2.1) <= 47 && Math.abs(dy) <= 10, `${a.id} pisa na casa ${t.cell}`).toBe(false);
+        expect(Math.abs(a.x - cx) < half && cy < foot && cy > foot - height, `${a.id} cobre a casa ${t.cell}`).toBe(false);
+      }
+    }
+    for (const cells of ['1', '2', '3 e 4', '5']) { await expect(page.locator('#game-jump')).toHaveText(`Pular para ${cells}`); await expect(page.locator('#game-jump')).toBeEnabled(); await page.locator('#game-jump').click(); }
+    await expect(page.locator('#game-jump')).toHaveText('Pular para 6 e 7'); await expect.poll(inside).toBe(true);
+    await page.screenshot({ path: `reports/hopscotch-board-${viewport.width}.png` });
+  });
+}

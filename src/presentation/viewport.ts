@@ -66,10 +66,11 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
     },
     pan(dx: number, dy: number) { manual = true; shown(); center.x -= dx / view.scale; center.y -= dy / view.scale; render(); },
     resume() { manual = false; },
-    follow(point: Point, now = performance.now()) {
+    /** Eases toward `point`, letting it move freely within `slack` (a fraction of the view) of the centre; 0 centres it. */
+    follow(point: Point, now = performance.now(), slack = .25) {
       if (manual) return;
       const step = followFactor(followElapsed(now, followed)); followed = now; shown();
-      const half = { x: parent.clientWidth / view.scale * .25, y: parent.clientHeight / view.scale * .25 };
+      const half = { x: parent.clientWidth / view.scale * slack, y: parent.clientHeight / view.scale * slack };
       const dx = point.x - center.x, dy = point.y - 70 - center.y;
       if (Math.abs(dx) > half.x) center.x += (dx - Math.sign(dx) * half.x) * step;
       if (Math.abs(dy) > half.y) center.y += (dy - Math.sign(dy) * half.y) * step;
