@@ -36,6 +36,7 @@ import { reducedMotion, reducedFadeMs } from './motion';
 import { hex } from './palette';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
+  private sky: ReturnType<typeof drawStreet> | null = null;
   previewGame(value: GamePreview | null) { this.gameArt?.paint(value); }
   private world: World;
   private town: Neighborhood | null = null;
@@ -83,12 +84,15 @@ export class PlayScene extends Phaser.Scene {
     this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(state.streetWidth ? this.cameraX : 0);
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
-    if (state.streetWidth && this.town) drawStreet(this, this.town, selected);
-    else { drawRoom(this, state); this.exitDoor(); }
+    this.drawPlace(state, selected);
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
     this.game.canvas.dataset.ready = 'true';
+  }
+  private drawPlace(state: World, selected: ActorId) {
+    this.sky = state.streetWidth && this.town ? drawStreet(this, this.town, selected) : null;
+    if (!this.sky) { drawRoom(this, state); this.exitDoor(); }
   }
   private prepareArt(state: World) {
     if (!this.ready || this.load.isLoading()) return false;
@@ -272,6 +276,7 @@ export class PlayScene extends Phaser.Scene {
       animateFigure(ctx, figure, actor, time, index, reduced);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
+    this.sky?.(time, reduced);
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }
 }

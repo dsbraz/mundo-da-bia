@@ -12,17 +12,19 @@ import type Phaser from 'phaser';
 import type { Building, Neighborhood } from '../domain/neighborhood-types';
 import { palettes } from '../content/furnishings';
 import { hex } from './palette';
+import { drawSky, skyAnimator } from './sky';
 
 export function drawStreet(scene: Phaser.Scene, town: Neighborhood, selected: ActorId) {
   const width = streetWidth(town.plots);
   const g = scene.add.graphics();
   g.fillStyle(0xe9f3ef).fillRect(-10000, -10000, width + 20000, 20600);
   backdrop(g, width);
+  const sky = drawSky(scene, width);
   g.fillStyle(0xd7e6c5).fillRect(0, 345, width, 120);
   g.fillStyle(0xf0e3ce).fillRect(0, 455, width, 110);
   g.fillStyle(0x9eaeb0).fillRect(-10000, 565, width + 20000, 10000);
   g.lineStyle(2, 0xbcaf9d).lineBetween(0, 455, width, 455).lineBetween(0, 562, width, 562);
-  drawPlaza(scene, town);
+  sky.crowns.push(drawPlaza(scene, town));
   drawPlazaGlow(scene, town, selected);
   for (let plot = 0; plot < town.plots; plot++) {
     const b = town.buildings.find(b => b.plot === plot);
@@ -30,6 +32,7 @@ export function drawStreet(scene: Phaser.Scene, town: Neighborhood, selected: Ac
     g.lineStyle(1, 0xd2c4b1).lineBetween(plotStart(plot), 455, plotStart(plot), 562);
   }
   drawOutdoorState(scene, town);
+  return skyAnimator(scene, sky);
 }
 /** Free plot: a sign with a big "+" and a few bricks, kept in the left part of the plot so it stays whole on screen. */
 function emptyPlot(scene: Phaser.Scene, plot: number) {
@@ -65,9 +68,7 @@ export function drawExit(scene: Phaser.Scene) {
 
 function backdrop(g: Phaser.GameObjects.Graphics, width: number) {
   for (let x = -240; x < width; x += 480) {
-    g.fillStyle(0xffffff, .5).fillEllipse(x + 140, 135, 160, 28).fillEllipse(x + 120, 123, 75, 36);
     g.fillStyle(0xb9cdb3, .4).fillEllipse(x + 240, 348, 500, 130);
     g.lineStyle(3, 0xa6b4a3).lineBetween(x + 410, 315, x + 410, 380);
-    g.fillStyle(0xb5c9a4).fillEllipse(x + 410, 305, 75, 60);
   }
 }

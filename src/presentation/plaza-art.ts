@@ -1,11 +1,14 @@
 import type Phaser from 'phaser';
 import { textStyle } from './text-style';
 import type { Neighborhood } from '../domain/neighborhood-types';
-export function drawPlaza(scene: Phaser.Scene, town: Neighborhood) {
+/** Draws the plaza and returns its tree crown, which sways with the sky. */
+export function drawPlaza(scene: Phaser.Scene, town: Neighborhood): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
   g.fillStyle(0x779884).fillRoundedRect(26, 130, 15, 290, 6);
-  g.fillStyle(0xa9c39d).fillEllipse(75, 160, 220, 210); g.fillStyle(0xbfd1a6).fillEllipse(28, 115, 180, 120);
-  g.fillStyle(0xcbd8ad).fillEllipse(330, 435, 620, 85);
+  const crown = scene.add.graphics({ x: 33, y: 250 }).setName('plaza-crown');
+  crown.fillStyle(0xa9c39d).fillEllipse(42, -90, 220, 210).fillStyle(0xbfd1a6).fillEllipse(-5, -135, 180, 120);
+  const ground = scene.add.graphics();
+  ground.fillStyle(0xcbd8ad).fillEllipse(330, 435, 620, 85);
   const bench = scene.add.graphics({ x: 72, y: 178 }).setScale(.6);
   bench.fillStyle(0x7c7764, .2).fillEllipse(180, 452, 215, 18).fillStyle(0x7c7764, .16).fillEllipse(180, 452, 118, 11);
   bench.lineStyle(7, 0x778979).lineBetween(100, 411, 100, 453).lineBetween(258, 411, 258, 453);
@@ -25,4 +28,5 @@ export function drawPlaza(scene: Phaser.Scene, town: Neighborhood) {
     g.fillStyle(0xe5b2a3).fillCircle(x, 385, 10); g.fillStyle(0xf6d68d).fillCircle(x, 385, 4);
   }
   scene.add.text(280, 85, 'Pracinha do encontro', textStyle('plaza')).setOrigin(.5);
+  return crown;
 }
