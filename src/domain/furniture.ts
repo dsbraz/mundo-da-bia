@@ -1,5 +1,6 @@
 import { itemKind } from './item-kind';
 import { fixture, fromPiece } from './layout';
+import { wake } from './care';
 import type { Actor, Home, Item, ItemId, SeatId, Spot, PieceKind, RoomId, Transition, World } from './types';
 
 export const seats = {
@@ -21,7 +22,7 @@ export function sit(state: World, actor: Actor, seat: SeatId): Transition {
   const place = seatPoint(state, seat);
   if (!place || place.room !== state.room || state.actors.some(a => a.id !== actor.id && a.room === state.room && a.seat === seat)) return { state, events: [] };
   return {
-    state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, ...place, seat, resting: seat === 'bed' } : a) },
+    state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, ...place, seat, ...(seat === 'bed' ? { resting: true } : wake(a)) } : a) },
     events: [{ type: 'rested', actor: actor.id }],
   };
 }

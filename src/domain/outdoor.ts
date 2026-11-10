@@ -1,4 +1,5 @@
 import type { ActorId } from './types';
+import { wake } from './care';
 import type { Neighborhood, Outdoor, OutdoorAction } from './neighborhood-types';
 export const initialOutdoor = (): Outdoor => ({ bench: null, swing: null, watered: false, mail: [], bells: [] });
 export const outdoorPoints = { bench: { x: 180, y: 445 }, swing: { x: 400, y: 445 }, water: { x: 560, y: 480 } };
@@ -15,7 +16,7 @@ export function interactOutdoor(town: Neighborhood, action: OutdoorAction): Neig
   if (target === 'leave') return { ...town, outdoor };
   const point = outdoorPoints[target];
   return { ...town, outdoor: { ...outdoor, [target]: action.actor },
-    actors: town.actors.map(a => a.id === action.actor ? { ...a, ...point, seat: null, resting: false } : a),
+    actors: town.actors.map(a => a.id === action.actor ? { ...a, ...point, seat: null, ...wake(a) } : a),
     items: town.items.map(i => i.holder === action.actor ? { ...i, ...point } : i) };
 }
 function buildingInteraction(town: Neighborhood, action: OutdoorAction): Neighborhood {

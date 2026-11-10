@@ -9,6 +9,7 @@ import { actorIds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
+import { toggleRest, wake } from './care';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -60,7 +61,7 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
     case 'sit': return sit(state, actor, action.seat);
     case 'dress':
       return actor.kind === 'human' ? changeActor(state, actor, { look: action.look }, 'dressed') : { state, events: [] };
-    case 'rest': return changeActor(state, actor, { resting: !actor.resting }, 'rested');
+    case 'rest': return changeActor(state, actor, toggleRest(actor), 'rested');
     case 'pick': return pick(state, actor, action.item);
     case 'drop': return release(state, actor, false);
     case 'feed': return release(state, actor, true);
@@ -90,7 +91,7 @@ function playTransition(state: World, action: Exclude<Action, { type: 'name' }>)
 }
 
 function moveActor(state: World, actor: Actor, point: Point): Transition {
-  return validPoint(point, roomWidth(state)) ? changeActor(state, actor, { ...point, resting: false, seat: null }, 'moved') : { state, events: [] };
+  return validPoint(point, roomWidth(state)) ? changeActor(state, actor, { ...point, ...wake(actor), seat: null }, 'moved') : { state, events: [] };
 }
 
 function usePiece(state: World, id: number): Transition {

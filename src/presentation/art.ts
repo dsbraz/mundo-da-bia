@@ -29,7 +29,6 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   coverActor(scene, container, actor);
   if (selected) drawSelection(scene, container, actor, actorLabel(actor), context);
   if (actor.resting) container.add(scene.add.text(actor.seat === 'bed' ? -175 : 24, actor.seat === 'bed' ? -60 : -185, 'z z Z', textStyle('mark')));
-  if (actor.fed) container.add(scene.add.text(-48, -100, '♥', textStyle('heart')));
   return container;
 }
 /** The face this frame: an expression (from events) and whether the eyes blink. */

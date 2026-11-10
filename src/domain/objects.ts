@@ -1,6 +1,7 @@
 import { itemKind } from './item-kind';
 import { availableSpot, foodHome } from './furniture';
 import type { Actor, Item, ItemId, Transition, World } from './types';
+import { wake } from './care';
 
 export function visibleItem(state: World, id: ItemId): Item | undefined {
   return state.items.find(item => item.id === id && (item.holder
@@ -23,7 +24,7 @@ function deliver(state: World, actor: Actor, item: Item, food: boolean): Transit
   return {
     state: {
       ...state, show: state.show || show,
-      actors: state.actors.map(a => a.id === actor.id ? { ...a, fed: a.fed || food, resting: false } : a),
+      actors: state.actors.map(a => a.id === actor.id ? { ...a, ...wake(a), ...(food ? { fed: true } : {}) } : a),
       items: state.items.map(i => i.id === item.id ? { ...i, ...(food ? foodHome(state, i, actor, true) : { room: actor.room, holder: actor.id, spot: 'floor' as const }) } : i),
     },
     events: [{ type: food ? 'fed' : 'picked', actor: actor.id }, ...(show ? [{ type: 'show' as const }] : [])],
