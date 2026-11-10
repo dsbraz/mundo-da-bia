@@ -16,10 +16,28 @@ const small = (page: Page) => page.evaluate(() => [...document.querySelectorAll<
   })
   .filter(item => item.size < 16));
 
+// Every visible text and icon inside a visible button or tab stays inside the button's box (1 px tolerance).
+const spilled = (page: Page) => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('button, summary, [role=tab]')]
+  .filter(node => node.checkVisibility({ visibilityProperty: true }) && !node.closest('[inert], .sr-only'))
+  .flatMap(node => {
+    const box = node.getBoundingClientRect(), found: string[] = [], name = (node.textContent!.trim() || node.getAttribute('aria-label') || node.id).slice(0, 30);
+    const out = (r: DOMRect) => r.width > 0 && (r.left < box.left - 1 || r.right > box.right + 1 || r.top < box.top - 1 || r.bottom > box.bottom + 1);
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+      if (!text.textContent!.trim() || !text.parentElement!.checkVisibility({ visibilityProperty: true })) continue;
+      const range = document.createRange(); range.selectNodeContents(text);
+      if ([...range.getClientRects()].some(out)) found.push(`${name}: texto "${text.textContent!.trim().slice(0, 20)}"`);
+    }
+    for (const icon of node.querySelectorAll<HTMLElement>('img, svg')) if (icon.checkVisibility({ visibilityProperty: true }) && out(icon.getBoundingClientRect())) found.push(`${name}: ícone`);
+    // Drawn icons are ::before boxes: any content (icon or text) spilling past the padding box shows up as scroll overflow.
+    if (node.scrollWidth > node.clientWidth + 1 || node.scrollHeight > node.clientHeight + 1) found.push(`${name}: conteúdo transborda`);
+    return found;
+  }));
+
 for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
-  test(`nenhum rótulo de botão ou aba tem menos de 16 px a ${viewport.width}`, async ({ page }) => {
+  test(`nenhum rótulo de botão ou aba tem menos de 16 px nem sai do botão a ${viewport.width}`, async ({ page }) => {
     await page.setViewportSize(viewport); await ready(page);
-    const check = async (where: string) => expect.soft(await small(page), where).toEqual([]);
+    const check = async (where: string) => { expect.soft(await small(page), where).toEqual([]); expect.soft(await spilled(page), `${where}: contido no botão`).toEqual([]); };
     await check('inicial');
     for (const tab of ['Turma', 'Looks', 'Objetos']) { await tray(page, tab); await check(`bandeja ${tab}`); }
     await tray(page, 'Turma'); await page.locator('#cast .character').first().click(); await closeTray(page);

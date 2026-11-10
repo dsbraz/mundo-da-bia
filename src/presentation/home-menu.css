@@ -37,6 +37,8 @@
 #room-map .room-picture img { max-height:90px; }
 
 @media(max-width:600px) { #room-dialog .home-tabs button { font-size:.9rem; padding:10px 4px; } #room-map .room-picture img { max-height:50px; } }
+/* Narrow phones: the Map tab icon goes above its label so both stay inside the button. */
+@media(max-width:480px) { #room-dialog .home-tabs button.illustrated { flex-direction:column; gap:2px; padding:6px 4px; } #room-dialog .home-tabs button.illustrated::before { width:24px; height:24px; flex-basis:24px; } }
 
 .house-plots { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin:20px 0; }
 .house-plots button { display:flex; flex-direction:column; align-items:center; gap:8px; }
