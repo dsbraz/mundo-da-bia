@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { Actor, ActorId, World } from '../domain/types';
 import { actorDepth } from './piece-art';
+import { supportedActor } from './furniture-scale';
 import { favoriteSpot, idleClock, idleMs, wanderAt, type Wander } from './idle-life';
 
 /** The scene's ambient life over repaints: the idle clock, the cat stroll to its favourite piece (drawn only: the save never changes)
@@ -15,14 +16,16 @@ export function ambientLife(canvas: () => HTMLCanvasElement) {
     /** A repaint: a cat moved by the child forgets its stroll; otherwise it walks home from where it is drawn. */
     painted(world: World, now: number) {
       clock.reset();
-      const home = wander && world.actors.find(a => a.id === wander!.actor);
+      const actor = wander && world.actors.find(a => a.id === wander!.actor), home = actor && supportedActor(world, actor);
       if (!home || home.room !== world.room || home.x !== wander!.home.x || home.y !== wander!.home.y) wander = null; else recall(now);
     },
     /** Once 20 s pass without a touch (and nothing else is going on), a cat that is not selected strolls to its favourite piece. */
     tick(world: World, selected: ActorId, now: number, calm: boolean) {
       if (clock.tick(now) < idleMs || wander || !calm || world.streetWidth) return;
       const cat = world.actors.find(a => a.kind === 'cat' && a.room === world.room && a.id !== selected && !a.resting && !a.seat && favoriteSpot(world, a.id));
-      if (cat) wander = { actor: cat.id, home: { x: cat.x, y: cat.y }, target: favoriteSpot(world, cat.id)!, start: now };
+      // Home is where the cat is drawn (on the painted floor), so it walks back to exactly that spot.
+      const home = cat && supportedActor(world, cat);
+      if (home) wander = { actor: home.id, home: { x: home.x, y: home.y }, target: favoriteSpot(world, home.id)!, start: now };
     },
     /** Draws the strolling cat; true while it walks (the caller poses the steps). */
     step(figure: Phaser.GameObjects.Container, actor: Actor, world: World, now: number): boolean {

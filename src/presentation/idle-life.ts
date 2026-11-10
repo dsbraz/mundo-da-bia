@@ -8,7 +8,7 @@ import { stroll, strollAt } from './stroll';
  *  after 20 s without a touch. Pure functions of time and a per-character phase, so repaints and reloads never shift anyone; with reduced
  *  motion all of it stands still (only blinks remain). */
 const tau = Math.PI * 2;
-export const idleMs = 20000, wanderStay = 6000, curledTail = -.7;
+export const idleMs = 20000, wanderStay = 6000, curledTail = .9;
 export function phaseOf(id: ActorId) { let h = 2166136261; for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return ((h >>> 0) % 6283) / 1000; }
 const share = (phase: number) => phase / tau;
 export function breath(time: number, phase: number, reduced: boolean) { return reduced ? 0 : .012 * Math.sin(time / 3600 * tau + phase); }
