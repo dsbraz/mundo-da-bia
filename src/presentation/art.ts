@@ -9,6 +9,7 @@ import { actors } from '../content/catalog';
 import { contactShadow } from './contact-shadow';
 import { catTail, phaseOf } from './idle-life';
 import { catTrot, gaitFrame } from './gait';
+import { addCatTail, curlLayers, curled, poseTail } from './cat-pose';
 import { expressionOf, faceParts, paintFace, type Expression } from './expression';
 import type { Actor } from '../domain/types';
 
@@ -20,7 +21,7 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
   container.add(pose);
-  const parts = actor.kind === 'human' ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', ...faceParts.human] : ['tail', 'ears', 'body', ...faceParts.cat];
+  const parts = actor.kind === 'human' ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', ...faceParts.human] : ['tail', 'ears', 'body', ...faceParts.cat, 'curl'];
   heroLayer(scene, pose, actor, 'back');
   parts.forEach(part => addPart(scene, pose, actor, part));
   heroLayer(scene, pose, actor, 'front');
@@ -48,14 +49,13 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   applyReaction(figure, pose);
   pulseStar(figure, time, reduced);
 }
-/** The cat's tail turns about its base (88, 100) and the ears about the head (70, 45), in the 140 × 120 art. */
+/** The cat's ears turn about the head (70, 45), in the 140 × 120 art. */
 function pivotCat(pose: Phaser.GameObjects.Container) {
-  const tail = pose.getByName<Phaser.GameObjects.Image>('tail').setOrigin(88 / 140, 100 / 120).setPosition(18, -20); tail.setData('base', tail.scaleY);
   pose.getByName<Phaser.GameObjects.Image>('ears').setOrigin(.5, 45 / 120).setPosition(0, -75);
 }
 function bodyLayers(pose: Phaser.GameObjects.Container, actor: Actor, time: number, reduced: boolean) {
   if (actor.kind === 'human') seatLayers(pose, actor, reduced);
-  else { const tail = pose.getByName<Phaser.GameObjects.Image>('tail'); tail.rotation = catTail(time, phaseOf(actor.id), actor.resting, reduced); tail.scaleY = tail.getData('base'); }
+  else { poseTail(pose, catTail(time, phaseOf(actor.id), actor.resting, reduced)); curlLayers(pose, curled(actor)); }
 }
 function pulseStar(figure: Phaser.GameObjects.Container, time: number, reduced: boolean) {
   const star = figure.getByName<Phaser.GameObjects.Graphics>('selection-star');
@@ -82,6 +82,7 @@ function coverActor(scene: Phaser.Scene, container: Phaser.GameObjects.Container
 }
 
 function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor: Actor, part: string) {
+  if (actor.kind === 'cat' && part === 'tail') { addCatTail(scene, pose, actor); return; }
   const key = `${actor.id}-${part}`;
   const image = scene.add.image(0, 0, key).setDisplaySize(140, actorHeight(actor)).setOrigin(.5, 1).setName(part);
   pose.add(image);
@@ -114,8 +115,8 @@ function heroLayer(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, acto
 export function walkPose(figure: Phaser.GameObjects.Container, actor: Actor, scale: number, reduced: boolean) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose'), distance = figure.getData('distance') ?? 0, direction = figure.getData('direction') ?? 0;
   if (actor.kind === 'cat') {
-    const trot = catTrot(distance, scale, reduced), tail = pose.getByName<Phaser.GameObjects.Image>('tail');
-    pose.y -= trot.bob; tail.rotation = trot.tail; tail.scaleY = tail.getData('base') * trot.raise; return;
+    const trot = catTrot(distance, scale, reduced);
+    pose.y -= trot.bob; poseTail(pose, { base: trot.tail, tip: trot.tip }, trot.raise); return;
   }
   const gait = gaitFrame(distance, scale, direction, figure.getData('gait')?.acceleration ?? 0, reduced);
   if (reduced) return;

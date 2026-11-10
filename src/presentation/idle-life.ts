@@ -16,9 +16,12 @@ export function breath(time: number, phase: number, reduced: boolean) { return r
 export function glancing(time: number, phase: number, reduced: boolean) {
   return !reduced && (time + phase * 1000) % (6000 + 4000 * share(phase)) < 1500;
 }
-export function catTail(time: number, phase: number, resting: boolean, reduced: boolean) {
-  if (resting) return curledTail;
-  return reduced ? 0 : .25 * Math.sin(time / 800 + phase);
+/** The tail as an S: the base and the tip each swing up to 0.25 rad, the tip a quarter turn behind. */
+export function catTail(time: number, phase: number, resting: boolean, reduced: boolean): { base: number; tip: number } {
+  if (resting) return { base: curledTail, tip: 0 };
+  if (reduced) return { base: 0, tip: 0 };
+  const at = time / 800 + phase;
+  return { base: .25 * Math.sin(at), tip: .25 * Math.sin(at - Math.PI / 2) };
 }
 /** A quick 320 ms ear flick every 5 to 6 s. */
 export function earTwitch(time: number, phase: number, reduced: boolean) {

@@ -19,12 +19,12 @@ export function gaitFrame(distance: number, scale: number, direction: number, ac
   }) };
 }
 /** Held up and still (no idle sway): turned up a little and drawn 1.4× taller, so the short tail stands above the back
- *  (turned further it would only hide behind the body). */
-export const trotTail = -.2, trotRaise = 1.4;
+ *  (turned further it would only hide behind the body), with the tip bent back into an S. */
+export const trotTail = -.2, trotTip = .3, trotRaise = 1.4;
 /** A cat trots: twice the steps of a child, a lower bob and the tail held up (no mirroring of the art). */
 export function catTrot(distance: number, scale: number, reduced: boolean) {
   const phase = distance / (stepPx * scale) * Math.PI * 2;
-  return { bob: reduced ? 0 : Math.abs(Math.sin(phase)) * 3 * scale, tail: trotTail, raise: trotRaise };
+  return { bob: reduced ? 0 : Math.abs(Math.sin(phase)) * 3 * scale, tail: trotTail, tip: trotTip, raise: trotRaise };
 }
 export interface GaitTrack { time: number; distance: number; speed: number; acceleration: number }
 /** Smoothed speed and acceleration from the walked distance between frames; a pause longer than 100 ms starts over at rest. */

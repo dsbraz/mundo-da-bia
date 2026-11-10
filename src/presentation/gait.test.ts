@@ -33,9 +33,12 @@ it('with reduced motion the walk is slow and still: no bob, no legs, no lean', (
 it('the cat trots with its tail up, faster and lower than a child', () => {
   const trot = catTrot(stepPx / 4, 1, false);
   expect(trot.tail).toBeLessThan(0); expect(trot.tail).toBeGreaterThan(-.25); expect(trot.raise).toBeGreaterThan(1.2);
+  // Held up as an S: the tip bends back against the base.
+  expect(trot.tip).toBeGreaterThan(0); expect(trot.tip).toBeLessThanOrEqual(.5);
   expect(trot.bob).toBeGreaterThan(0); expect(trot.bob).toBeLessThanOrEqual(3);
   expect(catTrot(stepPx / 4 * .6, .6, false).bob).toBeCloseTo(trot.bob * .6);
-  expect(catTrot(stepPx / 4, 1, true)).toEqual({ bob: 0, tail: trot.tail, raise: trot.raise });
+  expect(catTrot(stepPx / 4, 1, true)).toEqual({ bob: 0, tail: trot.tail, tip: trot.tip, raise: trot.raise });
+  expect(catTrot(stepPx / 3, 1, true)).toEqual(catTrot(stepPx / 4, 1, true));
 });
 it('tracks speed and acceleration from the walked distance between frames', () => {
   const first = trackGait(undefined, 0, 0);

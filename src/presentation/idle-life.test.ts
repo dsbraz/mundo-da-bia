@@ -23,9 +23,15 @@ it('olha para alguém a cada 6 a 10 s, por um instante', () => {
     for (let i = 1; i < starts.length; i++) { expect(starts[i]! - starts[i - 1]!).toBeGreaterThanOrEqual(6000); expect(starts[i]! - starts[i - 1]!).toBeLessThanOrEqual(10050); }
   }
 });
-it('o gato balança a cauda até 0,25 rad, mexe as orelhas de vez em quando e se espreguiça até 10%', () => {
-  const tail = span(t => catTail(t, 2, false, false));
-  expect(tail.hi).toBeCloseTo(.25, 2); expect(tail.lo).toBeCloseTo(-.25, 2);
+it('o gato balança a cauda em S (dois segmentos defasados, cada um até 0,25 rad), mexe as orelhas de vez em quando e se espreguiça até 10%', () => {
+  for (const segment of ['base', 'tip'] as const) {
+    const tail = span(t => catTail(t, 2, false, false)[segment]);
+    expect(tail.hi, segment).toBeCloseTo(.25, 2); expect(tail.lo, segment).toBeCloseTo(-.25, 2);
+  }
+  // Out of phase: the tip bends against the base (an S), and both swing the same way only part of the time.
+  let against = 0, apart = 0;
+  for (let t = 0; t < 30000; t += 25) { const { base, tip } = catTail(t, 2, false, false); if (base * tip < 0) against++; apart = Math.max(apart, Math.abs(base - tip)); }
+  expect(against).toBeGreaterThan(30000 / 25 / 5); expect(apart).toBeGreaterThan(.3);
   const ears = span(t => earTwitch(t, 2, false));
   expect(ears.hi).toBeGreaterThan(.05); expect(ears.lo).toBe(0);
   let twitching = 0; for (let t = 0; t < 30000; t += 25) if (earTwitch(t, 2, false)) twitching++;
@@ -34,12 +40,13 @@ it('o gato balança a cauda até 0,25 rad, mexe as orelhas de vez em quando e se
   expect(s.hi).toBeGreaterThan(.06); expect(s.hi).toBeLessThanOrEqual(.1); expect(s.lo).toBe(0);
 });
 it('descansando, o gato fica enrolado: cauda dobrada e parada', () => {
-  expect(catTail(0, 2, true, false)).toBe(curledTail); expect(catTail(9999, 2, true, false)).toBe(curledTail);
-  expect(catTail(500, 2, true, true)).toBe(curledTail);
+  const curled = { base: curledTail, tip: 0 };
+  expect(catTail(0, 2, true, false)).toEqual(curled); expect(catTail(9999, 2, true, false)).toEqual(curled);
+  expect(catTail(500, 2, true, true)).toEqual(curled);
 });
 it('com movimento reduzido nada disso se mexe', () => {
   for (const t of [0, 1234, 9876, 25000]) {
-    expect(breath(t, 1, true)).toBe(0); expect(glancing(t, 1, true)).toBe(false); expect(catTail(t, 1, false, true)).toBe(0);
+    expect(breath(t, 1, true)).toBe(0); expect(glancing(t, 1, true)).toBe(false); expect(catTail(t, 1, false, true)).toEqual({ base: 0, tip: 0 });
     expect(earTwitch(t, 1, true)).toBe(0); expect(stretch(t, 1, true)).toBe(0);
   }
 });
