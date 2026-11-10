@@ -47,9 +47,12 @@ function moveLayers(ctx: FrameContext, figure: Container, actor: Actor, walking:
   const gait = held || (walking ? (actor.kind === 'cat' ? 'trot' : 'walk') : '');
   if (gait) ctx.gaits.push(`${actor.id}:${gait}`);
 }
-function posture(ctx: FrameContext, figure: Container, actor: Actor) {
+/** Seated on plaza equipment, walking, carried (drawn standing, never walking) or as saved. */
+export function posture(ctx: FrameContext, figure: Container, actor: Actor) {
   const seated = [ctx.town?.outdoor.bench, ctx.town?.outdoor.swing].includes(actor.id), walking = ctx.walking(figure, actor);
-  const posed: Actor = walking ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' } : actor;
+  // Carried by the finger (never walking) or walking, the character is drawn standing and awake.
+  const standing = walking || ctx.weight.carrying(actor.id);
+  const posed: Actor = standing ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' } : actor;
   return { walking, seated, posed };
 }
 /** The expression (events first, a glance makes it curious), the blink and where the eyes look. */
