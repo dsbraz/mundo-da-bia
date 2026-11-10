@@ -17,16 +17,17 @@ for (const size of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }, 
       const box = c.getBoundingClientRect(), parent = c.parentElement!;
       const scale = box.width / Number(c.dataset.viewWidth);
       return { rasterWidth: c.width, rasterHeight: c.height, width: box.width, height: box.height, parentWidth: parent.clientWidth, parentHeight: parent.clientHeight,
-        scale, x: Number(c.dataset.viewX), y: Number(c.dataset.viewY), visibleWidth: Number(c.dataset.viewWidth), visibleHeight: Number(c.dataset.viewHeight) };
+        scale, x: Number(c.dataset.viewX), y: Number(c.dataset.viewY), visibleWidth: Number(c.dataset.viewWidth), visibleHeight: Number(c.dataset.viewHeight), world: Number(c.dataset.logicalWidth) };
     });
     const frame = await inspect();
     expect(frame.rasterWidth / 2).toBeCloseTo(frame.visibleWidth, 0);
     expect(frame.rasterHeight / 2).toBeCloseTo(frame.visibleHeight, 0);
     expect(frame.width).toBe(frame.parentWidth); expect(frame.height).toBe(frame.parentHeight);
-    expect(frame.scale).toBeCloseTo(Math.min(frame.width / 1000, frame.height / 600));
-    expect(frame.x).toBeLessThanOrEqual(0); expect(frame.y).toBeLessThanOrEqual(0);
-    expect(frame.x + frame.visibleWidth).toBeGreaterThanOrEqual(999.9);
-    expect(frame.y + frame.visibleHeight).toBeGreaterThanOrEqual(599.9);
+    // The scene is filled: the whole wall-to-floor height (600) shows, with no band above the ceiling or below the floor,
+    // and the view never leaves the room sideways; the rest of a wide room is reached by panning.
+    expect(frame.scale).toBeCloseTo(Math.max(frame.height / 600, frame.width / frame.world));
+    expect(frame.y).toBeCloseTo(0); expect(frame.visibleHeight).toBeCloseTo(600);
+    expect(frame.x).toBeGreaterThanOrEqual(-.1); expect(frame.x + frame.visibleWidth).toBeLessThanOrEqual(frame.world + .1);
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
     expect(await inspect()).toEqual(frame);
     const error = await page.locator('[data-world-x]').evaluateAll(buttons => {
@@ -39,5 +40,24 @@ for (const size of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }, 
     expect(error).toBeLessThan(.1);
     expect(await readTown(page)).toEqual(saved);
     await page.screenshot({ path: `reports/framing-${size.width}.png` });
+  });
+}
+
+// Drawn human height (hair to shoes) in logical units indoors; the street draws people at 60%.
+const human = 170;
+for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+  test(`sem faixa morta: chão sob a turma até 15% e asfalto até 20% da cena a ${size.width}`, async ({ page }) => {
+    await page.setViewportSize(size); await ready(page);
+    const view = () => page.locator('canvas').evaluate(c => ({ y: Number(c.dataset.viewY), height: Number(c.dataset.viewHeight), scale: c.getBoundingClientRect().width / Number(c.dataset.viewWidth) }));
+    const inside = await view(), feet = Math.max(...(await readTown(page)).actors.map(a => a.y));
+    expect((inside.y + inside.height - feet) / inside.height).toBeLessThanOrEqual(.15);
+    if (size.width === 768) expect(human * inside.scale).toBeGreaterThanOrEqual(150);
+    await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
+    await expect(page.locator('canvas')).toHaveAttribute('data-street', 'true');
+    if (await page.locator('#room-dialog').isVisible()) await page.locator('#close-map').click();
+    const street = await view();
+    expect(Math.max(0, street.y + street.height - 565) / street.height).toBeLessThanOrEqual(.2);
+    if (size.width === 768) expect(human * .6 * street.scale).toBeGreaterThanOrEqual(110);
+    await page.screenshot({ path: `reports/framing-street-${size.width}.png` });
   });
 }

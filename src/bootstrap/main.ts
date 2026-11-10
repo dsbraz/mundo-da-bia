@@ -2,7 +2,7 @@ import { roomWidth } from '../domain/geometry';
 import { childGames } from '../presentation/child-games';
 import '../presentation/child-games.css';
 import { illustratedChoices } from '../presentation/illustrated-choices';
-import { viewport, positionTargets, screenScale } from '../presentation/viewport';
+import { viewport, positionTargets, screenScale, streetFrame } from '../presentation/viewport';
 import { actorAt, sourceAt } from '../presentation/targets';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
 import { sceneFeedback } from './scene-feedback';
@@ -180,7 +180,7 @@ function refresh() {
   scene.neighborhood(town); scene.camera(camera);
   scene.buildMode(building, selectedPiece);
   scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street', constructing);
-  view?.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state));
+  view?.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state), state.streetWidth ? streetFrame : 600);
   renderControls();
   root.querySelector<HTMLButtonElement>('#construct-structure')!.textContent = town.location.kind === 'street' ? 'Escolher construção para ampliar' : 'Adicionar cômodo ou andar';
   root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
@@ -216,7 +216,7 @@ void loadFonts().then(() => { game = new Phaser.Game({
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
     view = viewport(current.canvas, (width, height, x, y) => { scene.frame(width, height, x, y); positionTargets(root); });
-    view.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state));
+    view.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state), state.streetWidth ? streetFrame : 600);
     new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); view?.render(); }).observe(root.querySelector('#world')!);
     renderControls();
     firstTouch(root, { seen: loadFirstTouchSeen(), done: () => saveFirstTouchSeen(), target: () => { const bia = state.actors.find(a => a.id === selected)!; return { x: bia.x, y: bia.y - 90 }; },
@@ -225,8 +225,10 @@ void loadFonts().then(() => { game = new Phaser.Game({
       walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) square.use(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, selected: () => selected, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
     }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, dropPiece, point => scene.pickPiece(point), () => screenScale(current.canvas)) }, {
       view: { background: p => { const world = scene.visibleWorld(); return building ? !scene.pickPiece(p) : !sourceAt(world, p, wardrobeOpen) && !actorAt(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
-        if (state.streetWidth) { camera = Math.max(0, Math.min(state.streetWidth - 1000, camera - dx / screenScale(current.canvas))); scene.camera(camera); }
-        view?.pan(state.streetWidth ? 0 : dx, dy);
+        // On the street the drag moves the 1000-wide window first; what is left past its ends pans the closer view inside it.
+        const scale = screenScale(current.canvas), wanted = camera - dx / scale;
+        if (state.streetWidth) { camera = Math.max(0, Math.min(state.streetWidth - 1000, wanted)); scene.camera(camera); }
+        view?.pan(state.streetWidth ? (camera - wanted) * scale : dx, dy);
       } },
       camera: () => camera, setCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building); outside(town, selected, camera, building); navigationBar(); },
       building: () => building, wardrobe: () => wardrobeOpen, dispatch,

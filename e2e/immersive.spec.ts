@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ready, readTown, tray } from './helpers';
+import { ready, readTown, tray, point } from './helpers';
 test('jogo preenche o viewport, separa cena e controles e recolhe as bandejas', async ({ page }) => {
   for (const size of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
     await page.setViewportSize(size); await ready(page);
@@ -33,6 +33,7 @@ test('ampliar usa cartões de cômodos com prévia e confirmação', async ({ pa
 test('abajur muda de material na cena e preserva a cor ao recarregar', async ({ page }) => {
   await ready(page); await page.locator('#build-toggle').click();
   const target = page.getByRole('button', { name: /Selecionar Abajur/ }); await target.focus(); await page.keyboard.press('Enter');
+  await point(page, 58, 238.4); // the closer camera may leave the lamp to the side: pan it into view before sampling
   const pixel = () => page.evaluate(() => {
     const canvas = document.querySelector('canvas')!;
     const x = Math.round((58 - Number(canvas.dataset.viewX)) * 2), y = Math.round((238.4 - Number(canvas.dataset.viewY)) * 2);

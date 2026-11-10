@@ -1,20 +1,32 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { framing, screenToWorld, viewport, worldToScreen } from './viewport';
-it('acomoda o cômodo inteiro em retrato sem deformar e sem faixa vazia acima do teto', () => {
-  const view = framing(768, 1024, 1000, { x: 500, y: 300 });
-  expect(view.scale).toBeCloseTo(.768);
-  expect(view.x).toBe(0);
-  expect(view.y).toBe(0);
+import { framing, screenToWorld, streetFrame, viewport, worldToScreen } from './viewport';
+// Drawn height of a human (hair to shoes) in logical units, measured on the rendered capture: 131 px at scale .768.
+const human = 170;
+// The scene area of a 768x1024 tablet in portrait, below the header and above the panel.
+const tablet = { width: 768, height: 582 };
+it('o interior preenche a altura da cena: humano com 150 px ou mais a 768 e nenhuma faixa vazia', () => {
+  const view = framing(tablet.width, tablet.height, 1000, { x: 500, y: 300 });
+  expect(view.scale).toBeCloseTo(582 / 600);
+  expect(human * view.scale).toBeGreaterThanOrEqual(150);
+  expect(view.y).toBe(0); expect(tablet.height / view.scale).toBeCloseTo(600);
+  expect(view.x).toBeCloseTo(500 - 768 / view.scale / 2);
 });
-it('acomoda o cômodo inteiro em paisagem', () => {
+it('a rua aproxima a câmera com fachadas e pessoas na mesma escala, sem faixa de asfalto', () => {
+  const view = framing(tablet.width, tablet.height, 1000, { x: 500, y: 360 }, streetFrame);
+  expect(human * .6 * view.scale).toBeGreaterThanOrEqual(110);
+  expect(view.y + tablet.height / view.scale).toBeCloseTo(600);
+  expect((600 - 565) / (tablet.height / view.scale)).toBeLessThanOrEqual(.2);
+  expect(768 / view.scale).toBeGreaterThanOrEqual(440);
+});
+it('em paisagem larga a vista nunca passa da largura do cômodo e acompanha o centro na vertical', () => {
   const view = framing(1400, 700, 1000, { x: 900, y: 580 });
-  expect(view.scale).toBeCloseTo(700 / 600);
-  expect(view.x).toBeCloseTo(-100); expect(view.y).toBe(0);
+  expect(view.scale).toBeCloseTo(1.4);
+  expect(view.x).toBeCloseTo(0); expect(view.y).toBeCloseTo(100);
 });
 it('mantém navegação lateral em cômodos maiores', () => {
-  const view = framing(768, 1024, 1400, { x: 1200, y: 300 });
-  expect(view.scale).toBeCloseTo(.768);
-  expect(view.x).toBeCloseTo(400);
+  const view = framing(tablet.width, tablet.height, 1400, { x: 1200, y: 300 });
+  expect(view.scale).toBeCloseTo(582 / 600);
+  expect(view.x).toBeCloseTo(1400 - 768 / view.scale);
 });
 
 it('converte ponteiro e controles pela mesma câmera, incluindo sobras e rua', () => {

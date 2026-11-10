@@ -83,6 +83,8 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
     await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
     await page.screenshot({ path: `reports/neighborhood-street-${viewport.width}.png` });
     expect((await readTown(page)).location).toEqual({ kind: 'street' });
+    // The closer street camera frames the house just left; the free plot beside it comes whole into view by panning.
+    await point(page, plotStart(2) + 261, 330);
     const edges = await page.locator('canvas').evaluate((canvas, [left, right]) => {
       const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth), offset = Number(canvas.dataset.viewX) + Number(canvas.dataset.cameraX);
       return { left: box.x + (left! - offset) * scale, right: box.x + (right! - offset) * scale };

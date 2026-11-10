@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, tray, closeTray, readTown } from './helpers';
+import { ready, tray, closeTray, readTown, point } from './helpers';
 import { neighborhoodAction } from '../src/domain/neighborhood';
 
 for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }]) {
@@ -71,11 +71,17 @@ test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async 
     return list.map(a => {
       const width = (a.cat ? 70 : 84) * scale, height = (a.cat ? 94 : 189) * scale, foot = a.y + (a.seated ? 19 : 0);
       const x = box.x + (a.x - Number(canvas.dataset.viewX)) * scale, y = box.y + (foot - Number(canvas.dataset.viewY)) * scale;
-      return { left: x - width / 2, right: x + width / 2, top: y - height, bottom: y, inside: x > box.x && x < box.x + box.width };
+      return { left: x - width / 2, right: x + width / 2, top: y - height, bottom: y };
     });
   }, actors.map(a => ({ x: a.x, y: a.y, cat: ['mimi', 'nino', 'pipoca'].includes(a.id), seated: !!a.seat })));
-  expect(boxes.every(b => b.inside)).toBe(true);
   for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(true);
+  // The closer camera shows part of the room; every character is fully reachable by panning, inside the scene.
+  const scene = (await page.locator('#world').boundingBox())!;
+  for (const a of actors) {
+    const half = (['mimi', 'nino', 'pipoca'].includes(a.id) ? 35 : 42);
+    const [left, right] = [await point(page, a.x - half, a.y), await point(page, a.x + half, a.y)];
+    expect(left.x, a.id).toBeGreaterThanOrEqual(scene.x); expect(right.x, a.id).toBeLessThanOrEqual(scene.x + scene.width);
+  }
   await tray(page, 'Turma'); const card = page.locator('#cast button', { hasText: 'Bia' }).locator('img');
   const before = await card.getAttribute('src');
   await page.locator('#play-tray').getByRole('button', { name: 'Looks', exact: true }).click(); await page.getByRole('button', { name: 'Festa' }).click();

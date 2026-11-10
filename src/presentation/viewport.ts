@@ -1,21 +1,22 @@
 import type { Point } from '../domain/types';
 import { followElapsed, followFactor } from './motion';
 const clamp = (value: number, maximum: number) => Math.max(0, Math.min(maximum, value));
-export function framing(width: number, height: number, worldWidth: number, center: Point) {
-  const scale = Math.min(width / Math.min(worldWidth, 1000), height / 600);
-  const visibleHeight = height / scale;
-  // Extra height goes below the floor (it keeps extending); the ceiling sits on the top edge, with no empty band above it.
-  return { scale, x: offset(center.x, worldWidth, width / scale), y: visibleHeight >= 600 ? 0 : offset(center.y, 600, visibleHeight) };
+/** Logical height the street shows (its lower part, y 110-600): the camera comes closer, facades and people at the same scale. */
+export const streetFrame = 490;
+/** Fills the scene: `frame` logical units tall (the whole 600 indoors), never wider than the world; the rest is reached by panning. */
+export function framing(width: number, height: number, worldWidth: number, center: Point, frame = 600) {
+  const scale = Math.max(height / frame, width / worldWidth);
+  return { scale, x: offset(center.x, worldWidth, width / scale), y: offset(center.y, 600, height / scale) };
 }
 function offset(center: number, world: number, visible: number) {
   return visible >= world ? (world - visible) / 2 : clamp(center - visible / 2, world - visible);
 }
 export function viewport(canvas: HTMLCanvasElement, changed: (width: number, height: number, x: number, y: number) => void) {
   const parent = canvas.parentElement!;
-  let center: Point = { x: 500, y: 360 }, width = 1000, room = '', manual = false, followed: number | null = null;
+  let center: Point = { x: 500, y: 360 }, width = 1000, frame = 600, room = '', manual = false, followed: number | null = null;
   let view = { scale: 1, x: 0, y: 0 };
   function render() {
-    view = framing(parent.clientWidth, parent.clientHeight, width, center);
+    view = framing(parent.clientWidth, parent.clientHeight, width, center, frame);
     canvas.style.setProperty('--view-width', `${parent.clientWidth}px`);
     canvas.style.setProperty('--view-height', `${parent.clientHeight}px`);
     canvas.style.setProperty('margin', '0', 'important');
@@ -29,8 +30,8 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
   new ResizeObserver(render).observe(parent);
   return {
     render,
-    scene(key: string, logicalWidth: number) {
-      width = logicalWidth;
+    scene(key: string, logicalWidth: number, logicalHeight = 600) {
+      width = logicalWidth; frame = logicalHeight;
       if (room !== key) { room = key; center = { x: Math.min(width, 1000) / 2, y: 360 }; manual = false; }
       render();
     },
