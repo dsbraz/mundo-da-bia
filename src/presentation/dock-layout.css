@@ -1,5 +1,5 @@
 /* The scene and its controls occupy separate, stable areas. */
-#app { --dock-height:164px; --footer-height:54px; background:#f5eddf; }
+#app { --dock-height:164px; --footer-height:0px; background:#f5eddf; }
 #app.tray-open { --dock-height:300px; }
 #app.playing-game { --dock-height:250px; }
 #app #world { inset:82px 0 calc(var(--dock-height) + var(--footer-height)); width:100%; height:auto; border-block:1px solid #cec5b5; }
@@ -19,9 +19,8 @@
 #app.tray-open:has(#build-inspector:not([hidden])) #build-catalog { left:320px; border-left:1px solid #cec5b5; }
 #app.tray-open #build-inspector { width:320px; }
 #app #build-inspector h2 { margin:0 0 10px; }
-#app #build-history { inset:auto auto 6px 12px; height:44px; padding:0; background:none; }
+#app #build-history { inset:auto auto calc(var(--dock-height) + 10px) 12px; height:44px; padding:0; background:none; z-index:8; }
 #app #build-history button { min-height:44px; padding:6px 12px; }
-#app #announcement { inset:auto 12px 8px 200px; max-width:none; background:none; border-radius:0; padding:6px; }
 #app #orientation-dock { display:none; }
 #app dialog { border-width:1.5px; border-radius:16px; }
 #app .home-tabs button,#app .module-card,#app .house-plots .empty-plot { border-radius:12px; }
@@ -29,7 +28,6 @@
 @media(orientation:portrait) {
   #app { --dock-height:calc(35dvh - var(--footer-height)); }
   #app.tray-open,#app.playing-game { --dock-height:calc(40dvh - var(--footer-height)); }
-  #app #announcement { display:block; font-size:11px; }
   #app.tray-open:has(#build-inspector:not([hidden])) { --dock-height:calc(50dvh - var(--footer-height)); }
   #app.tray-open:has(#build-inspector:not([hidden])) #build-catalog { left:0; height:calc(var(--dock-height) - 150px); border-left:0; }
   #app.tray-open #build-inspector { width:100%; height:150px; bottom:calc(var(--footer-height) + var(--dock-height) - 150px)!important; }
@@ -37,7 +35,7 @@
   #app #build-inspector .actions { display:inline-flex; }
 }
 @media(max-height:600px) and (orientation:landscape) {
-  #app { --dock-height:120px; --footer-height:48px; }
+  #app { --dock-height:120px; --footer-height:0px; }
   #app.tray-open,#app.playing-game { --dock-height:200px; }
   #app #actor-status { display:none; }
 }
@@ -45,6 +43,7 @@
 @media(orientation:landscape) {
   #app { --dock-width:320px; }
   #app #world { inset:82px var(--dock-width) var(--footer-height) 0; width:auto; }
+  #app #build-history { bottom:10px; }
   #app .mode-tray,#app #play-hint,#app #actor-context,#app #build-inspector,#app #game-panel { position:absolute; inset:82px 0 var(--footer-height) auto!important; width:var(--dock-width); height:auto; border-top:0; border-left:1px solid #cec5b5; }
   #app.tray-open:has(#build-inspector:not([hidden])) #build-catalog { inset:82px 0 calc(var(--footer-height) + 240px) auto!important; }
   #app.tray-open #build-inspector { inset:auto 0 var(--footer-height) auto!important; height:240px; border-top:1px solid #cec5b5; }

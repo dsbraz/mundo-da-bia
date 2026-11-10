@@ -1,4 +1,5 @@
 import { seatKind } from '../domain/furniture';
+import { textStyle } from './text-style';
 import { rasterScale } from './rendering';
 import type Phaser from 'phaser';
 import { fixture, pieceBounds } from '../domain/layout';
@@ -32,7 +33,7 @@ export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardr
   const box = pieceBounds[piece.kind];
   if (!['rug', 'picture', 'neon', 'cushion'].includes(piece.kind)) container.add(scene.add.ellipse(box.width / 2, box.height - 3, box.width * .76, 8, 0x625642, .1));
   parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped).setDisplaySize(box.width, box.height)));
-  if (piece.active) container.add(scene.add.text(box.width / 2, 6, effect(piece), { resolution: 2, fontSize: '24px', color: '#3f8799' }).setOrigin(.5).setName('effect'));
+  if (piece.active) container.add(scene.add.text(box.width / 2, 6, effect(piece), textStyle('effect')).setOrigin(.5).setName('effect'));
   return container;
 }
 function partsFor(piece: Piece, state: World, wardrobe: boolean): string[] {

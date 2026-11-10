@@ -20,7 +20,7 @@ export function walking(actions: Actions) {
     const origin = actor === id && position ? position : resident;
     const path = walkingPath(world, origin, destination), continuingSpeed = velocity;
     cancel();
-    if (resident.room !== world.room || !path) { actions.reject?.(destination); actions.hint('Escolha um lugar livre no chão.'); return; }
+    if (resident.room !== world.room || !path) { actions.reject?.(destination); actions.hint('Ali não cabe. Que tal aqui?'); return; }
     const current = command;
     actor = id; position = { x: origin.x, y: origin.y }; let last = performance.now(), speed = continuingSpeed;
     function tick(now: number) {

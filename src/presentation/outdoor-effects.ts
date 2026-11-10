@@ -1,7 +1,9 @@
 import type Phaser from 'phaser';
 import type { Neighborhood, OutdoorAction } from '../domain/neighborhood-types';
 import { plotStart } from '../domain/neighborhood-geometry';
-import { bubbleExit, reducedMotion } from './motion';
+import { reducedMotion } from './motion';
+import { speechBubble } from './feedback';
+import { nameOf, outdoorLine } from '../content/feedback-text';
 export function drawOutdoorState(scene: Phaser.Scene, town: Neighborhood) {
   const g = scene.add.graphics();
   town.buildings.forEach(b => {
@@ -17,10 +19,8 @@ export function drawOutdoorState(scene: Phaser.Scene, town: Neighborhood) {
 export function outdoorEffect(scene: Phaser.Scene, town: Neighborhood, action: OutdoorAction) {
   if (action.target === 'leave') return;
   const actor = town.actors.find(a => a.id === action.actor)!;
-  const label = { bench: 'Que descanso…', swing: 'Vai e vem!', water: 'Chuvinha no jardim', bell: 'Dlim, dlom!', mail: 'Uma carta para imaginar' }[action.target];
-  const text = scene.add.text(actor.x, actor.y - 120, label, { resolution: 2, fontSize: '16px', color: '#527568', backgroundColor: '#fff6db', padding: { x: 12, y: 8 } }).setOrigin(.5).setDepth(900);
+  speechBubble(scene, { x: actor.x, y: actor.y - 130 }, outdoorLine(action.target, nameOf(actor)), actor.id);
   const reduced = reducedMotion();
-  scene.tweens.add({ targets: text, ...bubbleExit(text.y, 15, 1500, reduced), onComplete: () => text.destroy() });
   if (action.target === 'water' && !reduced) water(scene, actor);
 }
 function water(scene: Phaser.Scene, actor: { x: number; y: number }) {

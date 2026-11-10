@@ -21,9 +21,10 @@ test('clicking and cancelling a drag during walking keeps the displayed stop', a
   expect(Number(await page.locator('canvas').getAttribute('data-walk-x'))).toBeGreaterThan(480);
   const x = Number(await page.locator('canvas').getAttribute('data-walk-x'));
   const at = await point(page, x, 410); await page.mouse.move(at.x, at.y); await page.mouse.down();
+  await page.mouse.move(at.x + 70, at.y - 20, { steps: 4 });
   const stop = (await read(page)).actors[0]!;
   expect(stop.x).toBeGreaterThanOrEqual(x); expect(stop.x).toBeLessThan(x + 50);
-  await page.mouse.move(at.x + 70, at.y - 20, { steps: 4 }); await page.keyboard.press('Escape'); await page.mouse.up();
+  await page.keyboard.press('Escape'); await page.mouse.up();
   expect((await read(page)).actors[0]).toEqual(stop);
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
 });
@@ -56,7 +57,8 @@ test('an occupied hand explains the refusal and cancels an older destination', a
   await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBe('bia');
   await tap(page, 930, 530); await expect(page.locator('canvas')).toHaveAttribute('data-walking', 'bia');
   await tap(page, 560, 272);
-  await expect(page.locator('#announcement')).toHaveText('Solte o objeto que está na mão primeiro.');
+  await expect(page.locator('#announcement')).toHaveText('Mãos cheias! Larga um antes.');
+  await expect(page.locator('canvas')).toHaveAttribute('data-said', 'Mãos cheias! Larga um antes.');
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
   expect((await read(page)).items.filter(i => i.holder === 'bia').map(i => i.id)).toEqual(['1:ursinho']);
 });

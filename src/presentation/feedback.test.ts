@@ -1,0 +1,82 @@
+import { afterEach, expect, it, vi } from 'vitest';
+import type Phaser from 'phaser';
+import { bubbleDuration, pokeFigure, refuseAt, speechBubble } from './feedback';
+afterEach(() => vi.unstubAllGlobals());
+
+function fakeScene() {
+  const tweens: Record<string, unknown>[] = [], destroyed: string[] = [], texts: { text: string; style: Record<string, unknown> }[] = [];
+  const canvas = { dataset: {} as Record<string, string> };
+  const object = (name = '') => {
+    const o: Record<string, unknown> = { x: 0, y: 0, active: true, width: 100, height: 30, scaleX: 1, scaleY: 1, data: {} as Record<string, unknown> };
+    for (const m of ['setOrigin', 'setDepth', 'setScale', 'setName', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'lineStyle', 'strokeRoundedRect', 'add']) o[m] = () => o;
+    o.destroy = () => { o.active = false; destroyed.push(name); };
+    o.setData = (k: string, v: unknown) => { (o.data as Record<string, unknown>)[k] = v; return o; };
+    o.getData = (k: string) => (o.data as Record<string, unknown>)[k];
+    o.getByName = () => o;
+    return o;
+  };
+  const scene = {
+    game: { canvas },
+    add: {
+      text: (_x: number, _y: number, text: string, style: Record<string, unknown>) => { texts.push({ text, style }); return object(text); },
+      graphics: () => object('graphics'), container: (x: number, y: number) => Object.assign(object('bubble'), { x, y }),
+    },
+    tweens: { add: (config: Record<string, unknown>) => { tweens.push(config); }, killTweensOf() {} },
+  };
+  return { scene: scene as unknown as Phaser.Scene, tweens, destroyed, texts, canvas, object };
+}
+
+it('o balão dura 1800 ms mais 60 ms por caractere', () => {
+  expect(bubbleDuration('Oi!')).toBe(1800 + 180);
+});
+
+it('fala com fonte de 22 px ou mais e mostra um balão por personagem', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const s = fakeScene();
+  speechBubble(s.scene, { x: 100, y: 400 }, 'Hummm! Bia adorou!', 'bia');
+  expect(Number.parseInt(String(s.texts[0]!.style.fontSize), 10)).toBeGreaterThanOrEqual(22);
+  expect(s.canvas.dataset.said).toBe('Hummm! Bia adorou!');
+  speechBubble(s.scene, { x: 100, y: 400 }, 'Oba! Bia pegou!', 'bia');
+  expect(s.destroyed).toContain('bubble');
+  speechBubble(s.scene, { x: 300, y: 400 }, 'Oi!', 'luna');
+  expect(s.destroyed.filter(d => d === 'bubble')).toHaveLength(1);
+  const exit = s.tweens.filter(t => t.alpha === 0).at(-1)!;
+  expect(Number(exit.duration) + Number(exit.delay)).toBe(bubbleDuration('Oi!'));
+});
+
+it('com movimento reduzido o balão não sobe e some por fade de 120 ms', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  const s = fakeScene();
+  speechBubble(s.scene, { x: 100, y: 400 }, 'Oi!', 'bia');
+  expect(s.tweens).toHaveLength(1);
+  expect(s.tweens[0]).toMatchObject({ alpha: 0, duration: 120 });
+});
+
+it('recusa é um tremor suave com balão neutro perto do alvo', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const s = fakeScene(), figure = s.object('figure');
+  refuseAt(s.scene, { x: 500, y: 300 }, 'Lia está aqui agora!', figure as unknown as Phaser.GameObjects.Container);
+  expect(s.canvas.dataset.said).toBe('Lia está aqui agora!');
+  expect(s.tweens.some(t => t.targets !== undefined && JSON.stringify(t).includes('"yoyo":true'))).toBe(true);
+  expect(s.texts[0]!.style.color).not.toBe('#a25240');
+});
+
+it('o toque de reação anima a pose, fala e marca a reação no canvas', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const s = fakeScene(), figure = s.object('figure');
+  Object.assign(figure, { name: 'bia', x: 200, y: 520 });
+  pokeFigure(s.scene, figure as unknown as Phaser.GameObjects.Container, 'hop', 'Oba! Bia pulou alto!', 220);
+  expect(s.canvas.dataset.reaction).toBe('bia:Oba! Bia pulou alto!');
+  expect(s.tweens.length).toBeGreaterThanOrEqual(2);
+  const motion = s.tweens.find(t => 'onUpdate' in t)!;
+  (motion.onUpdate as () => void)();
+  expect(typeof (figure as { getData: (k: string) => unknown }).getData('hop')).toBe('number');
+});
+
+it('com movimento reduzido a reação só fala, sem pulos', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  const s = fakeScene(), figure = Object.assign(s.object('figure'), { name: 'mimi' });
+  pokeFigure(s.scene, figure as unknown as Phaser.GameObjects.Container, 'purr', 'Rrrron…', 120);
+  expect(s.canvas.dataset.reaction).toBe('mimi:Rrrron…');
+  expect(s.tweens).toHaveLength(1);
+});

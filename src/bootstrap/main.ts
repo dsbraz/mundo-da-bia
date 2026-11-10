@@ -5,7 +5,8 @@ import { illustratedChoices } from '../presentation/illustrated-choices';
 import { viewport, positionTargets, screenScale } from '../presentation/viewport';
 import { actorAt, sourceAt } from '../presentation/targets';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
-import { announcer, eventMessages, invalidEditMessage, modeMessage } from './messages';
+import { sceneFeedback } from './scene-feedback';
+import { modeLine, refusal, welcomeLine, nameOf } from '../content/feedback-text';
 import { plaza } from './plaza';
 import { playActions } from './play-actions';
 import { bindKeyboard } from './keyboard';
@@ -30,8 +31,7 @@ import { editWorld, history, recordEdit } from '../domain/design';
 import { createEditorControls } from '../presentation/editor-controls';
 import { createBuildGesture } from '../presentation/build-gesture';
 import Phaser from 'phaser';
-import { createSound } from '../presentation/sound';
-import { actors } from '../content/catalog';
+import { loadFonts } from '../presentation/text-style';
 import { transition } from '../domain/world';
 import { loadNeighborhood, saveNeighborhood } from '../persistence/storage';
 import { createControls, positionContext } from '../presentation/controls';
@@ -60,12 +60,11 @@ let cancelGame = () => {};
 let view: ReturnType<typeof viewport> | undefined;
 const wardrobeButton = root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!;
 const shell = createShell(root, () => cancelInput());
-const announce = announcer(root), progress = edgeProgress(root);
+const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected }), announce = feedback.announce, progress = edgeProgress(root);
 function toggleWardrobe() { cancelGame(); wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
 function openLooks() { closeWardrobe(); shell.looks(); }
 wardrobeButton.addEventListener('click', openLooks);
-const playSound = createSound(root.querySelector<HTMLButtonElement>('#sound-toggle')!);
 const controls = createControls(root, action => play.perform(action), id => play.select(id), () => state, () => building, item => neighborhood.carryItem(item), () => doors(town).length > 0);
 const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(); }, action => play.perform(action), toggleWardrobe);
 const rooms = roomControls(root, {
@@ -89,12 +88,12 @@ const editor = createEditorControls(root, {
   duplicate: empty => { if (empty) newBuilding(); else townDispatch({ type: 'duplicate', building: albumView().active }); },
   rename: name => townDispatch({ type: 'facade', building: albumView().active, name }),
 });
-const walker = walking({ reject: point => scene.reject(point), state: () => state, selected: () => selected, preview: (id, point) => { scene.previewActor(id, point); if (point) view?.follow({ ...point, x: point.x - camera }); },
-  commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), hint: announce });
+const walker = walking({ reject: point => feedback.refuse(refusal('walk', ''), { x: point.x, y: point.y - 40 }), state: () => state, selected: () => selected, preview: (id, point) => { scene.previewActor(id, point); if (point) view?.follow({ ...point, x: point.x - camera }); },
+  commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), hint: () => {} });
 const games = childGames(root, { world: () => state, selected: () => selected, prepare: () => { walker.cancel(); cancelInput(); closeWardrobe(); shell.close(); view?.resume(); }, stopWalk: () => walker.cancel(), walk: walker.start, commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), preview: value => scene.previewGame(value), follow: point => view?.follow(point) });
 cancelGame = games.cancel;
-const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, announce });
-const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, announce });
+const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse });
+const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse });
 const outside = outdoorControls(root, square.use, () => townDispatch({ type: 'outdoor', actor: selected, target: 'leave' }));
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
@@ -112,11 +111,11 @@ function toggleBuild() {
   refresh();
   announceMode();
 }
-function announceMode() { announce(modeMessage(building, constructing)); }
+function announceMode() { announce(modeLine(building, constructing)); }
 function applyEdit(action: EditAction) {
   if (!building || town.location.kind === 'street') return;
   const next = editWorld(state, action);
-  if (next === state) { announce(invalidEditMessage); return; }
+  if (next === state) { announce(refusal('edit', '')); return; }
   remember();
   edits = recordEdit(edits, next); state = next;
   if (action.type === 'add') selectedPiece = state.layout.pieces.at(-1)?.id ?? null;
@@ -143,7 +142,7 @@ function townDispatch(action: NeighborhoodAction) {
   if (town.location.kind === 'street' && previous.kind === 'interior') camera = exitCamera;
   if (town.location.kind !== 'street') camera = 0;
   saved = saveNeighborhood(town); refresh();
-  if (action.type === 'visit' || action.type === 'transport') scene.arrive(previous);
+  if (action.type === 'visit' || action.type === 'transport') { scene.arrive(previous); feedback.sound.cue('door'); }
   if (action.type === 'construct') structure.open(town.nextBuilding - 1);
   if (action.type === 'outdoor') { settle(); scene.outdoorReaction(action); }
 }
@@ -199,11 +198,10 @@ function dispatch(action: Action, interrupt = true) {
   edits = history(state); selectedPiece = null;
   if (result.events.length) persist();
   refresh();
-  settle(); scene.react(result.events); playSound(result.events);
-  const event = result.events[0];
-  if (event) announce(eventMessages[event.type]);
+  settle(); feedback.events(result.events);
 }
-const game = new Phaser.Game({
+let game: Phaser.Game | undefined;
+void loadFonts().then(() => { game = new Phaser.Game({
   type: Phaser.CANVAS, parent: 'world', width: 2000, height: 1200, backgroundColor: '#f6dfd4',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene, audio: { noAudio: true }, render: { antialias: true },
@@ -212,8 +210,9 @@ const game = new Phaser.Game({
     view = viewport(current.canvas, (width, height, x, y) => { scene.frame(width, height, x, y); positionTargets(root); });
     view.scene(JSON.stringify(town.location), state.streetWidth ? 1000 : roomWidth(state));
     new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); view?.render(); }).observe(root.querySelector('#world')!);
+    renderControls();
     cancelInput = bindInput(current.canvas, () => scene.visibleWorld(), play.select, point => dispatch({ type: 'move', actor: selected, point }), {
-      walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) square.use(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
+      walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) square.use(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, selected: () => selected, poke: id => { root.classList.add('actor-chosen'); feedback.poke(id); }, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
     }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point), () => screenScale(current.canvas)) }, {
       view: { background: p => { const world = scene.visibleWorld(); return building ? !scene.pickPiece(p) : !sourceAt(world, p, wardrobeOpen) && !actorAt(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
         if (state.streetWidth) { camera = Math.max(0, Math.min(state.streetWidth - 1000, camera - dx / screenScale(current.canvas))); scene.camera(camera); }
@@ -226,14 +225,14 @@ const game = new Phaser.Game({
       progress,
     }, base => neighborhoodGesture(base, { town: () => town, world: () => scene.visibleWorld(), building: () => building, dispatch: townDispatch, plot: neighborhood.plot, drop: square.drop, preview: previewTown, progress }));
   } },
-});
+}); });
 bindKeyboard(root, { building: () => building, state: () => state, piece: () => selectedPiece, actor: () => state.actors.find(a => a.id === selected)!,
   edit: applyEdit, move: point => dispatch({ type: 'move', actor: selected, point }), stopWalk: () => walker.cancel() });
 buttonArt(root);
-announce(`${actors[selected].name} · crie um lugar, invente uma história.`);
+announce(welcomeLine(nameOf(state.actors.find(a => a.id === selected)!)));
 refresh();
 window.addEventListener('resize', () => requestAnimationFrame(renderControls));
 window.addEventListener('blur', () => walker.cancel());
 window.addEventListener('keydown', event => { if (event.key === 'Escape') walker.cancel(); });
-window.addEventListener('pagehide', () => { walker.cancel(); persist(); game.loop.sleep(); });
-window.addEventListener('pageshow', () => game.loop.wake());
+window.addEventListener('pagehide', () => { walker.cancel(); persist(); game?.loop.sleep(); });
+window.addEventListener('pageshow', () => game?.loop.wake());

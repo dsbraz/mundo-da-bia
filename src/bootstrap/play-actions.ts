@@ -2,11 +2,12 @@ import type { Action, ActorId, ItemId, Point, World } from '../domain/types';
 import { approach, equipmentAction } from '../presentation/equipment-interaction';
 import { pickupItem } from '../presentation/item-pickup';
 import type { walking } from '../presentation/walking';
-import { blockedMessage } from './messages';
+import { refusal } from '../content/feedback-text';
+const blockedMessage = refusal('blocked', '');
 interface PlayActions {
   root: HTMLElement; state: () => World; selected: () => ActorId; choose: (id: ActorId) => void;
   cancelGame: () => void; walker: ReturnType<typeof walking>; dispatch: (action: Action) => void;
-  toggleWardrobe: () => void; announce: (text: string) => void;
+  toggleWardrobe: () => void; refuse: (text: string) => void;
 }
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
@@ -17,14 +18,14 @@ export function playActions(deps: PlayActions) {
     if (!['use', 'sit', 'interact'].includes(action.type)) { deps.dispatch(action); return; }
     walker.cancel();
     const point = approach(deps.state(), deps.selected(), action);
-    if (!point) { deps.announce(blockedMessage); return; }
+    if (!point) { deps.refuse(blockedMessage); return; }
     walker.start(point, () => {
       if (approach(deps.state(), deps.selected(), action)) deps.dispatch(action);
-      else deps.announce(blockedMessage);
+      else deps.refuse(blockedMessage);
     });
   }
   function pickup(item: ItemId) {
-    pickupItem(item, { state: deps.state, selected: deps.selected, dispatch: deps.dispatch, walk: walker, hint: deps.announce });
+    pickupItem(item, { state: deps.state, selected: deps.selected, dispatch: deps.dispatch, walk: walker, hint: deps.refuse });
   }
   function interact(point: Point) {
     const action = equipmentAction(deps.state(), deps.selected(), point);

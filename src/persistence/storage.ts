@@ -62,3 +62,11 @@ function protectInvalid(port: StoragePort) {
   if (previous === null || previous === port.getItem(recoveryKey) || decodeNeighborhood(previous)) return;
   port.setItem(recoveryKey, previous);
 }
+
+const soundKey = 'mundo-da-bia:sound';
+export function loadSoundOn(storage?: StoragePort): boolean {
+  try { return (storage ?? globalThis.localStorage).getItem(soundKey) !== 'off'; } catch { return true; }
+}
+export function saveSoundOn(on: boolean, storage?: StoragePort): boolean {
+  try { (storage ?? globalThis.localStorage).setItem(soundKey, on ? 'on' : 'off'); return true; } catch { return false; }
+}

@@ -29,7 +29,7 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
     render,
     scene(key: string, logicalWidth: number) {
       width = logicalWidth;
-      if (room !== key) { room = key; center = { x: width / 2, y: 360 }; manual = false; }
+      if (room !== key) { room = key; center = { x: Math.min(width, 1000) / 2, y: 360 }; manual = false; }
       render();
     },
     pan(dx: number, dy: number) { manual = true; center.x -= dx / view.scale; center.y -= dy / view.scale; render(); },

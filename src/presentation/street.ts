@@ -1,4 +1,5 @@
 import { doorway } from './door-geometry';
+import { textStyle } from './text-style';
 import { facadeKey } from './architecture-art';
 import { facadeLabel } from './facade-parts';
 import { floorCount } from '../domain/modules';
@@ -33,14 +34,14 @@ function emptyPlot(scene: Phaser.Scene, plot: number) {
   g.lineStyle(2, 0x9aa990).strokeRoundedRect(x - 170, 270, 340, 180, 16);
   g.fillStyle(0xd4bda0).fillRect(x - 5, 340, 10, 100);
   g.fillStyle(0xfff9e7).fillRoundedRect(x - 110, 302, 220, 68, 10);
-  scene.add.text(x, 335, '✦ Terreno livre\nToque em Construir', { resolution: 2, fontSize: '18px', color: '#55635c', align: 'center' }).setOrigin(.5);
+  scene.add.text(x, 335, '✦ Terreno livre\nToque em Construir', textStyle('sign', { fontSize: '18px', color: '#55635c', align: 'center' })).setOrigin(.5);
 }
 function facade(scene: Phaser.Scene, b: Building) {
   const x = plotStart(b.plot);
   const image = scene.add.image(x, 0, facadeKey(b.model, floorCount(b.layout))).setOrigin(0).setDisplaySize(440, 480);
   if (b.color !== 'original') image.setTint(Number.parseInt(palettes[b.color].light.slice(1), 16));
   const label = facadeLabel(b.model, floorCount(b.layout));
-  scene.add.text(x + label.x, label.y, b.name, { resolution: 2, fontSize: '13px', maxLines: 2, color: '#52665e', align: 'center', wordWrap: { width: label.width }, padding: { x: 5, y: 3 } }).setOrigin(.5);
+  scene.add.text(x + label.x, label.y, b.name, textStyle('sign', { maxLines: 2, align: 'center', wordWrap: { width: label.width }, padding: { x: 5, y: 3 } })).setOrigin(.5);
 }
 export function drawExit(scene: Phaser.Scene) {
   const d = doorway.interior, g = scene.add.graphics().setDepth(150);
@@ -51,7 +52,7 @@ export function drawExit(scene: Phaser.Scene) {
   g.fillStyle(0xacc7bf).fillRoundedRect(d.x + 12, d.y + 14, d.width - 24, 86, 5);
   g.fillStyle(0xf7db94).fillCircle(d.x + d.width - 16, d.y + 124, 4);
   g.fillStyle(0xd7c3ab).fillRect(d.x - 12, d.y + d.height - 2, d.width + 24, 9);
-  scene.add.text(d.x + d.width / 2, d.y + 48, 'Rua', { resolution: 2, fontSize: '18px', color: '#334f49' }).setOrigin(.5).setDepth(151);
+  scene.add.text(d.x + d.width / 2, d.y + 48, 'Rua', textStyle('sign', { fontSize: '18px', color: '#334f49' })).setOrigin(.5).setDepth(151);
 }
 
 function backdrop(g: Phaser.GameObjects.Graphics, width: number) {

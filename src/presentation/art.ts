@@ -1,6 +1,8 @@
 import type { VisualContext } from './pose';
+import { textStyle } from './text-style';
 import { actorScale, settlePose, contextScale } from './pose';
 import Phaser from 'phaser';
+import { applyReaction } from './feedback';
 import { actors } from '../content/catalog';
 import type { Actor } from '../domain/types';
 
@@ -21,9 +23,9 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   heroLayer(scene, pose, actor, 'front');
   animateActor(container, actor, 500, 0, false);
   coverActor(scene, container, actor);
-  if (selected) container.add(scene.add.text(labelX, 22, actorLabel(actor), { resolution: 2, fontFamily: 'Trebuchet MS', fontSize: '15px', color: '#71452e', backgroundColor: '#fff1d1', padding: { x: 10, y: 4 } }).setOrigin(0.5));
-  if (actor.resting) container.add(scene.add.text(actor.seat === 'bed' ? -175 : 24, actor.seat === 'bed' ? -60 : -185, 'z z Z', { resolution: 2, fontSize: '21px', color: '#77558b' }));
-  if (actor.fed) container.add(scene.add.text(-48, -100, '♥', { resolution: 2, fontSize: '20px', color: '#d75c78' }));
+  if (selected) container.add(scene.add.text(labelX, 22, actorLabel(actor), textStyle('label')).setOrigin(0.5));
+  if (actor.resting) container.add(scene.add.text(actor.seat === 'bed' ? -175 : 24, actor.seat === 'bed' ? -60 : -185, 'z z Z', textStyle('mark')));
+  if (actor.fed) container.add(scene.add.text(-48, -100, '♥', textStyle('heart')));
   return container;
 }
 export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false) {
@@ -43,6 +45,7 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   const restingAngle = settlePose(pose.getData('restingAngle') ?? angle, angle, reduced);
   pose.setData('restingAngle', restingAngle);
   pose.rotation = restingAngle + danceAngle(time, index, show && !actor.resting);
+  applyReaction(figure, pose);
 }
 function danceAngle(time: number, index: number, dancing: boolean) { return dancing ? Math.sin(time / 220 + index) * 0.06 : 0; }
 

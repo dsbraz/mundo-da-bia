@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { textStyle } from './text-style';
 import { hopCells, ropeCue } from '../domain/child-games';
 import type { ChildGame } from '../domain/child-games';
 import type { ActorId, Point } from '../domain/types';
@@ -23,7 +24,7 @@ export function childGameArt(scene: Phaser.Scene) {
       const corners = [{ x: tile.x - 47, y: tile.y + 10 }, { x: tile.x + 5, y: tile.y + 10 }, { x: tile.x + 47, y: tile.y - 10 }, { x: tile.x - 5, y: tile.y - 10 }];
       chalk.fillStyle(active.includes(tile.cell) ? 0xf3d07a : 0xf5edcf, .8).fillPoints(corners, true);
       chalk.lineStyle(2, 0x738c83).strokePoints(corners, true);
-      ground!.add(scene.add.text(tile.x, tile.y, String(tile.cell), { fontSize: '14px', color: '#455c60', resolution: 2 }).setOrigin(.5));
+      ground!.add(scene.add.text(tile.x, tile.y, String(tile.cell), textStyle('hopscotch')).setOrigin(.5));
     });
   }
   function animate(figure: Phaser.GameObjects.Container, now: number, reduced: boolean) {

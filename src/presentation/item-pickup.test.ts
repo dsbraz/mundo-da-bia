@@ -15,7 +15,7 @@ it('walks before picking up and rechecks the object on arrival', () => {
 });
 it('does not replace a held object, including when the hand fills during walking', () => {
   const s = setup(); s.pickup(); s.world.items.find(i => i.id === 'ursinho')!.holder = 'bia'; s.arrive();
-  expect(s.dispatch).not.toHaveBeenCalled(); expect(s.hint).toHaveBeenLastCalledWith('Solte o objeto que está na mão primeiro.');
+  expect(s.dispatch).not.toHaveBeenCalled(); expect(s.hint).toHaveBeenLastCalledWith('Mãos cheias! Larga um antes.');
   s.pickup(); expect(s.start).toHaveBeenCalledOnce(); expect(s.cancel).toHaveBeenCalledTimes(2);
 });
 it('uses the existing pickup action once it arrives', () => {

@@ -46,9 +46,11 @@ describe('acompanhamento da câmera', () => {
   it('desliza pelo tempo decorrido, não pela quantidade de quadros', () => {
     const { view, views } = camera(false);
     view.follow({ x: 1100, y: 430 }, 1000);
-    expect(views.at(-1)).toBeCloseTo(218);
+    // A wide room opens on its 1000-wide core (x = 0, center 500); following eases toward x = 350.
+    expect(views[0]).toBe(0);
+    expect(views.at(-1)).toBeCloseTo((600 - 250) * .12);
     view.follow({ x: 1100, y: 430 }, 1000 + 2000 / 60);
-    expect(views.at(-1)).toBeCloseTo(218 + (150 - 18) * (1 - .88 ** 2));
+    expect(views.at(-1)).toBeCloseTo(42 + (558 - 250) * (1 - .88 ** 2));
     view.follow({ x: 1100, y: 430 }, 5000);
     const afterPause = views.at(-1)!;
     expect(afterPause - views.at(-2)!).toBeCloseTo((350 - views.at(-2)!) * .12);

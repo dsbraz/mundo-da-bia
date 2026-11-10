@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { textStyle } from './text-style';
 import type { Neighborhood } from '../domain/neighborhood-types';
 export function drawPlaza(scene: Phaser.Scene, town: Neighborhood) {
   const g = scene.add.graphics();
@@ -23,5 +24,5 @@ export function drawPlaza(scene: Phaser.Scene, town: Neighborhood) {
     g.fillStyle(town.outdoor.watered ? 0x92ba87 : 0xb2bd91).fillEllipse(x - 9, 417, 24, 12).fillEllipse(x + 8, 401, 25, 12);
     g.fillStyle(0xe5b2a3).fillCircle(x, 385, 10); g.fillStyle(0xf6d68d).fillCircle(x, 385, 4);
   }
-  scene.add.text(280, 85, 'Pracinha do encontro', { resolution: 2, fontSize: '22px', color: '#587563', backgroundColor: '#f7f1db', padding: { x: 18, y: 10 } }).setOrigin(.5);
+  scene.add.text(280, 85, 'Pracinha do encontro', textStyle('plaza')).setOrigin(.5);
 }

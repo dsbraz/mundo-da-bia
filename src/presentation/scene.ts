@@ -1,4 +1,5 @@
 import { supportedActor } from './furniture-scale';
+import { textStyle } from './text-style';
 import { visibleHit } from './visible-hit';
 import { childGameArt } from './child-game-art';
 import type { GamePreview } from './child-game-art';
@@ -27,6 +28,8 @@ import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './pi
 import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
+import { pokeFigure, refuseAt } from './feedback';
+import type { ReactionPose } from '../content/personalities';
 import { reducedMotion } from './motion';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
@@ -103,7 +106,7 @@ export class PlayScene extends Phaser.Scene {
       this.objects.push(this.add.image(point.x, point.y, itemKind(item)).setDisplaySize(40 * contextScale(visualContext(state)), 40 * contextScale(visualContext(state))).setName(item.id).setDepth(depth));
     });
     drawLighting(this, state);
-    if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', { resolution: 2, fontSize: '18px', color: '#425b66', backgroundColor: '#f3efe4', padding: { x: 12, y: 8 } }).setOrigin(.5).setDepth(700);
+    if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700);
   }
   pan(room: RoomId | null, fraction: number) {
     if (!this.ready) return;
@@ -202,9 +205,10 @@ export class PlayScene extends Phaser.Scene {
     const target = piece && this.pieces.get(piece.id);
     if (target) { const bounds = target.getBounds(); this.hint.lineStyle(2, 0x477e86, .55).strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, 8); }
   }
-  reject(point: Point) {
-    const mark = this.add.text(point.x, point.y, '×', { fontSize: '32px', color: '#a25240' }).setOrigin(.5).setDepth(1000);
-    this.time.delayedCall(900, () => mark.destroy());
+  refuse(point: Point, text: string) { if (this.ready) refuseAt(this, point, text, this.figures.find(f => f.name === this.selected)); }
+  poke(id: ActorId, pose: ReactionPose, line: string) {
+    const figure = this.figures.find(f => f.name === id), actor = this.world.actors.find(a => a.id === id);
+    if (this.ready && figure && actor) pokeFigure(this, figure, pose, line, (actor.kind === 'cat' ? 100 : 196) * contextScale(visualContext(this.world)));
   }
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
