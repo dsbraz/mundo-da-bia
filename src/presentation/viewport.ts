@@ -14,7 +14,7 @@ export const pieceSpans = (state: World): Span[] => state.layout.pieces.filter(p
 /** Each character in the current room as the width of its selection ring (cats are narrower). */
 export const peopleSpans = (state: World): Span[] => state.actors.filter(a => a.room === state.room).map(a => ({ left: a.x - (a.kind === 'cat' ? 35 : 42), right: a.x + (a.kind === 'cat' ? 35 : 42) }));
 /** Where a place opens: always with `must` (the chosen character, with its margin) in view when it fits, then the window with the most
- *  whole people, then the most whole furniture by width (a bed outweighs a lamp); ties go to the middle. */
+ *  whole people, then the most whole furniture by width (a bed outweighs a lamp); ties lean toward the people. */
 export function openingX(spans: Span[], visible: number, world: number, must?: Span, people: Span[] = []) {
   const middle = (world - visible) / 2;
   if (visible >= world) return middle;
@@ -22,7 +22,9 @@ export function openingX(spans: Span[], visible: number, world: number, must?: S
   const fits = (x: number, s: Span) => s.left >= x && s.right <= x + visible;
   const allowed = options.filter(x => !must || fits(x, must));
   const whole = (x: number) => people.filter(s => fits(x, s)).length * personWeight + spans.filter(s => fits(x, s)).reduce((sum, s) => sum + s.right - s.left, 0);
-  return (allowed.length ? allowed : options).reduce((best, x) => whole(x) > whole(best) || whole(x) === whole(best) && Math.abs(x - middle) < Math.abs(best - middle) ? x : best);
+  // Ties lean toward the people (centred on them), or the middle of the place without anyone.
+  const lean = people.length ? people.reduce((sum, s) => sum + s.left + s.right, 0) / people.length / 2 - visible / 2 : middle;
+  return (allowed.length ? allowed : options).reduce((best, x) => whole(x) > whole(best) || whole(x) === whole(best) && Math.abs(x - lean) < Math.abs(best - lean) ? x : best);
 }
 /** Wider than any room, so one more whole person always beats any amount of furniture. */
 export const personWeight = 10_000;

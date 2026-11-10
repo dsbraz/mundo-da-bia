@@ -48,7 +48,7 @@ import '../presentation/dock-layout.css';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
-let camera = 0, streetOpening: ReturnType<typeof streetExit> = { camera: 0, spans: [] };
+let camera = 0, streetOpening: ReturnType<typeof streetExit> = { camera: 0, spans: [], people: [] };
 let streetPast: Neighborhood[] = [], streetFuture: Neighborhood[] = [];
 function albumView(): Album { return { active: town.location.kind === 'interior' ? town.location.building : town.buildings[0]!.id, houses: town.buildings.map(b => ({ id: b.id, name: b.name, state: localWorld({ ...town, location: { kind: 'interior', building: b.id, room: b.entry } }) })) }; }
 let edits = history(state);
@@ -191,7 +191,7 @@ function refresh() {
 /** Street: its closer lower band. Interior: the full height, opening on the chosen character, then the most whole people, then furniture. */
 function frameScene() {
   const chosen = state.actors.find(a => a.id === selected && a.room === state.room), street = !!state.streetWidth;
-  if (street) { view?.scene(JSON.stringify(town.location), 1000, streetFrame, streetOpening.spans, streetOpening.must); return; }
+  if (street) { view?.scene(JSON.stringify(town.location), 1000, streetFrame, streetOpening.spans, streetOpening.must, streetOpening.people); return; }
   view?.scene(JSON.stringify(town.location), roomWidth(state), 600, pieceSpans(state), chosen && { left: chosen.x - 42, right: chosen.x + 42 }, peopleSpans(state));
 }
 function renderControls() {
