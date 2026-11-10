@@ -3,7 +3,8 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { expect, test } from '@playwright/test';
-import { ready, readTown, read, tray, closeTray, point, swipe, visitNeighbor } from './helpers';
+import { ready, readTown, read, tray, closeTray, point, swipe, visitNeighbor, tap } from './helpers';
+import { plotStart } from '../src/domain/neighborhood-geometry';
 test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await ready(page); await tray(page, 'Turma');
@@ -84,5 +85,13 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
     await page.locator('#map-toggle').click(); await page.getByRole('button', { name: '⌂ Bairro', exact: true }).click();
     await page.screenshot({ path: `reports/neighborhood-street-${viewport.width}.png` });
     expect((await readTown(page)).location).toEqual({ kind: 'street' });
+    const edges = await page.locator('canvas').evaluate((canvas, [left, right]) => {
+      const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth), offset = Number(canvas.dataset.viewX) + Number(canvas.dataset.cameraX);
+      return { left: box.x + (left! - offset) * scale, right: box.x + (right! - offset) * scale };
+    }, [plotStart(2) + 40, plotStart(2) + 261]);
+    const world = (await page.locator('#world').boundingBox())!;
+    expect(edges.left).toBeGreaterThanOrEqual(world.x); expect(edges.right).toBeLessThanOrEqual(world.x + world.width);
+    await tap(page, plotStart(2) + 125, 330);
+    await expect(page.locator('#plot-dialog')).toBeVisible();
   });
 }

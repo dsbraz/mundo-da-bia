@@ -97,9 +97,22 @@ test('tocar no balanço ocupado mostra quem está nele, junto do balanço', asyn
   town.actors = town.actors.map(a => a.id === 'luna' ? { ...a, location: { kind: 'street' }, x: 400, y: 445 } : a.id === 'bia' ? { ...a, location: { kind: 'street' }, x: 250, y: 520 } : a);
   town.outdoor.swing = 'luna';
   await seed(page, town);
-  await page.locator('.outdoor-controls button', { hasText: 'Balanço ocupado' }).dispatchEvent('click');
+  await tap(page, 400, 490);
   await expect(page.locator('canvas')).toHaveAttribute('data-said', /Luna/);
   await expect(page.locator('#announcement')).toHaveText(/Luna/);
   expect(Math.abs(Number(await page.locator('canvas').getAttribute('data-said-x')) - 400)).toBeLessThan(60);
   expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('luna');
+});
+
+test('a praça responde no desenho: sem lista de botões no painel e tocar no balanço faz descer', async ({ page }) => {
+  const town = spreadTown();
+  town.location = { kind: 'street' };
+  town.actors = town.actors.map(a => a.id === 'bia' ? { ...a, location: { kind: 'street' }, x: 400, y: 445 } : a);
+  town.outdoor.swing = 'bia';
+  await seed(page, town); await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('#actor-context button', { hasText: /balanço|banco|Regar|Campainha|Correio|Sair do equipamento/i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Descer do balanço', exact: true })).toHaveCount(1);
+  await page.screenshot({ path: 'reports/plaza-swing.png' });
+  await tap(page, 400, 400);
+  await expect.poll(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBeNull();
 });

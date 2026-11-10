@@ -57,3 +57,25 @@ test('ações da construção atual aparecem junto do mapa sem rolar até o bair
   await expect(action).toBeInViewport(); await action.click();
   await expect(page.locator('#plot-dialog').getByRole('button', { name: 'Excluir Minha casa…', exact: true })).toBeVisible();
 });
+
+test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
+  await page.screenshot({ path: 'reports/initial-768.png' });
+  const actors = (await readTown(page)).actors;
+  const boxes = await page.locator('canvas').evaluate((canvas, list) => {
+    const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth);
+    return list.map(a => {
+      const width = (a.cat ? 70 : 84) * scale, height = (a.cat ? 94 : 189) * scale, foot = a.y + (a.seated ? 19 : 0);
+      const x = box.x + (a.x - Number(canvas.dataset.viewX)) * scale, y = box.y + (foot - Number(canvas.dataset.viewY)) * scale;
+      return { left: x - width / 2, right: x + width / 2, top: y - height, bottom: y, inside: x > box.x && x < box.x + box.width };
+    });
+  }, actors.map(a => ({ x: a.x, y: a.y, cat: ['mimi', 'nino', 'pipoca'].includes(a.id), seated: !!a.seat })));
+  expect(boxes.every(b => b.inside)).toBe(true);
+  for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(true);
+  await tray(page, 'Turma'); const card = page.locator('#cast button', { hasText: 'Bia' }).locator('img');
+  const before = await card.getAttribute('src');
+  await page.locator('#play-tray').getByRole('button', { name: 'Looks', exact: true }).click(); await page.getByRole('button', { name: 'Festa' }).click();
+  await page.locator('#play-tray').getByRole('button', { name: 'Turma', exact: true }).click();
+  await expect.poll(() => card.getAttribute('src')).not.toBe(before);
+  await page.screenshot({ path: 'reports/ui-dock-dressed-768.png' });
+});

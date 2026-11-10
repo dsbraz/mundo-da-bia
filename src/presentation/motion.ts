@@ -13,3 +13,7 @@ export function followElapsed(now: number, previous: number | null): number {
 export function bubbleExit(y: number, rise: number, duration: number, reduced = reducedMotion()) {
   return reduced ? { y, alpha: 0, delay: duration - reducedFadeMs, duration: reducedFadeMs } : { y: y - rise, alpha: 0, delay: 0, duration };
 }
+/** Gentle breathing scale for the selection star (at most 10%); constant with reduced motion. */
+export function selectionPulse(time: number, reduced = reducedMotion()): number {
+  return reduced ? 1 : 1 + .08 * Math.sin(time / 260);
+}

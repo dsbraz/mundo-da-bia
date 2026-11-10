@@ -28,10 +28,12 @@ export function itemPoint(state: VisibleWorld, item: Item): Point | null {
   const holder = state.actors.find(a => a.id === item.holder);
   if (holder) return holder.room === state.room ? handPoint(state.visibleItems ? holder : supportedActor(state, holder), visualContext(state)) : null;
   if (item.room !== state.room || !availableSpot(state, item.spot)) return null;
-  const point = { x: item.x, y: item.y - 28 * contextScale(visualContext(state)) };
+  const point = { x: item.x, y: restingY(state, item) - 28 * contextScale(visualContext(state)) };
   const support = item.spot !== 'floor' && fixture(state, spotKind(item.spot));
   return support ? visualPiecePoint(support, point) : point;
 }
+/** Floor objects saved outside the floor band are drawn resting on it; the save keeps its value. */
+function restingY(state: World, item: Item) { return item.spot === 'floor' && !state.streetWidth ? Math.max(280, Math.min(540, item.y)) : item.y; }
 export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): DragToken | undefined {
   const foreground = foregroundDepth(state, p);
   const item = [...state.items].reverse().sort((a, b) => (state.itemDepth?.get(b.id) ?? b.y) - (state.itemDepth?.get(a.id) ?? a.y)).find(i => {

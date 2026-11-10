@@ -22,6 +22,7 @@ export function sceneControls(root: HTMLElement, select: (id: number) => void, d
 }
 function usePiece(piece: Piece, actor: ActorId, world: World, dispatch: (action: Action) => void, dress: () => void) {
   if (piece.kind === 'wardrobe') { dress(); return; }
+  if (piece.kind === 'stage') { dispatch({ type: 'show' }); return; }
   if (piece.kind === 'lamp' || piece.kind === 'fridge') { dispatch({ type: 'interact', target: piece.kind }); return; }
   if (piece.kind === 'table') { const item = world.items.find(i => i.holder === actor); if (item) dispatch({ type: 'put', item: item.id, spot: 'table' }); return; }
   const seat = { sofa: 'sofa-left', bed: 'bed', armchair: 'armchair' } as const;

@@ -12,7 +12,7 @@ import { pieceImage } from './piece-assets';
 export interface EditorActions {
   toggle: () => void; edit: (action: EditAction) => void; undo: () => void; redo: () => void;
   select: (id: number | null) => void; house: (id: number) => void;
-  duplicate: (empty: boolean) => void; rename: (name: string) => void;
+  duplicate: (empty: boolean) => void; rename: (name: string) => void; blink: (kind: PieceKind) => void;
 }
 function on(root: HTMLElement, id: string, action: () => void) { root.querySelector(id)!.addEventListener('click', action); }
 export function createEditorControls(root: HTMLElement, actions: EditorActions) {
@@ -26,7 +26,7 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
   on(root, '#rename-house', () => actions.rename(root.querySelector<HTMLInputElement>('#house-name')!.value));
   const houseList = root.querySelector<HTMLSelectElement>('#house-list')!;
   houseList.addEventListener('change', () => actions.house(Number(houseList.value)));
-  const catalog = createCatalog(root, actions.edit, () => width);
+  const catalog = createCatalog(root, actions, () => width);
   const colors = paletteIds.map(color => {
     const button = document.createElement('button'); button.type = 'button';
     button.title = palettes[color].name; button.setAttribute('aria-label', `Cor ${palettes[color].name}`);
@@ -49,13 +49,13 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
     root.querySelector<HTMLButtonElement>('#remove-piece')!.disabled = !piece;
     root.querySelector('#piece-name')!.textContent = piece ? furnishings[piece.kind].name : 'Escolha uma peça na casa';
     colors.forEach((button, index) => { button.disabled = !piece; button.setAttribute('aria-pressed', String(piece?.color === paletteIds[index])); });
-    catalog.forEach((button, kind) => { button.disabled = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room); button.title = button.disabled ? 'Já existe neste cômodo. Você pode usar outro em um novo cômodo.' : '';  });
+    catalog.forEach((button, kind) => { const present = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room); button.dataset.unavailable = String(present); button.title = present ? 'Já tem neste cômodo: veja onde está.' : ''; });
     updateHouseList(root, album);
     presentPieces(root, state, actions.select, selected);
     for (const surface of ['wall', 'floor'] as const) root.querySelector<HTMLSelectElement>(`#finish-${surface}`)!.value = state.layout.rooms[state.room]![surface];
   };
 }
-function createCatalog(root: HTMLElement, edit: (action: EditAction) => void, width: () => number) {
+function createCatalog(root: HTMLElement, { edit, blink }: EditorActions, width: () => number) {
   const buttons = new Map<PieceKind, HTMLButtonElement>();
   pieceKinds.forEach(kind => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'catalog-piece';
@@ -64,7 +64,7 @@ function createCatalog(root: HTMLElement, edit: (action: EditAction) => void, wi
     button.append(img, label); button.setAttribute('aria-label', `Adicionar ${furnishings[kind].name}`);
     button.dataset.category = furnishings[kind].category;
     catalogDrag(button, kind, edit, width);
-    button.addEventListener('click', () => edit({ type: 'add', kind }));
+    button.addEventListener('click', () => { if (button.dataset.unavailable === 'true') blink(kind); else edit({ type: 'add', kind }); });
     root.querySelector('#piece-catalog')!.append(button); buttons.set(kind, button);
   });
   let category = 'all';

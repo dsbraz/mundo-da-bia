@@ -34,10 +34,11 @@ test('tap walks, dragging the background does not, and the square saves equipmen
   await tray(page, 'Turma'); await page.locator('#cast button').first().click(); await closeTray(page);
   await page.getByRole('button', { name: 'Levar pela porta', exact: false }).click(); await page.getByRole('button', { name: 'Levar para Rua', exact: true }).click();
   await explore(page); await page.getByRole('button', { name: '← Anterior', exact: true }).click(); await page.locator('#close-map').click();
-  await page.getByRole('button', { name: 'Sentar no banco', exact: true }).click();
+  await tap(page, 180, 420);
   await expect.poll(async () => (await readTown(page)).outdoor.bench).toBe('bia');
-  await page.getByRole('button', { name: 'Sair do equipamento', exact: true }).click();
-  await page.getByRole('button', { name: 'Regar plantas', exact: true }).click();
+  await tap(page, 180, 420);
+  await expect.poll(async () => (await readTown(page)).outdoor.bench).toBeNull();
+  await tap(page, 560, 470);
   await expect.poll(async () => (await readTown(page)).outdoor.watered).toBe(true);
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Bola da praça', exact: true }).click(); await closeTray(page);
   expect((await readTown(page)).items.find(i => i.kind === 'bola')!.holder).toBe('bia');

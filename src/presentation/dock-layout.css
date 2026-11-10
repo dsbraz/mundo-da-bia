@@ -10,7 +10,11 @@
 #app .choices button,#app .catalog-piece { min-height:104px; }
 #app #bring-here { width:auto; min-width:160px; }
 #app #play-hint,#app #actor-context,#app #build-inspector,#app #game-panel { position:absolute; inset:auto 0 var(--footer-height)!important; width:100%; height:var(--dock-height); min-width:0; max-width:none; max-height:none; padding:12px 18px; border:0; border-top:1px solid #cec5b5; border-radius:0; background:#f9f3e7; box-shadow:none; overflow:auto; }
-#app #actor-context .actions { display:inline-flex; margin-right:8px; }
+#app #actor-context .actions { display:grid; grid-template-columns:repeat(auto-fill,64px); gap:6px; margin:0 0 6px; }
+#app #actor-context .panel-button { width:64px; min-width:64px; height:78px; margin:0; padding:4px 2px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:12px; line-height:1.1; }
+#app #actor-context .panel-button img { width:40px; height:40px; pointer-events:none; }
+#app #actor-context .panel-button:disabled { opacity:.35; filter:grayscale(.6); }
+#app #actor-context .status-badges { display:flex; gap:6px; min-height:28px; }
 #app #actor-context #selected { margin:0 12px 6px 0; }
 #app #actor-context #actor-status { margin:0 0 8px; }
 #app #actor-context button { margin-bottom:4px; }
@@ -19,8 +23,12 @@
 #app.tray-open:has(#build-inspector:not([hidden])) #build-catalog { left:320px; border-left:1px solid #cec5b5; }
 #app.tray-open #build-inspector { width:320px; }
 #app #build-inspector h2 { margin:0 0 10px; }
-#app #build-history { inset:auto auto calc(var(--dock-height) + 10px) 12px; height:44px; padding:0; background:none; z-index:8; }
-#app #build-history button { min-height:44px; padding:6px 12px; }
+#app #build-history { inset:auto auto calc(var(--dock-height) + 10px) 12px; height:56px; padding:0; gap:8px; background:none; z-index:8; }
+#app #build-history button { width:56px; height:56px; min-width:56px; min-height:56px; padding:0; border-radius:50%; font-size:0; }
+#app #build-history button.illustrated::before { width:30px; height:30px; flex-basis:30px; }
+#app .catalog-categories { flex-wrap:wrap; }
+#app .catalog-categories button { flex:1 0 84px; min-width:0; overflow-wrap:anywhere; }
+#app .catalog-piece[data-unavailable=true] { opacity:.45; filter:grayscale(.5); }
 #app #orientation-dock { display:none; }
 #app dialog { border-width:1.5px; border-radius:16px; }
 #app .home-tabs button,#app .module-card,#app .house-plots .empty-plot { border-radius:12px; }

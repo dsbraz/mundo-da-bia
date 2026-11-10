@@ -44,3 +44,12 @@ it('preserves named residents, held objects and relative room order across legac
   expect(Object.values(next.buildings[0]!.layout.rooms).sort((a, b) => a.cell - b.cell).map(r => r.name)).toEqual(['Sala & palco', 'Quarto dos sonhos', 'Flores', 'Café']);
   expect(next.actors.slice(1)).toEqual(town.actors.slice(1));
 });
+it('a save made with the old starting positions keeps them after the new defaults', () => {
+  const town = migrateNeighborhood(initialAlbum(initialWorld()));
+  const old = [520, 440, 755, 880, 600, 710, 835];
+  town.actors = town.actors.map((a, i) => ({ ...a, x: old[i]!, y: i < 4 ? 530 : 540, seat: null }));
+  const map = new Map<string, string>();
+  const port = { getItem: (key: string) => map.get(key) ?? null, setItem: (key: string, value: string) => { map.set(key, value); } };
+  expect(saveNeighborhood(town, port)).toBe(true);
+  expect(loadNeighborhood(port).actors.map(a => [a.x, a.y, a.seat])).toEqual(town.actors.map(a => [a.x, a.y, null]));
+});

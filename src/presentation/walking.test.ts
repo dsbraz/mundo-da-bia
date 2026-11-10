@@ -8,10 +8,10 @@ function setup() {
   vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
   const state = initialWorld(); state.layout.pieces = [];
-  const commit = vi.fn(), preview = vi.fn(), hint = vi.fn();
-  const walk = walking({ state: () => state, selected: () => 'bia', commit, preview, hint });
+  const commit = vi.fn(), preview = vi.fn(), hint = vi.fn(), face = vi.fn();
+  const walk = walking({ state: () => state, selected: () => 'bia', commit, preview, hint, face });
   function advance() { now += 50; const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(fn => fn(now)); }
-  return { state, commit, preview, hint, walk, advance };
+  return { state, commit, preview, hint, face, walk, advance };
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 it('confirms the visible stop once before replacing unfinished routes', () => {
@@ -23,7 +23,23 @@ it('cancel confirms the visible position once; inaccessible destinations do not 
   const s = setup(); s.walk.start({ x: 900, y: 530 }); s.advance(); s.walk.cancel();
   const visible = [...s.preview.mock.calls].reverse().find(call => call[0] === 'bia')![1];
   for (let n = 0; n < 50; n++) s.advance(); expect(s.commit).toHaveBeenCalledExactlyOnceWith('bia', visible);
-  s.walk.start({ x: 500, y: 20 }); expect(s.hint).toHaveBeenCalled(); expect(s.commit).toHaveBeenCalledOnce();
+  s.state.actors[0]!.room = 'quarto';
+  s.walk.start({ x: 500, y: 520 }); expect(s.hint).toHaveBeenCalled(); expect(s.commit).toHaveBeenCalledOnce();
+});
+it('a tap on the wall walks to the baseboard and looks at the tapped point', () => {
+  const s = setup(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  s.walk.start({ x: 500, y: 20 });
+  expect(s.commit).toHaveBeenCalledExactlyOnceWith('bia', { x: 500, y: 280 }); expect(s.hint).not.toHaveBeenCalled();
+  expect(s.face).toHaveBeenCalledWith('bia', { x: 500, y: 20 });
+});
+it('a tap right against furniture walks to its side instead of refusing', () => {
+  const s = setup(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  s.state.layout.pieces = [{ id: 1, kind: 'table', room: 'sala', x: 250, y: 350, flipped: false, color: 'original' }];
+  s.walk.start({ x: 350, y: 450 });
+  expect(s.hint).not.toHaveBeenCalled(); expect(s.commit).toHaveBeenCalledOnce();
+  const stop = s.commit.mock.calls[0]![1];
+  expect(Math.abs(stop.x - 350)).toBeLessThanOrEqual(150); expect(stop).not.toEqual({ x: 350, y: 450 });
+  expect(s.face).toHaveBeenCalledWith('bia', { x: 350, y: 450 });
 });
 it('reduced motion confirms immediately and equipment completes once', () => {
   const s = setup(), complete = vi.fn(); vi.stubGlobal('matchMedia', () => ({ matches: true }));
@@ -33,7 +49,7 @@ it('reduced motion confirms immediately and equipment completes once', () => {
 it('an invalid replacement stops the previous command without completing its action', () => {
   const s = setup(), complete = vi.fn();
   s.walk.start({ x: 900, y: 530 }, complete); s.advance();
-  s.walk.start({ x: 500, y: 20 });
+  s.state.actors[0]!.room = 'quarto'; s.walk.start({ x: 500, y: 20 });
   for (let n = 0; n < 50; n++) s.advance();
   expect(s.commit).toHaveBeenCalledOnce(); expect(complete).not.toHaveBeenCalled();
 });

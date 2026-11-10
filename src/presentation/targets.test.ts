@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { initialWorld, transition } from '../domain/world';
-import { sourceAt } from './targets';
+import { itemPoint, sourceAt } from './targets';
 import { createPlayGesture } from './play-gesture';
 
 it('um objeto na mão aparece sobre a roupa do armário e deve receber o toque', () => {
@@ -40,4 +40,10 @@ it('objetos na mesma profundidade seguem a ordem de desenho, do último para o p
   const state = initialWorld();
   state.items = state.items.slice(0, 2).map(item => ({ ...item, spot: 'floor', x: 500, y: 500 }));
   expect(sourceAt(state, { x: 500, y: 472 }, false)?.id).toBe('peixe');
+});
+it('a floor object saved outside the floor band is drawn resting on the floor without changing the save', () => {
+  const world = initialWorld();
+  world.items = world.items.map(i => i.id === 'ursinho' ? { ...i, spot: 'floor', x: 350, y: 120 } : i);
+  expect(itemPoint(world, world.items.find(i => i.id === 'ursinho')!)).toEqual({ x: 350, y: 280 - 28 });
+  expect(world.items.find(i => i.id === 'ursinho')!.y).toBe(120);
 });

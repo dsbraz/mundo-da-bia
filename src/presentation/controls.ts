@@ -1,5 +1,6 @@
 import { fixture } from '../domain/layout';
-import { itemKind } from '../domain/item-kind';
+import { panelButtons, statusBadges } from './panel';
+import { panelControls, renderBadges } from './panel-controls';
 import { objectControls } from './object-controls';
 import { actorNames } from './actor-names';
 import { portrait } from './portrait';
@@ -7,9 +8,9 @@ import { roomWidth } from '../domain/geometry';
 import { actorAt } from './targets';
 import { trayDrag } from './tray-drag';
 import { lookImage } from './look-image';
-import { actors, items, looks } from '../content/catalog';
+import { actors, looks } from '../content/catalog';
 import { actorIds, lookIds } from '../domain/types';
-import type { Action, Actor, ActorId, Item, ItemId, World } from '../domain/types';
+import type { Action, Actor, ActorId, ItemId, World } from '../domain/types';
 
 function button(label: string, run: () => void, className = ''): HTMLButtonElement {
   const element = document.createElement('button');
@@ -24,7 +25,8 @@ function illustratedButton(id: string, label: string, run: () => void, className
   element.prepend(icon);
   return element;
 }
-export function createControls(root: HTMLElement, dispatch: (action: Action) => void, select: (id: ActorId) => void, getState: () => World, building: () => boolean, carryItem: (item: ItemId) => void, canCarry: () => boolean) {
+export interface PanelActions { looks: () => void; games: () => void }
+export function createControls(root: HTMLElement, dispatch: (action: Action) => void, select: (id: ActorId) => void, getState: () => World, building: () => boolean, carryItem: (item: ItemId) => void, canCarry: () => boolean, panelActions: PanelActions) {
   let selected: ActorId = 'bia';
   const cast = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id), 'character'));
   const name = actorNames(root, dispatch, getState);
@@ -41,39 +43,29 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
   });
   root.querySelector('#looks')!.append(...wardrobe);
   const refreshObjects = objectControls(root, dispatch, getState, () => selected, building, carryItem, canCarry);
-  const actions = [
-    button('Oferecer comida', () => dispatch({ type: 'feed', actor: selected })),
-    button('Descansar', () => rest(getState(), selected, dispatch)),
-    button('Soltar objeto', () => dispatch({ type: 'drop', actor: selected })),
-    button('♫ Começar show', () => dispatch({ type: 'show' }), 'primary'),
-  ];
-  root.querySelector('#actions')!.append(...actions);
+  const panel = panelControls(root.querySelector('#actions')!, {
+    wear: () => panelActions.looks(), play: () => panelActions.games(), rest: () => rest(getState(), selected, dispatch),
+    drop: () => dispatch({ type: 'drop', actor: selected }), eat: () => dispatch({ type: 'feed', actor: selected }),
+  });
   root.querySelector('#gather')!.addEventListener('click', () => dispatch({ type: 'summon' }));
   return (state: World, id: ActorId, saved: boolean) => {
     selected = id;
     const actor = state.actors.find(a => a.id === id)!;
     const present = actor.room === state.room;
-    cast.forEach((b, i) => { b.setAttribute('aria-pressed', String(actorIds[i] === id)); b.lastChild!.textContent = state.actors.find(a => a.id === actorIds[i])!.name ?? actors[actorIds[i]!].name; });
+    cast.forEach((b, i) => {
+      const member = state.actors.find(a => a.id === actorIds[i])!, picture = portrait(member.id, member.look), image = b.querySelector('img')!;
+      b.setAttribute('aria-pressed', String(member.id === id)); b.lastChild!.textContent = member.name ?? actors[member.id].name;
+      if (image.getAttribute('src') !== picture) image.src = picture;
+    });
     wardrobe.forEach((b, i) => { b.querySelector('img')!.src = lookImage(lookIds[i]!, id === 'leo' || id === 'rui'); b.disabled = !state.actors.some(a => a.kind === 'human' && a.room === state.room); b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
     refreshObjects();
-    const held = state.items.find(item => item.holder === id);
-    actions[0]!.disabled = !present || (held && itemKind(held)) !== (actor.kind === 'cat' ? 'peixe' : 'lanche');
-    actions[1]!.disabled = !present;
-    actions[1]!.textContent = restLabel(state, actor);
-    actions[2]!.disabled = !present || !held;
-    actions[3]!.textContent = state.show ? '♫ Encerrar show' : '♫ Começar show';
+    panel(panelButtons(state, actor));
     root.querySelector('#selected')!.textContent = actor.name ?? actors[id].name;
-    root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!.hidden = !present || actor.kind === 'cat';
-    actions.forEach(b => { b.hidden = b.disabled; });
     root.querySelector<HTMLButtonElement>('#bring-here')!.disabled = present;
     positionContext(root, actor, state);
     root.querySelector('#save-status')!.textContent = saved ? '✓ Brincadeira salva' : 'Não foi possível salvar neste navegador';
-    root.querySelector('#actor-status')!.textContent = actorStatus(actor, held);
+    renderBadges(root.querySelector('#actor-status')!, statusBadges(state, actor, actor.name ?? actors[id].name));
   };
-}
-
-function actorStatus(actor: Actor, held: Item | undefined): string {
-  return `${actor.fed ? 'Já comeu' : 'Pronto para explorar'} · ${actor.resting ? 'Descansando' : 'Pronto para brincar'}${held ? ` · Com ${items[itemKind(held)].name}` : ''}`;
 }
 
 export function positionContext(root: HTMLElement, actor: Actor, state: World) {
@@ -84,9 +76,4 @@ function rest(state: World, actor: ActorId, dispatch: (action: Action) => void) 
   const value = state.actors.find(a => a.id === actor)!;
   if (!value.resting && fixture(state, 'bed')?.room === state.room) dispatch({ type: 'sit', actor, seat: 'bed' });
   else dispatch({ type: 'rest', actor });
-}
-
-function restLabel(state: World, actor: Actor) {
-  if (actor.resting) return 'Acordar';
-  return fixture(state, 'bed')?.room === state.room ? 'Deitar na cama' : 'Descansar';
 }

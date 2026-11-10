@@ -5,12 +5,15 @@ import { facadeLabel } from './facade-parts';
 import { floorCount } from '../domain/modules';
 import { drawOutdoorState } from './outdoor-effects';
 import { drawPlaza } from './plaza-art';
+import { drawPlazaGlow } from './plaza-glow';
+import type { ActorId } from '../domain/types';
 import { plotStart, streetWidth } from '../domain/neighborhood-geometry';
 import type Phaser from 'phaser';
 import type { Building, Neighborhood } from '../domain/neighborhood-types';
 import { palettes } from '../content/furnishings';
+import { hex } from './palette';
 
-export function drawStreet(scene: Phaser.Scene, town: Neighborhood) {
+export function drawStreet(scene: Phaser.Scene, town: Neighborhood, selected: ActorId) {
   const width = streetWidth(town.plots);
   const g = scene.add.graphics();
   g.fillStyle(0xe9f3ef).fillRect(-10000, -10000, width + 20000, 20600);
@@ -20,6 +23,7 @@ export function drawStreet(scene: Phaser.Scene, town: Neighborhood) {
   g.fillStyle(0x9eaeb0).fillRect(-10000, 565, width + 20000, 10000);
   g.lineStyle(2, 0xbcaf9d).lineBetween(0, 455, width, 455).lineBetween(0, 562, width, 562);
   drawPlaza(scene, town);
+  drawPlazaGlow(scene, town, selected);
   for (let plot = 0; plot < town.plots; plot++) {
     const b = town.buildings.find(b => b.plot === plot);
     if (b) facade(scene, b); else emptyPlot(scene, plot);
@@ -27,14 +31,18 @@ export function drawStreet(scene: Phaser.Scene, town: Neighborhood) {
   }
   drawOutdoorState(scene, town);
 }
+/** Free plot: a sign with a big "+" and a few bricks, kept in the left part of the plot so it stays whole on screen. */
 function emptyPlot(scene: Phaser.Scene, plot: number) {
-  const x = plotStart(plot) + 220;
+  const x = plotStart(plot) + 125;
   const g = scene.add.graphics();
-  g.fillStyle(0xe9edcf).fillRoundedRect(x - 170, 270, 340, 180, 16);
-  g.lineStyle(2, 0x9aa990).strokeRoundedRect(x - 170, 270, 340, 180, 16);
-  g.fillStyle(0xd4bda0).fillRect(x - 5, 340, 10, 100);
-  g.fillStyle(0xfff9e7).fillRoundedRect(x - 110, 302, 220, 68, 10);
-  scene.add.text(x, 335, '✦ Terreno livre\nToque em Construir', textStyle('sign', { fontSize: '18px', color: '#55635c', align: 'center' })).setOrigin(.5);
+  g.fillStyle(0xe9edcf).fillRoundedRect(plotStart(plot) + 40, 270, 360, 180, 16);
+  g.lineStyle(1.5, hex('outline')).strokeRoundedRect(plotStart(plot) + 40, 270, 360, 180, 16);
+  g.fillStyle(0xd4bda0).fillRoundedRect(x - 5, 360, 10, 80, 3);
+  g.fillStyle(hex('signBg')).fillRoundedRect(x - 85, 292, 170, 84, 12).lineStyle(1.5, hex('outline')).strokeRoundedRect(x - 85, 292, 170, 84, 12);
+  g.fillStyle(hex('leaf')).fillCircle(x, 322, 20).lineStyle(1.5, hex('outline')).strokeCircle(x, 322, 20);
+  g.fillStyle(0xffffff).fillRoundedRect(x - 11, 319, 22, 6, 3).fillRoundedRect(x - 3, 311, 6, 22, 3);
+  for (const [dx, dy] of [[70, 0], [104, 0], [87, -18]]) g.fillStyle(hex('coral')).fillRoundedRect(x + dx!, 418 + dy!, 32, 16, 4).lineStyle(1.5, hex('outline')).strokeRoundedRect(x + dx!, 418 + dy!, 32, 16, 4);
+  scene.add.text(x, 360, 'Terreno livre', textStyle('sign', { fontSize: '18px', color: '#55635c', align: 'center' })).setOrigin(.5);
 }
 function facade(scene: Phaser.Scene, b: Building) {
   const x = plotStart(b.plot);

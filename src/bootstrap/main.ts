@@ -26,10 +26,11 @@ import { sceneControls } from '../presentation/scene-controls';
 import { createShell } from '../presentation/shell';
 import { roomControls } from '../presentation/room-controls';
 import { addRoom, renameRoom } from '../domain/rooms';
-import type { Action, ActorId, Album, EditAction, World } from '../domain/types';
+import type { Action, ActorId, Album, EditAction } from '../domain/types';
 import { editWorld, history, recordEdit } from '../domain/design';
 import { createEditorControls } from '../presentation/editor-controls';
 import { createBuildGesture } from '../presentation/build-gesture';
+import { dragPreview, settleMove } from '../presentation/build-preview';
 import Phaser from 'phaser';
 import { loadFonts } from '../presentation/text-style';
 import { transition } from '../domain/world';
@@ -58,14 +59,12 @@ let wardrobeOpen = false;
 let cancelInput = () => {};
 let cancelGame = () => {};
 let view: ReturnType<typeof viewport> | undefined;
-const wardrobeButton = root.querySelector<HTMLButtonElement>('#wardrobe-toggle')!;
 const shell = createShell(root, () => cancelInput());
 const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected }), announce = feedback.announce, progress = edgeProgress(root);
 function toggleWardrobe() { cancelGame(); wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
 function openLooks() { closeWardrobe(); shell.looks(); }
-wardrobeButton.addEventListener('click', openLooks);
-const controls = createControls(root, action => play.perform(action), id => play.select(id), () => state, () => building, item => neighborhood.carryItem(item), () => doors(town).length > 0);
+const controls = createControls(root, action => play.perform(action), id => play.select(id), () => state, () => building, item => neighborhood.carryItem(item), () => doors(town).length > 0, { looks: openLooks, games: () => games.open() });
 const accessibleScene = sceneControls(root, id => { selectedPiece = id; refresh(); }, action => play.perform(action), toggleWardrobe);
 const rooms = roomControls(root, {
   enter: room => dispatch({ type: 'room', room }),
@@ -87,14 +86,15 @@ const editor = createEditorControls(root, {
   house: id => townDispatch({ type: 'visit', location: { kind: 'interior', building: id, room: town.buildings.find(b => b.id === id)!.entry } }),
   duplicate: empty => { if (empty) newBuilding(); else townDispatch({ type: 'duplicate', building: albumView().active }); },
   rename: name => townDispatch({ type: 'facade', building: albumView().active, name }),
+  blink: kind => scene.blinkPiece(kind),
 });
 const walker = walking({ reject: point => feedback.refuse(refusal('walk', ''), { x: point.x, y: point.y - 40 }), state: () => state, selected: () => selected, preview: (id, point) => { scene.previewActor(id, point); if (point) view?.follow({ ...point, x: point.x - camera }); },
-  commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), hint: () => {} });
+  commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), face: (actor, point) => scene.face(actor, point), hint: () => {} });
 const games = childGames(root, { world: () => state, selected: () => selected, prepare: () => { walker.cancel(); cancelInput(); closeWardrobe(); shell.close(); view?.resume(); }, stopWalk: () => walker.cancel(), walk: walker.start, commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), preview: value => scene.previewGame(value), follow: point => view?.follow(point) });
 cancelGame = games.cancel;
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse });
 const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse });
-const outside = outdoorControls(root, square.use, () => townDispatch({ type: 'outdoor', actor: selected, target: 'leave' }));
+const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, selected: () => selected, construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
 const neighborhood = neighborhoodControls(root, () => town, townDispatch, () => selected, () => root.querySelector<HTMLDialogElement>('#room-dialog')!.close(), dx => { camera = Math.max(0, Math.min(streetWidth(town.plots) - 1000, camera + dx)); scene.camera(camera); positionTargets(root); }, id => structure.open(id));
@@ -163,10 +163,12 @@ function previewTown(action: NeighborhoodAction | null) {
   scene.neighborhood(preview); scene.paint(localWorld(preview), selected);
 }
 function previewBuild(action: EditAction | null) {
-  const preview: World = action ? editWorld(state, action) : state;
-  scene.previewLayout(preview);
-  if (action?.type === 'move') scene.placementHint(action.point, preview === state);
-  else scene.placementHint(null, false);
+  const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
+  scene.previewLayout(preview.world); scene.placementHint(action?.type === 'move' ? action.id : null, preview.invalid);
+}
+function dropPiece(action: EditAction) {
+  if (action.type !== 'move') { applyEdit(action); return; }
+  applyEdit(settleMove(state, action) ?? action); scene.slidePiece(action.id, action.point);
 }
 function refresh() {
   camera = Math.min(camera, streetWidth(town.plots) - 1000);
@@ -212,8 +214,8 @@ void loadFonts().then(() => { game = new Phaser.Game({
     new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); view?.render(); }).observe(root.querySelector('#world')!);
     renderControls();
     cancelInput = bindInput(current.canvas, () => scene.visibleWorld(), play.select, point => dispatch({ type: 'move', actor: selected, point }), {
-      walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) square.use(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, selected: () => selected, poke: id => { root.classList.add('actor-chosen'); feedback.poke(id); }, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
-    }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, applyEdit, point => scene.pickPiece(point), () => screenScale(current.canvas)) }, {
+      walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) square.use(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, selected: () => selected, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point),
+    }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, dropPiece, point => scene.pickPiece(point), () => screenScale(current.canvas)) }, {
       view: { background: p => { const world = scene.visibleWorld(); return building ? !scene.pickPiece(p) : !sourceAt(world, p, wardrobeOpen) && !actorAt(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
         if (state.streetWidth) { camera = Math.max(0, Math.min(state.streetWidth - 1000, camera - dx / screenScale(current.canvas))); scene.camera(camera); }
         view?.pan(state.streetWidth ? 0 : dx, dy);

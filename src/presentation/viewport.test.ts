@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { framing, screenToWorld, viewport, worldToScreen } from './viewport';
-it('acomoda o cômodo inteiro em retrato sem deformar', () => {
+it('acomoda o cômodo inteiro em retrato sem deformar e sem faixa vazia acima do teto', () => {
   const view = framing(768, 1024, 1000, { x: 500, y: 300 });
   expect(view.scale).toBeCloseTo(.768);
   expect(view.x).toBe(0);
-  expect(view.y).toBeCloseTo((600 - 1024 / .768) / 2);
+  expect(view.y).toBe(0);
 });
 it('acomoda o cômodo inteiro em paisagem', () => {
   const view = framing(1400, 700, 1000, { x: 900, y: 580 });

@@ -18,7 +18,8 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
   const list = document.createElement('section'); list.id = 'neighborhood-list';
   const title = document.createElement('h3'); title.textContent = 'Nosso bairro';
   root.querySelector('[data-home-panel="map organize"]')!.append(title, list);
-  const carry = button('♧ Levar pela porta', () => carryDialog(root, get(), { actor: selected() }, dispatch));
+  const carry = button('Levar pela porta', () => carryDialog(root, get(), { actor: selected() }, dispatch));
+  carry.classList.add('illustrated'); carry.style.setProperty('--button-icon', "url('/icons/ui-panel-door.svg')");
   root.querySelector('#actor-context')!.append(carry);
   const accessible = document.createElement('div'); accessible.className = 'scene-controls'; root.append(accessible);
   const plotDialog = document.createElement('dialog'); plotDialog.id = 'plot-dialog'; root.append(plotDialog);

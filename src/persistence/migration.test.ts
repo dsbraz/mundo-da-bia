@@ -11,7 +11,7 @@ it('migra a brincadeira v1 preservando roupa, posições e objetos nas mãos', (
     items: state.items.map(item => Object.fromEntries(Object.entries(item).filter(([key]) => key !== 'spot'))),
   };
   const migrated = decode(JSON.stringify({ version: 1, state: legacy }));
-  expect(migrated).toEqual({ ...state, show: true, items: state.items.map(item => ({ ...item, spot: 'floor' })) });
+  expect(migrated).toEqual({ ...state, show: true, actors: state.actors.map(actor => ({ ...actor, seat: null })), items: state.items.map(item => ({ ...item, spot: 'floor' })) });
   expect(JSON.parse(encode(migrated)).version).toBe(4);
 });
 

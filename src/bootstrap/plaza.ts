@@ -19,9 +19,16 @@ export function plaza(deps: Plaza) {
     const selected = deps.selected();
     if (target.target === 'bench' || target.target === 'swing') {
       const occupant = deps.town().outdoor[target.target];
+      if (occupant === selected) { leave(selected); return; }
       if (occupant && occupant !== selected) { deps.refuse(refusal('outdoor', nameOf(deps.town().actors.find(a => a.id === occupant)!)), { x: target.point.x, y: target.point.y - 60 }); return; }
     }
     deps.walker.start({ x: target.point.x, y: 510 }, () => play(selected, target));
   }
-  return { drop, use };
+  /** The selected actor sitting on plaza equipment gets down when it (or the equipment) is tapped again. */
+  function leave(actor: ActorId) {
+    const outdoor = deps.town().outdoor;
+    if (actor !== deps.selected() || (outdoor.bench !== actor && outdoor.swing !== actor)) return false;
+    deps.dispatch({ type: 'outdoor', actor, target: 'leave' }); return true;
+  }
+  return { drop, use, leave };
 }

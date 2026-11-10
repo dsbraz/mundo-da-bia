@@ -3,14 +3,11 @@ import type { GameKind } from '../domain/child-games';
 import type { Point } from '../domain/types';
 
 export function gameControls(root: HTMLElement, actions: { start: (kind: GameKind) => void; jump: (cell?: number) => void; cancel: () => void; tap: (point: Point) => void }) {
-  const open = document.createElement('button'); open.id = 'games-toggle'; open.textContent = 'Brincadeiras'; open.className = 'illustrated';
-  root.querySelector('#actor-context')!.append(open);
   const chooser = document.createElement('dialog'); chooser.id = 'game-chooser'; chooser.setAttribute('aria-labelledby', 'game-title');
   chooser.innerHTML = '<h2 id="game-title">Vamos brincar?</h2><p>Escolha uma criança com as mãos livres. Use um cômodo ou quintal com espaço no chão.</p><div class="game-choices"><button data-game="rope">Pular corda</button><button data-game="hopscotch">Amarelinha</button></div><p id="game-choice-message" role="status"></p><button id="game-close">Voltar</button>';
   const panel = document.createElement('section'); panel.id = 'game-panel'; panel.hidden = true; panel.setAttribute('aria-label', 'Brincadeira em andamento');
   panel.innerHTML = '<h2 id="game-name"></h2><p id="game-instruction"></p><p id="game-cue" aria-hidden="true"></p><p id="game-message" role="status"></p><button id="game-jump">Pular</button><button id="game-restart" hidden>Brincar de novo</button><button id="game-stop">Encerrar brincadeira</button>';
   root.append(chooser, panel);
-  open.onclick = () => { actions.cancel(); chooser.querySelector('#game-choice-message')!.textContent = ''; chooser.showModal(); };
   chooser.querySelector<HTMLButtonElement>('#game-close')!.onclick = () => chooser.close();
   chooser.querySelectorAll<HTMLButtonElement>('[data-game]').forEach(b => { b.onclick = () => actions.start(b.dataset.game as GameKind); });
   panel.querySelector<HTMLButtonElement>('#game-stop')!.onclick = actions.cancel;
@@ -22,6 +19,8 @@ export function gameControls(root: HTMLElement, actions: { start: (kind: GameKin
   const resetContact = bindGameTaps(root, panel, actions.tap);
   root.querySelector('#map-toggle')!.addEventListener('click', actions.cancel);
   return {
+    /** Opened by the panel's "Brincar" button. */
+    open() { actions.cancel(); chooser.querySelector('#game-choice-message')!.textContent = ''; chooser.showModal(); },
     error(message: string) { chooser.querySelector('#game-choice-message')!.textContent = message; },
     start(kind: GameKind) {
       chooser.close(); panel.hidden = false; panel.dataset.kind = kind; panel.dataset.phase = 'walking'; root.classList.add('playing-game');
@@ -35,7 +34,7 @@ export function gameControls(root: HTMLElement, actions: { start: (kind: GameKin
       if (status.textContent !== message) status.textContent = message;
       if (rhythm.textContent !== cue) rhythm.textContent = cue;
     },
-    close() { resetContact(); panel.hidden = true; root.classList.remove('playing-game'); if (panel.contains(document.activeElement)) open.focus(); },
+    close() { resetContact(); panel.hidden = true; root.classList.remove('playing-game'); if (panel.contains(document.activeElement)) root.querySelector<HTMLButtonElement>('#actions [data-slot=play]')?.focus(); },
   };
 }
 function bindGameKeys(panel: HTMLElement, jump: HTMLButtonElement, actions: { jump: () => void; cancel: () => void }) {

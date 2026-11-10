@@ -83,3 +83,17 @@ describe('brincadeira', () => {
     expect(transition(gathered, { type: 'pick', actor: 'bia', item: 'lanche' }).state).toEqual(gathered);
   });
 });
+describe('posições iniciais de saves novos', () => {
+  it('espalha a turma sem sobreposição: alguém no sofá, alguém perto do microfone e gatos separados', () => {
+    const world = initialWorld(), standing = world.actors.filter(a => !a.seat);
+    expect(world.actors.map(a => [a.id, a.x, a.y, a.seat])).toEqual([
+      ['bia', 520, 530, null], ['luna', 245, 405, 'sofa-right'], ['leo', 740, 530, null], ['rui', 930, 530, null],
+      ['mimi', 100, 540, null], ['nino', 830, 540, null], ['pipoca', 390, 540, null],
+    ]);
+    for (const a of standing) for (const b of standing) if (a !== b) expect(Math.abs(a.x - b.x)).toBeGreaterThanOrEqual(90);
+    const stage = world.layout.pieces.find(p => p.kind === 'stage')!;
+    expect(standing.some(a => a.kind === 'human' && a.x >= stage.x)).toBe(true);
+    const food = world.items.filter(i => i.spot === 'fridge').map(i => i.x);
+    expect(standing.filter(a => food.some(x => Math.abs(a.x - x) <= 50))).toEqual([]);
+  });
+});

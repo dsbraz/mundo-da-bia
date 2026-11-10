@@ -30,6 +30,7 @@ export function seatAt(state: World, p: Point) {
     return seat && seat.room === state.room && Math.abs(seat.x - p.x) <= 45 && Math.abs(seat.y - p.y) <= 55;
   });
 }
+export function stageHit(state: World, p: Point) { return hit(state, 'stage', p, 830, 80, 170, 340); }
 export function wardrobeHit(state: World, p: Point) { return hit(state, 'wardrobe', p, 305, 150, 195, 195); }
 
 export function usableAt(state: World, point: Point) {

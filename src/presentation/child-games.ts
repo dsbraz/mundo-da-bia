@@ -68,5 +68,5 @@ export function childGames(root: HTMLElement, actions: Actions) {
     actions.follow(gamePosition(session, now, reducedMotion()));
     frame = requestAnimationFrame(tick);
   }
-  return { cancel };
+  return { cancel, open: view.open };
 }

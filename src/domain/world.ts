@@ -10,12 +10,17 @@ import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
 
+// New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart.
+const start: readonly Pick<Actor, 'x' | 'y' | 'seat'>[] = [
+  { x: 520, y: 530, seat: null }, { x: 245, y: 405, seat: 'sofa-right' }, { x: 740, y: 530, seat: null }, { x: 930, y: 530, seat: null },
+  { x: 100, y: 540, seat: null }, { x: 830, y: 540, seat: null }, { x: 390, y: 540, seat: null },
+];
 export function initialWorld(): World {
   return {
     room: 'sala', show: false, layout: initialLayout(), home: { lamp: true, fridge: true, drawer: false },
     actors: actorIds.map((id, index) => ({
       id, kind: index < 4 ? 'human' : 'cat', room: 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol'] as const)[index]!,
-      x: [520, 440, 755, 880, 600, 710, 835][index]!, y: index < 4 ? 530 : 540, fed: false, resting: false, seat: null,
+      ...start[index]!, fed: false, resting: false,
     })),
     items: itemIds.map((id, index) => ({ id, room: 'sala', holder: null, spot: index < 2 ? 'fridge' : 'floor',
       x: [680, 680, 600, 350][index]!, y: [310, 360, 430, 410][index]! })),

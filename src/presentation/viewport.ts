@@ -3,7 +3,9 @@ import { followElapsed, followFactor } from './motion';
 const clamp = (value: number, maximum: number) => Math.max(0, Math.min(maximum, value));
 export function framing(width: number, height: number, worldWidth: number, center: Point) {
   const scale = Math.min(width / Math.min(worldWidth, 1000), height / 600);
-  return { scale, x: offset(center.x, worldWidth, width / scale), y: offset(center.y, 600, height / scale) };
+  const visibleHeight = height / scale;
+  // Extra height goes below the floor (it keeps extending); the ceiling sits on the top edge, with no empty band above it.
+  return { scale, x: offset(center.x, worldWidth, width / scale), y: visibleHeight >= 600 ? 0 : offset(center.y, 600, visibleHeight) };
 }
 function offset(center: number, world: number, visible: number) {
   return visible >= world ? (world - visible) / 2 : clamp(center - visible / 2, world - visible);

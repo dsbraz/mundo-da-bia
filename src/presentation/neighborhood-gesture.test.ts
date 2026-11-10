@@ -5,6 +5,7 @@ import { initialAlbum } from '../domain/houses';
 import { localWorld, migrateNeighborhood } from '../domain/neighborhood';
 import { createPlayGesture } from './play-gesture';
 import { houseInput } from './house-input';
+import { plotStart } from '../domain/neighborhood-geometry';
 afterEach(() => vi.useRealTimers());
 function setup(building = false) {
   vi.useFakeTimers();
@@ -76,4 +77,16 @@ it('um equipamento visível diante da porta recebe o clique em Brincar', () => {
   const point = { x: 550, y: 300 }; gesture.start(1, point); gesture.end(1, point);
   expect(base.start).toHaveBeenCalledExactlyOnceWith(1, point);
   expect(base.end).toHaveBeenCalledExactlyOnceWith(1, point); expect(dispatch).not.toHaveBeenCalled();
+});
+it('no modo brincar, tocar no terreno livre abre o seletor de construção; o chão da rua continua andando', () => {
+  vi.useFakeTimers();
+  const town = { ...migrateNeighborhood(initialAlbum(initialWorld())), location: { kind: 'street' as const } };
+  const world = localWorld(town), plot = vi.fn(), base = { start: vi.fn(() => true), update: vi.fn(), end: vi.fn(), cancel: vi.fn() };
+  const gesture = neighborhoodGesture(base, { town: () => town, world: () => world, building: () => false, dispatch: vi.fn(), preview: vi.fn(), progress: vi.fn(), plot });
+  const sign = { x: plotStart(2) + 125, y: 330 };
+  gesture.start(1, sign); gesture.end(1, sign);
+  expect(plot).toHaveBeenCalledExactlyOnceWith(2); expect(base.end).not.toHaveBeenCalled();
+  gesture.start(2, { x: plotStart(2) + 150, y: 520 }); gesture.end(2, { x: plotStart(2) + 150, y: 520 });
+  gesture.start(3, { x: plotStart(0) + 150, y: 330 }); gesture.end(3, { x: plotStart(0) + 150, y: 330 });
+  expect(plot).toHaveBeenCalledOnce(); expect(base.end).toHaveBeenCalledTimes(2);
 });

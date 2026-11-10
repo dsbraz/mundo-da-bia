@@ -86,8 +86,8 @@ it('devolve ambas comidas à geladeira e permite guardar objetos da mão', () =>
 
 it('sentar novamente no próprio lugar é válido e não afeta os demais', () => {
   const before = initialWorld();
-  const seated = transition(before, { type: 'sit', actor: 'bia', seat: 'sofa-right' }).state;
-  expect(seated.actors[0]).toMatchObject({ seat: 'sofa-right', x: 245, y: 405, room: 'sala', resting: false });
+  const seated = transition(before, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  expect(seated.actors[0]).toMatchObject({ seat: 'sofa-left', x: 150, y: 405, room: 'sala', resting: false });
   expect(seated.actors.slice(1)).toEqual(before.actors.slice(1));
-  expect(transition(seated, { type: 'sit', actor: 'bia', seat: 'sofa-right' }).state).toEqual(seated);
+  expect(transition(seated, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state).toEqual(seated);
 });

@@ -3,11 +3,11 @@ import { ready, read, tray, closeTray, drag, tap, onPiece } from './helpers';
 test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message)); await ready(page);
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Lanche', exact: true }).click(); await closeTray(page);
-  await page.getByRole('button', { name: 'Oferecer comida' }).click(); expect((await read(page)).actors[0]!.fed).toBe(true);
+  await page.getByRole('button', { name: 'Comer', exact: true }).click(); expect((await read(page)).actors[0]!.fed).toBe(true);
   await tray(page, 'Looks'); await page.getByRole('button', { name: 'Festa' }).click();
   await tray(page, 'Turma'); await page.getByRole('button', { name: 'Mimi', exact: true }).click();
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Comidinha de gato' }).click(); await closeTray(page);
-  await page.getByRole('button', { name: 'Oferecer comida' }).click(); await page.getByRole('button', { name: 'Descansar' }).click();
+  await page.getByRole('button', { name: 'Comer', exact: true }).click(); await page.getByRole('button', { name: 'Descansar', exact: true }).click();
   const state = await read(page); expect(state.actors[4]).toMatchObject({ fed: true, resting: true });
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await read(page)).toEqual(state); expect(errors).toEqual([]);
 });
@@ -21,7 +21,7 @@ test('móveis, alimentação e guardar objeto continuam respondendo na cena', as
   await ready(page); await drag(page, [520, 420], [150, 405]); expect((await read(page)).actors[0]!.seat).toBe('sofa-left');
   await drag(page, await onPiece(page, 'fridge', 680, 282), await onPiece(page, 'table', 260, 450)); expect((await read(page)).items[0]!.spot).toBe('table');
   await drag(page, await onPiece(page, 'table', 260, 447), [150, 350]); expect((await read(page)).actors[0]!.fed).toBe(true);
-  await drag(page, await onPiece(page, 'fridge', 680, 332), [600, 490]); expect((await read(page)).actors[4]!.fed).toBe(true);
+  await drag(page, await onPiece(page, 'fridge', 680, 332), [105, 515]); expect((await read(page)).actors[4]!.fed).toBe(true);
   await tap(page, ...await onPiece(page, 'wardrobe', 380, 365)); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(true);
   await drag(page, [350, 382], await onPiece(page, 'wardrobe', 355, 370)); expect((await read(page)).items[3]!.spot).toBe('drawer');
   await tap(page, ...await onPiece(page, 'wardrobe', 320, 390)); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(false);
@@ -34,9 +34,9 @@ test('microfone e luminária respondem com as ações recolhidas', async ({ page
   await tap(page, ...await onPiece(page, 'lamp', 60, 200)); await expect.poll(async () => (await read(page)).home.lamp).toBe(false);
 });
 test('cancelar objeto e arrastar para o chão mantém identidade e quantidade', async ({ page }) => {
-  await ready(page); const before = await read(page); await drag(page, [350, 382], [935, 430], true); expect(await read(page)).toEqual(before);
-  await drag(page, [350, 382], [935, 430]); const state = await read(page); expect(state.items).toHaveLength(4);
-  expect(state.items[3]).toMatchObject({ id: '1:ursinho', holder: null, spot: 'floor' }); expect(state.items[3]!.x).toBeCloseTo(935);
+  await ready(page); const before = await read(page); await drag(page, [350, 382], [640, 430], true); expect(await read(page)).toEqual(before);
+  await drag(page, [350, 382], [640, 430]); const state = await read(page); expect(state.items).toHaveLength(4);
+  expect(state.items[3]).toMatchObject({ id: '1:ursinho', holder: null, spot: 'floor' }); expect(state.items[3]!.x).toBeCloseTo(640);
 });
 test('uma bandeja por vez, teclado, toque e orientações de tablet', async ({ page }) => {
   await ready(page);
@@ -54,8 +54,25 @@ test('os 16 looks da Bia e roupas arrastadas para outro humano funcionam', async
   const buttons = page.locator('#looks button');
   for (let index = 0; index < 16; index++) { await buttons.nth(index).click(); await expect(buttons.nth(index)).toHaveAttribute('aria-pressed', 'true'); }
   await buttons.first().scrollIntoViewIfNeeded();
-  const source = (await buttons.first().boundingBox())!; const target = await import('./helpers').then(h => h.point(page, 440, 420));
+  const source = (await buttons.first().boundingBox())!; const target = await import('./helpers').then(h => h.point(page, 245, 330));
   await page.mouse.move(source.x + 25, source.y + 25); await page.mouse.down(); await page.mouse.move(target.x, target.y, { steps: 10 }); await page.mouse.up();
   expect((await read(page)).actors[1]!.look).toBe('sol');
   await closeTray(page); await page.screenshot({ path: 'reports/atelier-bia.png' });
+});
+test('o painel tem cinco botões de ícone fixos que não mudam de lugar ao pegar e soltar', async ({ page }) => {
+  await ready(page); await tap(page, 520, 420);
+  const panel = page.locator('#actions button');
+  const boxes = async () => Promise.all((await panel.all()).map(b => b.boundingBox()));
+  await expect(panel).toHaveCount(5);
+  expect(await panel.allTextContents()).toEqual(['Vestir', 'Brincar', 'Descansar', 'Soltar', 'Comer']);
+  for (const button of await panel.all()) await expect(button.locator('img')).toHaveAttribute('src', /\.svg$/);
+  await expect(page.locator('#actor-context')).not.toContainText('Pronto para');
+  const before = await boxes(); await page.locator('#actions').screenshot({ path: 'reports/panel-before.png' });
+  await expect(page.getByRole('button', { name: 'Soltar', exact: true })).toBeDisabled();
+  await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Lanche', exact: true }).click(); await closeTray(page);
+  await expect(page.getByRole('button', { name: 'Comer', exact: true })).toBeEnabled();
+  expect(await boxes()).toEqual(before); await page.locator('#actions').screenshot({ path: 'reports/panel-holding.png' });
+  await page.getByRole('button', { name: 'Soltar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Soltar', exact: true })).toBeDisabled();
+  expect(await boxes()).toEqual(before); await page.locator('#actions').screenshot({ path: 'reports/panel-after.png' });
 });

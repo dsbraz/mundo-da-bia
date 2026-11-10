@@ -8,7 +8,7 @@ import { explore } from './helpers';
 test.use({ video: 'on' });
 test.beforeEach(async ({ page }) => {
   const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
-  world.actors = world.actors.map(a => ({ ...a, room: a.id === 'bia' ? 'sala' : 'quarto', x: 400, y: 530 }));
+  world.actors = world.actors.map(a => ({ ...a, room: a.id === 'bia' ? 'sala' : 'quarto', x: 400, y: 530, seat: null }));
   world.items = world.items.map((i, n) => ({ ...i, room: 'sala', spot: 'floor', x: n === 3 ? 700 : 400 + n * 80, y: n === 3 ? 530 : 300 }));
   const saved = encodeNeighborhood(migrateNeighborhood(initialAlbum(world)));
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, saved);
@@ -47,7 +47,7 @@ test('walk, pick up, sit, leave, travel, drop and reload preserve the object', a
   await explore(page);
   await page.getByRole('button', { name: 'Levar Bia', exact: true }).click();
   await page.getByRole('button', { name: 'Quarto dos sonhos · Térreo', exact: true }).click();
-  await page.getByRole('button', { name: 'Soltar objeto', exact: true }).click();
+  await page.getByRole('button', { name: 'Soltar', exact: true }).click();
   const state = await read(page); expect(state.room).toBe('quarto');
   expect(state.items.find(i => i.id.endsWith('ursinho'))).toMatchObject({ holder: null, room: 'quarto' });
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await read(page)).toEqual(state);
@@ -61,4 +61,10 @@ test('an occupied hand explains the refusal and cancels an older destination', a
   await expect(page.locator('canvas')).toHaveAttribute('data-said', 'Mãos cheias! Larga um antes.');
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');
   expect((await read(page)).items.filter(i => i.holder === 'bia').map(i => i.id)).toEqual(['1:ursinho']);
+});
+test('tapping the wall walks to the baseboard instead of refusing', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await tap(page, 700, 150);
+  await expect.poll(async () => { const a = (await read(page)).actors[0]!; return [Math.round(a.x), a.y]; }).toEqual([700, 280]);
+  await expect(page.locator('canvas')).not.toHaveAttribute('data-said', /.+/);
 });

@@ -3,11 +3,12 @@ import { seatPoint } from '../domain/furniture';
 import { roomWidth } from '../domain/geometry';
 import type { Action, ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
-import { furnitureAt, seatAt, usableAt, wardrobeHit } from './furniture-targets';
+import { furnitureAt, seatAt, stageHit, usableAt, wardrobeHit } from './furniture-targets';
 export function equipmentAction(world: World, actor: ActorId, point: Point): Action | 'wardrobe' | null {
   if (wardrobeHit(world, point)) return 'wardrobe';
   const seat = seatAt(world, point); if (seat) return { type: 'sit', actor, seat };
   const target = furnitureAt(world, point); if (target) return { type: 'interact', target };
+  if (stageHit(world, point)) return { type: 'show' };
   const piece = usableAt(world, point); return piece ? { type: 'use', id: piece.id } : null;
 }
 export function approach(world: World, actor: ActorId, action: Action): Point | null {

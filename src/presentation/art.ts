@@ -3,6 +3,8 @@ import { textStyle } from './text-style';
 import { actorScale, settlePose, contextScale } from './pose';
 import Phaser from 'phaser';
 import { applyReaction } from './feedback';
+import { drawSelection } from './selection-art';
+import { selectionPulse } from './motion';
 import { actors } from '../content/catalog';
 import type { Actor } from '../domain/types';
 
@@ -10,7 +12,6 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
   const labelX = actor.seat === 'bed' ? -80 : 0;
   const shadow = scene.add.ellipse(labelX, 2, actor.seat === 'bed' ? 140 : 56, 7, 0x716858, 0.08);
-  if (selected) shadow.setStrokeStyle(3, 0xffefb7);
   shadow.setScale(contextScale(context));
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
@@ -23,7 +24,7 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   heroLayer(scene, pose, actor, 'front');
   animateActor(container, actor, 500, 0, false);
   coverActor(scene, container, actor);
-  if (selected) container.add(scene.add.text(labelX, 22, actorLabel(actor), textStyle('label')).setOrigin(0.5));
+  if (selected) drawSelection(scene, container, actor, actorLabel(actor), context);
   if (actor.resting) container.add(scene.add.text(actor.seat === 'bed' ? -175 : 24, actor.seat === 'bed' ? -60 : -185, 'z z Z', textStyle('mark')));
   if (actor.fed) container.add(scene.add.text(-48, -100, '♥', textStyle('heart')));
   return container;
@@ -46,6 +47,11 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   pose.setData('restingAngle', restingAngle);
   pose.rotation = restingAngle + danceAngle(time, index, show && !actor.resting);
   applyReaction(figure, pose);
+  pulseStar(figure, time, reduced);
+}
+function pulseStar(figure: Phaser.GameObjects.Container, time: number, reduced: boolean) {
+  const star = figure.getByName<Phaser.GameObjects.Graphics>('selection-star');
+  star?.setScale(selectionPulse(time, reduced) * star.getData('base'));
 }
 function danceAngle(time: number, index: number, dancing: boolean) { return dancing ? Math.sin(time / 220 + index) * 0.06 : 0; }
 
@@ -109,4 +115,9 @@ export function walkPose(figure: Phaser.GameObjects.Container, distance: number,
     const stride = Math.sin(phase + Number(leg.getData('side')) * Math.PI);
     leg.y = 60 - Math.max(0, stride) * 8; leg.x = stride * 3;
   });
+}
+export function gazePose(figure: Phaser.GameObjects.Container, direction: number) {
+  const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
+  pose.getByName<Phaser.GameObjects.Image>('eyes').setX(direction * 2);
+  pose.getByName<Phaser.GameObjects.Image>('lids').setX(direction * 2);
 }

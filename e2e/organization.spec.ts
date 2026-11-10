@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ready, read, readTown, create, closeTray } from './helpers';
+import { ready, read, readTown, create, closeTray, point, tray } from './helpers';
 
 test('brincadeira tem três entradas e edição abre o catálogo sem outra procura', async ({ page }) => {
   await ready(page);
@@ -75,6 +75,9 @@ for (const width of [390, 768]) test(`organização mantém controles acessívei
   await page.getByRole('button', { name: 'Cozinha', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Adicionar Pia de cozinha', exact: true })).toBeVisible();
   await page.screenshot({ path: `reports/organization-catalog-${width}.png` });
+  const undo = (await page.locator('#undo').boundingBox())!;
+  expect([undo.width, undo.height]).toEqual([56, 56]); expect(undo.x).toBeGreaterThanOrEqual(0); expect(undo.y + undo.height).toBeLessThanOrEqual(1024);
+  expect(await page.locator('.catalog-categories').evaluate(n => n.scrollWidth <= n.clientWidth)).toBe(true);
   await page.locator('#map-toggle').click();
   expect(await page.locator('#room-dialog').evaluate(n => n.scrollWidth <= n.clientWidth)).toBe(true);
   await page.screenshot({ path: `reports/organization-map-${width}.png` });
@@ -120,4 +123,20 @@ test('arraste na borda revela terrenos em retrato e Escape não muda a casa', as
   await expect.poll(async () => Number(await canvas.getAttribute('data-camera-x'))).toBeGreaterThan(camera + 80);
   await page.screenshot({ path: 'reports/organization-house-drag-768.png' });
   await page.keyboard.press('Escape'); await page.mouse.up(); expect(await readTown(page)).toEqual(before);
+});
+
+test('arrumar sem briga: o sofá segue o dedo sobre a geladeira, encosta ao lado ao soltar e a peça repetida pisca na cena', async ({ page }) => {
+  await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' }); await page.locator('#build-toggle').click(); await closeTray(page);
+  const before = await read(page), sofa = before.layout.pieces.find(p => p.kind === 'sofa')!, fridge = before.layout.pieces.find(p => p.kind === 'fridge')!;
+  const from = await point(page, sofa.x + 135, sofa.y + 85), to = await point(page, fridge.x + 15, fridge.y + 110);
+  await page.mouse.move(from.x, from.y); await page.mouse.down(); await page.mouse.move(to.x, to.y, { steps: 8 });
+  await expect(page.locator('canvas')).toHaveAttribute('data-invalid-piece', String(sofa.id));
+  await page.mouse.up();
+  const moved = (await read(page)).layout.pieces.find(p => p.id === sofa.id)!;
+  expect(moved).not.toMatchObject({ x: sofa.x, y: sofa.y });
+  expect(Math.hypot(moved.x - (fridge.x - 120), moved.y - (fridge.y + 25))).toBeLessThan(260);
+  await expect(page.locator('canvas')).toHaveAttribute('data-invalid-piece', '');
+  await tray(page, 'Todos'); await page.getByRole('button', { name: 'Adicionar Geladeira', exact: true }).click();
+  await expect(page.locator('canvas')).toHaveAttribute('data-blink', 'fridge');
+  expect((await read(page)).layout.pieces.filter(p => p.kind === 'fridge' && p.room === 'sala')).toHaveLength(1);
 });

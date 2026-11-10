@@ -51,7 +51,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
       if (backgroundTap(a, point)) {
         const door = doorAt(actions.town(), point);
         if (door && !actions.building()) { cancel(); actions.dispatch({ type: 'visit', location: door.location }); return; }
-        if (actions.building() && actions.town().location.kind === 'street') { cancel(); actions.plot(plotAt(point.x)); return; }
+        if (plotTap(actions, point)) { cancel(); actions.plot(plotAt(point.x)); return; }
       }
       base.end(id, point); cancel();
     }, cancel, transferring: () => active?.ready ?? false,
@@ -69,6 +69,14 @@ function startBase(active: Active, point: Point, actions: Actions) {
   return actions.building() || active.claimed || !doorAt(actions.town(), point) || active.actor || active.item;
 }
 
+/** On the street, Create mode picks any plot; Play mode only answers on a free plot's ground and sign. */
+function plotTap(actions: Actions, point: Point) {
+  const town = actions.town();
+  if (town.location.kind !== 'street') return false;
+  if (actions.building()) return true;
+  const plot = plotAt(point.x);
+  return plot >= 0 && plot < town.plots && point.y >= 270 && point.y <= 455 && !town.buildings.some(b => b.plot === plot);
+}
 function claimed(world: VisibleWorld, point: Point, token: ReturnType<typeof sourceAt>) {
   return !!token || (world.occludingDepth?.(point) ?? 0) > 150;
 }

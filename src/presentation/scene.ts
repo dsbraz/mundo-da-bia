@@ -18,11 +18,11 @@ import { roomPreview } from './room-preview';
 import { enterRoom } from '../domain/room-state';
 import type { RoomId, ItemId } from '../domain/types';
 import { itemIds } from '../domain/types';
-import type { Actor, ActorId, Point, PresentationEvent, World } from '../domain/types';
+import type { Actor, ActorId, Piece, Point, PresentationEvent, World } from '../domain/types';
 import { roomWidth } from '../domain/geometry';
 import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
-import { animateActor, drawActor, walkPose } from './art';
+import { animateActor, drawActor, gazePose, walkPose } from './art';
 import { drawRoom } from './room';
 import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
 import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
@@ -30,7 +30,8 @@ import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 import { pokeFigure, refuseAt } from './feedback';
 import type { ReactionPose } from '../content/personalities';
-import { reducedMotion } from './motion';
+import { reducedMotion, reducedFadeMs } from './motion';
+import { hex } from './palette';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
   previewGame(value: GamePreview | null) { this.gameArt?.paint(value); }
@@ -49,6 +50,7 @@ export class PlayScene extends Phaser.Scene {
   camera(x: number) { this.cameraX = x; if (this.ready) { this.cameras.main.scrollX = x + Number(this.game.canvas.dataset.viewX ?? 0); this.game.canvas.dataset.cameraX = String(x); } }
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
+  private gaze = new Map<ActorId, number>();
   private pieces = new Map<number, Phaser.GameObjects.Container>();
   private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
   private transferRoom: RoomId | null = null;
@@ -77,7 +79,7 @@ export class PlayScene extends Phaser.Scene {
     this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(state.streetWidth ? this.cameraX : 0);
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
-    if (state.streetWidth && this.town) drawStreet(this, this.town);
+    if (state.streetWidth && this.town) drawStreet(this, this.town, selected);
     else { drawRoom(this, state); this.exitDoor(); }
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
@@ -141,12 +143,17 @@ export class PlayScene extends Phaser.Scene {
   previewLayout(state: World) {
     state.layout.pieces.forEach(piece => this.pieces.get(piece.id)?.setPosition(piece.x, piece.y).setDepth(pieceDepth(piece)));
   }
-  placementHint(point: Point | null, invalid: boolean) {
-    this.hint?.clear();
-    if (!point || !invalid) return;
+  placementHint(id: number | null, invalid: boolean) {
+    this.hint?.clear(); this.game.canvas.dataset.invalidPiece = invalid && id !== null ? String(id) : '';
+    const target = id !== null && invalid ? this.pieces.get(id) : undefined; if (!target) return;
     if (!this.hint) this.hint = this.add.graphics().setDepth(999);
-    this.hint.lineStyle(3, 0xac665d).strokeCircle(point.x + 20, point.y + 20, 15);
-    this.hint.lineBetween(point.x + 10, point.y + 10, point.x + 30, point.y + 30);
+    const b = target.getBounds(); this.hint.lineStyle(3, hex('coral'), .9).strokeRoundedRect(b.x - 4, b.y - 4, b.width + 8, b.height + 8, 14);
+  }
+  slidePiece(id: number, from: Point) { const piece = this.pieces.get(id); if (piece && !reducedMotion()) this.tweens.add({ targets: piece, x: { from: from.x, to: piece.x }, y: { from: from.y, to: piece.y }, duration: 240, ease: 'Back.Out' }); }
+  blinkPiece(kind: Piece['kind']) {
+    const piece = this.world.layout.pieces.find(p => p.kind === kind && p.room === this.world.room), target = piece && this.pieces.get(piece.id); if (!target) return;
+    this.game.canvas.dataset.blink = kind; this.tweens.killTweensOf(target); target.setAlpha(1);
+    this.tweens.add({ targets: target, alpha: .35, duration: reducedMotion() ? reducedFadeMs : 160, yoyo: true, repeat: reducedMotion() ? 0 : 2, onComplete: () => target.setAlpha(1) });
   }
   previewActor(id: ActorId | null, point: Point | null) {
     const active = id ?? this.moving; if (!active) return;
@@ -167,7 +174,7 @@ export class PlayScene extends Phaser.Scene {
   }
   private trackSteps(figure: Phaser.GameObjects.Container | undefined, point: Point | null) {
     if (!figure || !point) return;
-    figure.setData('direction', Math.sign(point.x - figure.x));
+    figure.setData('direction', Math.sign(point.x - figure.x)); this.gaze.delete(figure.name as ActorId);
     figure.setData('distance', (figure.getData('distance') ?? 0) + Math.hypot(point.x - figure.x, point.y - figure.y));
   }
   walkToDoor(id: ActorId, x: number, duration: number): Promise<void> {
@@ -205,6 +212,7 @@ export class PlayScene extends Phaser.Scene {
     const target = piece && this.pieces.get(piece.id);
     if (target) { const bounds = target.getBounds(); this.hint.lineStyle(2, 0x477e86, .55).strokeRoundedRect(bounds.x, bounds.y, bounds.width, bounds.height, 8); }
   }
+  face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) this.gaze.set(id, Math.sign(point.x - actor.x)); }
   refuse(point: Point, text: string) { if (this.ready) refuseAt(this, point, text, this.figures.find(f => f.name === this.selected)); }
   poke(id: ActorId, pose: ReactionPose, line: string) {
     const figure = this.figures.find(f => f.name === id), actor = this.world.actors.find(a => a.id === id);
@@ -256,6 +264,7 @@ export class PlayScene extends Phaser.Scene {
     animateActor(figure, posed, reduced ? 500 : time, index, !reduced && this.world.show, reduced);
     const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
     if (this.moving === actor.id) walkPose(figure, figure.getData('distance') ?? 0, reduced, figure.getData('direction'));
+    else gazePose(figure, this.gaze.get(actor.id) ?? 0);
     this.animateSwing(pose, actor, time, reduced);
     const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
     this.world.items.filter(i => i.holder === actor.id).forEach(i => this.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));

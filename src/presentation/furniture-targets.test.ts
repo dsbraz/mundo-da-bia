@@ -6,6 +6,7 @@ import { initialWorld, transition } from '../domain/world';
 import { furnitureAt, seatAt, surfaceAt } from './furniture-targets';
 import { itemPoint, actorAt } from './targets';
 import { createPlayGesture } from './play-gesture';
+import { equipmentAction } from './equipment-interaction';
 
 const at = (kind: PieceKind, x: number, y: number) => visualPiecePoint(fixture(initialWorld(), kind, kind === 'bed' ? 'quarto' : 'sala')!, { x, y });
 
@@ -88,4 +89,9 @@ it('encaixa um brinquedo no centro do colo quando sentado', () => {
   let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
   state = transition(state, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
   expect(itemPoint(state, state.items[3]!)).toEqual({ x: 152.7, y: 373.3 });
+});
+it('tapping the stage starts the show from the scene, not from the panel', () => {
+  const world = initialWorld(), stage = world.layout.pieces.find(p => p.kind === 'stage')!;
+  expect(equipmentAction(world, 'bia', visualPiecePoint(stage, { x: 915, y: 150 }))).toEqual({ type: 'show' });
+  expect(equipmentAction(world, 'bia', { x: 500, y: 520 })).toBeNull();
 });
