@@ -77,6 +77,8 @@ test('bairro oferece arraste da casa, destino visível e cancelamento', async ({
 
 test('ampliar mostra o espaço escolhido no mapa antes de criar o cômodo', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
+  await expect(page.getByRole('button', { name: 'Adicionar cômodo · Térreo · espaço 4', exact: true })).toBeHidden();
+  await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   await page.getByRole('button', { name: 'Adicionar cômodo · Térreo · espaço 4', exact: true }).click();
   await page.getByRole('button', { name: 'Criar Cozinha', exact: true }).click();
   const before = await readTown(page);

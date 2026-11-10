@@ -7,10 +7,11 @@ export function firstTouch(root: HTMLElement, options: FirstTouch) {
   if (options.seen) return;
   const hand = document.createElement('img'); hand.id = 'first-touch'; hand.src = '/icons/ghost-hand.svg'; hand.alt = ''; hand.setAttribute('aria-hidden', 'true');
   const point = options.target(); hand.dataset.worldX = String(point.x); hand.dataset.worldY = String(point.y);
-  root.append(hand); positionTargets(root);
+  // Marked as seen as soon as it shows: only the very first opening gets the hand, and no write happens mid-gesture.
+  root.append(hand); positionTargets(root); options.done();
   const wave = setTimeout(options.wave, 700);
   const dismiss = () => {
-    clearTimeout(wave); hand.remove(); options.done();
+    clearTimeout(wave); hand.remove();
     window.removeEventListener('pointerdown', dismiss, true); window.removeEventListener('keydown', dismiss, true);
   };
   window.addEventListener('pointerdown', dismiss, true); window.addEventListener('keydown', dismiss, true);

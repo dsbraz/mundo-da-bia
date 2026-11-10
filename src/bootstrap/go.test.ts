@@ -1,45 +1,47 @@
-import { expect, it, vi } from 'vitest';
+import { expect, it } from 'vitest';
 import { goTo } from './go';
-import { migrateNeighborhood } from '../domain/neighborhood';
+import { migrateNeighborhood, neighborhoodAction } from '../domain/neighborhood';
 import { initialAlbum } from '../domain/houses';
 import { initialWorld } from '../domain/world';
-import type { Neighborhood } from '../domain/neighborhood-types';
+import type { Location, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 
-function setup(building: boolean, town: Neighborhood = migrateNeighborhood(initialAlbum(initialWorld()))) {
-  const townDispatch = vi.fn(), dispatch = vi.fn();
-  const go = goTo({ town: () => town, selected: () => 'bia', building: () => building, townDispatch, dispatch });
-  return { go, townDispatch, dispatch, town };
+function play(building: boolean, start: Neighborhood = migrateNeighborhood(initialAlbum(initialWorld()))) {
+  let town = start; const actions: NeighborhoodAction[] = [];
+  const go = goTo({ town: () => town, selected: () => 'bia', building: () => building, townDispatch: action => { actions.push(action); town = neighborhoodAction(town, action); } });
+  return { go, actions, town: () => town };
 }
+const bia = (town: Neighborhood) => town.actors.find(a => a.id === 'bia')!;
 
-it('takes the selected character along to a room of the same house while playing', () => {
-  const { go, townDispatch, dispatch, town } = setup(false);
-  const home = town.buildings[0]!;
-  go({ kind: 'interior', building: home.id, room: 'room-1' });
-  expect(townDispatch).not.toHaveBeenCalled();
-  expect(dispatch).toHaveBeenCalledWith({ type: 'travel', actor: 'bia', room: 'room-1' });
+it('takes the selected character along to another room while playing', () => {
+  const game = play(false), home = game.town().buildings[0]!;
+  const quarto: Location = { kind: 'interior', building: home.id, room: 'quarto' };
+  game.go(quarto);
+  expect(game.town().location).toEqual(quarto); expect(bia(game.town()).location).toEqual(quarto);
 });
 
 it('only changes the view while creating', () => {
-  const { go, townDispatch, dispatch } = setup(true);
-  go({ kind: 'street' });
-  expect(townDispatch).toHaveBeenCalledWith({ type: 'visit', location: { kind: 'street' } });
-  expect(dispatch).not.toHaveBeenCalled();
+  const game = play(true);
+  game.go({ kind: 'street' });
+  expect(game.town().location).toEqual({ kind: 'street' }); expect(bia(game.town()).location.kind).toBe('interior');
 });
 
-it('gathers the character into the current room and walks out to the street together', () => {
-  const { go, townDispatch, dispatch, town } = setup(false);
-  go({ kind: 'street' });
-  expect(dispatch).toHaveBeenCalledWith({ type: 'travel', actor: 'bia', room: town.location.kind === 'interior' ? town.location.room : '' });
-  expect(townDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'transport', actor: 'bia', location: { kind: 'street' } }));
+it('fetches a character who is elsewhere and walks out to the street together', () => {
+  const game = play(false), home = game.town().buildings[0]!;
+  game.go({ kind: 'interior', building: home.id, room: 'quarto' });
+  game.actions.length = 0;
+  const away = neighborhoodAction(game.town(), { type: 'visit', location: { kind: 'interior', building: home.id, room: 'sala' } });
+  const again = play(false, away);
+  again.go({ kind: 'street' });
+  expect(again.actions[0]).toEqual({ type: 'visit', location: { kind: 'interior', building: home.id, room: 'quarto' } });
+  expect(again.town().location).toEqual({ kind: 'street' }); expect(bia(again.town()).location).toEqual({ kind: 'street' });
 });
 
-it('opens another house first, then brings the character in, from the street', () => {
-  const base = migrateNeighborhood(initialAlbum(initialWorld()));
-  const { go, townDispatch, dispatch } = setup(false, { ...base, location: { kind: 'street' } });
-  const target = { kind: 'interior' as const, building: base.buildings[0]!.id, room: base.buildings[0]!.entry };
-  go(target);
-  expect(townDispatch).toHaveBeenCalledWith({ type: 'visit', location: target });
-  expect(dispatch).toHaveBeenCalledWith({ type: 'travel', actor: 'bia', room: target.room });
-  go({ kind: 'street' });
-  expect(townDispatch).toHaveBeenCalledTimes(1);
+it('gets down from the swing when going into a house', () => {
+  const game = play(false), home = game.town().buildings[0]!;
+  game.go({ kind: 'street' });
+  const swinging = neighborhoodAction(game.town(), { type: 'outdoor', actor: 'bia', target: 'swing' });
+  expect(swinging.outdoor.swing).toBe('bia');
+  const again = play(false, swinging);
+  again.go({ kind: 'interior', building: home.id, room: home.entry });
+  expect(again.town().outdoor.swing).toBeNull(); expect(bia(again.town()).location).toMatchObject({ kind: 'interior', room: home.entry });
 });

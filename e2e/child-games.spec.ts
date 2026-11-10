@@ -57,10 +57,10 @@ test('corda: interrupção ao trocar personagem, escapar e perder foco', async (
   }
 });
 
-test('mão ocupada solta o objeto no chão e a corda começa', async ({ page }) => {
+for (const game of ['Pular corda', 'Amarelinha']) test(`mão ocupada solta o objeto no chão e ${game} começa`, async ({ page }) => {
   await playground(page, true); const held = (await readTown(page)).items.find(i => i.holder === 'bia')!;
   await page.getByRole('button', { name: 'Jogar', exact: true }).click();
-  await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
+  await page.getByRole('button', { name: game, exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
   expect((await readTown(page)).items.find(i => i.id === held.id)).toMatchObject({ holder: null, spot: 'floor' });
 });
@@ -104,6 +104,7 @@ test('amarelinha por toque mantém os controles abaixo da cena no retrato e canc
   expect(panel.y).toBeGreaterThanOrEqual(world.y + world.height - 1);
   await page.screenshot({ path: 'reports/hopscotch-portrait.png' });
   const vision = await page.context().newCDPSession(page);
+  await page.locator('#game-jump').click(); await expect(page.locator('#game-jump')).toHaveText('Pular para 3 e 4');
   await vision.send('Emulation.setEmulatedVisionDeficiency', { type: 'deuteranopia' });
   await page.screenshot({ path: 'reports/hopscotch-portrait-deuteranopia.png' });
   await vision.send('Emulation.setEmulatedVisionDeficiency', { type: 'none' }); await vision.detach();

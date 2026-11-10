@@ -92,3 +92,16 @@ test('cancelar arraste em Organizar não bloqueia a próxima visita no Mapa', as
   await expect(page.locator('#room-dialog')).not.toBeVisible();
   expect((await readTown(page)).location).toMatchObject({ room: 'quarto' });
 });
+
+test('segurar o dedo no botão de excluir por 2 s exclui a casa no tablet', async ({ page }) => {
+  await ready(page); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
+  await page.locator('#copy-house').click(); await expect.poll(async () => (await readTown(page)).buildings.length).toBe(2);
+  await page.getByRole('button', { name: 'Excluir casa…', exact: true }).click();
+  const box = (await page.getByRole('button', { name: 'Segure para excluir', exact: true }).boundingBox())!;
+  const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 }, session = await page.context().newCDPSession(page);
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...at, id: 1 }] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: at.x + 3, y: at.y + 2, id: 1 }] });
+  await expect.poll(async () => (await readTown(page)).buildings.length).toBe(1);
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await session.detach();
+  await expect(page.locator('#undo-toast')).toBeVisible();
+});

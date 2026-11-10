@@ -89,7 +89,7 @@ function emptyCells(state: World, choose: (cell: number) => void) {
   const occupied = Object.values(state.layout.rooms).map(room => room.cell);
   const count = (Math.floor(Math.max(...occupied) / 4) + 1) * 4;
   return Array.from({ length: count }, (_, cell) => cell).filter(cell => !occupied.includes(cell)).map(cell => {
-    const button = document.createElement('button'); button.className = 'empty-room'; button.textContent = '＋ Cômodo';
+    const button = document.createElement('button'); button.className = 'empty-room home-manage'; button.textContent = '＋ Cômodo';
     const floor = Math.floor(cell / 4); button.setAttribute('aria-label', `Adicionar cômodo · ${floor ? `${floor}º andar` : 'Térreo'} · espaço ${cell % 4 + 1}`);
     button.style.gridColumn = String(cell % 4 + 1); button.style.gridRow = String(floorCount(state.layout) - floor);
     button.onclick = () => choose(cell); return button;

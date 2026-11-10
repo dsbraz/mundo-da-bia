@@ -96,7 +96,7 @@ const walker = walking({ reject: point => feedback.refuse(refusal('walk', ''), {
 const games = childGames(root, { world: () => state, selected: () => selected, prepare: () => { walker.cancel(); cancelInput(); closeWardrobe(); shell.close(); view?.resume(); }, stopWalk: () => walker.cancel(), walk: walker.start, commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), preview: value => scene.previewGame(value), follow: point => view?.follow(point),
   select: id => play.select(id), drop: actor => dispatch({ type: 'drop', actor }, false) });
 cancelGame = games.cancel;
-const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch, dispatch });
+const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse });
 const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse });
 const outside = outdoorControls(root, square.use);
