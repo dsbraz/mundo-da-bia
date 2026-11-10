@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
+import { footprint } from '../domain/placement';
 import { freestFloor, gameSpace, hopBoard, hopFocus, hopPosition, hopTiles, stepAside } from './game-space';
 
 it('mantém todas as casas no piso, com profundidade e pares de pés na mesma linha', () => {
@@ -53,10 +54,12 @@ it('quem esconderia uma casa dá um passo para trás do tabuleiro; quem está lo
   for (const m of moves) {
     const actor = world.actors.find(a => a.id === m.actor)!;
     expect(m.point.y).toBeLessThan(board.top); expect(Math.abs(m.point.x - actor.x)).toBeLessThanOrEqual(200);
-    // Beside the board when a free spot is a short step away; behind it, where it stood, otherwise.
-    expect(m.point.x === actor.x || m.point.x < board.left - 35 || m.point.x > board.right + 35).toBe(true);
+    // Never behind a piece drawn in front of the spot (the stage, the sofa).
+    for (const piece of world.layout.pieces.filter(p => p.room === world.room)) {
+      const b = footprint(piece); if (!b || b.bottom + 8 <= m.point.y) continue;
+      expect(m.point.x + 42 <= b.left || m.point.x - 42 >= b.right, `${m.actor} atrás de ${piece.kind}`).toBe(true);
+    }
   }
-  expect(moves.some(m => m.point.x !== world.actors.find(a => a.id === m.actor)!.x)).toBe(true);
   const xs = moves.map(m => m.point.x); for (const x of xs) expect(xs.filter(y => Math.abs(y - x) < 55)).toHaveLength(1);
   const moved = { ...world, actors: world.actors.map(a => { const m = moves.find(n => n.actor === a.id); return m ? { ...a, ...m.point, seat: null } : a; }) };
   expect(stepAside(moved, bia, origin)).toEqual([]);
