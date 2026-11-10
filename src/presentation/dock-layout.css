@@ -34,8 +34,9 @@
 #app .home-tabs button,#app .module-card,#app .house-plots .empty-plot { border-radius:12px; }
 #app button:focus-visible,#app summary:focus-visible { outline:3px solid #3e776f; outline-offset:3px; }
 @media(orientation:portrait) {
-  #app { --dock-height:calc(35dvh - var(--footer-height)); }
-  #app.tray-open,#app.playing-game { --dock-height:calc(40dvh - var(--footer-height)); }
+  /* The game panel takes the dock's own height: the scene (and the people in it) never shrink while playing. */
+  #app,#app.playing-game { --dock-height:calc(35dvh - var(--footer-height)); }
+  #app.tray-open { --dock-height:calc(40dvh - var(--footer-height)); }
   #app.tray-open:has(#build-inspector:not([hidden])) { --dock-height:calc(50dvh - var(--footer-height)); }
   #app.tray-open:has(#build-inspector:not([hidden])) #build-catalog { left:0; height:calc(var(--dock-height) - 150px); border-left:0; }
   #app.tray-open #build-inspector { width:100%; height:150px; bottom:calc(var(--footer-height) + var(--dock-height) - 150px)!important; }

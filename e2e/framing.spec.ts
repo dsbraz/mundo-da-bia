@@ -61,3 +61,22 @@ for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, {
     await page.screenshot({ path: `reports/framing-street-${size.width}.png` });
   });
 }
+
+test('com a brincadeira aberta a 768, a cena não encolhe: mesma escala do painel e humano com 150 px ou mais', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+  const scale = () => page.locator('canvas').evaluate(c => c.getBoundingClientRect().width / Number(c.dataset.viewWidth));
+  const docked = await scale();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
+  await expect(page.locator('#game-panel')).toBeVisible();
+  const playing = await scale();
+  expect(playing).toBeCloseTo(docked, 3);
+  expect(human * playing).toBeGreaterThanOrEqual(150);
+  const panel = (await page.locator('#game-panel').boundingBox())!;
+  for (const id of ['#game-jump', '#game-stop']) {
+    const button = (await page.locator(id).boundingBox())!;
+    expect(button.y + button.height, id).toBeLessThanOrEqual(panel.y + panel.height);
+  }
+  await page.screenshot({ path: 'reports/framing-playing-768.png' });
+});
