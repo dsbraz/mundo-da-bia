@@ -72,7 +72,7 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
   });
 }
 
-for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
+for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
   test(`interior e bairro panorâmico em ${viewport.width}`, async ({ page }) => {
     let town = migrateNeighborhood(initialAlbum(initialWorld()));
     town = neighborhoodAction(town, { type: 'construct', plot: 1, model: 'shop' });
@@ -83,14 +83,15 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
     await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
     await page.screenshot({ path: `reports/neighborhood-street-${viewport.width}.png` });
     expect((await readTown(page)).location).toEqual({ kind: 'street' });
-    // The closer street camera frames the house just left; the free plot beside it comes whole into view by panning.
-    await point(page, plotStart(2) + 261, 330);
-    const edges = await page.locator('canvas').evaluate((canvas, [left, right]) => {
+    // Arriving from the house, the nearest free plot's sign opens whole beside it, before any pan.
+    const edges = await page.locator('canvas').evaluate((canvas, [left, right, door]) => {
       const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth), offset = Number(canvas.dataset.viewX) + Number(canvas.dataset.cameraX);
-      return { left: box.x + (left! - offset) * scale, right: box.x + (right! - offset) * scale };
-    }, [plotStart(2) + 40, plotStart(2) + 261]);
+      return { left: box.x + (left! - offset) * scale, right: box.x + (right! - offset) * scale, door: box.x + (door! - offset) * scale };
+    }, [plotStart(2) + 40, plotStart(2) + 261, plotStart(1) + 330]);
     const world = (await page.locator('#world').boundingBox())!;
     expect(edges.left).toBeGreaterThanOrEqual(world.x); expect(edges.right).toBeLessThanOrEqual(world.x + world.width);
+    // Beside the house just left: the right part of its facade is in view too.
+    expect(edges.door).toBeGreaterThan(world.x); expect(edges.door).toBeLessThan(world.x + world.width);
     await tap(page, plotStart(2) + 125, 330);
     await expect(page.locator('#plot-dialog')).toBeVisible();
   });

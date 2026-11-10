@@ -5,6 +5,7 @@ import { illustratedChoices } from '../presentation/illustrated-choices';
 import { viewport, positionTargets, screenScale, streetFrame, pieceSpans, peopleSpans } from '../presentation/viewport';
 import { actorAt, sourceAt } from '../presentation/targets';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
+import { streetExit } from '../presentation/street-opening';
 import { sceneFeedback } from './scene-feedback';
 import { modeLine, refusal, welcomeLine, nameOf } from '../content/feedback-text';
 import { plaza } from './plaza';
@@ -13,7 +14,7 @@ import { bindKeyboard } from './keyboard';
 import { edgeProgress } from './edge-progress';
 import { worldNavigation } from '../presentation/world-navigation';
 import { structureControls } from '../presentation/structure-controls';
-import { streetWidth, plotStart } from '../domain/neighborhood-geometry';
+import { streetWidth } from '../domain/neighborhood-geometry';
 import { walking } from '../presentation/walking';
 import { goTo } from './go';
 import { uiText } from '../content/ui-text';
@@ -47,7 +48,7 @@ import '../presentation/dock-layout.css';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
-let camera = 0;
+let camera = 0, streetOpening: ReturnType<typeof streetExit> = { camera: 0, spans: [] };
 let streetPast: Neighborhood[] = [], streetFuture: Neighborhood[] = [];
 function albumView(): Album { return { active: town.location.kind === 'interior' ? town.location.building : town.buildings[0]!.id, houses: town.buildings.map(b => ({ id: b.id, name: b.name, state: localWorld({ ...town, location: { kind: 'interior', building: b.id, room: b.entry } }) })) }; }
 let edits = history(state);
@@ -154,7 +155,7 @@ function townDispatch(action: NeighborhoodAction) {
 function streetCamera(previous: Neighborhood) {
   const where = previous.location;
   if (where.kind === 'street') return camera;
-  return Math.max(0, Math.min(streetWidth(previous.plots) - 1000, plotStart(previous.buildings.find(b => b.id === where.building)!.plot) - 280));
+  streetOpening = streetExit(previous, where.building); return streetOpening.camera;
 }
 function remember() { streetPast = [...streetPast.slice(-49), town]; streetFuture = []; }
 function streetUndo(forward: boolean) {
@@ -190,7 +191,7 @@ function refresh() {
 /** Street: its closer lower band. Interior: the full height, opening on the chosen character, then the most whole people, then furniture. */
 function frameScene() {
   const chosen = state.actors.find(a => a.id === selected && a.room === state.room), street = !!state.streetWidth;
-  if (street) { view?.scene(JSON.stringify(town.location), 1000, streetFrame); return; }
+  if (street) { view?.scene(JSON.stringify(town.location), 1000, streetFrame, streetOpening.spans, streetOpening.must); return; }
   view?.scene(JSON.stringify(town.location), roomWidth(state), 600, pieceSpans(state), chosen && { left: chosen.x - 42, right: chosen.x + 42 }, peopleSpans(state));
 }
 function renderControls() {
