@@ -2,7 +2,7 @@ import { roomWidth } from '../domain/geometry';
 import { childGames } from '../presentation/child-games';
 import '../presentation/child-games.css';
 import { illustratedChoices } from '../presentation/illustrated-choices';
-import { viewport, positionTargets, screenScale, streetFrame, pieceSpans } from '../presentation/viewport';
+import { viewport, positionTargets, screenScale, streetFrame, pieceSpans, peopleSpans } from '../presentation/viewport';
 import { actorAt, sourceAt } from '../presentation/targets';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
 import { sceneFeedback } from './scene-feedback';
@@ -187,10 +187,11 @@ function refresh() {
   root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building));
   root.querySelector('#decorate-mode')!.setAttribute('aria-pressed', String(building && !constructing));
 }
-/** Street: its closer lower band. Interior: the full height, opening where the most pieces are whole with the chosen character in view. */
+/** Street: its closer lower band. Interior: the full height, opening on the chosen character, then the most whole people, then furniture. */
 function frameScene() {
   const chosen = state.actors.find(a => a.id === selected && a.room === state.room), street = !!state.streetWidth;
-  view?.scene(JSON.stringify(town.location), street ? 1000 : roomWidth(state), street ? streetFrame : 600, street ? [] : pieceSpans(state), chosen && !street ? { left: chosen.x - 42, right: chosen.x + 42 } : undefined);
+  if (street) { view?.scene(JSON.stringify(town.location), 1000, streetFrame); return; }
+  view?.scene(JSON.stringify(town.location), roomWidth(state), 600, pieceSpans(state), chosen && { left: chosen.x - 42, right: chosen.x + 42 }, peopleSpans(state));
 }
 function renderControls() {
   const focus = state.layout.pieces.find(p => p.id === selectedPiece) ?? state.actors.find(a => a.id === selected)!;

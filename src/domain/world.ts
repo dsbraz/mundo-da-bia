@@ -10,10 +10,11 @@ import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
 
-// New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart.
+// New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
+// and compact enough (x 203-872) for the whole group to open in view at 768 px.
 const start: readonly Pick<Actor, 'x' | 'y' | 'seat'>[] = [
-  { x: 520, y: 530, seat: null }, { x: 245, y: 405, seat: 'sofa-right' }, { x: 740, y: 530, seat: null }, { x: 930, y: 530, seat: null },
-  { x: 100, y: 540, seat: null }, { x: 830, y: 540, seat: null }, { x: 390, y: 540, seat: null },
+  { x: 520, y: 530, seat: null }, { x: 245, y: 405, seat: 'sofa-right' }, { x: 420, y: 530, seat: null }, { x: 830, y: 530, seat: null },
+  { x: 330, y: 540, seat: null }, { x: 740, y: 540, seat: null }, { x: 610, y: 540, seat: null },
 ];
 export function initialWorld(): World {
   return {

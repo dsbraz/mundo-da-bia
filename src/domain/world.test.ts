@@ -87,9 +87,12 @@ describe('posições iniciais de saves novos', () => {
   it('espalha a turma sem sobreposição: alguém no sofá, alguém perto do microfone e gatos separados', () => {
     const world = initialWorld(), standing = world.actors.filter(a => !a.seat);
     expect(world.actors.map(a => [a.id, a.x, a.y, a.seat])).toEqual([
-      ['bia', 520, 530, null], ['luna', 245, 405, 'sofa-right'], ['leo', 740, 530, null], ['rui', 930, 530, null],
-      ['mimi', 100, 540, null], ['nino', 830, 540, null], ['pipoca', 390, 540, null],
+      ['bia', 520, 530, null], ['luna', 245, 405, 'sofa-right'], ['leo', 420, 530, null], ['rui', 830, 530, null],
+      ['mimi', 330, 540, null], ['nino', 740, 540, null], ['pipoca', 610, 540, null],
     ]);
+    // Compact enough for one opening at 768 px (about 790 logical units visible): the whole group fits with room to spare.
+    const half = (a: typeof world.actors[number]) => a.kind === 'cat' ? 35 : 42;
+    expect(Math.max(...world.actors.map(a => a.x + half(a))) - Math.min(...world.actors.map(a => a.x - half(a)))).toBeLessThanOrEqual(765);
     for (const a of standing) for (const b of standing) if (a !== b) expect(Math.abs(a.x - b.x)).toBeGreaterThanOrEqual(90);
     const stage = world.layout.pieces.find(p => p.kind === 'stage')!;
     expect(standing.some(a => a.kind === 'human' && a.x >= stage.x)).toBe(true);

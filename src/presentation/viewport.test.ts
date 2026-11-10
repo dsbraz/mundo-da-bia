@@ -78,6 +78,27 @@ describe('onde o cômodo abre', () => {
     expect(openingX([], 1200, 1000)).toBe(-100);
     expect(openingX([{ left: 14, right: 439 }, { left: 640, right: 700 }, { left: 720, right: 780 }], 617, 1000, { left: 300, right: 384 })).toBeLessThanOrEqual(14);
   });
+  it('abre centrada nas pessoas: a turma inteira antes dos móveis, com a escolhida sempre à vista', () => {
+    const sala = [{ left: 90, right: 900 }, { left: 60, right: 330 }, { left: 292, right: 518 }, { left: 620, right: 765 }, { left: 0, right: 150 }, { left: 160, right: 400 }, { left: 830, right: 1000 }];
+    const people = [203, 330, 420, 520, 610, 740, 830].map((x, i) => ({ left: x - (i === 1 || i >= 4 && i <= 5 ? 35 : 42), right: x + 42 }));
+    const x = openingX(sala, 792, 1000, { left: 470, right: 570 }, people);
+    expect(people.every(p => p.left >= x && p.right <= x + 792)).toBe(true);
+    // Furniture alone would open on the left; whole people come first, even against a bed, and furniture breaks ties among them.
+    expect(openingX([{ left: 0, right: 425 }], 500, 1000, undefined, [{ left: 600, right: 680 }, { left: 700, right: 780 }])).toBeGreaterThanOrEqual(280);
+    expect(openingX([{ left: 0, right: 425 }], 500, 1000, undefined, [{ left: 300, right: 380 }])).toBeLessThanOrEqual(0);
+    // The chosen character is a hard rule: kept in view even when the others are elsewhere.
+    expect(openingX([], 500, 1000, { left: 40, right: 140 }, [{ left: 700, right: 780 }, { left: 800, right: 880 }])).toBeLessThanOrEqual(40);
+  });
+  it('a escolhida abre a 24 px ou mais da borda da cena', () => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} });
+    const canvas = { parentElement: { clientWidth: 390, clientHeight: 467 }, style: { setProperty() {} }, dataset: {} as Record<string, string> } as unknown as HTMLCanvasElement;
+    const view = viewport(canvas, () => {});
+    // A wide piece would open with her right on the left edge.
+    view.scene('sala', 1000, 600, [{ left: 470, right: 960 }], { left: 470, right: 554 });
+    const scale = 467 / 600, left = Number(canvas.dataset.viewX), right = left + Number(canvas.dataset.viewWidth);
+    expect((470 - left) * scale).toBeGreaterThanOrEqual(24); expect((right - 554) * scale).toBeGreaterThanOrEqual(24);
+    vi.unstubAllGlobals();
+  });
   it('abre a cena com a cama da enfermaria inteira a 768', () => {
     vi.stubGlobal('ResizeObserver', class { observe() {} });
     const canvas = { parentElement: { clientWidth: 768, clientHeight: 582 }, style: { setProperty() {} }, dataset: {} as Record<string, string> } as unknown as HTMLCanvasElement;
@@ -95,4 +116,12 @@ it('cada peça do cômodo atual vira uma faixa horizontal pelo seu desenho', asy
   const world = initialWorld();
   expect(pieceSpans(world)).toContainEqual({ left: 292, right: 518 });
   expect(pieceSpans(world)).toHaveLength(world.layout.pieces.filter(p => p.room === world.room).length);
+});
+it('cada personagem do cômodo atual vira uma faixa da largura do seu anel', async () => {
+  const { initialWorld } = await import('../domain/world');
+  const { peopleSpans } = await import('./viewport');
+  const world = initialWorld();
+  expect(peopleSpans(world)).toContainEqual({ left: 478, right: 562 });
+  expect(peopleSpans(world)).toContainEqual({ left: 295, right: 365 });
+  expect(peopleSpans({ ...world, actors: world.actors.map(a => a.id === 'bia' ? { ...a, room: 'quarto' } : a) })).toHaveLength(6);
 });

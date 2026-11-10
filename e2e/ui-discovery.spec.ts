@@ -71,12 +71,14 @@ test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async 
     return list.map(a => {
       const width = (a.cat ? 70 : 84) * scale, height = (a.cat ? 94 : 189) * scale, foot = a.y + (a.seated ? 19 : 0);
       const x = box.x + (a.x - Number(canvas.dataset.viewX)) * scale, y = box.y + (foot - Number(canvas.dataset.viewY)) * scale;
-      return { left: x - width / 2, right: x + width / 2, top: y - height, bottom: y };
+      return { left: x - width / 2, right: x + width / 2, top: y - height, bottom: y, inside: x > box.x && x < box.x + box.width };
     });
   }, actors.map(a => ({ x: a.x, y: a.y, cat: ['mimi', 'nino', 'pipoca'].includes(a.id), seated: !!a.seat })));
+  expect(boxes.every(b => b.inside)).toBe(true);
   for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(true);
-  // The closer camera shows part of the room; every character is fully reachable by panning, inside the scene.
+  // Every character opens whole inside the scene, before any pan.
   const scene = (await page.locator('#world').boundingBox())!;
+  for (const b of boxes) { expect(b.left).toBeGreaterThanOrEqual(scene.x); expect(b.right).toBeLessThanOrEqual(scene.x + scene.width); }
   for (const a of actors) {
     const half = (['mimi', 'nino', 'pipoca'].includes(a.id) ? 35 : 42);
     const [left, right] = [await point(page, a.x - half, a.y), await point(page, a.x + half, a.y)];
@@ -89,6 +91,18 @@ test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async 
   await expect.poll(() => card.getAttribute('src')).not.toBe(before);
   await page.screenshot({ path: 'reports/ui-dock-dressed-768.png' });
 });
+
+for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+  test(`a personagem escolhida nasce a 24 px ou mais da borda da cena a ${viewport.width}`, async ({ page }) => {
+    await page.setViewportSize(viewport); await ready(page);
+    const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!, scene = (await page.locator('#world').boundingBox())!;
+    const ring = await page.locator('canvas').evaluate((c, x) => {
+      const box = c.getBoundingClientRect(), scale = box.width / Number(c.dataset.viewWidth), offset = Number(c.dataset.viewX) + Number(c.dataset.cameraX);
+      return { left: box.x + (x - 42 - offset) * scale, right: box.x + (x + 42 - offset) * scale };
+    }, bia.x);
+    expect(ring.left - scene.x).toBeGreaterThanOrEqual(24); expect(scene.x + scene.width - ring.right).toBeGreaterThanOrEqual(24);
+  });
+}
 
 test('a Turma inteira cabe sem rolagem a 768 px, com o lápis só no cartão escolhido', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 }); await ready(page); await tray(page, 'Turma');
