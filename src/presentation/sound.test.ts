@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { createSound, eventCue, timbres } from './sound';
+import { createSound, eventCue, pieceCue, timbres } from './sound';
 afterEach(() => vi.unstubAllGlobals());
 
 class FakeAudio {
@@ -93,4 +93,17 @@ it('miado para gatos e nada para eventos sem timbre', () => {
   expect(audio()!.oscillators).toHaveLength(0);
   sound.events([{ type: 'fed', actor: 'mimi' }], id => id === 'mimi');
   expect(audio()!.oscillators).toHaveLength(timbres.meow.length);
+});
+
+it('cada móvel usado soa do seu jeito e desligar faz só um pop', () => {
+  expect(['sink', 'washer', 'planter', 'bookcase', 'picnic-table', 'kitchen-cart'].map(k => pieceCue(k as never))).toEqual(['splash', 'whirr', 'rustle', 'page', 'clink', 'clink']);
+  expect(pieceCue('stove')).toBe('pop'); expect(pieceCue(undefined)).toBe('pop');
+  const shape = (cue: keyof typeof timbres) => JSON.stringify(timbres[cue].map(n => [n.wave, n.from, n.to]));
+  expect(new Set(Object.keys(timbres).map(c => shape(c as keyof typeof timbres))).size).toBe(Object.keys(timbres).length);
+  const { sound, fire, audio } = setup();
+  fire('pointerdown');
+  sound.events([{ type: 'furniture', piece: 7 }], () => false, id => id === 7 ? 'washer' : undefined);
+  expect(audio()!.oscillators).toHaveLength(timbres.whirr.length);
+  sound.events([{ type: 'furniture', piece: 8 }], () => false, () => undefined);
+  expect(audio()!.oscillators).toHaveLength(timbres.whirr.length + timbres.pop.length);
 });

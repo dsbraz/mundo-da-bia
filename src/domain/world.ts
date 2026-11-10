@@ -10,6 +10,7 @@ import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
 import { toggleRest, wake } from './care';
+import { usePiece } from './use';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -92,12 +93,6 @@ function playTransition(state: World, action: Exclude<Action, { type: 'name' }>)
 
 function moveActor(state: World, actor: Actor, point: Point): Transition {
   return validPoint(point, roomWidth(state)) ? changeActor(state, actor, { ...point, ...wake(actor), seat: null }, 'moved') : { state, events: [] };
-}
-
-function usePiece(state: World, id: number): Transition {
-  const piece = state.layout.pieces.find(p => p.id === id && p.room === state.room);
-  if (!piece || !['stove', 'bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium', 'reading-lamp'].includes(piece.kind)) return { state, events: [] };
-  return { state: { ...state, show: piece.kind === 'piano' ? !piece.active : state.show, layout: { ...state.layout, pieces: state.layout.pieces.map(p => p.id === id ? { ...p, active: !p.active } : p) } }, events: [{ type: 'furniture' }] };
 }
 
 function navigate(state: World, action: Extract<Action, { room: RoomId }>): Transition {

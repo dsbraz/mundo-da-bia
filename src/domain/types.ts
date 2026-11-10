@@ -47,7 +47,7 @@ export type Action =
   | { type: 'room'; room: RoomId }
   | { type: 'summon' }
   | { type: 'show' };
-export interface PresentationEvent { type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId }
+export interface PresentationEvent { type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId; piece?: number }
 export interface Transition { state: World; events: PresentationEvent[] }
 
 export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table', 'sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart'] as const;

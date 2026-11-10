@@ -38,6 +38,7 @@ import { ballSize } from './ball-motion';
 import { placeSlide, placeTransfer, slidePreview, transferPreview } from './transfer-preview';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
+import { animatePieces } from './use-effects';
 import { pokeFigure, refuseAt } from './feedback';
 import type { ReactionPose } from '../content/personalities';
 import { reducedMotion, reducedFadeMs } from './motion';
@@ -234,7 +235,7 @@ export class PlayScene extends Phaser.Scene {
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }
-  react(events: PresentationEvent[]) { faceEvents(this.faces, events, this.world, this.selected, performance.now()); if (this.ready) react(this, this.world, events); }
+  react(events: PresentationEvent[]) { faceEvents(this.faces, events, this.world, this.selected, performance.now()); if (this.ready) react(this, this.world, events, this.selected); }
   preview(drag: DragPreview | null) {
     if (!this.ready) return;
     this.objects.forEach(o => o.setAlpha(drag?.kind === 'item' && o.name === drag.id ? .25 : 1));
@@ -283,6 +284,6 @@ export class PlayScene extends Phaser.Scene {
     this.mark('faces', shown.join(' '));
     this.sky?.(time, reduced); (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(this.swing.angle());
     if (this.sky) { this.mark('swing', this.swing.amplitude().toFixed(2)); this.mark('swingAngle', this.swing.angle().toFixed(2)); }
-    this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
+    this.mark('uses', animatePieces(this.pieces, time, reduced));
   }
 }

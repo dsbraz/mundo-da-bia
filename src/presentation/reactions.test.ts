@@ -7,7 +7,7 @@ import { heartDuration } from './care-heart';
 afterEach(() => vi.unstubAllGlobals());
 function scene() {
   const tweens: Record<string, unknown>[] = [], said: string[] = [];
-  const object = () => { const o: Record<string, unknown> = { width: 80, height: 30, active: true }; for (const m of ['setOrigin', 'setDepth', 'setY', 'setPosition', 'setAlpha', 'setScale', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'fillCircle', 'lineStyle', 'strokeRoundedRect', 'strokeCircle', 'destroy']) o[m] = () => o; return o; };
+  const object = () => { const o: Record<string, unknown> = { width: 80, height: 30, active: true }; for (const m of ['setOrigin', 'setDepth', 'setY', 'setPosition', 'setAlpha', 'setScale', 'fillStyle', 'fillRoundedRect', 'fillTriangle', 'fillCircle', 'lineStyle', 'strokeRoundedRect', 'strokeCircle', 'fillRect', 'destroy']) o[m] = () => o; return o; };
   const fake = { game: { canvas: { dataset: {} } }, cameras: { main: { scrollX: 0, scrollY: 0, width: 2000, height: 1200, zoom: 2 } }, add: { text: (_x: number, _y: number, text: string) => { said.push(text); return object(); }, graphics: object, container: object },
     tweens: { add: (config: Record<string, unknown>) => { tweens.push(config); } } };
   return { tweens, said, fake: fake as unknown as Phaser.Scene };
@@ -41,4 +41,16 @@ it('mudar de lugar não gera fala', () => {
   const world = initialWorld(), { said, fake } = scene();
   react(fake, world, [{ type: 'moved', actor: 'bia' }]);
   expect(said).toEqual([]);
+});
+it('ligar a estante de livros põe um livro na mão de quem foi até ela; desligar ou outra peça não', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const base = initialWorld();
+  const shelf = { id: 900, kind: 'bookcase' as const, room: 'sala' as const, x: 300, y: 200, color: 'original' as const, flipped: false };
+  const world = (active: boolean, kind: 'bookcase' | 'sink' = 'bookcase') => ({ ...base, layout: { ...base.layout, pieces: [{ ...shelf, kind, active }] } });
+  const book = (state: ReturnType<typeof world>, selected?: 'bia') => { const { said, tweens, fake } = scene(); react(fake, state, [{ type: 'furniture', piece: 900 }], selected); return { said, tweens, dataset: fake.game.canvas.dataset as Record<string, string> }; };
+  const on = book(world(true), 'bia');
+  expect(on.dataset.book).toBe('hand'); expect(on.tweens).toHaveLength(1); expect(on.said).toEqual([]);
+  expect(book(world(false), 'bia').dataset.book).toBeUndefined();
+  expect(book(world(true, 'sink'), 'bia').dataset.book).toBeUndefined();
+  expect(book(world(true)).dataset.book).toBeUndefined();
 });

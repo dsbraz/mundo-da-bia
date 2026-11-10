@@ -2,6 +2,7 @@ import { visualPiecePoint, logicalPiecePoint } from './furniture-scale';
 import { seatPoint, seatKind } from '../domain/furniture';
 import { fixture, pieceBounds, toPiece } from '../domain/layout';
 import { seatIds } from '../domain/types';
+import { usableKinds } from '../domain/use';
 import type { Home, PieceKind, Point, Spot, World } from '../domain/types';
 
 function hit(state: World, kind: PieceKind, p: Point, x: number, y: number, width: number, height: number) {
@@ -36,7 +37,7 @@ export function wardrobeHit(state: World, p: Point) { return hit(state, 'wardrob
 export function usableAt(state: World, point: Point) {
   return [...state.layout.pieces].reverse().find(piece => {
     const box = pieceBounds[piece.kind];
-    return piece.room === state.room && ['stove', 'bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium', 'reading-lamp'].includes(piece.kind)
+    return piece.room === state.room && usableKinds.includes(piece.kind)
       && point.x >= piece.x && point.x <= piece.x + box.width && point.y >= piece.y && point.y <= piece.y + box.height;
   });
 }

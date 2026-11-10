@@ -7,6 +7,7 @@ import { fixture, pieceBounds } from '../domain/layout';
 import type { Actor, Piece, World } from '../domain/types';
 import { slotsFor } from './targets';
 import { floorTop } from './floor-band';
+import { drawnUse, drawUse } from './use-effects';
 export function orderedPieces(state: World) {
   return state.layout.pieces.filter(p => p.room === state.room).sort((a, b) => pieceDepth(a) - pieceDepth(b));
 }
@@ -35,7 +36,7 @@ export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardr
   const box = pieceBounds[piece.kind];
   if (!['rug', 'picture', 'neon', 'cushion'].includes(piece.kind)) container.add(contactShadow(scene, box.width / 2, box.height - 3, box.width * .76, 8, 0x625642));
   parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped).setDisplaySize(box.width, box.height)));
-  if (piece.active) container.add(scene.add.text(box.width / 2, 6, effect(piece), textStyle('effect')).setOrigin(.5).setName('effect'));
+  if (piece.active) container.add(drawnUse(piece.kind) ? drawUse(scene, piece) : scene.add.text(box.width / 2, 6, effect(piece), textStyle('effect')).setOrigin(.5).setName('effect'));
   return container;
 }
 function partsFor(piece: Piece, state: World, wardrobe: boolean): string[] {

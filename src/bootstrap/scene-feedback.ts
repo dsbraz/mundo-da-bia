@@ -15,7 +15,7 @@ export function sceneFeedback(deps: Deps) {
   return {
     announce, sound,
     events(events: PresentationEvent[]) {
-      deps.scene.react(events); sound.events(events, id => actor(id)?.kind === 'cat');
+      deps.scene.react(events); sound.events(events, id => actor(id)?.kind === 'cat', id => deps.state().layout.pieces.find(p => p.id === id && p.active)?.kind);
       const event = events[0], who = event?.actor && actor(event.actor);
       const line = event && eventLine(event.type, who || undefined, who ? who.kind === 'cat' : false);
       if (line) announce(line);

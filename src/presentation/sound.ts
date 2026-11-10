@@ -1,6 +1,6 @@
-import type { ActorId, PresentationEvent } from '../domain/types';
+import type { ActorId, PieceKind, PresentationEvent } from '../domain/types';
 
-export type Cue = 'dress' | 'pick' | 'drop' | 'refuse' | 'door' | 'eat' | 'meow' | 'purr' | 'pop' | 'cheer' | 'poke';
+export type Cue = 'dress' | 'pick' | 'drop' | 'refuse' | 'door' | 'eat' | 'meow' | 'purr' | 'pop' | 'cheer' | 'poke' | 'splash' | 'whirr' | 'rustle' | 'page' | 'clink';
 export interface Note { wave: OscillatorType; from: number; to: number; start: number; length: number }
 const note = (wave: OscillatorType, from: number, to: number, start = 0, length = .14): Note => ({ wave, from, to, start, length });
 // Each cue has its own contour and wave so it is recognizable with eyes closed.
@@ -16,7 +16,15 @@ export const timbres: Record<Cue, Note[]> = {
   pop: [note('sine', 900, 1300, 0, .05)],
   poke: [note('triangle', 400, 800, 0, .09), note('triangle', 600, 1100, .1, .09)],
   cheer: [note('triangle', 523, 523, 0, .1), note('triangle', 659, 659, .1, .1), note('triangle', 784, 784, .2, .16)],
+  splash: [note('sine', 1200, 700, 0, .06), note('sine', 1400, 800, .07, .06), note('sine', 1100, 650, .14, .07)],
+  whirr: [note('sawtooth', 140, 220, 0, .25), note('sawtooth', 220, 180, .25, .2)],
+  rustle: [note('triangle', 1800, 1500, 0, .04), note('triangle', 1700, 1400, .06, .04)],
+  page: [note('triangle', 700, 1000, 0, .07), note('triangle', 600, 400, .09, .05)],
+  clink: [note('sine', 1568, 1568, 0, .08), note('sine', 2093, 2093, .1, .1)],
 };
+const pieceCues: Partial<Record<PieceKind, Cue>> = { sink: 'splash', washer: 'whirr', planter: 'rustle', bookcase: 'page', 'picnic-table': 'clink', 'kitchen-cart': 'clink' };
+/** The sound of a piece switched on (its own for the everyday pieces); a piece switched off or without its own sound pops. */
+export function pieceCue(kind: PieceKind | undefined): Cue { return (kind && pieceCues[kind]) ?? 'pop'; }
 const volume = .05;
 const eventCues: Partial<Record<PresentationEvent['type'], Cue>> = { dressed: 'dress', picked: 'pick', dropped: 'drop', fed: 'eat', room: 'door', summoned: 'cheer', show: 'cheer', furniture: 'pop' };
 export function eventCue(type: PresentationEvent['type'], cat: boolean): Cue | null {
@@ -51,9 +59,10 @@ export function createSound(options: SoundOptions) {
   render();
   return {
     cue,
-    events(events: PresentationEvent[], isCat: (id: ActorId) => boolean) {
+    /** `switchedOn` gives the kind of a used piece that is now on (undefined when it went off). */
+    events(events: PresentationEvent[], isCat: (id: ActorId) => boolean, switchedOn: (id: number) => PieceKind | undefined = () => undefined) {
       const event = events[0]; if (!event) return;
-      const name = eventCue(event.type, !!event.actor && isCat(event.actor));
+      const name = event.piece === undefined ? eventCue(event.type, !!event.actor && isCat(event.actor)) : pieceCue(switchedOn(event.piece));
       if (name) cue(name);
     },
   };
