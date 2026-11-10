@@ -7,7 +7,7 @@ import { doorEffect } from './door-effect';
 import type { Location } from '../domain/neighborhood-types';
 import { outdoorEffect } from './outdoor-effects';
 import type { OutdoorAction } from '../domain/neighborhood-types';
-import { handAnchor, contextScale, visualContext } from './pose';
+import { contextScale, visualContext } from './pose';
 import { rasterScale, logicalWidth } from './rendering';
 import { captureMotion } from './settle-motion';
 import { strollFigures } from './stroll-figures';
@@ -23,7 +23,8 @@ import type { Actor, ActorId, Piece, Point, PresentationEvent, World } from '../
 import { roomWidth } from '../domain/geometry';
 import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
-import { animateActor, drawActor, gazePose, walkPose } from './art';
+import { drawActor } from './art';
+import { animateFigure, type FrameContext } from './figure-frame';
 import { drawRoom } from './room';
 import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
 import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
@@ -260,34 +261,17 @@ export class PlayScene extends Phaser.Scene {
     ghost.setData('target', target);
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
+  private get frameContext(): FrameContext {
+    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects,
+      swingRig: () => this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null, walking: (f, a) => this.walking(f, a) };
+  }
   update(time: number) {
-    const reduced = reducedMotion();
+    const reduced = reducedMotion(), ctx = this.frameContext;
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
-      this.animateFigure(figure, actor, time, index, reduced);
+      animateFigure(ctx, figure, actor, time, index, reduced);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });
   }
-  private animateFigure(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, reduced: boolean) {
-    const seated = [this.town?.outdoor.bench, this.town?.outdoor.swing].includes(actor.id);
-    const walking = this.walking(figure, actor);
-    const posed = walking ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' as const } : actor;
-    animateActor(figure, posed, reduced ? 500 : time, index, !reduced && this.world.show, reduced);
-    const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
-    if (walking) walkPose(figure, figure.getData('distance') ?? 0, reduced, figure.getData('direction'));
-    else gazePose(figure, this.gaze.get(actor.id) ?? 0);
-    this.animateSwing(pose, actor, time, reduced);
-    const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
-    this.world.items.filter(i => i.holder === actor.id).forEach(i => this.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));
-  }
-  private animateSwing(pose: Phaser.GameObjects.Container, actor: Actor, time: number, reduced: boolean) {
-    if (this.town?.outdoor.swing !== actor.id || this.moving === actor.id) return;
-    const angle = reduced ? 0 : Math.sin(time / 600) * .08;
-    (this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null)?.setRotation(angle);
-    pose.x = -Math.sin(angle) * 126;
-    pose.y += (Math.cos(angle) - 1) * 126;
-    pose.rotation = angle;
-  }
-
 }
