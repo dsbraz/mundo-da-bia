@@ -44,8 +44,15 @@ export function animateFigure(ctx: FrameContext, figure: Container, actor: Actor
 function moveLayers(ctx: FrameContext, figure: Container, actor: Actor, walking: boolean, reduced: boolean) {
   const scale = contextScale(visualContext(ctx.world)), held = ctx.weight.pose(figure.getByName<Container>('pose'), actor, ctx.now, scale, reduced);
   if (walking) walkPose(figure, actor, scale, reduced);
+  if (walking && actor.kind === 'cat') trotFrame(figure, actor.id);
   const gait = held || (walking ? (actor.kind === 'cat' ? 'trot' : 'walk') : '');
   if (gait) ctx.gaits.push(`${actor.id}:${gait}`);
+}
+/** The trot as drawn this frame, `id:bob:tail base:tail tip` (px and rad), on the canvas's `data-trot`. */
+function trotFrame(figure: Container, id: ActorId) {
+  const pose = figure.getByName<Container>('pose'), tail = pose.getByName<Container>('tail');
+  const tip = tail.getByName<Phaser.GameObjects.Image>('tail-tip');
+  figure.scene.game.canvas.dataset.trot = [id, -pose.y, tail.rotation, tip.rotation].map(v => typeof v === 'number' ? (v + 0).toFixed(2) : v).join(':');
 }
 /** Seated on plaza equipment, walking, carried (drawn standing, never walking) or as saved. */
 export function posture(ctx: FrameContext, figure: Container, actor: Actor) {

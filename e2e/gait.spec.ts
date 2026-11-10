@@ -32,12 +32,32 @@ test('na rua a figura menor anda mais devagar, na mesma cadência, sem patinar',
   await page.screenshot({ path: 'reports/gait-street-walk.png', clip: await clip(page, await walkX(page), 520, 160) });
 });
 
-test('o gato trota com a cauda erguida', async ({ page }) => {
-  await street(page);
+/** Mimi trotting toward x 600, captured as `shot` once she trots: `data-trot` frames (bob in px, tail base and tip in rad) every 50 ms of scene time while she trots. */
+async function trot(page: Page, shot: string) {
   await tap(page, 820, 500); await expect(page.locator('#actor-context')).toContainText(/Mimi/);
   await tap(page, 600, 530);
   await page.clock.runFor(500); await expect(page.locator('canvas')).toHaveAttribute('data-gait', /mimi:trot/);
-  await page.screenshot({ path: 'reports/gait-cat-trot.png', clip: await clip(page, await walkX(page), 530, 100) });
+  await page.screenshot({ path: `reports/${shot}.png`, clip: await clip(page, await walkX(page), 530, 100) });
+  const frames: { bob: number; base: number; tip: number }[] = [];
+  for (let t = 0; t < 1000 && /mimi:trot/.test((await page.locator('canvas').getAttribute('data-gait')) ?? ''); t += 50) {
+    const [, bob, base, tip] = (await page.locator('canvas').getAttribute('data-trot'))!.split(':').map(Number);
+    frames.push({ bob: bob!, base: base!, tip: tip! }); await page.clock.runFor(50);
+  }
+  expect(frames.length).toBeGreaterThanOrEqual(10);
+  return frames;
+}
+
+test('o gato trota com a cauda erguida', async ({ page }) => {
+  await street(page);
+  const frames = await trot(page, 'gait-cat-trot');
+  expect(Math.max(...frames.map(f => f.bob))).toBeGreaterThan(0);
+});
+
+test('com movimento reduzido o gato trota sem balanço e com a cauda parada', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await street(page);
+  const frames = await trot(page, 'gait-cat-trot-reduced');
+  expect(frames.every(f => f.bob === 0), JSON.stringify(frames)).toBe(true);
+  expect(new Set(frames.map(f => `${f.base}:${f.tip}`)).size, JSON.stringify(frames)).toBe(1);
 });
 
 test('com movimento reduzido a caminhada é lenta, sem balanço e sem teleporte', async ({ page }) => {
