@@ -53,7 +53,7 @@ export function childGameArt(scene: Phaser.Scene) {
     });
     if (rope) drawRope(rope, value, now, pose.y, reduced);
   }
-  return { paint, animate };
+  return { paint, animate, active: () => current !== null };
 }
 
 /** Crouch and landing squash (at most 10%) on the pose, and the contact shadow shrinking while in the air. */

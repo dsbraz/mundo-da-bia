@@ -14,5 +14,5 @@ it('the portrait uses the same layers the scene draws for the current look', () 
   expect(portraitParts('leo', 'mira')).toContain('body-mira-shorts'); expect(portraitParts('rui', 'sol')).toContain('hair-back-short');
   expect(portraitParts('luna', 'superman')).toEqual(['cape-superman', 'hair-back', 'legs', 'hands', 'body-superman', 'face', 'hair-luna', 'brows', 'eyes', 'mouth']);
   expect(portraitParts('bia', 'spiderman').at(-1)).toBe('mask-spiderman');
-  expect(portraitParts('pipoca', 'sol')).toEqual(['tail', 'body', 'eyes']);
+  expect(portraitParts('pipoca', 'sol')).toEqual(['tail', 'ears', 'body', 'eyes']);
 });

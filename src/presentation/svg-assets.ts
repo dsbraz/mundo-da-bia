@@ -14,7 +14,7 @@ import { faceParts } from './expression';
 
 export const roomLayers = ['wardrobe-closed', 'wardrobe-open', 'drawer-closed', 'drawer-open', 'fridge-closed', 'fridge-open', 'lamp-on', 'lamp-off'] as const;
 export const humanLayers = ['hair-back', 'legs', 'hands', 'face', ...faceParts.human];
-export const catLayers = ['tail', 'body', ...faceParts.cat];
+export const catLayers = ['tail', 'ears', 'body', ...faceParts.cat];
 
 const layer = (source: string, id: string) => svgFragment(source, [id]);
 function loadActor(scene: Phaser.Scene, id: ActorId, index: number, current: LookId) {

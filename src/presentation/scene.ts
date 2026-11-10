@@ -26,6 +26,7 @@ import { loadArt } from './svg-assets';
 import { drawActor } from './art';
 import { animateFigure, type FrameContext } from './figure-frame';
 import { faceEvents, faces, pokeFace } from './expression';
+import { ambientLife } from './ambient';
 import { drawRoom } from './room';
 import { drawPieces, pickPiece, pieceDepth, actorDepth, objectDepth } from './piece-art';
 import { actorAt, handPoint, previewPoint, itemPoint, sourceAt } from './targets';
@@ -56,6 +57,7 @@ export class PlayScene extends Phaser.Scene {
   private figures: Phaser.GameObjects.Container[] = [];
   private gaze = new Map<ActorId, number>();
   private faces = faces();
+  private life = ambientLife(() => this.game.canvas);
   private strolls = strollFigures(() => this.game.canvas);
   private pieces = new Map<number, Phaser.GameObjects.Container>();
   private sliding: { room: RoomId; current: Phaser.GameObjects.Container; next: Phaser.GameObjects.Container } | null = null;
@@ -75,9 +77,10 @@ export class PlayScene extends Phaser.Scene {
     const view = this.game.canvas.dataset;
     this.frame(Number(view.viewWidth ?? 1000), Number(view.viewHeight ?? 600), Number(view.viewX ?? 0), Number(view.viewY ?? 0));
     this.gameArt = childGameArt(this); this.paint(this.world, this.selected);
+    for (const type of ['pointerdown', 'keydown']) window.addEventListener(type, () => this.life.input(performance.now()), { capture: true });
   }
   paint(state: World, selected: ActorId) {
-    this.strolls.leave(this.world, state);
+    this.strolls.leave(this.world, state); this.life.painted(state, performance.now());
     this.world = state; this.selected = selected;
     if (!this.prepareArt(state)) return;
     const width = state.streetWidth ? 1000 : roomWidth(state);
@@ -195,7 +198,7 @@ export class PlayScene extends Phaser.Scene {
   }
   /** Whoever moves for a game walks there (fades with reduced motion); call it before committing the moves. */
   stroll(moves: { actor: ActorId; point: Point }[]) { this.strolls.start(this.figures, moves); }
-  private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.strolls.step(figure, actor, this.world) || this.moving === actor.id; }
+  private walking(figure: Phaser.GameObjects.Container, actor: Actor) { return this.strolls.step(figure, actor, this.world) || this.life.step(figure, actor, this.world, performance.now()) || this.moving === actor.id; }
   captureMotion() {
     const settle = captureMotion(this, this.figures, [...this.objects, ...(this.ghost ? [this.ghost] : [])], this.world.room);
     return () => settle(this.figures, this.objects, this.world.room);
@@ -269,16 +272,18 @@ export class PlayScene extends Phaser.Scene {
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   private get frameContext(): FrameContext {
-    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(),
+    return { world: this.world, town: this.town, moving: this.moving, gaze: this.gaze, objects: this.objects, faces: this.faces, now: performance.now(), life: this.life,
       swingRig: () => this.children.getByName('swing-rig') as Phaser.GameObjects.Container | null, walking: (f, a) => this.walking(f, a) };
   }
   update(time: number) {
     const reduced = reducedMotion(), ctx = this.frameContext, shown: string[] = [];
+    this.life.tick(this.world, this.selected, ctx.now, !reduced && !this.building && !this.wardrobe && !this.moving && !this.gameArt?.active() && !this.game.canvas.dataset.strolling);
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
       shown.push(`${actor.id}:${animateFigure(ctx, figure, actor, time, index, reduced)}`);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
+    this.life.flush();
     if (this.game.canvas.dataset.faces !== shown.join(' ')) this.game.canvas.dataset.faces = shown.join(' ');
     this.sky?.(time, reduced);
     this.pieces.forEach(piece => { const effect = piece.getByName<Phaser.GameObjects.Text>('effect'); if (effect) effect.y = 6 + Math.sin(time / 400) * 4; });

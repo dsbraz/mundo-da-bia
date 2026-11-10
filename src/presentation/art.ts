@@ -7,6 +7,7 @@ import { drawSelection } from './selection-art';
 import { selectionPulse } from './motion';
 import { actors } from '../content/catalog';
 import { contactShadow } from './contact-shadow';
+import { catTail, phaseOf } from './idle-life';
 import { expressionOf, faceParts, paintFace, type Expression } from './expression';
 import type { Actor } from '../domain/types';
 
@@ -18,10 +19,11 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
   container.add(pose);
-  const parts = actor.kind === 'human' ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', ...faceParts.human] : ['tail', 'body', ...faceParts.cat];
+  const parts = actor.kind === 'human' ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', ...faceParts.human] : ['tail', 'ears', 'body', ...faceParts.cat];
   heroLayer(scene, pose, actor, 'back');
   parts.forEach(part => addPart(scene, pose, actor, part));
   heroLayer(scene, pose, actor, 'front');
+  if (actor.kind === 'cat') pivotCat(pose);
   animateActor(container, actor, 500, 0, false);
   coverActor(scene, container, actor);
   if (selected) drawSelection(scene, container, actor, actorLabel(actor), context);
@@ -38,7 +40,7 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   shiftFace(pose, 0);
   const shown = face ?? { expression: expressionOf({ ...actor, show: false }, null), blink: false };
   paintFace(pose, actor.kind, shown.expression, shown.blink);
-  bodyLayers(pose, actor, time, index, reduced);
+  bodyLayers(pose, actor, time, reduced);
   const angle = actor.seat === 'bed' ? -Math.PI / 2 : 0;
   const restingAngle = settlePose(pose.getData('restingAngle') ?? angle, angle, reduced);
   pose.setData('restingAngle', restingAngle);
@@ -46,9 +48,14 @@ export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor,
   applyReaction(figure, pose);
   pulseStar(figure, time, reduced);
 }
-function bodyLayers(pose: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, reduced: boolean) {
+/** The cat's tail turns about its base (88, 100) and the ears about the head (70, 45), in the 140 × 120 art. */
+function pivotCat(pose: Phaser.GameObjects.Container) {
+  pose.getByName<Phaser.GameObjects.Image>('tail').setOrigin(88 / 140, 100 / 120).setPosition(18, -20);
+  pose.getByName<Phaser.GameObjects.Image>('ears').setOrigin(.5, 45 / 120).setPosition(0, -75);
+}
+function bodyLayers(pose: Phaser.GameObjects.Container, actor: Actor, time: number, reduced: boolean) {
   if (actor.kind === 'human') seatLayers(pose, actor, reduced);
-  else pose.getByName<Phaser.GameObjects.Image>('tail').rotation = actor.resting ? 0 : Math.sin(time / 700 + index) * 0.04;
+  else pose.getByName<Phaser.GameObjects.Image>('tail').rotation = catTail(time, phaseOf(actor.id), actor.resting, reduced);
 }
 function pulseStar(figure: Phaser.GameObjects.Container, time: number, reduced: boolean) {
   const star = figure.getByName<Phaser.GameObjects.Graphics>('selection-star');
