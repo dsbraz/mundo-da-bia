@@ -47,6 +47,8 @@ import '../presentation/style.css';
 import '../presentation/immersive.css';
 import '../presentation/home-menu.css';
 import '../presentation/dock-layout.css';
+import '../presentation/kitchen.css';
+import { kitchen } from './kitchen';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -102,7 +104,7 @@ const go = goTo({ town: () => town, selected: () => selected, building: () => bu
 const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: townDispatch, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider) });
-const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse });
+const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece) });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
@@ -143,6 +145,7 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
   pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { townActs.dispatch(action); }
+const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
 let ticks = 0; startTicks(realClock, now => { townActs.tick(now); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
@@ -178,7 +181,7 @@ function renderControls() {
   root.classList.toggle('selection-on-right', focus.x > 500);
   controls(state, selected, saved);
   editor(albumView(), edits, building, selectedPiece); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building);
-  navigationBar(); illustratedChoices(root); outside(town, selected, camera, building);
+  navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh();
   root.querySelector<HTMLElement>('#build-history')!.hidden = !building && !townActs.canUndo() && !townActs.canRedo();
   root.querySelector<HTMLButtonElement>('#undo')!.disabled = !townActs.canUndo(); root.querySelector<HTMLButtonElement>('#redo')!.disabled = !townActs.canRedo();
 }

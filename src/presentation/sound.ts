@@ -22,11 +22,11 @@ export const timbres: Record<Cue, Note[]> = {
   page: [note('triangle', 700, 1000, 0, .07), note('triangle', 600, 400, .09, .05)],
   clink: [note('sine', 1568, 1568, 0, .08), note('sine', 2093, 2093, .1, .1)],
 };
-const pieceCues: Partial<Record<PieceKind, Cue>> = { sink: 'splash', washer: 'whirr', planter: 'rustle', bookcase: 'page', 'picnic-table': 'clink', 'kitchen-cart': 'clink' };
+const pieceCues: Partial<Record<PieceKind, Cue>> = { sink: 'splash', washer: 'whirr', planter: 'rustle', bookcase: 'page', 'picnic-table': 'clink' };
 /** The sound of a piece switched on (its own for the everyday pieces); a piece switched off or without its own sound pops. */
 export function pieceCue(kind: PieceKind | undefined): Cue { return (kind && pieceCues[kind]) ?? 'pop'; }
 const volume = .05;
-const eventCues: Partial<Record<PresentationEvent['type'], Cue>> = { dressed: 'dress', picked: 'pick', dropped: 'drop', fed: 'eat', room: 'door', summoned: 'cheer', show: 'cheer', furniture: 'pop' };
+const eventCues: Partial<Record<PresentationEvent['type'], Cue>> = { dressed: 'dress', picked: 'pick', dropped: 'drop', fed: 'eat', room: 'door', summoned: 'cheer', show: 'cheer', furniture: 'pop', cooked: 'clink' };
 export function eventCue(type: PresentationEvent['type'], cat: boolean): Cue | null {
   if (type === 'rested') return cat ? 'purr' : null;
   const cue = eventCues[type] ?? null;

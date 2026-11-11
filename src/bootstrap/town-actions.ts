@@ -47,17 +47,17 @@ export function townActions(deps: TownDeps) {
     deps.pause();
     const from = forward ? future : past, to = forward ? past : future;
     const next = from.pop(); if (!next) return;
-    to.push(deps.town()); deps.commit(next); deps.refresh(); deps.structure.refresh();
+    // What the child has gained only grows: undo and redo bring the old houses back, never an older progress.
+    to.push(deps.town()); deps.commit({ ...next, progress: deps.town().progress }); deps.refresh(); deps.structure.refresh();
   }
   /** Draws what `action` would make of the neighborhood (or the neighborhood itself), without committing it. */
   function preview(action: NeighborhoodAction | null) {
     const town = action ? neighborhoodAction(deps.town(), action) : deps.town();
     deps.scene.neighborhood(town); deps.scene.paint(localWorld(town), deps.selected());
   }
-  /** The clock's tick: what changed with time is saved and drawn, without interrupting anything; an unchanged neighborhood costs nothing. */
-  function tick(now: number) {
-    const town = deps.town(), next = neighborhoodAction(town, { type: 'tick', now });
-    if (next !== town) { deps.commit(next); deps.refresh(); }
-  }
-  return { dispatch, undo, remember, preview, tick, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
+  /** Saves and draws `next` without interrupting anything and outside the undo history; an unchanged neighborhood costs nothing. */
+  function apply(next: Neighborhood) { if (next !== deps.town()) { deps.commit(next); deps.refresh(); } }
+  /** The clock's tick: what changed with time is applied. */
+  function tick(now: number) { apply(neighborhoodAction(deps.town(), { type: 'tick', now })); }
+  return { dispatch, undo, remember, preview, tick, apply, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

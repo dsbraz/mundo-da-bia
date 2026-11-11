@@ -3,6 +3,7 @@ export const palette = {
   ink: '#343c53', paper: '#faf5e9', card: '#fffdf7',
   outline: '#786c62', actorOutline: '#715e58',
   coral: '#e8735a', sun: '#f2b630', turquoise: '#2ba8a0', leaf: '#6dae4f', cobalt: '#3f6fc4', lilac: '#9b7bd0',
+  cream: '#f7e7c4', crust: '#d9a05b', cocoa: '#7a4a35', carrot: '#ef8f3a', berry: '#d9475a', glass: '#cfe8ee', silhouette: '#d9d0c7', silhouetteLine: '#c2b6aa',
   plum: '#79507c', moss: '#52665e', chalk: '#455c60', signBg: '#f7f1db', bubbleBg: '#fff9dd', labelBg: '#fff1d1', labelInk: '#71452e',
 } as const;
 export type PaletteToken = keyof typeof palette;

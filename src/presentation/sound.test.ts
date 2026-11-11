@@ -96,7 +96,7 @@ it('miado para gatos e nada para eventos sem timbre', () => {
 });
 
 it('cada móvel usado soa do seu jeito e desligar faz só um pop', () => {
-  expect(['sink', 'washer', 'planter', 'bookcase', 'picnic-table', 'kitchen-cart'].map(k => pieceCue(k as never))).toEqual(['splash', 'whirr', 'rustle', 'page', 'clink', 'clink']);
+  expect(['sink', 'washer', 'planter', 'bookcase', 'picnic-table'].map(k => pieceCue(k as never))).toEqual(['splash', 'whirr', 'rustle', 'page', 'clink']);
   expect(pieceCue('stove')).toBe('pop'); expect(pieceCue(undefined)).toBe('pop');
   const shape = (cue: keyof typeof timbres) => JSON.stringify(timbres[cue].map(n => [n.wave, n.from, n.to]));
   expect(new Set(Object.keys(timbres).map(c => shape(c as keyof typeof timbres))).size).toBe(Object.keys(timbres).length);

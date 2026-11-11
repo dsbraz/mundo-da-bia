@@ -6,7 +6,7 @@ import { hex } from './palette';
 
 type Container = Phaser.GameObjects.Container;
 type Graphics = Phaser.GameObjects.Graphics;
-const drawn: readonly PieceKind[] = ['sink', 'washer', 'planter', 'bookcase', 'picnic-table', 'kitchen-cart'];
+const drawn: readonly PieceKind[] = ['sink', 'washer', 'planter', 'bookcase', 'picnic-table'];
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 /** The everyday pieces answer with a drawn, moving effect; the older ones keep their small sign. */
 export const drawnUse = (kind: PieceKind) => drawn.includes(kind);
@@ -67,9 +67,9 @@ const painters: Partial<Record<PieceKind, (g: Graphics, time: number, reduced: b
     g.lineStyle(1.5, hex('outline'), .7).lineBetween(80, y - 10, 80, y + 10);
   },
   'picnic-table'(g, time, reduced) { g.fillStyle(hex('coral')).fillCircle(60, 30, 7).fillStyle(hex('leaf')).fillCircle(72, 31, 6); steam(g, 92, 20, time, reduced); },
-  'kitchen-cart'(g, time, reduced) { steam(g, 57, 10, time, reduced); },
 };
-function steam(g: Graphics, x: number, y: number, time: number, reduced: boolean) {
+/** Three white wisps over `x`, `y` (also the bench's cooking steam). */
+export function steam(g: Graphics, x: number, y: number, time: number, reduced: boolean) {
   for (const w of steamFrame(time, reduced)) {
     g.lineStyle(2.5, 0xffffff, w.alpha).beginPath();
     for (let s = 0; s <= 6; s++) { const py = y - w.rise - s * 3, px = x + w.dx + Math.sin(s + (reduced ? 0 : time / 200)) * 2; if (s) g.lineTo(px, py); else g.moveTo(px, py); }

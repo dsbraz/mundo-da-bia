@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { bookFrame, bubbleFrame, drawnUse, drumAngle, sproutAngle, steamFrame } from './use-effects';
 
 describe('efeitos de usar móveis', () => {
-  it('pia, lavadora, horta, estante de livros, mesa de piquenique e carrinho têm efeito desenhado; os antigos guardam o deles', () => {
-    for (const kind of ['sink', 'washer', 'planter', 'bookcase', 'picnic-table', 'kitchen-cart'] as const) expect(drawnUse(kind)).toBe(true);
-    for (const kind of ['stove', 'piano', 'tv', 'sofa'] as const) expect(drawnUse(kind)).toBe(false);
+  it('pia, lavadora, horta, estante de livros e mesa de piquenique têm efeito desenhado; os antigos guardam o deles', () => {
+    for (const kind of ['sink', 'washer', 'planter', 'bookcase', 'picnic-table'] as const) expect(drawnUse(kind)).toBe(true);
+    for (const kind of ['stove', 'kitchen-cart', 'piano', 'tv', 'sofa'] as const) expect(drawnUse(kind)).toBe(false);
   });
   it('as bolhas da pia sobem da cuba e somem no alto; com movimento reduzido ficam paradas', () => {
     const start = bubbleFrame(0, false), later = bubbleFrame(300, false);

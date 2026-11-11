@@ -6,6 +6,7 @@ import { loadSvg } from './rendering';
 import { outfitLayer } from './outfit';
 import { loadPieces } from './piece-assets';
 import { svgFragment } from './svg-source';
+import { dishBox, dishOf, dishParts, itemTexture, sheetPart } from './art-sheet';
 import type Phaser from 'phaser';
 import { actorIds, lookIds } from '../domain/types';
 import type { ActorId, LookId, World } from '../domain/types';
@@ -37,9 +38,15 @@ export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | 
   town?.buildings.forEach(b => { const floors = floorCount(b.layout); loadSvg(scene, facadeKey(b.model, floors), svgUrl(facadeSvg(b.model, floors))); });
   roomTemplates.filter(template => !scene.textures.exists(`architecture-${template}`)).forEach(template => loadSvg(scene, `architecture-${template}`, svgUrl(roomArchitecture(template))));
   loadPieces(scene, state);
+  loadDishes(scene, town?.items ?? state.items);
   actorIds.forEach((id, index) => loadActor(scene, id, index, state.actors.find(a => a.id === id)!.look));
   lookIds.filter(look => !scene.textures.exists(`look-${look}`)).forEach(look => {
     const garment = lookSource(look).replace('viewBox="0 0 140 220"', 'viewBox="15 98 110 122"').replace('width="140" height="220"', 'width="110" height="122"');
     loadSvg(scene, `look-${look}`, layer(garment, outfitLayer(look)));
   });
+}
+/** Every dish of the neighborhood, cut from the dishes sheet (loaded in preload) with its garnish when fancy. */
+function loadDishes(scene: Phaser.Scene, items: World['items']) {
+  const source = scene.cache.text.get('art-dishes') as string | undefined; if (!source) return;
+  items.forEach(item => { const dish = dishOf(item); if (dish) loadSvg(scene, itemTexture(item), sheetPart(source, dishParts(dish.recipe, dish.fancy), dishBox)); });
 }

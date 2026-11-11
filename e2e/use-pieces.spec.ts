@@ -4,7 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { Piece, PieceKind, World } from '../src/domain/types';
-import { point, read, ready, tap } from './helpers';
+import { onPiece, point, read, ready, tap } from './helpers';
 
 const piece = (id: number, kind: PieceKind, x: number, y: number, active?: boolean): Piece => ({ id, kind, room: 'sala', x, y, color: 'original', flipped: false, ...(active ? { active } : {}) });
 /** The living room with only `pieces`, Bia alone in it at x 760; paused clock once ready. */
@@ -43,10 +43,20 @@ for (const reduced of [false, true]) test(`tocar na pia leva a Bia até ela e as
   await expect(canvas(page)).toHaveAttribute('data-uses', '');
 });
 
-for (const reduced of [false, true]) test(`os seis móveis do dia a dia ligados mostram seus efeitos${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
+for (const reduced of [false, true]) test(`os móveis do dia a dia ligados mostram seus efeitos (o carrinho de cozinha agora abre a bancada)${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await room(page, [piece(1, 'sink', 20, 250, true), piece(2, 'washer', 230, 255, true), piece(3, 'planter', 390, 280, true), piece(4, 'bookcase', 590, 190, true), piece(5, 'kitchen-cart', 780, 260, true), piece(6, 'picnic-table', 960, 260, true)], 'large');
-  await expect(canvas(page)).toHaveAttribute('data-uses', 'sink washer planter bookcase kitchen-cart picnic-table');
+  await expect(canvas(page)).toHaveAttribute('data-uses', 'sink washer planter bookcase picnic-table');
   await page.clock.pauseAt(new Date('2026-01-01T00:10:00Z'));
   await page.screenshot({ path: `reports/use-everyday${reduced ? '-reduced' : ''}.png` });
+});
+
+test('tocar no carrinho de cozinha leva a Bia até ele e abre a bancada, sem ligar o móvel', async ({ page }) => {
+  await room(page, [piece(1, 'kitchen-cart', 300, 250)]);
+  await tap(page, ...await onPiece(page, 'kitchen-cart', 360, 320));
+  await expect(page.locator('#kitchen-bench')).toBeVisible();
+  const bia = (await read(page)).actors[0]!;
+  expect(Math.abs(bia.x - 360)).toBeLessThanOrEqual(120);
+  expect((await read(page)).layout.pieces[0]!.active).toBeUndefined();
+  await expect(canvas(page)).toHaveAttribute('data-uses', '');
 });

@@ -60,9 +60,8 @@ it('cria todos os modelos e respeita as doze posições sem reusar IDs', () => {
 it('mantém assentos exclusivos por cômodo e interage com as peças novas', () => {
   let state = addRoom(initialWorld(), { name: 'Cozinha', template: 'kitchen', size: 'medium', cell: 2 });
   const stove = state.layout.pieces.find(p => p.kind === 'stove')!;
-  const used = transition(state, { type: 'use', id: stove.id }).state;
-  expect(used.layout.pieces.find(p => p.id === stove.id)?.active).toBe(true);
-  expect(transition(used, { type: 'use', id: stove.id }).state.layout.pieces.find(p => p.id === stove.id)?.active).toBe(false);
+  // The kitchen's stove opens the bench (W3-16) instead of switching on.
+  expect(transition(state, { type: 'use', id: stove.id }).state).toBe(state);
   expect(transition(state, { type: 'use', id: 999 }).state).toBe(state);
   expect(transition(state, { type: 'use', id: 2 }).state).toBe(state);
   state = transition(state, { type: 'interact', target: 'fridge' }).state;

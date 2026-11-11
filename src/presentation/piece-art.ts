@@ -11,6 +11,8 @@ import { visualContext } from './pose';
 import { itemKind } from '../domain/item-kind';
 import { floorTop } from './floor-band';
 import { drawnUse, drawUse } from './use-effects';
+import { itemTexture } from './art-sheet';
+import { benchKinds } from '../domain/recipes';
 export function orderedPieces(state: World) {
   return state.layout.pieces.filter(p => p.room === state.room).sort((a, b) => pieceDepth(a) - pieceDepth(b));
 }
@@ -39,7 +41,8 @@ export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardr
   const box = pieceBounds[piece.kind];
   if (!['rug', 'picture', 'neon', 'cushion'].includes(piece.kind)) container.add(contactShadow(scene, box.width / 2, box.height - 3, box.width * .76, 8, 0x625642));
   parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped).setDisplaySize(box.width, box.height)));
-  if (piece.active) container.add(drawnUse(piece.kind) ? drawUse(scene, piece) : scene.add.text(box.width / 2, 6, effect(piece), textStyle('effect')).setOrigin(.5).setName('effect'));
+  // The bench pieces show steam only while cooking (kitchen-art); an old saved `active` draws nothing.
+  if (piece.active && !benchKinds.includes(piece.kind)) container.add(drawnUse(piece.kind) ? drawUse(scene, piece) : scene.add.text(box.width / 2, 6, effect(piece), textStyle('effect')).setOrigin(.5).setName('effect'));
   return container;
 }
 function partsFor(piece: Piece, state: World, wardrobe: boolean): string[] {
@@ -52,7 +55,6 @@ function partsFor(piece: Piece, state: World, wardrobe: boolean): string[] {
 }
 function effect(piece: Piece): string {
   if (['speaker', 'piano'].includes(piece.kind)) return '♫ ♪';
-  if (piece.kind === 'stove') return '♨';
   if (piece.kind === 'aquarium') return '◦ ○';
   if (piece.kind === 'bath') return '◦ ○ ◦';
   return '✦';
@@ -92,6 +94,6 @@ export function drawObjects(scene: Phaser.Scene, state: World) {
   return state.items.flatMap(item => {
     const point = itemPoint(state, item); if (!point) return [];
     const depth = objectDepth(state, item);
-    return [scene.add.image(point.x, point.y, itemKind(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth)];
+    return [scene.add.image(point.x, point.y, itemTexture(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth)];
   });
 }

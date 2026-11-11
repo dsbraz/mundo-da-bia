@@ -3,11 +3,14 @@ import { approach, equipmentAction } from '../presentation/equipment-interaction
 import { pickupItem } from '../presentation/item-pickup';
 import type { walking } from '../presentation/walking';
 import { refusal } from '../content/feedback-text';
+import { benchKinds } from '../domain/recipes';
 const blockedMessage = refusal('blocked', '');
 interface PlayActions {
   root: HTMLElement; state: () => World; selected: () => ActorId; choose: (id: ActorId) => void;
   cancelGame: () => void; walker: ReturnType<typeof walking>; dispatch: (action: Action) => void;
   toggleWardrobe: () => void; refuse: (text: string) => void;
+  /** Opens the kitchen bench of a stove, counter or cart once the selected character got there. */
+  bench: (piece: number) => void;
 }
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
@@ -19,8 +22,9 @@ export function playActions(deps: PlayActions) {
     walker.cancel();
     const point = approach(deps.state(), deps.selected(), action);
     if (!point) { deps.refuse(blockedMessage); return; }
+    const bench = action.type === 'use' && deps.state().layout.pieces.some(p => p.id === action.id && benchKinds.includes(p.kind));
     walker.start(point, () => {
-      if (approach(deps.state(), deps.selected(), action)) deps.dispatch(action);
+      if (approach(deps.state(), deps.selected(), action)) { if (bench) deps.bench(action.id); else deps.dispatch(action); }
       else deps.refuse(blockedMessage);
     });
   }

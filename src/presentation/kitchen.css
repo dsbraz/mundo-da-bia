@@ -1,0 +1,26 @@
+/* A bancada abre ao lado da cena, do lado oposto à peça, para o prato nascer à vista. Fundo neutro; o tocável é saturado. */
+#kitchen-bench{position:absolute;z-index:12;top:88px;max-height:calc(100% - 168px);width:min(336px,calc(100vw - 24px));display:flex;flex-direction:column;gap:10px;padding:10px 12px 12px;background:var(--paper);border:1.5px solid var(--outline);border-radius:18px;box-shadow:0 6px 18px #343c531f;overflow:auto;overscroll-behavior:contain}
+#kitchen-bench[data-side=right]{right:12px}#kitchen-bench[data-side=left]{left:12px}
+.at-bench #actor-context,.at-bench #play-hint{display:none!important}
+.bench-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.bench-top button{padding:8px;min-width:48px}.bench-top button.illustrated::before{width:30px;height:30px;flex-basis:30px}
+.bench-bowl{position:relative;flex:0 0 auto;width:100%;aspect-ratio:240/120}.bench-bowl>img:first-child{position:absolute;inset:0;width:100%;height:100%}
+.bowl-slot{position:absolute;top:13%;width:22%;aspect-ratio:1;min-width:0;min-height:0;padding:3%;border:2px dashed var(--silhouette-line);border-radius:50%;background:#fffdf7b3}
+.bowl-slot[data-slot="0"]{left:17%}.bowl-slot[data-slot="1"]{left:39%}.bowl-slot[data-slot="2"]{left:61%}
+.bowl-slot[data-ingredient]:not([data-ingredient=""]){border:2px solid var(--outline);background:var(--card)}
+.bowl-slot img{width:100%;height:100%;object-fit:contain;pointer-events:none}.bowl-slot img.ghost{opacity:.45;animation:ghost 1.2s ease-in-out infinite}
+.bowl-slot[data-ghost]:not([data-ghost=""]){border-color:var(--coral)}
+.bench-steam{position:absolute;left:50%;top:-30%;width:46%;transform:translateX(-50%);pointer-events:none}.bench-steam.puff{animation:puff 1.2s ease-out}
+.bench-bowl.cooking{animation:stir .3s ease-in-out 4}.bench-bowl.nudge{animation:stir .35s ease-in-out}
+.bench-utensils{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bench-utensil{aspect-ratio:1;padding:6px;border:2px solid var(--outline);background:var(--card);border-radius:14px}.bench-utensil img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.bench-utensil.wobble{animation:wobble .7s ease-in-out;border-color:var(--sun);background:#fff4cf}
+.bench-pantry{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px;border-radius:14px;background:#efe6d8}
+.bench-ingredient{position:relative;aspect-ratio:1;min-width:0;min-height:52px;padding:4px;border-radius:12px;background:var(--card);touch-action:none}
+.bench-ingredient>img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.bench-ingredient .pile{position:absolute;right:2px;bottom:2px;display:flex;flex-direction:row-reverse}.bench-ingredient .pile img{width:15px;height:15px;margin-left:-7px;pointer-events:none}
+.bench-ghost{position:fixed;z-index:100;width:64px;height:64px;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 4px 5px #343c5344)}
+@keyframes stir{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@keyframes wobble{20%{transform:rotate(-10deg)}40%{transform:rotate(9deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(4deg)}}
+@keyframes puff{from{opacity:0;transform:translate(-50%,30%) scale(.6)}30%{opacity:1}to{opacity:0;transform:translate(-50%,-30%) scale(1.05)}}
+@keyframes ghost{50%{opacity:.7}}
+@media(max-width:700px){#kitchen-bench{top:auto;bottom:76px;max-height:60dvh;width:calc(100vw - 24px)}}

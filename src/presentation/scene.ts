@@ -8,7 +8,7 @@ import { sceneLife } from './scene-life';
 import { contextScale, visualContext } from './pose';
 import { rasterScale, logicalWidth } from './rendering';
 import { captureMotion } from './settle-motion';
-import { itemKind } from '../domain/item-kind';
+import { itemTexture } from './art-sheet';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import Phaser from 'phaser';
 import type { RoomId, ItemId, ItemKind } from '../domain/types';
@@ -36,6 +36,7 @@ import { animatePieces, blinkPiece } from './use-effects';
 import { pokeFigure, refuseAt } from './feedback';
 import type { ReactionPose } from '../content/personalities';
 import { reducedMotion } from './motion';
+import { cookedEffect, hopDishes } from './kitchen-art';
 import { hex } from './palette';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
@@ -75,7 +76,7 @@ export class PlayScene extends Phaser.Scene {
   private hint: Phaser.GameObjects.Graphics | null = null;
   private objects: Phaser.GameObjects.Image[] = [];
   constructor(state: World) { super('play'); this.world = state; }
-  preload() { loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); actorIds.forEach(id => this.load.svg(`face-${id}`, `/icons/${id}.svg`, { width: 112, height: 112 })); }
+  preload() { this.load.text('art-dishes', '/art/dishes.svg'); loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); actorIds.forEach(id => this.load.svg(`face-${id}`, `/icons/${id}.svg`, { width: 112, height: 112 })); }
   create() {
     this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true;
     const view = this.game.canvas.dataset;
@@ -97,7 +98,14 @@ export class PlayScene extends Phaser.Scene {
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
-    this.game.canvas.dataset.ready = 'true';
+    this.game.canvas.dataset.ready = 'true'; this.playCooking();
+  }
+  private cooking: { piece: Piece; item: ItemId | null } | null = null;
+  /** The bench answered: the cooked `item` pops in by `piece` with steam, or (no item) the room's dishes hop: the table is full. Waits for the dish's art. */
+  cooked(piece: Piece, item: ItemId | null) { this.cooking = { piece, item }; if (this.ready && !this.load.isLoading()) this.playCooking(); }
+  private playCooking() {
+    const cooking = this.cooking; if (!cooking) return; this.cooking = null;
+    if (cooking.item) cookedEffect(this, cooking.piece, this.objects.find(o => o.name === cooking.item)); else hopDishes(this, this.objects.filter(o => o.texture.key.startsWith('dish-')));
   }
   private prepareArt(state: World) {
     if (!this.ready || this.load.isLoading()) return false;
@@ -201,7 +209,7 @@ export class PlayScene extends Phaser.Scene {
     if (!this.ready) return;
     this.objects.forEach(o => o.setAlpha(drag?.kind === 'item' && o.name === drag.id ? .25 : 1));
     if (!drag) { this.clearPreview(); return; }
-    const key = drag.kind === 'look' ? `look-${drag.id}` : itemKind(this.world.items.find(i => i.id === drag.id)!);
+    const key = drag.kind === 'look' ? `look-${drag.id}` : itemTexture(this.world.items.find(i => i.id === drag.id)!);
     if (!this.ghost) this.ghost = this.add.image(drag.point.x, drag.point.y, key).setDepth(1000);
     const target = actorAt(this.visibleWorld(), drag.point);
     const point = previewPoint(this.visibleWorld(), drag);
