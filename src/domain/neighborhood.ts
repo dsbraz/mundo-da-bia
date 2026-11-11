@@ -4,7 +4,7 @@ import { editModule } from './modules';
 import { sameLocation, validLocation } from './location';
 import { itemKind } from './item-kind';
 import type { Album, World, RoomId } from './types';
-import type { LegacyNeighborhood, Location, ModuleAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
+import type { GardenAction, LegacyNeighborhood, Location, ModuleAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { initialProgress, nextItemAfter } from './progress';
 import { activeHouse } from './houses';
 import { initialWorld } from './world';
@@ -12,6 +12,7 @@ import { removeBuilding } from './remove-building';
 import { construct, duplicateBuilding, customize, moveBuilding } from './buildings';
 import { transport } from './neighborhood-transfer';
 import { cook } from './recipes';
+import { garden, gardenActions } from './garden';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -38,9 +39,9 @@ function albumTown(album: Album): LegacyNeighborhood {
 }
 export function neighborhoodAction(town: Neighborhood, action: NeighborhoodAction): Neighborhood {
   if (buildingActions.includes(action.type)) return editBuilding(town, action as BuildingAction);
+  if (gardenActions.includes(action.type)) return garden(town, action as GardenAction | { type: 'tick'; now: number });
   switch (action.type) {
     case 'outdoor': return interactOutdoor(town, action);
-    case 'tick': return town;
     case 'cook': return cook(town, action).town;
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
     case 'transport': return transport(town, action);
