@@ -4,7 +4,7 @@ import { editModule } from './modules';
 import { sameLocation, validLocation } from './location';
 import { itemKind } from './item-kind';
 import type { Album, World, RoomId } from './types';
-import type { LegacyNeighborhood, Location, ModuleAction, Neighborhood, NeighborhoodAction } from './neighborhood-types';
+import type { LegacyNeighborhood, Location, ModuleAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { initialProgress, nextItemAfter } from './progress';
 import { activeHouse } from './houses';
 import { initialWorld } from './world';
@@ -76,6 +76,9 @@ function streetLayout(plots: number) {
   const layout = initialWorld().layout;
   return { ...layout, pieces: [], rooms: { ...layout.rooms, sala: { ...layout.rooms.sala, name: 'Nosso bairro', size: 'small' as const } }, streetWidth: streetWidth(plots) } as typeof layout;
 }
+/** A dish that was in view and is no longer in the world was eaten: it leaves the neighborhood too. */
+const eaten = (item: NeighborhoodItem, world: World, view: Location) =>
+  item.kind === 'prato' && localRoom(item.location, view) !== 'room-0' && !world.items.some(i => i.id === item.id);
 export function storeWorld(town: Neighborhood, world: World): Neighborhood {
   const view = town.location;
   const location = (room: RoomId): Location => view.kind === 'street' ? view : { ...view, room };
@@ -83,7 +86,7 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
     const updated = world.actors.find(p => p.id === a.id)!;
     return { ...updated, room: updated.room === 'room-0' ? a.room : updated.room, location: updated.room === 'room-0' ? a.location : location(updated.room) };
   });
-  const items = town.items.map(i => {
+  const items = town.items.filter(i => !eaten(i, world, view)).map(i => {
     const updated = world.items.find(p => p.id === i.id);
     const holder = actors.find(a => a.id === (updated ?? i).holder);
     if (holder) return { ...(updated ?? i), room: holder.room, x: holder.x, y: holder.y, location: holder.location };

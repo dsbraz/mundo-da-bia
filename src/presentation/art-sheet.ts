@@ -37,3 +37,20 @@ export function itemTexture(item: Item): string {
   const dish = dishOf(item);
   return dish ? `dish-${dish.recipe}${dish.fancy ? '-fancy' : ''}` : itemKind(item);
 }
+let dishSource: string | null = null;
+const icons = new Map<string, string>();
+/** Keeps the dishes sheet (read in the scene's preload) for the DOM icons. */
+export function keepDishes(source: string) { dishSource = source; }
+/** Shows `item` in `image`; a dish whose sheet is not read yet gets its drawing as soon as it arrives. */
+export function showItem(image: HTMLImageElement, item: Item) {
+  image.src = itemIcon(item);
+  if (dishOf(item) && !dishSource) void sheet('dishes').then(source => { keepDishes(source); image.src = itemIcon(item); });
+}
+/** The picture of an object in the DOM (tray, panel, badges): a dish shows its own drawing once the sheet is read. */
+export function itemIcon(item: Item): string {
+  const dish = dishOf(item);
+  if (!dish || !dishSource) return `/icons/${dish ? 'lanche' : itemKind(item)}.svg`;
+  const key = itemTexture(item);
+  if (!icons.has(key)) icons.set(key, sheetPart(dishSource, dishParts(dish.recipe, dish.fancy), dishBox));
+  return icons.get(key)!;
+}

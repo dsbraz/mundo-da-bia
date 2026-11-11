@@ -52,8 +52,10 @@ export type Action =
 /** Ephemeral: never saved. `cooked`, `ate`, `harvested`, `served`, `letter` and `hint` belong to the wave 3 systems (lines in W3-02). */
 export interface PresentationEvent {
   type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'
-    | 'cooked' | 'ate' | 'harvested' | 'served' | 'letter' | 'hint';
+    | 'cooked' | 'ate' | 'sniffed' | 'harvested' | 'served' | 'letter' | 'hint';
   actor?: ActorId; piece?: number;
+  /** On `ate`: the eater's favourite dish (the big reaction). */
+  favorite?: true;
 }
 export interface Transition { state: World; events: PresentationEvent[] }
 

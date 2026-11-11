@@ -1,10 +1,10 @@
-import { itemKind } from '../domain/item-kind';
 import { visibleItem } from '../domain/objects';
 import type { Action, ActorId, Item, ItemId, World } from '../domain/types';
-import { items } from '../content/catalog';
 import { trayDrag } from './tray-drag';
 import { roomWidth } from '../domain/geometry';
 import { actorAt } from './targets';
+import { itemIcon, showItem } from './art-sheet';
+import { itemName } from './panel';
 interface Callbacks { dispatch: (a: Action) => void; get: () => World; selected: () => ActorId; building: () => boolean }
 export function objectControls(root: HTMLElement, dispatch: Callbacks['dispatch'], get: Callbacks['get'], selected: Callbacks['selected'], building: Callbacks['building']) {
   const cards = new Map<ItemId, ReturnType<typeof objectCard>>();
@@ -14,6 +14,7 @@ export function objectControls(root: HTMLElement, dispatch: Callbacks['dispatch'
       if (!cards.has(item.id)) cards.set(item.id, objectCard(item, { dispatch, get, selected, building }));
       const card = cards.get(item.id)!;
       card.pick.disabled = !canPick(state, item, selected());
+      const picture = itemIcon(item); if (card.icon.getAttribute('src') !== picture) card.icon.src = picture;
       return card.root;
     });
     const container = root.querySelector('#objects')!;
@@ -22,8 +23,8 @@ export function objectControls(root: HTMLElement, dispatch: Callbacks['dispatch'
 }
 function objectCard(item: Item, actions: Callbacks) {
   const button = document.createElement('button'); button.type = 'button';
-  const icon = document.createElement('img'); icon.src = `/icons/${itemKind(item)}.svg`; icon.alt = ''; icon.width = 26; icon.height = 26;
-  button.append(icon, document.createTextNode(items[itemKind(item)].name));
+  const icon = document.createElement('img'); showItem(icon, item); icon.alt = ''; icon.width = 26; icon.height = 26;
+  button.append(icon, document.createTextNode(itemName(item)));
   button.onclick = () => actions.dispatch({ type: 'pick', actor: actions.selected(), item: item.id });
   trayDrag(button, () => roomWidth(actions.get()), point => {
     const target = actorAt(actions.get(), point);
@@ -31,7 +32,7 @@ function objectCard(item: Item, actions: Callbacks) {
   }, () => !actions.building());
   const card = document.createElement('article'); card.className = 'character-card';
   card.append(button);
-  return { root: card, pick: button };
+  return { root: card, pick: button, icon };
 }
 
 function canPick(state: World, item: Item, actor: ActorId) {

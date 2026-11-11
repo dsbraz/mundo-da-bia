@@ -46,3 +46,11 @@ it('a Bia fala de batata frita e de pastel, os favoritos dela', () => {
   const bia = spokenEvents.flatMap(type => [0, 1, 2, 3].map(turn => eventLine(type, { id: 'bia' }, false, turn)));
   expect(bia.some(l => /batata frita/i.test(l ?? ''))).toBe(true); expect(bia.some(l => /pastel/i.test(l ?? ''))).toBe(true);
 });
+
+it('o gato que cheira um prato diz que prefere peixinho, em rodízio; humano nunca cheira', () => {
+  const next = lineRotation();
+  const said = [1, 2, 3].map(() => next('sniffed', { id: 'mimi' }, true));
+  expect(said[0]).toBe('Miau? (Mimi: prefiro peixinho)');
+  expect(new Set(said).size).toBe(3);
+  expect(eventLine('sniffed', { id: 'bia' }, false)).toBeNull();
+});

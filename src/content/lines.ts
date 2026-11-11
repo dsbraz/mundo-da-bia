@@ -67,11 +67,14 @@ const own: Partial<Record<ActorId, Partial<Pools>>> = {
   nino: { ate: ['Miau! ({nome} quer leitinho)', '({nome} explorou o prato todo)', 'Miau? ({nome} cheirou e aprovou)'] },
   pipoca: { ate: ['Miau! ({nome} quer ovinho)', 'Prrr… ({nome} comeu e cochilou)', 'Rrrron… ({nome} amou de verdade)'] },
 };
+/** A cat offered a dish it does not eat sniffs it (§3.2): never disgust, it just prefers fish. Cats only. */
+const sniffed = ['Miau? ({nome}: prefiro peixinho)', 'Sniff… ({nome} quer peixinho)', 'Miau! ({nome} sonha com peixinho)'];
 const spoken = (type: PresentationEvent['type']): type is SpokenEvent => (spokenEvents as readonly string[]).includes(type);
 /** The lines a character takes turns on for `type` (its own, else the shared human or cat ones); null for an event nobody speaks. */
 export function linePool(type: PresentationEvent['type'], id: ActorId, isCat: boolean): readonly string[] | null {
+  if (type === 'sniffed') return isCat ? sniffed : null;
   if (!spoken(type)) return null;
   return own[id]?.[type] ?? (isCat ? cat : human)[type];
 }
 /** Every line, for the content checks. */
-export const allLines = () => [human, cat, ...Object.values(own)].flatMap(pools => Object.values(pools).flat());
+export const allLines = () => [...[human, cat, ...Object.values(own)].flatMap(pools => Object.values(pools).flat()), ...sniffed];

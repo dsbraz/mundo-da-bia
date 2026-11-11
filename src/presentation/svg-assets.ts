@@ -6,7 +6,7 @@ import { loadSvg } from './rendering';
 import { outfitLayer } from './outfit';
 import { loadPieces } from './piece-assets';
 import { svgFragment } from './svg-source';
-import { dishBox, dishOf, dishParts, itemTexture, sheetPart } from './art-sheet';
+import { dishBox, dishOf, dishParts, itemTexture, keepDishes, sheetPart } from './art-sheet';
 import type Phaser from 'phaser';
 import { actorIds, lookIds } from '../domain/types';
 import type { ActorId, LookId, World } from '../domain/types';
@@ -48,5 +48,6 @@ export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | 
 /** Every dish of the neighborhood, cut from the dishes sheet (loaded in preload) with its garnish when fancy. */
 function loadDishes(scene: Phaser.Scene, items: World['items']) {
   const source = scene.cache.text.get('art-dishes') as string | undefined; if (!source) return;
+  keepDishes(source);
   items.forEach(item => { const dish = dishOf(item); if (dish) loadSvg(scene, itemTexture(item), sheetPart(source, dishParts(dish.recipe, dish.fancy), dishBox)); });
 }

@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { initialWorld, transition } from '../domain/world';
-import { panelButtons, panelSlots, statusBadges } from './panel';
+import { itemName, panelButtons, panelSlots, statusBadges } from './panel';
+import type { Item } from '../domain/types';
 import type { World } from '../domain/types';
 
 const actor = (world: World, id: string) => world.actors.find(a => a.id === id)!;
@@ -55,4 +56,17 @@ it('status becomes at most three badges with neutral, named labels', () => {
 it('Jogar stays dimmed on the street, where games have no floor', () => {
   const street = { ...initialWorld(), streetWidth: 3000 };
   expect(panelButtons(street, actor(street, 'bia')).find(b => b.slot === 'play')!.enabled).toBe(false);
+});
+
+it('Comer acende com um prato na mão de quem come aquele prato; o gato com pizza fica apagado', () => {
+  const plate = (recipe: string, holder: string) => ({ id: '9:prato', kind: 'prato', recipe, room: 'sala', x: 400, y: 500, holder, spot: 'floor' }) as Item;
+  const world = (item: Item): World => ({ ...initialWorld(), items: [...initialWorld().items, item] });
+  const eat = (w: World, id: string) => panelButtons(w, actor(w, id))[4]!;
+  // Without the dishes sheet read yet (no scene here) the button keeps a food picture; in the game it shows the dish (E2E).
+  expect(eat(world(plate('pizza', 'luna')), 'luna')).toMatchObject({ enabled: true, icon: '/icons/lanche.svg' });
+  expect(eat(world(plate('pizza', 'mimi')), 'mimi').enabled).toBe(false);
+  expect(eat(world(plate('ovo-mexido', 'mimi')), 'mimi').enabled).toBe(true);
+  const badges = statusBadges(world(plate('pizza', 'luna')), actor(world(plate('pizza', 'luna')), 'luna'), 'Luna');
+  expect(badges.at(-1)!.label).toBe('Luna está com Pizza');
+  expect(itemName(plate('ovo-mexido', 'bia'))).toBe('Ovo mexido');
 });

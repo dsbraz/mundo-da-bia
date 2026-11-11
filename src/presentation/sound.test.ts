@@ -37,6 +37,9 @@ it('cada evento tem seu timbre e vestir, pegar e comer soam diferentes', () => {
   expect(eventCue('picked', false)).toBe('pick');
   expect(eventCue('fed', false)).toBe('eat');
   expect(eventCue('fed', true)).toBe('meow');
+  expect(eventCue('ate', false)).toBe('eat');
+  expect(eventCue('ate', true)).toBe('meow');
+  expect(eventCue('sniffed', true)).toBe('meow');
   expect(eventCue('room', false)).toBe('door');
   expect(eventCue('moved', false)).toBeNull();
   const shape = (cue: keyof typeof timbres) => JSON.stringify(timbres[cue].map(n => [n.wave, n.from, n.to]));

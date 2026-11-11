@@ -1,10 +1,11 @@
 import { expect, it } from 'vitest';
 import { decodeNeighborhood, encodeNeighborhood } from './neighborhood';
-import { migrateNeighborhood, neighborhoodAction } from '../domain/neighborhood';
+import { localWorld, migrateNeighborhood, neighborhoodAction, storeWorld } from '../domain/neighborhood';
 import { initialAlbum } from '../domain/houses';
-import { initialWorld } from '../domain/world';
+import { initialWorld, transition } from '../domain/world';
 import { recipes } from '../domain/recipes';
 import type { Neighborhood } from '../domain/neighborhood-types';
+import { actorIds } from '../domain/types';
 import type { PieceKind } from '../domain/types';
 
 const roundTrip = (town: Neighborhood) => decodeNeighborhood(encodeNeighborhood(town));
@@ -33,5 +34,24 @@ it('cozinhar qualquer receita, em qualquer canto, até a mesa encher, sobrevive 
     }
     expect(cooked).toBe(29);
     expect(town.progress.basket).toEqual({ cenoura: 3, milho: 4, morango: 4, abobora: 4 });
+  }
+});
+
+it('cada personagem recebendo cada prato (come ou cheira) e comendo com o botão sobrevive a encode → decode igual', () => {
+  const start = kitchen('stove', 300, 250);
+  for (const recipe of recipes) {
+    const cooked = neighborhoodAction(start, { type: 'cook', building: 1, piece: 50, cook: 'bia', ingredients: recipe.ingredients, utensil: recipe.utensil });
+    const plate = cooked.items.find(i => i.kind === 'prato')!;
+    let town = cooked;
+    for (const actor of actorIds) {
+      const next = storeWorld(cooked, transition(localWorld(cooked), { type: 'give', actor, item: plate.id }).state);
+      expect(roundTrip(next), `${actor} ${recipe.id}`).toEqual(next);
+      if (!next.items.some(i => i.id === plate.id) && town === cooked) town = next;
+    }
+    expect(town.items.some(i => i.id === plate.id), recipe.id).toBe(false);
+    const held = transition(localWorld(cooked), { type: 'pick', actor: 'bia', item: plate.id }).state;
+    const fed = storeWorld(cooked, transition(held, { type: 'feed', actor: 'bia' }).state);
+    expect(fed.items.some(i => i.id === plate.id)).toBe(false);
+    expect(roundTrip(fed)).toEqual(fed);
   }
 });

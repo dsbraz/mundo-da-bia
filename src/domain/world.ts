@@ -9,7 +9,7 @@ import { actorIds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
-import { toggleRest, wake } from './care';
+import { eat, toggleRest, wake } from './care';
 import { usePiece } from './use';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
@@ -48,6 +48,7 @@ function pick(state: World, actor: Actor, itemId: import('./types').ItemId): Tra
 function release(state: World, actor: Actor, feeding: boolean): Transition {
   const item = state.items.find(i => i.holder === actor.id);
   if (!item) return { state, events: [] };
+  if (feeding && item.kind === 'prato') return eat(state, actor, item);
   const food = actor.kind === 'cat' ? 'peixe' : 'lanche';
   if (feeding && itemKind(item) !== food) return { state, events: [] };
   const result = feeding ? changeActor(state, actor, { fed: true, resting: false }, 'fed')
