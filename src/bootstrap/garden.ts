@@ -1,0 +1,70 @@
+import { harvest, nearestPlot, plotSpots, thirsty } from '../domain/garden';
+import { neighborhoodAction } from '../domain/neighborhood';
+import type { Neighborhood } from '../domain/neighborhood-types';
+import type { PlazaPlot } from '../domain/progress';
+import type { ActorId, CropId } from '../domain/types';
+import { seedBag } from '../presentation/seed-bag';
+import { standPoint } from '../presentation/plaza-garden';
+import type { walking } from '../presentation/walking';
+import type { PlayScene } from '../presentation/scene';
+import { fullBasketLine } from '../content/garden';
+import type { sceneFeedback } from './scene-feedback';
+
+interface GardenDeps {
+  root: HTMLElement; town: () => Neighborhood; selected: () => ActorId; building: () => boolean; walker: ReturnType<typeof walking>;
+  /** The app's clock (ms): the domain only gets the time through the action. */
+  now: () => number;
+  /** Commits a neighborhood the garden changed (saved and drawn), outside the undo history: what she gains only grows. */
+  apply: (town: Neighborhood) => void;
+  scene: Pick<PlayScene, 'outdoor'>; feedback: Pick<ReturnType<typeof sceneFeedback>, 'events' | 'refuse'>;
+}
+/** The plaza vegetable garden (§3.3): a touch on a plot walks the selected character beside it, then plants (seed bag), waters,
+ *  harvests or just sways the plant; the plaza's can waters the plot nearest to whoever is selected. */
+export function gardenPlay(deps: GardenDeps) {
+  let open: PlazaPlot | null = null;
+  const bag = seedBag(deps.root, { plant });
+  const street = () => { const actor = deps.town().actors.find(a => a.id === deps.selected()); return actor?.location.kind === 'street' ? actor : undefined; };
+  function go(plot: PlazaPlot, then: (actor: ActorId) => void) {
+    close(); deps.walker.cancel();
+    deps.walker.start(standPoint(plot).point, () => then(deps.selected()));
+  }
+  /** What a plot asks for when touched: an empty one opens the seed bag, a thirsty one is watered, a ready one harvested. */
+  function tend(actor: ActorId, plot: PlazaPlot) {
+    const plant = deps.town().progress.plaza[plot];
+    if (!plant) { open = plot; bag.open(deps.town().progress.seeds, { x: plotSpots[plot].x, y: plotSpots[plot].y - 100 }); return; }
+    if (plant.stage === 4) { gather(actor, plot); return; }
+    if (thirsty(plant)) { water(actor, plot); return; }
+    deps.scene.outdoor.garden.sway(plot);
+  }
+  function water(actor: ActorId, plot: PlazaPlot) {
+    deps.apply(neighborhoodAction(deps.town(), { type: 'water-plot', plot, now: deps.now() }));
+    deps.scene.outdoor.reaction({ type: 'outdoor', actor, target: 'water' }, standPoint(plot).facing);
+  }
+  function gather(actor: ActorId, plot: PlazaPlot) {
+    const crop = deps.town().progress.plaza[plot]!.crop, result = harvest(deps.town(), plot);
+    if (!result.amount) { deps.scene.outdoor.garden.full(); deps.feedback.refuse(fullBasketLine, undefined, actor); return; }
+    deps.apply(result.town);
+    deps.scene.outdoor.garden.harvested(plot, crop, result.amount); deps.feedback.events([{ type: 'harvested', actor }]);
+  }
+  function plant(crop: CropId) {
+    const plot = open; close(); if (!plot) return;
+    const next = neighborhoodAction(deps.town(), { type: 'plant', plot, crop, now: deps.now() });
+    if (next === deps.town()) return;
+    deps.apply(next); deps.scene.outdoor.garden.planted(plot);
+  }
+  function close() { open = null; bag.close(); }
+  return {
+    /** A touch on `plot` in the drawing or its button. */
+    touch(plot: PlazaPlot) { if (street()) go(plot, actor => tend(actor, plot)); },
+    /** The plaza's can: whoever is selected waters the nearest plot (a thirsty one first). */
+    can() { const actor = street(); if (actor) { const plot = nearestPlot(deps.town().progress, actor); go(plot, who => water(who, plot)); } },
+    /** Someone dropped on a plot (or the can) tends it right there, without walking. */
+    drop(actor: ActorId, plot: PlazaPlot | null) {
+      const who = deps.town().actors.find(a => a.id === actor); if (!who) return;
+      const target = plot ?? nearestPlot(deps.town().progress, who);
+      if (plot) tend(actor, target); else water(actor, target);
+    },
+    /** After every refresh: the bag closes in Create, off the street, or when the selected character is not there. */
+    refresh() { if (open && (deps.building() || deps.town().location.kind !== 'street' || !street())) close(); },
+  };
+}

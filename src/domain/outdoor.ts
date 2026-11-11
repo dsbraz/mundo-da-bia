@@ -2,7 +2,7 @@ import type { ActorId } from './types';
 import { wake } from './care';
 import type { Neighborhood, Outdoor, OutdoorAction } from './neighborhood-types';
 export const initialOutdoor = (): Outdoor => ({ bench: null, swing: null, watered: false, mail: [], bells: [] });
-export const outdoorPoints = { bench: { x: 180, y: 445 }, swing: { x: 400, y: 445 }, water: { x: 560, y: 480 } };
+export const outdoorPoints = { bench: { x: 180, y: 445 }, swing: { x: 400, y: 445 } };
 export function releaseOutdoor(outdoor: Outdoor, actor: ActorId): Outdoor {
   return { ...outdoor, bench: outdoor.bench === actor ? null : outdoor.bench, swing: outdoor.swing === actor ? null : outdoor.swing };
 }
@@ -10,7 +10,8 @@ export function interactOutdoor(town: Neighborhood, action: OutdoorAction): Neig
   if (town.location.kind !== 'street' || !town.actors.some(a => a.id === action.actor && a.location.kind === 'street')) return town;
   const target = action.target;
   if (target === 'bell' || target === 'mail') return buildingInteraction(town, action);
-  if (target === 'water') return { ...town, outdoor: { ...town.outdoor, watered: true } };
+  // The plaza's can waters a garden plot now (`water-plot`); the old flowerbed flag stays false (§4.3).
+  if (target === 'water') return town;
   if (target !== 'leave' && town.outdoor[target] && town.outdoor[target] !== action.actor) return town;
   const outdoor = releaseOutdoor(town.outdoor, action.actor);
   if (target === 'leave') return { ...town, outdoor };

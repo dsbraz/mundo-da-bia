@@ -24,7 +24,7 @@ async function clip(page: Page, x: number, top: number, bottom: number, half = 1
   return { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y };
 }
 
-test('a criança contorna o canteiro em vez de passar por cima', async ({ page }) => {
+test('a criança contorna a horta em vez de passar por cima', async ({ page }) => {
   await plaza(page, { x: 470, y: 455 });
   await tap(page, 700, 455);
   let lowest = 0, shot = false;
@@ -38,7 +38,7 @@ test('a criança contorna o canteiro em vez de passar por cima', async ({ page }
   }
   expect(await canvas(page).getAttribute('data-walking')).toBe('');
   expect(Math.round((await readTown(page)).actors[0]!.x)).toBe(700);
-  expect(lowest).toBeGreaterThan(480);
+  expect(lowest).toBeGreaterThan(498);
 });
 
 for (const reduced of [false, true]) test(`subir no banco é um arco de 260 ms${reduced ? ' (movimento reduzido: fade)' : ''}`, async ({ page }) => {
@@ -64,18 +64,20 @@ test('subir no balanço também é um arco', async ({ page }) => {
   await page.clock.runFor(300); await expect(canvas(page)).toHaveAttribute('data-climb', '');
 });
 
-for (const reduced of [false, true]) test(`as gotas saem do bico do regador${reduced ? ' (movimento reduzido: só o regador, sem gotas)' : ''}`, async ({ page }) => {
+for (const reduced of [false, true]) test(`as gotas saem do bico do regador da praça, virado para o canteiro${reduced ? ' (movimento reduzido: só o regador, sem gotas)' : ''}`, async ({ page }) => {
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await plaza(page, { x: 700, y: 520 });
-  await tap(page, 560, 470);
+  // The can rests left of the plots; she waters the plot nearest to her (the front right one), standing at its right.
+  await tap(page, 470, 516);
   await playUntil(page, 'data-water', reduced ? 'can' : 'drops');
-  const bia = (await readTown(page)).actors[0]!;
-  expect((await readTown(page)).outdoor.watered).toBe(true);
+  const town = await readTown(page), bia = town.actors[0]!;
+  expect(bia.x).toBeGreaterThan(612);
+  expect(town.outdoor.watered).toBe(false);
   if (!reduced) {
-    expect(Number(await canvas(page).getAttribute('data-water-x'))).toBe(bia.x + 3);
+    expect(Number(await canvas(page).getAttribute('data-water-x'))).toBe(bia.x - 3);
     expect(Number(await canvas(page).getAttribute('data-water-y'))).toBe(bia.y - 44);
   }
   await page.clock.runFor(250);
-  await page.screenshot({ path: `reports/plaza-water${reduced ? '-reduced' : ''}.png`, clip: await clip(page, 560, 300, 560) });
+  await page.screenshot({ path: `reports/plaza-water${reduced ? '-reduced' : ''}.png`, clip: await clip(page, 600, 300, 560) });
   await page.clock.runFor(1200); await expect(canvas(page)).toHaveAttribute('data-water', '');
 });

@@ -12,6 +12,7 @@ import { actorIds, lookIds } from '../domain/types';
 import type { ActorId, LookId, World } from '../domain/types';
 import { actorSource, lookSource } from './actor-paint';
 import { faceParts } from './expression';
+import { loadGarden } from './plaza-garden';
 
 export const roomLayers = ['wardrobe-closed', 'wardrobe-open', 'drawer-closed', 'drawer-open', 'fridge-closed', 'fridge-open', 'lamp-on', 'lamp-off'] as const;
 export const humanLayers = ['hair-back', 'legs', 'hands', 'face', ...faceParts.human];
@@ -39,6 +40,7 @@ export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | 
   roomTemplates.filter(template => !scene.textures.exists(`architecture-${template}`)).forEach(template => loadSvg(scene, `architecture-${template}`, svgUrl(roomArchitecture(template))));
   loadPieces(scene, state);
   loadDishes(scene, town?.items ?? state.items);
+  if (state.streetWidth) loadGarden(scene);
   actorIds.forEach((id, index) => loadActor(scene, id, index, state.actors.find(a => a.id === id)!.look));
   lookIds.filter(look => !scene.textures.exists(`look-${look}`)).forEach(look => {
     const garment = lookSource(look).replace('viewBox="0 0 140 220"', 'viewBox="15 98 110 122"').replace('width="140" height="220"', 'width="110" height="122"');

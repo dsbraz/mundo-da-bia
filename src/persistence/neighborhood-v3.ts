@@ -6,10 +6,12 @@ import { itemKinds } from '../domain/item-kind';
 import { member, record } from './values';
 import { knownPlant } from './progress-validation';
 
-/** v2 → v3: the same neighborhood, with the starting progress and item numbering after its items. */
+/** v2 → v3: the same neighborhood, with the starting progress and item numbering after its items. The old flowerbed's `watered`
+ *  became the four plots and no longer counts: it stays in the save (earlier v3 builds require it) and is always false (§4.3). */
 export function upgradeToV3(town: LegacyNeighborhood): Neighborhood {
-  return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
+  return { ...unwatered(town), progress: initialProgress(), nextItem: nextItemAfter(town.items) };
 }
+export const unwatered = <T extends LegacyNeighborhood>(town: T): T => ({ ...town, outdoor: { ...town.outdoor, watered: false } });
 /** Unknown looks become the default one; objects of unknown kinds and dishes of unknown recipes drop out (whoever held them is left empty-handed). */
 export function knownContent(value: unknown): unknown {
   if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return value;
