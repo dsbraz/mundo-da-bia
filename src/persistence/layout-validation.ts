@@ -4,11 +4,16 @@ import { fixtures, validPlacement } from '../domain/layout';
 import { roomWidths } from '../domain/geometry';
 import { member, positiveId, record, roomId } from './values';
 import { validRooms } from './room-validation';
+import { knownPlant } from './progress-validation';
 function piece(value: unknown): value is Piece {
   if (!record(value) || !positiveId(value.id)) return false;
   return member(pieceKinds, value.kind) && roomId(value.room) && member(paletteIds, value.color)
-    && typeof value.flipped === 'boolean' && (value.active === undefined || typeof value.active === 'boolean')
-    && typeof value.x === 'number' && typeof value.y === 'number';
+    && typeof value.flipped === 'boolean'
+    && typeof value.x === 'number' && typeof value.y === 'number' && plantField(value);
+}
+/** Optional fields: `active` is a flag; a plant only on a planter, and only one this build knows. */
+function plantField(value: Record<string, unknown>): boolean {
+  return (value.active === undefined || typeof value.active === 'boolean') && (value.plant === undefined || (value.kind === 'planter' && knownPlant(value.plant) !== null));
 }
 export function validLayout(value: unknown): value is Layout {
   if (!record(value) || !positiveId(value.nextId) || !Array.isArray(value.pieces)) return false;

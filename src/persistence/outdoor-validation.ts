@@ -1,4 +1,4 @@
-import type { Neighborhood } from '../domain/neighborhood-types';
+import type { LegacyNeighborhood as Neighborhood } from '../domain/neighborhood-types';
 import { outdoorPoints } from '../domain/outdoor';
 import { record } from './values';
 export function validOutdoor(town: Neighborhood): boolean {

@@ -20,7 +20,7 @@ test('limite de doze cômodos explica como continuar', async ({ page }) => {
   await ready(page);
   let town = await readTown(page);
   for (let cell = 2; cell < 12; cell++) town = neighborhoodAction(town, { type: 'add-module', building: 1, cell, template: 'empty' });
-  await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v2', JSON.stringify({ version: 2, town: value })), town);
+  await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v3', JSON.stringify({ version: 3, town: value })), town);
   await page.reload(); await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.locator('#construct-structure').click();
   await expect(page.getByText('Esta casa está cheia. Que tal outra casa?', { exact: true })).toBeVisible();

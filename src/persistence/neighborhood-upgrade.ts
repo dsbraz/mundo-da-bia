@@ -1,8 +1,8 @@
 import { initialOutdoor, plazaBall } from '../domain/outdoor';
-import type { Neighborhood } from '../domain/neighborhood-types';
+import type { LegacyNeighborhood } from '../domain/neighborhood-types';
 import type { RoomId } from '../domain/types';
 import { plazaWidth } from '../domain/neighborhood-geometry';
-export function upgradeNeighborhood(town: Neighborhood): Neighborhood {
+export function upgradeNeighborhood<T extends LegacyNeighborhood>(town: T): T {
   return plazaBall({ ...town, outdoor: initialOutdoor(), buildings: town.buildings.map(b => {
     const ordered = (Object.keys(b.layout.rooms) as RoomId[]).filter(id => id !== b.entry).sort((a, c) => b.layout.rooms[a]!.cell - b.layout.rooms[c]!.cell);
     const rooms = { ...b.layout.rooms };

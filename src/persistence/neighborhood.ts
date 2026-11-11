@@ -2,31 +2,37 @@ import { validOutdoor } from './outdoor-validation';
 import { upgradeNeighborhood } from './neighborhood-upgrade';
 import { plotWidth, streetWidth } from '../domain/neighborhood-geometry';
 import { localWorld } from '../domain/neighborhood';
-import type { Building, Location, Neighborhood } from '../domain/neighborhood-types';
+import type { Building, LegacyNeighborhood, Location, Neighborhood } from '../domain/neighborhood-types';
 import { buildingModels } from '../domain/neighborhood-types';
-import { actorIds, itemIds, lookIds, paletteIds } from '../domain/types';
+import { actorIds, itemIds, paletteIds } from '../domain/types';
 import { sameLocation, validLocation } from '../domain/location';
+import { nextItemAfter } from '../domain/progress';
 import { member, positiveId, record, roomId } from './values';
+import { knownContent, knownTown, upgradeToV3 } from './neighborhood-v3';
+import { knownProgress } from './progress-validation';
 import { validLayout } from './layout-validation';
 import { actor, item, consistentWorld } from './validation';
-export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 2, town }); }
+export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 3, town }); }
+/** Envelopes v1 and v2 (upgraded to v3) and v3; null when the structure is not valid. */
 export function decodeNeighborhood(raw: string | null): Neighborhood | null {
   try {
     const value: unknown = JSON.parse(raw ?? 'null');
-    if (!record(value) || (value.version !== 1 && value.version !== 2)) return null;
+    if (!record(value)) return null;
+    if (value.version === 3) return decodeV3(value.town);
+    if (value.version !== 1 && value.version !== 2) return null;
     const town = knownContent(value.town);
     if (!validTown(town) || !validVersion(town, value.version)) return null;
-    return value.version === 1 ? upgradeNeighborhood(town) : town;
+    return upgradeToV3(value.version === 1 ? upgradeNeighborhood(town) : town);
   } catch { return null; }
 }
-const itemKinds = [...itemIds, 'bola'];
-function knownContent(value: unknown): unknown {
-  if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return value;
-  const unknown = (entry: unknown, field: string, known: readonly string[]) => record(entry) && !member(known, entry[field]);
-  return { ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
-    items: value.items.filter(i => !unknown(i, 'kind', itemKinds)) };
+function decodeV3(value: unknown): Neighborhood | null {
+  const town = knownTown(value);
+  if (!record(value) || !validTown(town) || !validVersion(town, 3)) return null;
+  const first = nextItemAfter(town.items);
+  return { ...town, progress: knownProgress(value.progress), nextItem: positiveId(value.nextItem) && value.nextItem >= first ? value.nextItem : first };
 }
-function validVersion(town: Neighborhood, version: number) {
+const itemKinds = [...itemIds, 'bola'];
+function validVersion(town: LegacyNeighborhood, version: number) {
   if (version === 1) return [...town.actors, ...town.items].every(entity => entity.location.kind !== 'street' || entity.x <= town.plots * plotWidth - 60);
   return validOutdoor(town) && town.buildings.every(b => b.layout.rooms[b.entry]!.cell === 0);
 }
@@ -52,18 +58,18 @@ function object(value: unknown): boolean {
     && item({ ...value, id: value.kind === 'bola' ? 'ursinho' : value.kind, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
 }
 function unique(values: unknown[]): boolean { return new Set(values).size === values.length; }
-function validTown(value: unknown): value is Neighborhood {
+function validTown(value: unknown): value is LegacyNeighborhood {
   if (!record(value) || !Array.isArray(value.buildings) || !value.buildings.length || !value.buildings.every(building)) return false;
   if (!validEntities(value)) return false;
   if (!townHeader(value)) return false;
-  const town = value as unknown as Neighborhood;
+  const town = value as unknown as LegacyNeighborhood;
   return identities(town) && consistent(town) && furnitureConsistent(town);
 }
-function identities(town: Neighborhood) {
+function identities(town: LegacyNeighborhood) {
   return unique(town.buildings.map(b => b.id)) && unique(town.buildings.map(b => b.plot))
     && unique(town.actors.map(a => a.id)) && unique(town.items.map(i => i.id));
 }
-function consistent(town: Neighborhood): boolean {
+function consistent(town: LegacyNeighborhood): boolean {
   if (!validLocation(town, town.location) || !town.buildings.every(b => b.id < town.nextBuilding && b.plot < town.plots)) return false;
   const entities = [...town.actors, ...town.items];
   if (!entities.every(e => validLocation(town, e.location) && validPosition(town, e))) return false;
@@ -73,7 +79,7 @@ function consistent(town: Neighborhood): boolean {
     return !!holder && sameLocation(holder.location, i.location) && i.spot === 'floor';
   });
 }
-function validPosition(town: Neighborhood, entity: { x: number; room: string; location: Location }): boolean {
+function validPosition(town: LegacyNeighborhood, entity: { x: number; room: string; location: Location }): boolean {
   const where = entity.location;
   if (where.kind === 'street') return entity.room === 'sala' && entity.x >= 60 && entity.x <= streetWidth(town.plots) - 60;
   const room = town.buildings.find(b => b.id === where.building)!.layout.rooms[where.room]!;
@@ -88,7 +94,7 @@ function townHeader(value: Record<string, unknown>) {
   return positiveId(value.nextBuilding) && positiveId(value.plots) && value.plots >= 4 && value.plots % 2 === 0 && location(value.location);
 }
 
-function furnitureConsistent(town: Neighborhood): boolean {
+function furnitureConsistent(town: LegacyNeighborhood): boolean {
   if (town.actors.some(a => a.location.kind === 'street' && a.seat !== null)) return false;
   if (town.items.some(i => i.location.kind === 'street' && i.spot !== 'floor')) return false;
   return town.buildings.every(b => {

@@ -44,7 +44,7 @@ test('mapa mostra a mobília real e explica a capacidade esgotada', async ({ pag
   await ready(page);
   let town = await readTown(page);
   for (let cell = 2; cell < 12; cell++) town = neighborhoodAction(town, { type: 'add-module', building: 1, cell, template: 'empty' });
-  await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v2', JSON.stringify({ version: 2, town: value })), town);
+  await page.addInitScript(value => localStorage.setItem('mundo-da-bia:neighborhood:v3', JSON.stringify({ version: 3, town: value })), town);
   await page.reload(); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
   await expect(page.locator('#add-room')).toBeDisabled();
   await expect(page.locator('#room-capacity')).toHaveText('12 de 12 cômodos. Crie outra construção para continuar.');

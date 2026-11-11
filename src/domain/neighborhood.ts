@@ -4,13 +4,18 @@ import { editModule } from './modules';
 import { sameLocation, validLocation } from './location';
 import { itemKind } from './item-kind';
 import type { Album, World, RoomId } from './types';
-import type { Location, Neighborhood, NeighborhoodAction } from './neighborhood-types';
+import type { LegacyNeighborhood, Location, Neighborhood, NeighborhoodAction } from './neighborhood-types';
+import { initialProgress, nextItemAfter } from './progress';
 import { activeHouse } from './houses';
 import { initialWorld } from './world';
 import { removeBuilding } from './remove-building';
 import { construct, duplicateBuilding, customize, moveBuilding } from './buildings';
 import { transport } from './neighborhood-transfer';
 export function migrateNeighborhood(album: Album): Neighborhood {
+  const town = albumTown(album);
+  return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
+}
+function albumTown(album: Album): LegacyNeighborhood {
   const active = activeHouse(album);
   return {
     outdoor: initialOutdoor(),
@@ -47,7 +52,7 @@ function localRoom(location: Location, view: Location): RoomId {
   if (location.kind === 'street') return view.kind === 'street' ? 'sala' : 'room-0';
   return view.kind === 'interior' && location.building === view.building ? location.room : 'room-0';
 }
-export function localWorld(town: Neighborhood): World {
+export function localWorld(town: LegacyNeighborhood): World {
   const location = town.location;
   const building = location.kind === 'interior' ? town.buildings.find(b => b.id === location.building)! : null;
   const room = location.kind === 'interior' ? location.room : 'sala';

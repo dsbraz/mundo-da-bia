@@ -39,14 +39,17 @@ export function saveAlbum(album: Album, storage?: StoragePort): boolean {
   } catch { return false; }
 }
 
-const neighborhoodKey = 'mundo-da-bia:neighborhood:v2';
+const neighborhoodKey = 'mundo-da-bia:neighborhood:v3';
 const recoveryKey = `${neighborhoodKey}:recovery`;
+/** Earlier envelopes, read in this order and never written again: they stay as the rollback copy for an older build. */
+const olderKeys = ['mundo-da-bia:neighborhood:v2', 'mundo-da-bia:neighborhood:v1'];
 export function loadNeighborhood(storage?: StoragePort): import('../domain/neighborhood-types').Neighborhood {
   try {
     const port = storage ?? globalThis.localStorage;
-    const saved = decodeNeighborhood(port.getItem(neighborhoodKey)) ?? decodeNeighborhood(port.getItem('mundo-da-bia:neighborhood:v1'));
+    const saved = decodeNeighborhood(port.getItem(neighborhoodKey));
     if (saved) return saved;
-    const town = upgradeNeighborhood(migrateNeighborhood(loadAlbum(port)));
+    const town = olderKeys.reduce<ReturnType<typeof decodeNeighborhood>>((found, key) => found ?? decodeNeighborhood(port.getItem(key)), null)
+      ?? upgradeNeighborhood(migrateNeighborhood(loadAlbum(port)));
     saveNeighborhood(town, port); return town;
   } catch { return upgradeNeighborhood(migrateNeighborhood(loadAlbum(storage))); }
 }

@@ -54,7 +54,11 @@ export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage
 export const paletteIds = ['original', 'mint', 'lilac', 'rose', 'sky', 'gold'] as const;
 export type PieceKind = typeof pieceKinds[number];
 export type Palette = typeof paletteIds[number];
-export interface Piece extends Point { id: number; kind: PieceKind; room: RoomId; color: Palette; flipped: boolean; active?: boolean }
+export const cropIds = ['alface', 'tomate', 'cenoura', 'milho', 'morango', 'abobora'] as const;
+export type CropId = typeof cropIds[number];
+/** A crop in a plot or planter: stage 0 (seed) to 4 (ready), watered since `since` (ms). */
+export interface Plant { crop: CropId; stage: 0 | 1 | 2 | 3 | 4; since: number; watered: boolean }
+export interface Piece extends Point { id: number; kind: PieceKind; room: RoomId; color: Palette; flipped: boolean; active?: boolean; plant?: Plant }
 export interface Finish { wall: Palette; floor: Palette }
 export interface Room extends Finish { name: string; template: RoomTemplate; size: RoomSize; cell: number; home: Home }
 export interface Layout { pieces: Piece[]; rooms: Record<RoomId, Room>; nextId: number; nextRoomId: number }

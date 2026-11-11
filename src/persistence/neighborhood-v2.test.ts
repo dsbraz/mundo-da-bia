@@ -16,7 +16,8 @@ it('migrates the old envelope once, preserves recovery and shifts outdoor positi
   expect(next.buildings[0]!.layout.rooms.quarto.cell).toBe(1);
   expect(saveNeighborhood(next, port)).toBe(true);
   expect(map.get('mundo-da-bia:neighborhood:v1')).toBe(old);
-  expect(JSON.parse(map.get('mundo-da-bia:neighborhood:v2')!).version).toBe(2);
+  expect(map.has('mundo-da-bia:neighborhood:v2')).toBe(false);
+  expect(JSON.parse(map.get('mundo-da-bia:neighborhood:v3')!).version).toBe(3);
   expect(loadNeighborhood(port)).toEqual(next);
 });
 it('rejects a v2 entrance off the ground floor and legacy positions beyond the old street', async () => {

@@ -14,7 +14,7 @@ test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar', async
 test('arraste cancelado preserva posição, teclado move e dados inválidos recuperam', async ({ page }) => {
   await ready(page); const before = await read(page); await drag(page, [520, 420], [550, 430], true); expect(await read(page)).toEqual(before);
   await page.locator('#world').focus(); await page.keyboard.press('ArrowRight'); expect((await read(page)).actors[0]!.x).toBe(540);
-  await page.evaluate(() => window.addEventListener('pagehide', () => { localStorage.setItem('mundo-da-bia:neighborhood:v2', '{bad'); localStorage.setItem('mundo-da-bia:neighborhood:v1', '{bad'); localStorage.setItem('mundo-da-bia:v1', '{bad'); localStorage.setItem('mundo-da-bia:houses:v1', '{bad'); }));
+  await page.evaluate(() => window.addEventListener('pagehide', () => { localStorage.setItem('mundo-da-bia:neighborhood:v3', '{bad'); localStorage.setItem('mundo-da-bia:neighborhood:v2', '{bad'); localStorage.setItem('mundo-da-bia:neighborhood:v1', '{bad'); localStorage.setItem('mundo-da-bia:v1', '{bad'); localStorage.setItem('mundo-da-bia:houses:v1', '{bad'); }));
   await page.reload(); expect((await read(page)).actors).toHaveLength(7); expect((await read(page)).actors[0]!.x).toBe(520);
 });
 test('móveis, alimentação e guardar objeto continuam respondendo na cena', async ({ page }) => {

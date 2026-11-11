@@ -6,7 +6,7 @@ import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { actors } from '../src/content/catalog';
 
-const saveKey = 'mundo-da-bia:neighborhood:v2';
+const saveKey = 'mundo-da-bia:neighborhood:v3';
 /** Plays `ms` of scene time as 100 ms frames: idle time counts frame steps up to 100 ms (never bigger clock jumps), with few frames to render. */
 async function advance(page: Page, ms: number) { for (let t = 0; t < ms; t += 100) await page.clock.fastForward(100); }
 async function still(page: Page) {

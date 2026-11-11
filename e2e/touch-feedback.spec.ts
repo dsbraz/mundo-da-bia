@@ -4,7 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { read, ready, tap } from './helpers';
-const saveKey = 'mundo-da-bia:neighborhood:v2';
+const saveKey = 'mundo-da-bia:neighborhood:v3';
 function spreadTown() {
   const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
   world.actors = world.actors.map((a, i) => ({ ...a, room: 'sala', x: 130 + i * 125, y: 530, seat: null }));
@@ -113,7 +113,7 @@ for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768
   expect(box.a.y).toBeGreaterThanOrEqual(scene.y); expect(box.b.y).toBeLessThanOrEqual(scene.y + scene.height);
   expect(box.bottom).toBeLessThanOrEqual(340);
   await page.screenshot({ path: `reports/plaza-swing-occupied-${viewport.width}.png` });
-  expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('luna');
+  expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v3')!).town.outdoor.swing))).toBe('luna');
 });
 
 test('a praça responde no desenho: sem lista de botões no painel, tocar no balanço dá impulso e o botão Descer faz descer', async ({ page }) => {
@@ -128,8 +128,8 @@ test('a praça responde no desenho: sem lista de botões no painel, tocar no bal
   // A tap on the rider is a push now: she laughs and stays on (with reduced motion the seat stays still).
   await tap(page, 400, 400);
   await expect(page.locator('canvas')).toHaveAttribute('data-faces', /bia:laugh/);
-  expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBe('bia');
+  expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v3')!).town.outdoor.swing))).toBe('bia');
   // The invisible button (keyboard and screen readers) still gets her down.
   await page.getByRole('button', { name: 'Descer do balanço', exact: true }).focus(); await page.keyboard.press('Enter');
-  await expect.poll(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v2')!).town.outdoor.swing))).toBeNull();
+  await expect.poll(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v3')!).town.outdoor.swing))).toBeNull();
 });

@@ -26,7 +26,7 @@ function buildingInteraction(town: Neighborhood, action: OutdoorAction): Neighbo
   return { ...town, outdoor: { ...town.outdoor, [key]: list.includes(id!) ? list.filter(n => n !== id) : [...list, id!] } };
 }
 
-export function plazaBall(town: Neighborhood): Neighborhood {
+export function plazaBall<T extends Pick<Neighborhood, 'items'>>(town: T): T {
   if (town.items.some(i => i.kind === 'bola')) return town;
   return { ...town, items: [...town.items, { id: '1:bola', kind: 'bola', room: 'sala', location: { kind: 'street' }, x: 320, y: 525, holder: null, spot: 'floor' }] };
 }
