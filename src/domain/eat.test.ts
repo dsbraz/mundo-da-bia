@@ -95,3 +95,17 @@ it('no bairro, o prato comido sai da cidade; pratos de outra casa ficam', () => 
   expect(stored.actors.find(a => a.id === 'luna')!.fed).toBe(true);
   expect(storeWorld(town, localWorld(town)).items).toEqual(town.items);
 });
+
+it('desfazer e refazer guardam os ganhos: o prato cozinhado fica, o comido não volta e os ids não andam para trás', async () => {
+  const { undoTo } = await import('./neighborhood');
+  const base = migrateNeighborhood(initialAlbum(initialWorld()));
+  const plate = (id: `${number}:prato`, building: number): NeighborhoodItem => ({ ...dish('pizza'), id, location: { kind: 'interior', building, room: 'sala' } } as NeighborhoodItem);
+  const older = { ...base, items: [...base.items, plate('9:prato', 1)], nextItem: 10 };
+  const now = { ...base, items: [...base.items, plate('10:prato', 1), plate('11:prato', 77)], nextItem: 12, progress: { ...base.progress, recipes: ['pizza' as const] } };
+  const back = undoTo(older, now);
+  expect(back.items.filter(i => i.kind === 'prato').map(i => i.id)).toEqual(['10:prato']);
+  expect(back.items.filter(i => i.kind !== 'prato')).toEqual(older.items.filter(i => i.kind !== 'prato'));
+  expect(back.nextItem).toBe(12);
+  expect(back.progress).toBe(now.progress);
+  expect(undoTo(now, older).nextItem).toBe(12);
+});

@@ -98,3 +98,9 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
   town.actors.forEach(a => { const next = actors.find(n => n.id === a.id)!; if (!sameLocation(next.location, a.location) || next.x !== a.x || next.y !== a.y) outdoor = releaseOutdoor(outdoor, a.id); });
   return { ...town, outdoor, buildings, actors, items, location: location(world.room) };
 }
+/** Undo and redo bring old houses back, never take a gain away: progress and the dishes stay as they are now (a dish in a house the
+ *  undo removes goes with it), and item ids never go back. */
+export function undoTo(next: Neighborhood, current: Neighborhood): Neighborhood {
+  const dishes = current.items.filter(i => i.kind === 'prato' && validLocation(next, i.location));
+  return { ...next, progress: current.progress, nextItem: Math.max(next.nextItem, current.nextItem), items: [...next.items.filter(i => i.kind !== 'prato'), ...dishes] };
+}

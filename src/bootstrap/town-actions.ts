@@ -1,4 +1,4 @@
-import { localWorld, neighborhoodAction } from '../domain/neighborhood';
+import { localWorld, neighborhoodAction, undoTo } from '../domain/neighborhood';
 import type { NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
 import type { ActorId } from '../domain/types';
 import { streetExit } from '../presentation/street-opening';
@@ -47,8 +47,8 @@ export function townActions(deps: TownDeps) {
     deps.pause();
     const from = forward ? future : past, to = forward ? past : future;
     const next = from.pop(); if (!next) return;
-    // What the child has gained only grows: undo and redo bring the old houses back, never an older progress.
-    to.push(deps.town()); deps.commit({ ...next, progress: deps.town().progress }); deps.refresh(); deps.structure.refresh();
+    // What the child has gained only grows: undo and redo bring the old houses back, never an older progress or a lost dish.
+    to.push(deps.town()); deps.commit(undoTo(next, deps.town())); deps.refresh(); deps.structure.refresh();
   }
   /** Draws what `action` would make of the neighborhood (or the neighborhood itself), without committing it. */
   function preview(action: NeighborhoodAction | null) {
