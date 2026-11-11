@@ -49,5 +49,6 @@ export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | 
 function loadDishes(scene: Phaser.Scene, items: World['items']) {
   const source = scene.cache.text.get('art-dishes') as string | undefined; if (!source) return;
   keepDishes(source);
-  items.forEach(item => { const dish = dishOf(item); if (dish) loadSvg(scene, itemTexture(item), sheetPart(source, dishParts(dish.recipe, dish.fancy), dishBox)); });
+  // Runs on every paint: only dishes without a texture yet are cut from the sheet (each cut parses it).
+  items.forEach(item => { const dish = dishOf(item), key = itemTexture(item); if (dish && !scene.textures.exists(key)) loadSvg(scene, key, sheetPart(source, dishParts(dish.recipe, dish.fancy), dishBox)); });
 }
