@@ -15,10 +15,10 @@ it('occupies, prevents sharing and releases equipment without duplicating actors
   expect(t.outdoor.bench).toBeNull(); expect(t.outdoor.swing).toBe('bia');
   t = neighborhoodAction(t, { type: 'outdoor', actor: 'bia', target: 'leave' }); expect(t.outdoor.swing).toBeNull();
 });
-it('persists watering, mail and bells and rejects absent residents or buildings', () => {
+it('persists mail and bells and rejects absent residents or buildings; the old flowerbed watering no longer changes anything (§4.3)', () => {
   let t = outside();
   expect(neighborhoodAction(t, { type: 'outdoor', actor: 'leo', target: 'water' })).toBe(t);
-  t = neighborhoodAction(t, { type: 'outdoor', actor: 'bia', target: 'water' }); expect(t.outdoor.watered).toBe(true);
+  expect(neighborhoodAction(t, { type: 'outdoor', actor: 'bia', target: 'water' })).toBe(t);
   expect(neighborhoodAction(t, { type: 'outdoor', actor: 'bia', target: 'bell', building: 999 })).toBe(t);
   for (const target of ['bell', 'mail'] as const) t = neighborhoodAction(t, { type: 'outdoor', actor: 'bia', target, building: 1 });
   expect(t.outdoor.mail).toEqual([1]); expect(t.outdoor.bells).toEqual([1]);

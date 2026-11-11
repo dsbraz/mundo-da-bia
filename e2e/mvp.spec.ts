@@ -54,8 +54,10 @@ test('the square saves equipment', async ({ page }) => {
   (await soon(async () => (await readTown(page)).outdoor.bench, v => v === 'bia')).toBe('bia');
   await tap(page, 180, 420);
   (await soon(async () => (await readTown(page)).outdoor.bench, v => v === null)).toBeNull();
-  await tap(page, 560, 470);
-  (await soon(async () => (await readTown(page)).outdoor.watered, v => v)).toBe(true);
+  await tap(page, 535, 474);
+  (await soon(async () => page.locator('#seed-bag').isVisible(), v => v)).toBe(true);
+  await page.locator('#seed-bag [data-crop="tomate"]').click();
+  expect((await readTown(page)).progress.plaza['praca-3']?.crop).toBe('tomate');
   await reloadKeeps(page);
 });
 test('the square saves the ball', async ({ page }) => {

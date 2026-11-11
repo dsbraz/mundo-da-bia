@@ -8,6 +8,8 @@ interface TownDeps {
   town: () => Neighborhood; selected: () => ActorId;
   /** Makes `town` the current neighborhood (world, edits and selection follow) and saves it. */
   commit: (town: Neighborhood) => void;
+  /** Makes `town` current and saves it when only what grows with time changed: the world, edits, walks and the scene stay; the garden redraws. */
+  quiet: (town: Neighborhood) => void;
   camera: () => number; setCamera: (x: number) => void; refresh: () => void;
   /** Before a neighborhood action: balls settle and every game, walk, drag, input and the wardrobe close. */
   interrupt: () => void;
@@ -57,7 +59,7 @@ export function townActions(deps: TownDeps) {
   }
   /** Saves and draws `next` without interrupting anything and outside the undo history; an unchanged neighborhood costs nothing. */
   function apply(next: Neighborhood) { if (next !== deps.town()) { deps.commit(next); deps.refresh(); } }
-  /** The clock's tick: what changed with time is applied. */
-  function tick(now: number) { apply(neighborhoodAction(deps.town(), { type: 'tick', now })); }
+  /** The clock's tick: what changed with time is applied quietly, without interrupting a walk, a drag or a game. */
+  function tick(now: number) { const next = neighborhoodAction(deps.town(), { type: 'tick', now }); if (next !== deps.town()) deps.quiet(next); }
   return { dispatch, undo, remember, preview, tick, apply, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

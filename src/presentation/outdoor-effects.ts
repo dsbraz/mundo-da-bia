@@ -16,17 +16,18 @@ export function drawOutdoorState(scene: Phaser.Scene, town: Neighborhood) {
     if (town.outdoor.bells.includes(b.id)) g.lineStyle(2, 0xd4b65d).strokeCircle(x + 280, 400, 17);
   });
 }
-export function outdoorEffect(scene: Phaser.Scene, town: Neighborhood, action: OutdoorAction) {
+/** `facing` (watering only): 1 when the plot is to the right of whoever waters, -1 to the left. */
+export function outdoorEffect(scene: Phaser.Scene, town: Neighborhood, action: OutdoorAction, facing: 1 | -1 = 1) {
   if (action.target === 'leave') return;
   const actor = town.actors.find(a => a.id === action.actor)!;
   speechBubble(scene, { x: actor.x, y: actor.y - 130 }, outdoorLine(action.target, nameOf(actor)), actor.id);
-  if (action.target === 'water') water(scene, actor, reducedMotion());
+  if (action.target === 'water') water(scene, actor, reducedMotion(), facing);
 }
-/** The tip of the watering can's spout held by someone standing at `actor` (the can is drawn at 60% beside the hip). */
-export const spoutPoint = (actor: { x: number; y: number }) => ({ x: actor.x + 3, y: actor.y - 44 });
-/** The can tilts and the drops come out of its spout toward the flowers; with reduced motion the can only fades, without drops. */
-function water(scene: Phaser.Scene, actor: { x: number; y: number }, reduced: boolean) {
-  const can = scene.add.graphics({ x: actor.x - 16.8, y: actor.y - 33 }).setScale(.6).setDepth(actor.y + 5);
+/** The tip of the watering can's spout held by someone standing at `actor` (the can is drawn at 60% beside the hip, toward `facing`). */
+export const spoutPoint = (actor: { x: number; y: number }, facing: 1 | -1 = 1) => ({ x: actor.x + 3 * facing, y: actor.y - 44 });
+/** The can tilts and the drops come out of its spout toward the plot; with reduced motion the can only fades, without drops. */
+function water(scene: Phaser.Scene, actor: { x: number; y: number }, reduced: boolean, facing: 1 | -1) {
+  const can = scene.add.graphics({ x: actor.x - 16.8 * facing, y: actor.y - 33 }).setScale(.6 * facing, .6).setDepth(actor.y + 5);
   can.fillStyle(0x85a9a0).fillRoundedRect(-16, -13, 30, 23, 5).fillTriangle(10, -8, 33, -19, 16, 4);
   can.lineStyle(3, 0x668c85).strokeCircle(-17, -5, 10);
   const dataset = scene.game.canvas.dataset;
@@ -35,9 +36,9 @@ function water(scene: Phaser.Scene, actor: { x: number; y: number }, reduced: bo
     scene.tweens.add({ targets: can, alpha: 0, delay: 650, duration: reducedFadeMs, onComplete: () => { can.destroy(); dataset.water = ''; } });
     return;
   }
-  scene.tweens.add({ targets: can, angle: 18, duration: 325, yoyo: true, repeat: 1, onComplete: () => can.destroy() });
-  const spout = spoutPoint(actor), drops = scene.add.graphics({ x: spout.x, y: spout.y }).setDepth(actor.y + 6);
-  for (let i = 0; i < 6; i++) drops.fillStyle(0x82b3c8, .8).fillEllipse(2 + i * 3, i * 6, 3, 7);
+  scene.tweens.add({ targets: can, angle: 18 * facing, duration: 325, yoyo: true, repeat: 1, onComplete: () => can.destroy() });
+  const spout = spoutPoint(actor, facing), drops = scene.add.graphics({ x: spout.x, y: spout.y }).setDepth(actor.y + 6);
+  for (let i = 0; i < 6; i++) drops.fillStyle(0x82b3c8, .8).fillEllipse((2 + i * 3) * facing, i * 6, 3, 7);
   dataset.water = 'drops'; dataset.waterX = String(spout.x); dataset.waterY = String(spout.y);
-  scene.tweens.add({ targets: drops, x: spout.x + 12, y: spout.y + 30, alpha: 0, duration: 420, delay: 120, repeat: 1, onComplete: () => { drops.destroy(); dataset.water = ''; } });
+  scene.tweens.add({ targets: drops, x: spout.x + 12 * facing, y: spout.y + 30, alpha: 0, duration: 420, delay: 120, repeat: 1, onComplete: () => { drops.destroy(); dataset.water = ''; } });
 }

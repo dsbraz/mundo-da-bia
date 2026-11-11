@@ -9,7 +9,7 @@ import { itemKinds } from '../domain/item-kind';
 import { sameLocation, validLocation } from '../domain/location';
 import { nextItemAfter, recipeIds } from '../domain/progress';
 import { member, positiveId, record, roomId } from './values';
-import { knownContent, knownTown, upgradeToV3 } from './neighborhood-v3';
+import { knownContent, knownTown, unwatered, upgradeToV3 } from './neighborhood-v3';
 import { knownProgress } from './progress-validation';
 import { validLayout } from './layout-validation';
 import { actor, portable, consistentWorld } from './validation';
@@ -30,7 +30,7 @@ function decodeV3(value: unknown): Neighborhood | null {
   const town = knownTown(value);
   if (!record(value) || !validTown(town) || !validVersion(town, 3)) return null;
   const first = nextItemAfter(town.items);
-  return { ...town, progress: knownProgress(value.progress), nextItem: positiveId(value.nextItem) && value.nextItem >= first ? value.nextItem : first };
+  return { ...unwatered(town), progress: knownProgress(value.progress), nextItem: positiveId(value.nextItem) && value.nextItem >= first ? value.nextItem : first };
 }
 function validVersion(town: LegacyNeighborhood, version: number) {
   if (version === 1) return [...town.actors, ...town.items].every(entity => entity.location.kind !== 'street' || entity.x <= town.plots * plotWidth - 60);

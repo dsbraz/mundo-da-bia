@@ -30,3 +30,13 @@ it('plantar, regar, crescer até pronto, colher e chover, em cada canteiro e cul
   step({ type: 'tick', now: 0 });
   expect(town.progress.plaza['praca-1']).toEqual({ crop: 'alface', stage: 0, since: 0, watered: true });
 });
+
+it('o regado do canteiro antigo deixa de valer: v2 e v3 carregam com false e o resto do outdoor fica igual (§4.3)', () => {
+  const town = migrateNeighborhood(initialAlbum(initialWorld()));
+  const outdoor = { ...town.outdoor, watered: true, mail: [1], bells: [1] };
+  const v3 = decodeNeighborhood(JSON.stringify({ version: 3, town: { ...town, outdoor } }))!;
+  expect(v3.outdoor).toEqual({ ...outdoor, watered: false });
+  const legacy: Record<string, unknown> = { ...town, outdoor }; delete legacy.progress; delete legacy.nextItem;
+  const v2 = decodeNeighborhood(JSON.stringify({ version: 2, town: legacy }))!;
+  expect(v2.outdoor).toEqual({ ...outdoor, watered: false });
+});

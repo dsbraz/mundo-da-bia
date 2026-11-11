@@ -6,6 +6,9 @@ import { drawStreet, drawExit } from './street';
 import { drawRoom } from './room';
 import { swingMotion } from './swing-motion';
 import { reducedMotion } from './motion';
+import { basketWobble, drawGarden, harvestFlight, plantPop, plantSway } from './garden-art';
+import type { PlazaPlot } from '../domain/progress';
+import type { CropId } from '../domain/types';
 import type { faces } from './expression';
 import type { sceneLife } from './scene-life';
 import type { Location, Neighborhood, OutdoorAction } from '../domain/neighborhood-types';
@@ -40,11 +43,19 @@ export function sceneOutdoor(view: OutdoorView) {
       view.faces().trigger(view.selected(), 'surprise', performance.now()); const town = view.town(); if (!view.ready() || !town) return;
       doorEffect(view.scene, town, previous); const sill = walker && doorStep(town, previous); if (sill) view.ambient().strolls.emerge(view.figures(), walker, sill);
     },
-    reaction(action: OutdoorAction) {
+    /** The plaza garden's answers: `redraw` only the garden layer (the clock moved a plant), or play a planting, sway, harvest or full basket. */
+    garden: {
+      redraw() { const town = view.town(); if (view.ready() && sky && town) drawGarden(view.scene, town); },
+      planted(plot: PlazaPlot) { if (view.ready()) plantPop(view.scene, plot); },
+      sway(plot: PlazaPlot) { if (view.ready()) plantSway(view.scene, plot); },
+      harvested(plot: PlazaPlot, crop: CropId, amount: number) { if (view.ready()) harvestFlight(view.scene, plot, crop, amount); },
+      full() { if (view.ready()) basketWobble(view.scene); },
+    },
+    reaction(action: OutdoorAction, facing: 1 | -1 = 1) {
       if (action.target === 'swing') push(action.actor);
       const rider = view.world().actors.find(a => a.id === action.actor), figure = view.figures().find(f => f.name === action.actor);
       if (rider && (action.target === 'swing' || action.target === 'bench')) { if (figure) view.scene.tweens.killTweensOf(figure); view.ambient().strolls.climb(rider.id, { x: rider.x, y: rider.y }); }
-      const town = view.town(); if (view.ready() && town) outdoorEffect(view.scene, town, action);
+      const town = view.town(); if (view.ready() && town) outdoorEffect(view.scene, town, action, facing);
     },
     /** Through the door to `destination`: it opens and the figure fades into the doorway, then `done` (at most 240 ms, nothing held). */
     enterDoor(id: ActorId, destination: Location, done: () => void) {

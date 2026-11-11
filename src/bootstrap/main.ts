@@ -49,6 +49,7 @@ import '../presentation/home-menu.css';
 import '../presentation/dock-layout.css';
 import '../presentation/kitchen.css';
 import { kitchen } from './kitchen';
+import { gardenPlay } from './garden';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -103,7 +104,8 @@ cancelGame = games.cancel;
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
 const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: townDispatch, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
-const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider) });
+const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback });
+const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
 const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece) });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
@@ -142,6 +144,7 @@ function newBuilding() {
 }
 const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh, scene, cue: sound => feedback.sound.cue(sound),
   commit: next => { town = next; state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); },
+  quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
   pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { townActs.dispatch(action); }
@@ -181,7 +184,7 @@ function renderControls() {
   root.classList.toggle('selection-on-right', focus.x > 500);
   controls(state, selected, saved);
   editor(albumView(), edits, building, selectedPiece); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building);
-  navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh();
+  navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh();
   root.querySelector<HTMLElement>('#build-history')!.hidden = !building && !townActs.canUndo() && !townActs.canRedo();
   root.querySelector<HTMLButtonElement>('#undo')!.disabled = !townActs.canUndo(); root.querySelector<HTMLButtonElement>('#redo')!.disabled = !townActs.canRedo();
 }

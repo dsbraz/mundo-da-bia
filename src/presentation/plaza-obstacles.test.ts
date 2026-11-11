@@ -12,19 +12,20 @@ const street = (): World => localWorld(neighborhoodAction(migrateNeighborhood(in
 const inside = (b: { left: number; right: number; top: number; bottom: number }, p: { x: number; y: number }) => p.x >= b.left && p.x <= b.right && p.y >= b.top && p.y <= b.bottom;
 
 describe('obstáculos da praça', () => {
-  it('banco, os dois pés do balanço e o canteiro ocupam o chão onde estão desenhados', () => {
-    expect(plazaObstacles.map(o => o.name)).toEqual(['bench', 'swing-left', 'swing-right', 'flowerbed']);
+  it('banco, os dois pés do balanço e os quatro canteiros da horta ocupam o chão onde estão desenhados', () => {
+    expect(plazaObstacles.map(o => o.name)).toEqual(['bench', 'swing-left', 'swing-right', 'praca-1', 'praca-2', 'praca-3', 'praca-4']);
     const at = (name: string) => plazaObstacles.find(o => o.name === name)!;
     expect(inside(at('bench'), { x: 180, y: 445 })).toBe(true);
-    expect(inside(at('flowerbed'), { x: 573, y: 452 })).toBe(true);
+    expect(inside(at('praca-1'), { x: 573, y: 452 })).toBe(true);
+    expect(inside(at('praca-4'), { x: 612, y: 480 })).toBe(true);
     expect(inside(at('swing-left'), { x: 340, y: 445 })).toBe(true);
     expect(inside(at('swing-right'), { x: 460, y: 445 })).toBe(true);
     expect(plazaObstacles.some(o => inside(o, { x: 400, y: 445 }))).toBe(false);
   });
-  it('a criança contorna o canteiro em vez de atravessá-lo', () => {
+  it('a criança contorna a horta em vez de atravessá-la', () => {
     const path = walkingPath(street(), { x: 470, y: 455 }, { x: 700, y: 455 });
     expect(path).not.toBeNull();
-    expect(path!.some(p => p.y > plazaObstacles.find(o => o.name === 'flowerbed')!.bottom)).toBe(true);
+    expect(path!.some(p => p.y > plazaObstacles.find(o => o.name === 'praca-4')!.bottom)).toBe(true);
     expect(walkingPath(street(), { x: 470, y: 455 }, { x: 573, y: 455 })).toBeNull();
   });
   it('contorna o banco e os pés do balanço', () => {

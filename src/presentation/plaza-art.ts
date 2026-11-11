@@ -1,7 +1,8 @@
 import type Phaser from 'phaser';
 import { textStyle } from './text-style';
 import type { Neighborhood } from '../domain/neighborhood-types';
-/** Draws the plaza and returns its tree crown, which sways with the sky. */
+import { drawGarden } from './garden-art';
+/** Draws the plaza (its vegetable garden in place of the old flowerbed) and returns its tree crown, which sways with the sky. */
 export function drawPlaza(scene: Phaser.Scene, town: Neighborhood): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
   g.fillStyle(0x779884).fillRoundedRect(26, 130, 15, 290, 6);
@@ -20,12 +21,7 @@ export function drawPlaza(scene: Phaser.Scene, town: Neighborhood): Phaser.GameO
   seat.lineStyle(2, 0x8b8573).lineBetween(-34, 2, -34, 195).lineBetween(34, 2, 34, 195);
   seat.fillStyle(0xa2b8a3).fillRoundedRect(-45, 193, 90, 13, 5);
   seat.lineStyle(1.5, 0x718b78).strokeRoundedRect(-45, 193, 90, 13, 5);
-  g.fillStyle(0xbe9c79).fillRoundedRect(518, 432, 110, 41, 8);
-  for (const x of [535, 565, 600]) {
-    g.lineStyle(3, 0x7c9a75).lineBetween(x, 440, x, 390);
-    g.fillStyle(town.outdoor.watered ? 0x92ba87 : 0xb2bd91).fillEllipse(x - 9, 417, 24, 12).fillEllipse(x + 8, 401, 25, 12);
-    g.fillStyle(0xe5b2a3).fillCircle(x, 385, 10); g.fillStyle(0xf6d68d).fillCircle(x, 385, 4);
-  }
+  drawGarden(scene, town);
   scene.add.text(280, 85, 'Pracinha do encontro', textStyle('plaza')).setOrigin(.5);
   return crown;
 }

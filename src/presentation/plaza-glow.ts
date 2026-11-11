@@ -5,10 +5,10 @@ import { outdoorTargets } from './outdoor-controls';
 import { hex } from './palette';
 
 export const glowDistance = 220;
-/** Plaza spots the selected actor can reach soon: a soft warm glow on the ground under each one. */
+/** Plaza spots the selected actor can reach soon: a soft warm glow on the ground under each one (the plots show themselves). */
 export function nearbyHotspots(town: Neighborhood, selected: ActorId) {
   const actor = town.actors.find(a => a.id === selected && a.location.kind === 'street');
-  return actor ? outdoorTargets(town, selected).filter(t => Math.abs(t.point.x - actor.x) <= glowDistance) : [];
+  return actor ? outdoorTargets(town, selected).filter(t => t.target !== 'plot' && Math.abs(t.point.x - actor.x) <= glowDistance) : [];
 }
 export function drawPlazaGlow(scene: Phaser.Scene, town: Neighborhood, selected: ActorId) {
   const g = scene.add.graphics().setName('plaza-glow');
