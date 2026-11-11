@@ -17,8 +17,8 @@ export function plaza(deps: Plaza) {
   const play = (actor: ActorId, target: Equipment) => deps.dispatch({ type: 'outdoor', actor, target: target.target, ...(target.building ? { building: target.building } : {}) });
   function drop(actor: ActorId, point: Point) {
     const target = outdoorAt(deps.town(), point); if (!target) return false;
-    if (target.target === 'plot' || target.target === 'water') deps.garden.drop(actor, target.plot ?? null); else play(actor, target as Equipment);
-    return true;
+    if (target.target === 'plot' || target.target === 'water') return deps.garden.drop(actor, target.plot ?? null);
+    play(actor, target as Equipment); return true;
   }
   function use(target: OutdoorTarget) {
     if (target.target === 'plot') { deps.garden.touch(target.plot!); return; }
