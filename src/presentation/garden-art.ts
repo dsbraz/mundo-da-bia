@@ -13,12 +13,17 @@ const plotSize = { width: 76, height: 44 }, plantSize = { width: 60, height: 68 
 /** Test hooks on the canvas, only under automation. */
 function mark(scene: Phaser.Scene, key: string, value: string) { if (navigator.webdriver) scene.game.canvas.dataset[key] = value; }
 const named = (scene: Phaser.Scene, name: string) => scene.children.getByName(name) as Image | null;
+const loops = new WeakMap<Phaser.Scene, Phaser.Tweens.Tween[]>();
+/** An endless tween of the garden drawing, stopped when the garden is drawn again. */
+function loop(scene: Phaser.Scene, config: Phaser.Types.Tweens.TweenBuilderConfig) { loops.get(scene)?.push(scene.tweens.add(config)); }
 /** Where a plant in `plot` grows from: the soil of its box. */
 export const plantBase = (plot: PlazaPlot): Point => ({ x: plotSpots[plot].x, y: plotSpots[plot].y - soil });
 
 /** The four plots with their plants (a thirsty one droops and a drop blinks over it), the resting can and the basket with what it
  *  holds peeking out. Drawn again as a layer of its own when only the garden changed. */
 export function drawGarden(scene: Phaser.Scene, town: Neighborhood) {
+  // The endless pulse and blink of the previous drawing stop with it (a full repaint has already removed their images).
+  (loops.get(scene) ?? []).forEach(tween => tween.remove()); loops.set(scene, []);
   scene.children.list.filter(o => o.name.startsWith('garden:')).forEach(o => o.destroy());
   if (!scene.textures.exists('plot')) return;
   const reduced = reducedMotion(), plaza = town.progress.plaza;
@@ -34,11 +39,11 @@ export function drawGarden(scene: Phaser.Scene, town: Neighborhood) {
 function drawPlant(scene: Phaser.Scene, plot: PlazaPlot, plant: Plant, reduced: boolean) {
   const base = plantBase(plot), art = plantArt(plant), depth = plotSpots[plot].y;
   const image = scene.add.image(base.x, base.y, art.key).setOrigin(.5, 86 / 90).setDisplaySize(plantSize.width, plantSize.height).setRotation(art.lean).setDepth(depth).setName(`garden:plant:${plot}`);
-  if (plant.stage === 4 && !reduced) scene.tweens.add({ targets: image, scaleY: image.scaleY * 1.05, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+  if (plant.stage === 4 && !reduced) loop(scene, { targets: image, scaleY: image.scaleY * 1.05, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
   if (!art.drop) return;
   // Just above the leaves: low over a seed or sprout, higher over taller plants.
   const drop = scene.add.image(base.x + 18, base.y - (plant.stage <= 1 ? 30 : 54), 'garden-drop').setDisplaySize(19, 24).setDepth(depth + 1).setName(`garden:drop:${plot}`);
-  if (!reduced) scene.tweens.add({ targets: drop, alpha: .35, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+  if (!reduced) loop(scene, { targets: drop, alpha: .35, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 }
 function drawBasket(scene: Phaser.Scene, basket: Neighborhood['progress']['basket']) {
   const inside = cropIds.filter(crop => (basket[crop] ?? 0) > 0).slice(0, 3);

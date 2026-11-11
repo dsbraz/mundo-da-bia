@@ -74,6 +74,15 @@ test('plantar alface, regar e avançar 2 min mostra o broto; repetindo até pron
   await expect(page.locator('#kitchen-bench .bench-pantry [data-ingredient="alface"]')).toBeVisible();
 });
 
+test('o saco de sementes fecha quando ela sai de perto do canteiro', async ({ page }) => {
+  await plaza(page, { x: 760, y: 520 });
+  await plotTap(page, 'praca-1');
+  await until(page, () => page.locator('#seed-bag').isVisible());
+  await tap(page, 300, 525);
+  await until(page, async () => !await page.locator('#seed-bag').isVisible());
+  expect((await readTown(page)).progress.plaza).toEqual({});
+});
+
 test('sem rega por 30 dias a planta continua viva e no mesmo estágio, com sede', async ({ page }) => {
   await plaza(page, { x: 760, y: 520 }, t => ({ ...t, progress: { ...t.progress, plaza: { 'praca-2': { crop: 'tomate', stage: 2, since: start.getTime(), watered: false } } } }));
   // 30 days, in jumps of 10 (a single jump that long overflows the browser's timers).

@@ -58,13 +58,18 @@ export function gardenPlay(deps: GardenDeps) {
     touch(plot: PlazaPlot) { if (street()) go(plot, actor => tend(actor, plot)); },
     /** The plaza's can: whoever is selected waters the nearest plot (a thirsty one first). */
     can() { const actor = street(); if (actor) { const plot = nearestPlot(deps.town().progress, actor); go(plot, who => water(who, plot)); } },
-    /** Someone dropped on a plot (or the can) tends it right there, without walking. */
-    drop(actor: ActorId, plot: PlazaPlot | null) {
-      const who = deps.town().actors.find(a => a.id === actor); if (!who) return;
-      const target = plot ?? nearestPlot(deps.town().progress, who);
-      if (plot) tend(actor, target); else water(actor, target);
+    /** Someone dropped on a planted plot (or the can) tends it right there, without walking; an empty plot is just floor. */
+    drop(actor: ActorId, plot: PlazaPlot | null): boolean {
+      const who = deps.town().actors.find(a => a.id === actor);
+      if (!who || (plot && !deps.town().progress.plaza[plot])) return false;
+      if (plot) tend(actor, plot); else water(actor, nearestPlot(deps.town().progress, who));
+      return true;
     },
-    /** After every refresh: the bag closes in Create, off the street, or when the selected character is not there. */
-    refresh() { if (open && (deps.building() || deps.town().location.kind !== 'street' || !street())) close(); },
+    /** After every refresh: the bag closes in Create, off the street, or when the selected character is not beside its plot. */
+    refresh() {
+      if (!open) return;
+      const actor = street(), stand = standPoint(open).point;
+      if (deps.building() || deps.town().location.kind !== 'street' || !actor || Math.hypot(actor.x - stand.x, actor.y - stand.y) > 40) close();
+    },
   };
 }
