@@ -11,6 +11,8 @@ import type { PlayScene } from '../presentation/scene';
 import { fullBasketLine } from '../content/garden';
 import type { sceneFeedback } from './scene-feedback';
 
+/** Standing at the plot's spot (within 40 px), where a walk to it ends. */
+const beside = (who: { x: number; y: number }, plot: PlazaPlot) => { const stand = standPoint(plot).point; return Math.hypot(who.x - stand.x, who.y - stand.y) <= 40; };
 interface GardenDeps {
   root: HTMLElement; town: () => Neighborhood; selected: () => ActorId; building: () => boolean; walker: ReturnType<typeof walking>;
   /** The app's clock (ms): the domain only gets the time through the action. */
@@ -37,9 +39,11 @@ export function gardenPlay(deps: GardenDeps) {
     if (thirsty(plant)) { water(actor, plot); return; }
     deps.scene.outdoor.garden.sway(plot);
   }
+  /** Beside the plot the drops land on its soil; from farther away (dropped somewhere else) they only fall at her feet. */
   function water(actor: ActorId, plot: PlazaPlot) {
     deps.apply(neighborhoodAction(deps.town(), { type: 'water-plot', plot, now: deps.now() }));
-    deps.scene.outdoor.reaction({ type: 'outdoor', actor, target: 'water' }, standPoint(plot).facing, plantBase(plot));
+    const who = deps.town().actors.find(a => a.id === actor);
+    deps.scene.outdoor.reaction({ type: 'outdoor', actor, target: 'water' }, standPoint(plot).facing, who && beside(who, plot) ? plantBase(plot) : undefined);
   }
   function gather(actor: ActorId, plot: PlazaPlot) {
     const crop = deps.town().progress.plaza[plot]!.crop, result = harvest(deps.town(), plot);
@@ -69,8 +73,8 @@ export function gardenPlay(deps: GardenDeps) {
     /** After every refresh: the bag closes in Create, off the street, or when the selected character is not beside its plot. */
     refresh() {
       if (!open) return;
-      const actor = street(), stand = standPoint(open).point;
-      if (deps.building() || deps.town().location.kind !== 'street' || !actor || Math.hypot(actor.x - stand.x, actor.y - stand.y) > 40) close();
+      const actor = street();
+      if (deps.building() || deps.town().location.kind !== 'street' || !actor || !beside(actor, open)) close();
     },
   };
 }
