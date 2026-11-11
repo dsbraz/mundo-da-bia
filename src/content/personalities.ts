@@ -1,19 +1,57 @@
-import type { ActorId } from '../domain/types';
+import type { ActorId, CropId } from '../domain/types';
 
-// Only the pool of touch reactions; character personalities come later.
 export type ReactionPose = 'hop' | 'wiggle' | 'stretch' | 'purr' | 'clap' | 'cheer' | 'goof';
 export interface Reaction { pose: ReactionPose; line: string; cue: 'poke' | 'cheer' | 'meow' | 'purr' }
-const kids: Reaction[] = [
-  { pose: 'hop', line: 'Oba! {nome} pulou alto!', cue: 'cheer' },
-  { pose: 'wiggle', line: 'Hihi! {nome} sentiu cócegas!', cue: 'poke' },
-  { pose: 'stretch', line: 'Oi! Eu sou {nome}!', cue: 'poke' },
-];
-const cats: Reaction[] = [
-  { pose: 'purr', line: 'Rrrron… ({nome} amou o carinho)', cue: 'purr' },
-  { pose: 'stretch', line: 'Miau! ({nome} quer mais carinho)', cue: 'meow' },
-  { pose: 'wiggle', line: 'Prrr… {nome} fechou os olhinhos.', cue: 'purr' },
-];
-export const personalities: Record<ActorId, Reaction[]> = { bia: kids, luna: kids, leo: kids, rui: kids, mimi: cats, nino: cats, pipoca: cats };
+/** What each character says when touched (W3-01): the Bia is affectionate, clever and does things on her own (family, 11/2026). */
+export const personalities: Record<ActorId, Reaction[]> = {
+  bia: [
+    { pose: 'hop', line: 'Abraço? {nome} adora abraço!', cue: 'cheer' },
+    { pose: 'wiggle', line: 'Hmm… {nome} teve uma ideia!', cue: 'poke' },
+    { pose: 'stretch', line: 'Deixa que {nome} resolve!', cue: 'poke' },
+  ],
+  luna: [
+    { pose: 'hop', line: 'Tum-tum! {nome} ouviu o coração!', cue: 'cheer' },
+    { pose: 'wiggle', line: '{nome} quer saber: tudo bem?', cue: 'poke' },
+    { pose: 'stretch', line: 'Pizza hoje? {nome} topa!', cue: 'poke' },
+  ],
+  leo: [
+    { pose: 'stretch', line: 'Psiu! {nome} ouviu um passarinho.', cue: 'poke' },
+    { pose: 'wiggle', line: '{nome} cuida de cada broto.', cue: 'poke' },
+    { pose: 'hop', line: 'Bolo de cenoura? {nome} quer!', cue: 'cheer' },
+  ],
+  rui: [
+    { pose: 'hop', line: 'Aventura! {nome} topa tudo!', cue: 'cheer' },
+    { pose: 'wiggle', line: 'Hahaha! {nome} riu demais!', cue: 'poke' },
+    { pose: 'stretch', line: 'Piquenique? {nome} leva a cesta!', cue: 'poke' },
+  ],
+  mimi: [
+    { pose: 'purr', line: 'Rrrron… ({nome} amou o carinho)', cue: 'purr' },
+    { pose: 'stretch', line: 'Miau! ({nome} quer petisco)', cue: 'meow' },
+    { pose: 'wiggle', line: 'Prrr… {nome} fechou os olhinhos.', cue: 'purr' },
+  ],
+  nino: [
+    { pose: 'stretch', line: 'Miau? ({nome} viu algo ali)', cue: 'meow' },
+    { pose: 'purr', line: 'Rrrron… ({nome} amou o carinho)', cue: 'purr' },
+    { pose: 'wiggle', line: 'Prrr… {nome} piscou devagar.', cue: 'purr' },
+  ],
+  pipoca: [
+    { pose: 'wiggle', line: 'Miau! ({nome} quer brincar)', cue: 'meow' },
+    { pose: 'purr', line: 'Rrrron… ({nome} amou o carinho)', cue: 'purr' },
+    { pose: 'stretch', line: 'Prrr… {nome} rolou no tapete.', cue: 'purr' },
+  ],
+};
+/** The Turma card: a motto of up to 4 words, the social gesture (drawn in W3-08), the voice (pitch of the touch sound) and the favourite
+ *  crop. Gesture, voice and crop of the six others are proposals still to be watched with the child. */
+export interface Card { motto: string; gesture: 'abraco' | 'toca-aqui'; voice: number; crop: CropId }
+export const cards: Record<ActorId, Card> = {
+  bia: { motto: 'Deixa comigo! Abraço?', gesture: 'abraco', voice: 1.15, crop: 'morango' },
+  luna: { motto: 'Posso ouvir seu coração?', gesture: 'toca-aqui', voice: 1.25, crop: 'tomate' },
+  leo: { motto: 'Plantei, reguei, cresceu!', gesture: 'abraco', voice: 1, crop: 'cenoura' },
+  rui: { motto: 'Aventura? Eu topo!', gesture: 'toca-aqui', voice: .9, crop: 'milho' },
+  mimi: { motto: 'Miau! Cadê meu petisco?', gesture: 'abraco', voice: 1.1, crop: 'alface' },
+  nino: { motto: 'Miau? Vamos explorar?', gesture: 'toca-aqui', voice: .85, crop: 'abobora' },
+  pipoca: { motto: 'Prrr… Ovinho e soneca!', gesture: 'abraco', voice: 1.3, crop: 'milho' },
+};
 
 /** Lines during a game, about the child who plays ({nome}): a spectator claps, the child celebrates or makes a funny face on a miss. */
 export const gameLines = { clap: 'Vai, {nome}!', cheer: 'Uhuu, {nome}! Ida e volta!', goof: 'Ops! Quase, {nome}!' } as const;

@@ -30,6 +30,12 @@ select{display:none!important}.street .choice-cards[aria-label=Andar]{display:no
 #create-tabs{position:absolute;inset:84px auto auto 12px;display:flex;gap:6px;padding:4px;border-radius:16px;background:#fff7ddee;z-index:11}#create-tabs[hidden]{display:none}#create-tabs button{min-height:48px;border-radius:14px}#create-tabs button[aria-pressed=true]{background:#f8d2c6;border-color:var(--coral);color:#7a3424}
 /* Turma: one compact card per character; the pencil only on the selected one. */
 #cast .character-card{position:relative;min-width:0}#cast .character-card>.rename{position:absolute;top:2px;right:2px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border-radius:50%;font-size:0;display:none}#cast .character-card>.rename::before{width:24px;height:24px;flex-basis:24px}#cast .character-card:has(>.character[aria-pressed=true])>.rename{display:inline-flex}
+/* The motto under each card. On a tablet the cards get narrower (one row of 7 in portrait, three a row in the landscape side dock), so the
+   mottos never push the Turma into a scroll. */
+#cast .motto{margin:0;padding:0 2px;font-size:16px;line-height:1.2;text-align:center;color:#4b4f63;overflow-wrap:break-word}
+@media(min-width:700px){#app #cast{gap:6px}#app #cast button.character{min-width:0;padding:6px 4px}#app #cast img{max-width:100%;object-fit:contain}}
+@media(orientation:portrait) and (min-width:700px){#app #cast{grid-template-columns:repeat(7,minmax(0,1fr))}}
+@media(orientation:landscape) and (min-width:700px){#app #cast{grid-template-columns:repeat(3,minmax(0,1fr))}#app #cast button.character{min-height:108px}#app #cast img{height:72px}}
 /* Lugares: big thumbnails with the faces of who is in each room. */
 #room-map .room-cast{display:flex;flex-wrap:wrap;justify-content:center;max-width:100%;min-height:28px;margin-top:-28px;padding:0 6px;position:relative}#room-map .room-cast img{width:28px;height:28px;margin:0 -3px;border-radius:50%;background:#fffaf0;border:2px solid #fff}
 /* Grown-up gate: hold until the ring closes. Keeping the house is the big, green, easy choice. */

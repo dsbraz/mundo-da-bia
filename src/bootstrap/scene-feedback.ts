@@ -1,6 +1,6 @@
 import type { ActorId, Point, PresentationEvent, World } from '../domain/types';
 import { eventLine, nameOf, say } from '../content/feedback-text';
-import { personalities, pickReaction } from '../content/personalities';
+import { cards, personalities, pickReaction } from '../content/personalities';
 import { createSound } from '../presentation/sound';
 import type { PlayScene } from '../presentation/scene';
 import { loadSoundOn, saveSoundOn } from '../persistence/storage';
@@ -30,7 +30,7 @@ export function sceneFeedback(deps: Deps) {
       const pool = personalities[id], index = pickReaction(pool.length, last.get(id), Math.random), reaction = pool[index]!;
       last.set(id, index);
       const line = say(reaction.line, nameOf(who));
-      deps.scene.poke(id, reaction.pose, line); sound.cue(reaction.cue); announce(line);
+      deps.scene.poke(id, reaction.pose, line); sound.cue(reaction.cue, cards[id].voice); announce(line);
     },
   };
 }

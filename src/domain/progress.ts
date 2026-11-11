@@ -1,9 +1,10 @@
 import type { ActorId, CropId, Item, Plant } from './types';
 
-/** Recipes R01–R24 and the secrets S1–S3, in the book's order; these strings are save format. */
+/** Recipes R01–R26 and the secrets S1–S3, in the book's order; these strings are save format. R25 and R26 (batata frita and pastel, the
+ *  Bia's favourites) came within v3, as 4.4 allows: an earlier v3 build drops them instead of losing the house. */
 export const recipeIds = ['sanduiche', 'ovo-mexido', 'panqueca', 'bolo-simples', 'leite-batidinho', 'torrada', 'pao-de-queijo', 'biscoito', 'pudim',
   'misto-quente', 'pipoca', 'salada', 'vitamina-de-morango', 'sopa-de-legumes', 'bolo-de-cenoura', 'torta-de-abobora', 'pizza', 'curau',
-  'suco-de-cenoura', 'sanduiche-natural', 'brigadeiro', 'bolo-de-chocolate', 'torrada-de-canela', 'morango-com-mel',
+  'suco-de-cenoura', 'sanduiche-natural', 'brigadeiro', 'bolo-de-chocolate', 'torrada-de-canela', 'morango-com-mel', 'batata-frita', 'pastel',
   'petisco-de-gato', 'chocolate-quente', 'bolo-de-mel'] as const;
 export const specialIds = ['chocolate', 'canela', 'mel'] as const;
 /** The 12 goals of W3-10, in their order. */

@@ -107,3 +107,12 @@ it('cada móvel usado soa do seu jeito e desligar faz só um pop', () => {
   sound.events([{ type: 'furniture', piece: 8 }], () => false, () => undefined);
   expect(audio()!.oscillators).toHaveLength(timbres.whirr.length + timbres.pop.length);
 });
+
+it('a voz de cada personagem muda só a altura do toque: o mesmo contorno, frequências multiplicadas', () => {
+  const { sound, fire, audio } = setup();
+  fire('pointerdown');
+  sound.cue('poke'); sound.cue('poke', 1.25);
+  const freq = audio()!.oscillators.map(o => o.freq), n = timbres.poke.length;
+  expect(freq.slice(0, n)).toEqual(timbres.poke.map(t => [t.from, t.to]));
+  expect(freq.slice(n)).toEqual(timbres.poke.map(t => [t.from * 1.25, t.to * 1.25]));
+});

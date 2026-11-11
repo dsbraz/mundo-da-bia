@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { ready, tray, closeTray, readTown, point } from './helpers';
 import { neighborhoodAction } from '../src/domain/neighborhood';
+import { actorIds } from '../src/domain/types';
+import { cards } from '../src/content/personalities';
 
 for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }]) {
   test(`controles ficam fora da cena e no mesmo lugar ao trocar a seleção ${viewport.width}`, async ({ page }) => {
@@ -104,9 +106,11 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
   });
 }
 
-test('a Turma inteira cabe sem rolagem a 768 px, com o lápis só no cartão escolhido', async ({ page }) => {
+test('a Turma inteira cabe sem rolagem a 768 px, com a frase de cada um e o lápis só no cartão escolhido', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 }); await ready(page); await tray(page, 'Turma');
   await expect(page.locator('#cast .character')).toHaveCount(7);
+  await expect(page.locator('#cast .motto')).toHaveText(actorIds.map(id => cards[id].motto));
+  for (const motto of await page.locator('#cast .motto').all()) await expect(motto).toBeInViewport({ ratio: 1 });
   await expect(page.locator('#cast .rename:visible')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Mudar o nome de Bia', exact: true })).toBeVisible();
   expect(await page.locator('#play-tray').evaluate(n => n.scrollHeight <= n.clientHeight + 1)).toBe(true);

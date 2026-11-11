@@ -14,6 +14,10 @@ it('listas tiram ids desconhecidos e repetidos e mantêm a ordem; campo que não
   expect(knownProgress({ seeds: [] }).seeds).toEqual([]);
   expect(knownProgress({}).recipes).toEqual([]);
 });
+it('as receitas da Bia (batata frita e pastel, W3-01) são conhecidas pelo v3', () => {
+  expect(knownProgress({ recipes: ['batata-frita', 'pastel'], fancy: ['pastel'], revealed: ['batata-frita'] }))
+    .toMatchObject({ recipes: ['batata-frita', 'pastel'], fancy: ['pastel'], revealed: ['batata-frita'] });
+});
 it('cesta: chave desconhecida, valor não inteiro ou ≤ 0 saem; acima de 6 vira 6', () => {
   expect(knownProgress({ basket: { kiwi: 2, alface: 1, tomate: 7, cenoura: 0, milho: -1, morango: 1.5, abobora: '2' } }).basket)
     .toEqual({ alface: 1, tomate: 6 });

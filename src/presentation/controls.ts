@@ -9,6 +9,7 @@ import { actorAt } from './targets';
 import { trayDrag } from './tray-drag';
 import { lookImage } from './look-image';
 import { actors, looks } from '../content/catalog';
+import { cards } from '../content/personalities';
 import { actorIds, lookIds } from '../domain/types';
 import type { Action, Actor, ActorId, World } from '../domain/types';
 import { uiText } from '../content/ui-text';
@@ -34,7 +35,7 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
   const faces = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id)));
   root.querySelector('#play-hint .hint-cast')!.append(...faces);
   const name = actorNames(root, dispatch, getState);
-  root.querySelector('#cast')!.append(...cast.map((card, i) => { const group = document.createElement('article'); group.className = 'character-card'; const rename = button('', () => name(actorIds[i]!), 'rename illustrated'); rename.style.setProperty('--button-icon', "url('/icons/ui-pencil.svg')"); group.append(card, rename); return group; }));
+  root.querySelector('#cast')!.append(...cast.map((card, i) => castCard(card, actorIds[i]!, () => name(actorIds[i]!))));
   cast.forEach((b, index) => trayDrag(b, () => roomWidth(getState()), p => {
     const actor = actorIds[index]!; select(actor); dispatch({ type: 'travel', actor, room: getState().room });
     dispatch({ type: 'move', actor, point: onFloor(getState(), p) });
@@ -71,6 +72,14 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
   };
 }
 
+/** A Turma card: the portrait button, the pencil right after it (renaming) and the character's motto under them. */
+function castCard(card: HTMLButtonElement, id: ActorId, rename: () => void) {
+  const group = document.createElement('article'), pencil = button('', rename, 'rename illustrated'), motto = document.createElement('p');
+  group.className = 'character-card'; pencil.style.setProperty('--button-icon', "url('/icons/ui-pencil.svg')");
+  motto.className = 'motto'; motto.textContent = cards[id].motto;
+  group.append(card, pencil, motto);
+  return group;
+}
 export function positionContext(root: HTMLElement, actor: Actor, state: World) {
   root.querySelector<HTMLElement>('#actor-context')!.classList.toggle('absent', actor.room !== state.room);
 }

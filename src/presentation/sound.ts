@@ -45,10 +45,11 @@ export function createSound(options: SoundOptions) {
     button.setAttribute('aria-label', enabled ? 'Som ligado' : 'Som desligado');
     button.textContent = 'Som';
   }
-  function cue(name: Cue) {
+  /** `pitch` is the character's voice: the same contour, every frequency multiplied. */
+  function cue(name: Cue, pitch = 1) {
     if (!enabled || !context) return;
     const now = context.currentTime;
-    timbres[name].forEach(n => play(context!, n, now));
+    timbres[name].forEach(n => play(context!, { ...n, from: n.from * pitch, to: n.to * pitch }, now));
   }
   options.unlock.addEventListener('pointerdown', wake, { capture: true });
   options.unlock.addEventListener('click', event => {

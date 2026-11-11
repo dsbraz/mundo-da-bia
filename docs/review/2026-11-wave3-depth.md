@@ -82,11 +82,13 @@ Ingrediente não é objeto do mundo. Só o prato pronto é. Isso evita que a ban
 
 | Grupo | Ingredientes | Origem | Quantidade |
 | --- | --- | --- | --- |
-| Básicos (7) | farinha, ovo, leite, açúcar, pão, queijo, peixe | Sempre na despensa, desde o início | Infinitos |
+| Básicos (9) | farinha, ovo, leite, açúcar, pão, queijo, peixe, batata, óleo | Sempre na despensa, desde o início | Infinitos |
 | Da horta (6) | alface, tomate, cenoura, milho, morango, abóbora | Colheita (2 por colheita) e feira | Até 6 por tipo na cesta. Mostrados como pilha de ícones, nunca como número. |
 | Especiais (3) | chocolate, canela, mel | Cartas L04, L06 e L08, ou presente da Pipoca (mel) | Infinitos depois de ganhos |
 
 Sementes iniciais: alface, tomate e cenoura. Milho, morango e abóbora chegam pelas cartas L01, L03 e L07.
+
+**Batata e óleo (W3-01, decisão de 11/2026).** Entraram para as comidas favoritas da Bia, definidas pela família: batata frita e pastel. A batata é **básico**, e não da horta, por três motivos: o favorito da Bia fica possível desde o início, como pede a rotação de pedidos da padaria (3.4); básico não vai para o save, então nada muda em `cropIds`, `seeds`, `basket` nem na validação v3; e não pede semente, carta nem arte de planta. O óleo também é básico. O código ainda não tem lista de ingredientes (a tabela de receitas chega com `domain/recipes.ts`, no lote 3). Por isso a única mudança de save é a das duas receitas em `recipeIds`.
 
 ### 3.2 Cozinha e receitas
 
@@ -107,7 +109,7 @@ A criança arrasta de 1 a 3 ingredientes para a tigela, toca num utensílio e o 
 
 **Mesa cheia.** Cada casa aceita até 6 pratos soltos. No limite, a bancada não cozinha, e os pratos da cena pulam com a fala "Mesa cheia! Quem quer comer?". Não há perda nenhuma.
 
-**As 27 receitas.** São 6 conhecidas desde o início e 21 descobríveis: 18 aparecem como silhueta no livro e 3 são secretas, sem silhueta. 15 levam 3 ingredientes.
+**As 29 receitas.** São 6 conhecidas desde o início e 23 descobríveis: 20 aparecem como silhueta no livro e 3 são secretas, sem silhueta. 16 levam 3 ingredientes. R25 e R26 entraram em W3-01, dentro do v3, como a seção 4.4 permite.
 
 | # | Prato | Ingredientes | Utensílio | Estado inicial | Pede |
 | --- | --- | --- | --- | --- | --- |
@@ -135,11 +137,13 @@ A criança arrasta de 1 a 3 ingredientes para a tigela, toca num utensílio e o 
 | R22 | Bolo de chocolate | farinha + ovo + chocolate | forno | silhueta | especial |
 | R23 | Torrada de canela | pão + canela + açúcar | forno | silhueta | especial |
 | R24 | Morango com mel | morango + mel | tábua | silhueta | horta e especial |
+| R25 | Batata frita | batata + óleo | panela | silhueta | básicos (favorito da Bia) |
+| R26 | Pastel | farinha + queijo + óleo | panela | silhueta | básicos (a massa é a farinha e o recheio é o queijo; segundo gosto da Bia) |
 | S1 | Petisco de gato | peixe + farinha | forno | secreta | básicos |
 | S2 | Chocolate quente | leite + chocolate + canela | panela | secreta (dica em L12) | especial |
 | S3 | Bolo de mel | farinha + ovo + mel | forno | secreta | especial (troca de um ingrediente do R04) |
 
-Conferência: os 16 ingredientes aparecem em pelo menos uma receita, e cada um tem origem na tabela 3.1. Não há dois pares conjunto+utensílio iguais (teste unitário obrigatório).
+Conferência: os 18 ingredientes aparecem em pelo menos uma receita, e cada um tem origem na tabela 3.1. Não há dois pares conjunto+utensílio iguais (teste unitário obrigatório).
 
 **Livro de receitas.** É um ícone de livro no cabeçalho de Brincar e um livro desenhado sobre a bancada. Tem uma página por utensílio (tábua, panela, forno, liquidificador) e uma de "segredos", que só aparece depois do primeiro segredo descoberto.
 - **Receita conhecida:** prato colorido mais os ícones dos ingredientes e do utensílio. Se já saiu caprichada, ganha uma fita.
@@ -211,7 +215,7 @@ A vitrine abre a mesma bancada da seção 3.2. A placa da porta, **aberta** ou *
 
 | Freguês | Favorito (provisório) | Presente |
 | --- | --- | --- |
-| Bia | Panqueca (R03), **a confirmar com a família** | toldo listrado na fachada da padaria (derivado) |
+| Bia | Batata frita (R25), definida pela família; pastel (R26) é o segundo gosto e aparece só nas falas | toldo listrado na fachada da padaria (derivado) |
 | Luna | Pizza (R17) | estetoscópio |
 | Léo | Bolo de cenoura (R15) | regador de mão |
 | Rui | Pipoca (R11) | cesta |
@@ -412,7 +416,7 @@ O tipo `Plant` é `{ crop: CropId; stage: 0|1|2|3|4; since: number; watered: boo
 
 | ID | Origem | O que fazer | Arquivos prováveis | Critério de aceitação | Esf. |
 | --- | --- | --- | --- | --- | --- |
-| W3-15 | nova direção (a) | Domínio das receitas: tabela das 27, `cook(town, {building, cook, ingredients, utensil})` com as 4 saídas de 3.2, caprichado, mesa cheia, consumo só da horta, descoberta e `hint`. | novo `domain/recipes.ts`, `domain/neighborhood.ts` | Unitário:<br>• as 27 receitas cozinham a partir de uma despensa completa;<br>• não há dois pares conjunto+utensílio iguais;<br>• pão+queijo na panela devolve a dica "utensílio";<br>• em save novo, farinha+ovo no forno devolve o fantasma "queijo" (a candidata é R07, a não descoberta de menor número que contém o par);<br>• receita errada não muda `basket`;<br>• o look `chef` gera `fancy`;<br>• o 7º prato numa casa é recusado.<br>Mutação de 80% ou mais. | M |
+| W3-15 | nova direção (a) | Domínio das receitas: tabela das 29, `cook(town, {building, cook, ingredients, utensil})` com as 4 saídas de 3.2, caprichado, mesa cheia, consumo só da horta, descoberta e `hint`. | novo `domain/recipes.ts`, `domain/neighborhood.ts` | Unitário:<br>• as 29 receitas cozinham a partir de uma despensa completa;<br>• não há dois pares conjunto+utensílio iguais;<br>• pão+queijo na panela devolve a dica "utensílio";<br>• em save novo, farinha+ovo no forno devolve o fantasma "queijo" (a candidata é R07, a não descoberta de menor número que contém o par);<br>• receita errada não muda `basket`;<br>• o look `chef` gera `fancy`;<br>• o 7º prato numa casa é recusado.<br>Mutação de 80% ou mais. | M |
 | W3-16 | nova direção (a) | Bancada na cena: tigela de 3 lugares, despensa por ícone, 4 utensílios, animação de 1,2 s, prato nascendo junto da peça, utensílio que balança e ingrediente-fantasma. Variante reduzida. **Conflito com o `use` da onda 2:** em fogão, bancada e carrinho de cozinha, o toque passa a levar o personagem até a peça e abrir a bancada. O `active` e o efeito de vapor da onda 2 viram a animação de "cozinhando" da bancada. O spec `use-pieces` (carrinho e captura `use-everyday`) é atualizado no mesmo commit, com a asserção nova no lugar da antiga. | novo `presentation/kitchen-bench.ts`, novo `presentation/kitchen-art.ts`, `presentation/furniture-targets.ts`, `bootstrap/` (despacho), `public/art/kitchen.svg`, `public/icons/ing-*.svg` | E2E: tocar no fogão, arrastar farinha, ovo e leite e tocar na panela faz aparecer uma panqueca no chão, junto do fogão. E2E sem texto: o mesmo fluxo com o texto transparente. Com movimento reduzido, a captura não tem vapor nem quique. Nenhuma animação bloqueia o toque por mais de 300 ms. | G |
 | W3-17 | nova direção (a), DIR-7 | Comer pratos: `eat` (humano come qualquer prato; gato só peixe, S1, R05 e R02), consumo do item, reação grande no favorito e "prefiro peixinho". | `domain/care.ts`, `domain/objects.ts`, `presentation/reactions.ts`, `presentation/controls.ts` | Unitário:<br>• Luna come pizza: o prato some e `fed` fica `true`;<br>• Mimi recusa pizza e o prato fica;<br>• Pipoca come ovo mexido (o favorito de cada gato é comível por gato).<br>E2E: soltar a pizza na Luna mostra a dança do favorito. | M |
 | W3-18 | nova direção (a); revoga JOG-12 | Livro de receitas: ícone no cabeçalho e livro na bancada, páginas por utensílio, silhuetas, fita do caprichado, página de segredos, receitas reveladas por cartão. | novo `presentation/recipe-book.ts`, `public/art/book.svg`, `public/art/dishes.svg`, `index.html` | E2E:<br>• em save novo, a página do forno mostra o bolo colorido e o pão de queijo em silhueta;<br>• depois de cozinhar o pão de queijo, ele aparece colorido;<br>• a página de segredos não existe até o primeiro segredo.<br>Teste DOM: nenhum dígito no livro. | M |
@@ -483,9 +487,9 @@ O tipo `Plant` é `{ crop: CropId; stage: 0|1|2|3|4; since: number; watered: boo
 
 | Grupo | Peças | Arquivo | KB estimados |
 | --- | --- | --- | --- |
-| Ingredientes | 15 novos (peixe reaproveita `peixe.svg`) | `public/icons/ing-*.svg` | 9 |
+| Ingredientes | 17 novos (peixe reaproveita `peixe.svg`; batata e óleo vieram em W3-01) | `public/icons/ing-*.svg` | 9 |
 | Utensílios | 4 (tábua, panela, forno, liquidificador) | `public/icons/ut-*.svg` | 3 |
-| Pratos | 27 + guarnição de caprichado | `public/art/dishes.svg` | 34 |
+| Pratos | 29 + guarnição de caprichado | `public/art/dishes.svg` | 34 |
 | Plantas | 3 estágios genéricos + 6 culturas × (flor, pronto) + gota de sede | `public/art/plants.svg` | 16 |
 | Horta da praça | 4 canteiros de madeira + placa | `public/art/plants.svg` | 3 |
 | Bancada | tigela grande, vapor, utensílios em tamanho de cena | `public/art/kitchen.svg` | 8 |
