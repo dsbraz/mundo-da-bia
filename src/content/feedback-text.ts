@@ -12,18 +12,18 @@ const sceneLines: Partial<Record<PresentationEvent['type'], string>> = {
 };
 type Speaker = { id: ActorId; name?: string | undefined };
 /** The `turn`-th line (in rotation) of `actor` for `type`, or the scene's line for an event nobody speaks; null when nothing is said. */
-export function eventLine(type: PresentationEvent['type'], actor: Speaker | undefined, cat: boolean, turn = 0): string | null {
-  const pool = actor ? linePool(type, actor.id, cat) : null;
+export function eventLine(type: PresentationEvent['type'], actor: Speaker | undefined, cat: boolean, turn = 0, favorite = false): string | null {
+  const pool = actor ? linePool(type, actor.id, cat, favorite) : null;
   if (pool && actor) return say(pool[turn % pool.length]!, nameOf(actor));
   return sceneLines[type] ?? null;
 }
 /** Deterministic rotation: each character goes through its lines for an event in order, separately per event. */
 export function lineRotation() {
   const turns = new Map<string, number>();
-  return (type: PresentationEvent['type'], actor: Speaker | undefined, cat: boolean) => {
-    const key = `${actor?.id}:${type}`, turn = turns.get(key) ?? 0;
+  return (type: PresentationEvent['type'], actor: Speaker | undefined, cat: boolean, favorite = false) => {
+    const key = `${actor?.id}:${type}${favorite ? ':favorite' : ''}`, turn = turns.get(key) ?? 0;
     turns.set(key, turn + 1);
-    return eventLine(type, actor, cat, turn);
+    return eventLine(type, actor, cat, turn, favorite);
   };
 }
 

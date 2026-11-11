@@ -16,7 +16,7 @@ export function sceneFeedback(deps: Deps) {
     announce, sound,
     events(events: PresentationEvent[]) {
       // Each line is taken from the rotation once: the bubble and the announcement say the same.
-      const said = events.map(event => { const who = event.actor && actor(event.actor); return line(event.type, who || undefined, who ? who.kind === 'cat' : false); });
+      const said = events.map(event => { const who = event.actor && actor(event.actor); return line(event.type, who || undefined, who ? who.kind === 'cat' : false, event.favorite === true); });
       deps.scene.react(events, said); sound.events(events, id => actor(id)?.kind === 'cat', id => deps.state().layout.pieces.find(p => p.id === id && p.active)?.kind);
       if (said[0]) announce(said[0]);
     },

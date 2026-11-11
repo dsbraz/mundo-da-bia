@@ -54,3 +54,18 @@ it('o gato que cheira um prato diz que prefere peixinho, em rodízio; humano nun
   expect(new Set(said).size).toBe(3);
   expect(eventLine('sniffed', { id: 'bia' }, false)).toBeNull();
 });
+
+it('comer o prato favorito tem falas próprias, curtas e em rodízio, nunca a fala comum de "ate" (Luna não pede pizza depois da pizza)', () => {
+  for (const id of actorIds) {
+    const next = lineRotation(), loved = [1, 2, 3, 4].map(() => next('ate', { id }, cat(id), true));
+    const usual = [0, 1, 2, 3, 4].map(turn => eventLine('ate', { id }, cat(id), turn));
+    expect(new Set(loved).size, id).toBeGreaterThanOrEqual(3);
+    for (const line of loved) { expect(usual, `${id}: ${line}`).not.toContain(line); expect(line).not.toMatch(/\d/); }
+  }
+  expect(eventLine('ate', { id: 'luna' }, false, 0, true)).not.toMatch(/agora uma pizza/i);
+  // The favourite has its own turn: eating something else afterwards still starts the usual lines from the first one.
+  const next = lineRotation();
+  next('ate', { id: 'luna' }, false, true);
+  expect(next('ate', { id: 'luna' }, false)).toBe(eventLine('ate', { id: 'luna' }, false, 0));
+  expect(eventLine('ate', { id: 'bia', name: 'Ana' }, false, 0, true)).toContain('Ana');
+});
