@@ -5,6 +5,7 @@ import type { Neighborhood } from '../domain/neighborhood-types';
 import { pieceBounds } from '../domain/layout';
 import type { ActorId, CropId, Piece } from '../domain/types';
 import { kitchenBench } from '../presentation/kitchen-bench';
+import { recipeBook } from '../presentation/recipe-book';
 import type { PlayScene } from '../presentation/scene';
 import { fullTableLine } from '../content/kitchen';
 import type { sceneFeedback } from './scene-feedback';
@@ -18,7 +19,12 @@ interface KitchenDeps {
 /** The bench of the current room's stove, counter or cart: the selected character cooks there (§3.2). */
 export function kitchen(deps: KitchenDeps) {
   let piece: number | null = null;
-  const bench = kitchenBench(deps.root, { cook: run, close });
+  const book = recipeBook(deps.root, () => deps.town().progress);
+  /** One thing over the scene at a time: the open tray folds away when the book opens. */
+  const read = () => { const tray = deps.root.querySelector<HTMLButtonElement>('#tray-toggle'); if (tray?.getAttribute('aria-expanded') === 'true') tray.click(); void book.open(); };
+  const bench = kitchenBench(deps.root, { cook: run, close, book: read });
+  deps.root.querySelector('#book-toggle')!.addEventListener('click', () => { if (book.isOpen()) book.close(); else read(); });
+  deps.root.querySelector('#tray-toggle')?.addEventListener('click', () => book.close());
   const current = (): Piece | undefined => {
     const where = deps.town().location;
     return where.kind === 'interior' ? deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.id === piece && p.room === where.room) : undefined;
@@ -46,6 +52,7 @@ export function kitchen(deps: KitchenDeps) {
   }
   /** After every refresh: the bench closes in Create, away from its piece's room, or when the cook is somewhere else. */
   function refresh() {
+    if (deps.building()) book.close(); else book.refresh();
     if (piece === null) return;
     const where = deps.town().location, cook = deps.town().actors.find(a => a.id === deps.selected());
     const here = cook?.location.kind === 'interior' && where.kind === 'interior' && cook.location.building === where.building && cook.location.room === where.room;

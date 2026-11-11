@@ -8,11 +8,11 @@ import { worldToScreen } from './viewport';
 
 /** One pantry entry: a crop carries how many units the basket holds (1 to 6), drawn as a pile of icons, never as a number. */
 export interface PantryEntry { id: Ingredient; pile?: number | undefined }
-export interface BenchActions { cook: (bowl: Ingredient[], utensil: Utensil) => void; close: () => void }
+export interface BenchActions { cook: (bowl: Ingredient[], utensil: Utensil) => void; close: () => void; book: () => void }
 /** The cooking animation; nothing waits for it (the bowl is free again at once). */
 export const cookMs = 1200;
 export const ingredientIcon = (id: Ingredient) => id === 'peixe' ? '/icons/peixe.svg' : `/icons/ing-${id}.svg`;
-const places = 3, wobbleMs = 700;
+const places = 3, wobbleMs = 700, coverBox = { width: 120, height: 100 };
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, label?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag); node.className = className;
@@ -26,13 +26,14 @@ function picture(src: string, className = '') { const image = element('img', cla
 export function kitchenBench(root: HTMLElement, actions: BenchActions) {
   const panel = element('section', 'kitchen-bench', benchText.region); panel.id = 'kitchen-bench'; panel.hidden = true;
   const close = element('button', 'bench-close illustrated', benchText.close); close.style.setProperty('--button-icon', "url('/icons/ui-close.svg')");
+  const book = element('button', 'bench-book', benchText.book), cover = picture(''); book.append(cover);
   const bowlArea = element('div', 'bench-bowl'); bowlArea.dataset.bowl = '';
   const bowlArt = picture(''), steam = picture('', 'bench-steam'); steam.hidden = true;
   const slots = Array.from({ length: places }, (_, i) => { const slot = element('button', 'bowl-slot', benchText.empty); slot.dataset.slot = String(i); return slot; });
   const tools = utensils.map(id => { const b = element('button', 'bench-utensil', utensilNames[id]); b.dataset.utensil = id; b.append(picture(`/icons/ut-${id}.svg`)); return b; });
   const shelf = element('div', 'bench-pantry'); shelf.setAttribute('role', 'group');
   const top = element('div', 'bench-top'), toolRow = element('div', 'bench-utensils');
-  top.append(close); bowlArea.append(bowlArt, ...slots, steam); toolRow.append(...tools);
+  top.append(close, book); bowlArea.append(bowlArt, ...slots, steam); toolRow.append(...tools);
   panel.append(top, bowlArea, toolRow, shelf); root.append(panel);
   let bowl: Ingredient[] = [], ghost: Ingredient | null = null, timers: number[] = [];
 
@@ -53,7 +54,7 @@ export function kitchenBench(root: HTMLElement, actions: BenchActions) {
   }
   slots.forEach((slot, i) => slot.addEventListener('click', () => { if (bowl[i]) { bowl = bowl.filter((_, n) => n !== i); ghost = null; renderBowl(); } }));
   tools.forEach((tool, i) => tool.addEventListener('click', () => { if (bowl.length) actions.cook([...bowl], utensils[i]!); else flash(bowlArea, 'nudge', wobbleMs); }));
-  close.addEventListener('click', () => actions.close());
+  close.addEventListener('click', () => actions.close()); book.addEventListener('click', () => actions.book());
   function flash(target: HTMLElement, name: string, ms: number) { target.classList.remove(name); void target.offsetWidth; target.classList.add(name); later(ms, () => target.classList.remove(name)); }
   function show(outcome: Outcome) {
     if (outcome.kind === 'dish') { bowl = []; ghost = null; panel.dataset.cooking = outcome.recipe; flash(bowlArea, 'cooking', cookMs); later(cookMs, () => { panel.dataset.cooking = ''; }); }
@@ -66,6 +67,7 @@ export function kitchenBench(root: HTMLElement, actions: BenchActions) {
     /** Opens beside the scene, on the side away from `anchor` (the bench piece, in world coordinates) so the dish stays in view. */
     open(entries: PantryEntry[], anchor: Point) {
       if (!bowlArt.src) void sheet('kitchen').then(source => { bowlArt.src = sheetPart(source, ['bowl'], bowlBox); steam.src = sheetPart(source, ['steam'], steamBox); });
+      if (!cover.src) void sheet('book').then(source => { cover.src = sheetPart(source, ['cover'], coverBox); });
       const canvas = root.querySelector('canvas'), world = root.querySelector('#world')!.getBoundingClientRect();
       const x = canvas ? worldToScreen(canvas, anchor).x : world.left;
       panel.dataset.side = x > world.left + world.width / 2 ? 'left' : 'right';
