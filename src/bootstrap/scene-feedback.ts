@@ -1,5 +1,5 @@
 import type { ActorId, Point, PresentationEvent, World } from '../domain/types';
-import { eventLine, nameOf, say } from '../content/feedback-text';
+import { lineRotation, nameOf, say } from '../content/feedback-text';
 import { cards, personalities, pickReaction } from '../content/personalities';
 import { createSound } from '../presentation/sound';
 import type { PlayScene } from '../presentation/scene';
@@ -11,14 +11,14 @@ export function sceneFeedback(deps: Deps) {
   const announce = (text: string) => { status.textContent = text; };
   const sound = createSound({ button: deps.root.querySelector<HTMLButtonElement>('#sound-toggle')!, enabled: loadSoundOn(), remember: on => { saveSoundOn(on); }, unlock: window });
   const actor = (id: ActorId) => deps.state().actors.find(a => a.id === id);
-  const last = new Map<ActorId, number>();
+  const last = new Map<ActorId, number>(), line = lineRotation();
   return {
     announce, sound,
     events(events: PresentationEvent[]) {
-      deps.scene.react(events); sound.events(events, id => actor(id)?.kind === 'cat', id => deps.state().layout.pieces.find(p => p.id === id && p.active)?.kind);
-      const event = events[0], who = event?.actor && actor(event.actor);
-      const line = event && eventLine(event.type, who || undefined, who ? who.kind === 'cat' : false);
-      if (line) announce(line);
+      // Each line is taken from the rotation once: the bubble and the announcement say the same.
+      const said = events.map(event => { const who = event.actor && actor(event.actor); return line(event.type, who || undefined, who ? who.kind === 'cat' : false); });
+      deps.scene.react(events, said); sound.events(events, id => actor(id)?.kind === 'cat', id => deps.state().layout.pieces.find(p => p.id === id && p.active)?.kind);
+      if (said[0]) announce(said[0]);
     },
     refuse(text: string, point?: Point, face?: ActorId) {
       const self = actor(deps.selected());

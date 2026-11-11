@@ -49,7 +49,12 @@ export type Action =
   | { type: 'room'; room: RoomId }
   | { type: 'summon' }
   | { type: 'show' };
-export interface PresentationEvent { type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'; actor?: ActorId; piece?: number }
+/** Ephemeral: never saved. `cooked`, `ate`, `harvested`, `served`, `letter` and `hint` belong to the wave 3 systems (lines in W3-02). */
+export interface PresentationEvent {
+  type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'
+    | 'cooked' | 'ate' | 'harvested' | 'served' | 'letter' | 'hint';
+  actor?: ActorId; piece?: number;
+}
 export interface Transition { state: World; events: PresentationEvent[] }
 
 export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table', 'sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart'] as const;

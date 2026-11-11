@@ -1,27 +1,30 @@
 import type { ActorId, PresentationEvent } from '../domain/types';
 import type { OutdoorAction } from '../domain/neighborhood-types';
 import { actors } from './catalog';
+import { linePool } from './lines';
 
 // Every line spoken in the scene: at most 6 words, a 7-year-old's vocabulary, the current name interpolated.
 export const nameOf = (actor: { id: ActorId; name?: string | undefined }) => actor.name ?? actors[actor.id].name;
 export const say = (line: string, name: string) => line.replaceAll('{nome}', name);
 
-const humanLines: Partial<Record<PresentationEvent['type'], string>> = {
-  dressed: '{nome} amou o look novo!', picked: 'Oba! {nome} pegou!', dropped: '{nome} deixou aqui.',
-  fed: 'Hummm! {nome} adorou!', rested: '{nome} está descansando.', named: 'Oi! Agora sou {nome}!',
-};
-const catLines: Partial<Record<PresentationEvent['type'], string>> = {
-  dressed: 'Miau! ({nome} amou o look)', picked: 'Miau? ({nome} quer brincar)', dropped: 'Miau! ({nome} largou)',
-  fed: 'Miau! ({nome}: tem mais peixinho?)', rested: 'Rrrron… {nome} cochila.', named: 'Miau! ({nome} gostou do nome)',
-};
 const sceneLines: Partial<Record<PresentationEvent['type'], string>> = {
   furniture: 'A casa brinca junto!', room: 'Lugar novo! O que tem aqui?', summoned: 'A turma toda chegou!', show: 'Música! Todo mundo dança!',
 };
-export function eventLine(type: PresentationEvent['type'], actor: { id: ActorId; name?: string | undefined } | undefined, cat: boolean): string | null {
-  if (type === 'moved') return null;
-  const personal = actor ? (cat ? catLines : humanLines)[type] : undefined;
-  if (personal && actor) return say(personal, nameOf(actor));
+type Speaker = { id: ActorId; name?: string | undefined };
+/** The `turn`-th line (in rotation) of `actor` for `type`, or the scene's line for an event nobody speaks; null when nothing is said. */
+export function eventLine(type: PresentationEvent['type'], actor: Speaker | undefined, cat: boolean, turn = 0): string | null {
+  const pool = actor ? linePool(type, actor.id, cat) : null;
+  if (pool && actor) return say(pool[turn % pool.length]!, nameOf(actor));
   return sceneLines[type] ?? null;
+}
+/** Deterministic rotation: each character goes through its lines for an event in order, separately per event. */
+export function lineRotation() {
+  const turns = new Map<string, number>();
+  return (type: PresentationEvent['type'], actor: Speaker | undefined, cat: boolean) => {
+    const key = `${actor?.id}:${type}`, turn = turns.get(key) ?? 0;
+    turns.set(key, turn + 1);
+    return eventLine(type, actor, cat, turn);
+  };
 }
 
 export type Refusal = 'outdoor' | 'blocked' | 'walk' | 'edit';
