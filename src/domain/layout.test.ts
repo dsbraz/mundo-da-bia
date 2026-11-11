@@ -47,7 +47,7 @@ it('remove suporte sem perder objetos e bloqueia suas ações', () => {
 });
 it('desfaz e refaz na ordem e limita histórico às últimas cinquenta edições', () => {
   let h = history(initialWorld());
-  for (let i = 0; i < 55; i++) h = recordEdit(h, editWorld(h.present, { type: 'add', kind: 'plant' }));
+  for (let i = 0; i < 55; i++) h = recordEdit(h, editWorld(h.present, { type: 'add', kind: 'picture' }));
   expect(h.past).toHaveLength(50);
   const before = h;
   h = undo(undo(h));

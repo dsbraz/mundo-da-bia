@@ -4,6 +4,15 @@ import { pieceBounds, validPlacement } from './layout';
 import type { Piece, World } from './types';
 export interface Footprint { left: number; right: number; top: number; bottom: number }
 const flat = ['rug', 'picture', 'neon', 'mirror', 'cushion'];
+/** Where the painted floor meets the baseboard: anything that stands on the floor has its base at or below it. */
+export const floorBase = 390;
+const onWall = ['picture', 'neon', 'mirror', 'cushion'];
+const standsOnFloor = (piece: Piece) => !onWall.includes(piece.kind);
+/** A floor piece dropped on the wall slides down until its base touches the baseboard; wall pieces stay where they are. */
+export function onFloorPiece(piece: Piece): Piece {
+  const bottom = piece.y + pieceBounds[piece.kind].height;
+  return standsOnFloor(piece) && bottom < floorBase ? { ...piece, y: floorBase - pieceBounds[piece.kind].height } : piece;
+}
 export function footprint(piece: Piece): Footprint | null {
   if (flat.includes(piece.kind)) return null;
   const box = pieceBounds[piece.kind];
@@ -13,6 +22,7 @@ export function footprint(piece: Piece): Footprint | null {
 export function overlap(a: Footprint, b: Footprint) { return Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)); }
 export function canPlace(world: World, piece: Piece) {
   if (!validPlacement(piece, roomWidth(world))) return false;
+  if (onFloorPiece(piece) !== piece) return false;
   const area = footprint(piece); if (!area) return true;
   const others = world.layout.pieces.filter(p => p.room === piece.room && p.id !== piece.id).map(footprint).filter((p): p is Footprint => !!p);
   const room = world.layout.rooms[piece.room]!;

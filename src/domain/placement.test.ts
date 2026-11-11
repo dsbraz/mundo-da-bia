@@ -11,7 +11,7 @@ it('permite recolorir uma peça de save antigo mesmo quando sobreposta', () => {
   expect(editWorld(world, { type: 'color', id: sofa.id, color: 'mint' }).layout.pieces.find(p => p.id === sofa.id)?.color).toBe('mint');
 });
 
-import { canPlace, footprint, freePlacement, overlap } from './placement';
+import { canPlace, floorBase, footprint, freePlacement, onFloorPiece, overlap } from './placement';
 import type { Piece } from './types';
 const plant = (patch: Partial<Piece> = {}): Piece => ({ id: 100, kind: 'plant', room: 'sala', x: 700, y: 350, color: 'original', flipped: false, ...patch });
 it('áreas de chão preservam base, profundidade e exceções planas', () => {
@@ -27,7 +27,7 @@ it('protege passagem, limites e cômodos separados', () => {
   expect(canPlace(world, plant({ x: -1 }))).toBe(false);
   expect(canPlace(world, plant({ x: 520, y: 350 }))).toBe(false);
   expect(canPlace(world, plant({ kind: 'picture', x: 520 }))).toBe(true);
-  expect(canPlace(world, plant({ room: 'quarto', x: 500, y: 100 }))).toBe(true);
+  expect(canPlace(world, plant({ kind: 'picture', room: 'quarto', x: 500, y: 100 }))).toBe(true);
 });
 it('permite reduzir sobreposição antiga, mas não aumentá-la', () => {
   const world = editWorld(initialWorld(), { type: 'clear' });
@@ -44,4 +44,22 @@ it('encontra colocação próxima e retorna ausência quando não há espaço', 
   world.layout.rooms.sala.size = 'small';
   for (let y = 65; y <= 500; y += 40) for (let x = 0; x < 1000; x += 60) world.layout.pieces.push(plant({ id: 200 + world.layout.pieces.length, x, y }));
   expect(freePlacement(world, plant())).toBeUndefined();
+});
+it('móveis de chão ficam com o pé no chão: mover a cama para a parede a encosta no rodapé; quadro, neon e espelho podem ficar na parede', () => {
+  const world = initialWorld(), bed = world.layout.pieces.find(p => p.kind === 'bed')!;
+  expect(canPlace(world, { ...bed, y: 40 + 65 })).toBe(false);
+  expect(canPlace(editWorld(world, { type: 'clear' }), plant({ y: floorBase - 105 - 1 }))).toBe(false);
+  expect(canPlace(editWorld(world, { type: 'clear' }), plant({ y: floorBase - 105 }))).toBe(true);
+  const empty = editWorld({ ...world, room: 'quarto' }, { type: 'clear' });
+  const withBed = editWorld(empty, { type: 'add', kind: 'bed', point: { x: 765, y: 150 } });
+  const newBed = withBed.layout.pieces.at(-1)!; expect(newBed.kind).toBe('bed'); expect(newBed.y + 275).toBe(floorBase);
+  const lowered = editWorld(withBed, { type: 'move', id: newBed.id, point: { x: newBed.x, y: newBed.y + 60 } });
+  const onWall = editWorld(lowered, { type: 'move', id: newBed.id, point: { x: newBed.x, y: 70 } });
+  const moved = onWall.layout.pieces.find(p => p.id === newBed.id)!;
+  expect(moved.y + 275).toBe(floorBase); expect(moved.x).toBe(newBed.x);
+  const cleared = editWorld(initialWorld(), { type: 'clear' });
+  for (const kind of ['picture', 'neon', 'mirror'] as const) expect(canPlace(cleared, plant({ kind, x: 300, y: 100 }))).toBe(true);
+  const added = editWorld(cleared, { type: 'add', kind: 'plant', point: { x: 200, y: 120 } });
+  const pot = added.layout.pieces.at(-1)!; expect(pot.kind).toBe('plant'); expect(pot.y + 105).toBeGreaterThanOrEqual(floorBase);
+  expect(onFloorPiece({ ...bed, y: 300 })).toEqual({ ...bed, y: 300 });
 });

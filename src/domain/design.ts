@@ -1,4 +1,4 @@
-import { canPlace, freePlacement } from './placement';
+import { canPlace, freePlacement, onFloorPiece } from './placement';
 import type { EditAction, Piece, PieceKind, World } from './types';
 import { fixtures, fromPiece, pieceBounds, toPiece, validPlacement } from './layout';
 import { seatKind, spotKind } from './furniture';
@@ -17,7 +17,7 @@ export function editWorld(state: World, action: EditAction): World {
 function editPiece(state: World, piece: Piece, action: Extract<EditAction, { id: number }>): World {
   if (action.type === 'remove') return removePiece(state, piece);
   const patch = action.type === 'move' ? action.point : action.type === 'flip' ? { flipped: !piece.flipped } : { color: action.color };
-  const updated = { ...piece, ...patch };
+  const updated = action.type === 'move' ? onFloorPiece({ ...piece, ...patch }) : { ...piece, ...patch };
   if (!validPlacement(updated, roomWidth(state))) return state;
   if (action.type === 'move' && !canPlace(state, updated)) return state;
   const next = relocate(state, piece, updated);
@@ -31,7 +31,7 @@ function addPiece(state: World, kind: PieceKind, point?: { x: number; y: number 
   const y = Math.min(300, 580 - box.height);
   const piece: Piece = { id: state.layout.nextId, kind, room: state.room, color: 'original', flipped: false, x, y };
   if (point) {
-    const placed = { ...piece, x: Math.round(point.x - box.width / 2), y: Math.round(point.y - box.height / 2) };
+    const placed = onFloorPiece({ ...piece, x: Math.round(point.x - box.width / 2), y: Math.round(point.y - box.height / 2) });
     if (validPlacement(placed, roomWidth(state))) Object.assign(piece, placed);
   }
   if (!validPlacement(piece, roomWidth(state))) { piece.x = box.x; piece.y = box.y; }
