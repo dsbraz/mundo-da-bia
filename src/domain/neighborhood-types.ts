@@ -1,5 +1,5 @@
-import type { Actor, ActorId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
-import type { Progress, RecipeId } from './progress';
+import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
+import type { PlazaPlot, Progress, RecipeId } from './progress';
 import type { Ingredient, Utensil } from './ingredients';
 export interface Outdoor { bench: ActorId | null; swing: ActorId | null; watered: boolean; mail: number[]; bells: number[] }
 export type OutdoorAction = { type: 'outdoor'; actor: ActorId; target: 'bench' | 'swing' | 'water' | 'leave' | 'bell' | 'mail'; building?: number };
@@ -23,11 +23,18 @@ export type ModuleAction =
   | { type: 'rename-module'; building: number; room: RoomId; name: string }
   | { type: 'move-module'; building: number; room: RoomId; cell: number }
   | { type: 'replace-module'; building: number; room: RoomId; template: RoomTemplate };
+/** The plaza's vegetable garden (§3.3); time always comes in the action, in ms. */
+export type GardenAction =
+  | { type: 'plant'; plot: PlazaPlot; crop: CropId; now: number }
+  | { type: 'water-plot'; plot: PlazaPlot; now: number }
+  | { type: 'harvest'; plot: PlazaPlot }
+  | { type: 'rain'; now: number };
 export type NeighborhoodAction = ModuleAction | OutdoorAction
 
   | { type: 'visit'; location: Location }
   /** The time has come (ms, from the app's clock): what grows or arrives with time moves on. */
   | { type: 'tick'; now: number }
+  | GardenAction
   /** At the bench of `piece`: `cook` mixes 1 to 3 ingredients with a utensil (§3.2). */
   | { type: 'cook'; building: number; piece: number; cook: ActorId; ingredients: readonly Ingredient[]; utensil: Utensil }
   | { type: 'transport'; actor?: ActorId; item?: ItemId; location: Location; point: Point }
