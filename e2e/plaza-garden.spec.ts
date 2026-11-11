@@ -83,6 +83,35 @@ test('o saco de sementes fecha quando ela sai de perto do canteiro', async ({ pa
   expect((await readTown(page)).progress.plaza).toEqual({});
 });
 
+test('pelo toque o saco abre sem semente escolhida; pelo teclado o foco vai para a primeira semente', async ({ page }) => {
+  await plaza(page, { x: 760, y: 520 });
+  const bag = page.locator('#seed-bag');
+  await plotTap(page, 'praca-3');
+  await until(page, () => bag.isVisible());
+  expect(await page.evaluate(() => document.activeElement?.classList.contains('bag-seed') ?? false)).toBe(false);
+  await bag.locator('.bag-close').click();
+  await expect(bag).toBeHidden();
+  const spot = plotSpots['praca-4'];
+  await page.locator(`.scene-target[data-world-x="${spot.x}"][data-world-y="${spot.y - 20}"]`).focus();
+  await page.keyboard.press('Enter');
+  await until(page, () => bag.isVisible());
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.crop)).toBe('alface');
+});
+
+for (const [width, height] of [[768, 1024], [1024, 768]] as const) test(`a ${width}, o saco com as seis sementes sobre um canteiro da direita fica inteiro dentro da cena`, async ({ page }) => {
+  await plaza(page, { x: 760, y: 520 }, t => ({ ...t, progress: { ...t.progress, seeds: ['alface', 'tomate', 'cenoura', 'milho', 'morango', 'abobora'] } }), { width, height });
+  const bag = page.locator('#seed-bag');
+  for (const plot of ['praca-2', 'praca-4'] as const) {
+    await plotTap(page, plot);
+    await until(page, () => bag.isVisible());
+    await expect(bag.locator('[data-crop]')).toHaveCount(6);
+    const box = (await bag.boundingBox())!, world = (await page.locator('#world').boundingBox())!;
+    expect(box.x, plot).toBeGreaterThanOrEqual(world.x); expect(box.x + box.width, plot).toBeLessThanOrEqual(world.x + world.width);
+    await page.screenshot({ path: `reports/plaza-garden-bag-six-${plot}-${width}.png` });
+    await bag.locator('.bag-close').click(); await expect(bag).toBeHidden();
+  }
+});
+
 test('sem rega por 30 dias a planta continua viva e no mesmo estágio, com sede', async ({ page }) => {
   await plaza(page, { x: 760, y: 520 }, t => ({ ...t, progress: { ...t.progress, plaza: { 'praca-2': { crop: 'tomate', stage: 2, since: start.getTime(), watered: false } } } }));
   // 30 days, in jumps of 10 (a single jump that long overflows the browser's timers).
@@ -103,7 +132,10 @@ test('o regador da praça rega o canteiro com sede mais perto de quem está esco
   expect(bia.x).toBeGreaterThan(plotSpots['praca-2'].x);
   expect(Number(await canvas(page).getAttribute('data-water-x'))).toBe(bia.x - 3);
   expect((await readTown(page)).progress.plaza['praca-3']?.watered).toBe(false);
-  await page.clock.runFor(200);
+  // The drops fall on the soil of the plot's box, not on the pavement at her feet.
+  const spot = plotSpots['praca-2'], to = { x: Number(await canvas(page).getAttribute('data-water-to-x')), y: Number(await canvas(page).getAttribute('data-water-to-y')) };
+  expect(Math.abs(to.x - spot.x)).toBeLessThanOrEqual(38); expect(to.y).toBeGreaterThanOrEqual(spot.y - 44); expect(to.y).toBeLessThanOrEqual(spot.y);
+  await page.clock.runFor(420);
   await page.screenshot({ path: 'reports/plaza-garden-water-1280.png' });
 });
 

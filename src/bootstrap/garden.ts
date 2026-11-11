@@ -5,6 +5,7 @@ import type { PlazaPlot } from '../domain/progress';
 import type { ActorId, CropId } from '../domain/types';
 import { seedBag } from '../presentation/seed-bag';
 import { standPoint } from '../presentation/plaza-garden';
+import { plantBase } from '../presentation/garden-art';
 import type { walking } from '../presentation/walking';
 import type { PlayScene } from '../presentation/scene';
 import { fullBasketLine } from '../content/garden';
@@ -29,16 +30,16 @@ export function gardenPlay(deps: GardenDeps) {
     deps.walker.start(standPoint(plot).point, () => then(deps.selected()));
   }
   /** What a plot asks for when touched: an empty one opens the seed bag, a thirsty one is watered, a ready one harvested. */
-  function tend(actor: ActorId, plot: PlazaPlot) {
+  function tend(actor: ActorId, plot: PlazaPlot, focus = false) {
     const plant = deps.town().progress.plaza[plot];
-    if (!plant) { open = plot; bag.open(deps.town().progress.seeds, { x: plotSpots[plot].x, y: plotSpots[plot].y - 100 }); return; }
+    if (!plant) { open = plot; bag.open(deps.town().progress.seeds, { x: plotSpots[plot].x, y: plotSpots[plot].y - 100 }, focus); return; }
     if (plant.stage === 4) { gather(actor, plot); return; }
     if (thirsty(plant)) { water(actor, plot); return; }
     deps.scene.outdoor.garden.sway(plot);
   }
   function water(actor: ActorId, plot: PlazaPlot) {
     deps.apply(neighborhoodAction(deps.town(), { type: 'water-plot', plot, now: deps.now() }));
-    deps.scene.outdoor.reaction({ type: 'outdoor', actor, target: 'water' }, standPoint(plot).facing);
+    deps.scene.outdoor.reaction({ type: 'outdoor', actor, target: 'water' }, standPoint(plot).facing, plantBase(plot));
   }
   function gather(actor: ActorId, plot: PlazaPlot) {
     const crop = deps.town().progress.plaza[plot]!.crop, result = harvest(deps.town(), plot);
@@ -54,8 +55,8 @@ export function gardenPlay(deps: GardenDeps) {
   }
   function close() { open = null; bag.close(); }
   return {
-    /** A touch on `plot` in the drawing or its button. */
-    touch(plot: PlazaPlot) { if (street()) go(plot, actor => tend(actor, plot)); },
+    /** A touch on `plot` in the drawing or its button (`focus`: from the keyboard, the seed bag takes the focus). */
+    touch(plot: PlazaPlot, focus = false) { if (street()) go(plot, actor => tend(actor, plot, focus)); },
     /** The plaza's can: whoever is selected waters the nearest plot (a thirsty one first). */
     can() { const actor = street(); if (actor) { const plot = nearestPlot(deps.town().progress, actor); go(plot, who => water(who, plot)); } },
     /** Someone dropped on a planted plot (or the can) tends it right there, without walking; an empty plot is just floor. */

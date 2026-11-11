@@ -20,8 +20,9 @@ export function plaza(deps: Plaza) {
     if (target.target === 'plot' || target.target === 'water') return deps.garden.drop(actor, target.plot ?? null);
     play(actor, target as Equipment); return true;
   }
-  function use(target: OutdoorTarget) {
-    if (target.target === 'plot') { deps.garden.touch(target.plot!); return; }
+  /** `keyboard`: used through its invisible button, so whatever opens takes the focus. */
+  function use(target: OutdoorTarget, keyboard = true) {
+    if (target.target === 'plot') { deps.garden.touch(target.plot!, keyboard); return; }
     if (target.target === 'water') { deps.garden.can(); return; }
     deps.walker.cancel();
     const selected = deps.selected();
@@ -35,7 +36,7 @@ export function plaza(deps: Plaza) {
   /** In the drawing, a tap on the swing its rider sits on pushes it; anything else is used as by its button. */
   function touch(target: OutdoorTarget) {
     if (target.target === 'swing' && deps.town().outdoor.swing === deps.selected()) { deps.walker.cancel(); deps.push(deps.selected()); return; }
-    use(target);
+    use(target, false);
   }
   /** A tap on the selected actor on plaza equipment: the swing is pushed, from the bench they get up. */
   function leave(actor: ActorId) {
