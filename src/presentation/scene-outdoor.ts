@@ -8,7 +8,7 @@ import { swingMotion } from './swing-motion';
 import { reducedMotion } from './motion';
 import { basketWobble, drawGarden, harvestFlight, plantPop, plantSway } from './garden-art';
 import type { PlazaPlot } from '../domain/progress';
-import type { CropId } from '../domain/types';
+import type { CropId, Point } from '../domain/types';
 import type { faces } from './expression';
 import type { sceneLife } from './scene-life';
 import type { Location, Neighborhood, OutdoorAction } from '../domain/neighborhood-types';
@@ -51,11 +51,12 @@ export function sceneOutdoor(view: OutdoorView) {
       harvested(plot: PlazaPlot, crop: CropId, amount: number) { if (view.ready()) harvestFlight(view.scene, plot, crop, amount); },
       full() { if (view.ready()) basketWobble(view.scene); },
     },
-    reaction(action: OutdoorAction, facing: 1 | -1 = 1) {
+    /** `soil` (watering a plot): where the drops land. */
+    reaction(action: OutdoorAction, facing: 1 | -1 = 1, soil?: Point) {
       if (action.target === 'swing') push(action.actor);
       const rider = view.world().actors.find(a => a.id === action.actor), figure = view.figures().find(f => f.name === action.actor);
       if (rider && (action.target === 'swing' || action.target === 'bench')) { if (figure) view.scene.tweens.killTweensOf(figure); view.ambient().strolls.climb(rider.id, { x: rider.x, y: rider.y }); }
-      const town = view.town(); if (view.ready() && town) outdoorEffect(view.scene, town, action, facing);
+      const town = view.town(); if (view.ready() && town) outdoorEffect(view.scene, town, action, facing, soil);
     },
     /** Through the door to `destination`: it opens and the figure fades into the doorway, then `done` (at most 240 ms, nothing held). */
     enterDoor(id: ActorId, destination: Location, done: () => void) {

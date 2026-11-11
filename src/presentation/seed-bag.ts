@@ -18,13 +18,22 @@ export function seedBag(root: HTMLElement, actions: { plant: (crop: CropId) => v
     const picture = document.createElement('img'); picture.src = `/icons/ing-${crop}.svg`; picture.alt = ''; picture.draggable = false;
     button.append(picture); button.addEventListener('click', () => actions.plant(crop)); return button;
   }
+  /** Shifts the bag sideways so it never sticks out of the game (the narrow layout pins it at the top instead). */
+  function inside() {
+    panel.style.marginLeft = ''; if (getComputedStyle(panel).position === 'fixed') return;
+    const box = panel.getBoundingClientRect(), frame = root.getBoundingClientRect(), gap = 8;
+    const shift = Math.max(frame.left + gap - box.left, Math.min(0, frame.right - gap - box.right));
+    if (shift) panel.style.marginLeft = `${shift}px`;
+  }
   function hide() { panel.hidden = true; delete panel.dataset.worldX; delete panel.dataset.worldY; }
   return {
-    /** Opens over the plot at `point` (world), with one picture per seed in the bag. */
-    open(crops: readonly CropId[], point: Point) {
+    /** Opens over the plot at `point` (world), with one picture per seed in the bag; `focus` (opened from the keyboard) puts the
+     *  focus on the first seed, while a touch leaves no seed looking already chosen. */
+    open(crops: readonly CropId[], point: Point, focus = false) {
       seeds.replaceChildren(...crops.map(seed));
       panel.dataset.worldX = String(point.x); panel.dataset.worldY = String(point.y); panel.hidden = false;
-      positionTargets(root); seeds.querySelector('button')?.focus({ preventScroll: true });
+      positionTargets(root); inside();
+      if (focus) seeds.querySelector('button')?.focus({ preventScroll: true });
     },
     close: hide, isOpen: () => !panel.hidden,
   };
