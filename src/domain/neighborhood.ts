@@ -11,6 +11,7 @@ import { initialWorld } from './world';
 import { removeBuilding } from './remove-building';
 import { construct, duplicateBuilding, customize, moveBuilding } from './buildings';
 import { transport } from './neighborhood-transfer';
+import { cook } from './recipes';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -40,6 +41,7 @@ export function neighborhoodAction(town: Neighborhood, action: NeighborhoodActio
   switch (action.type) {
     case 'outdoor': return interactOutdoor(town, action);
     case 'tick': return town;
+    case 'cook': return cook(town, action).town;
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
     case 'transport': return transport(town, action);
     default: return editModule(town, action as ModuleAction);
