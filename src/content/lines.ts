@@ -67,14 +67,26 @@ const own: Partial<Record<ActorId, Partial<Pools>>> = {
   nino: { ate: ['Miau! ({nome} quer leitinho)', '({nome} explorou o prato todo)', 'Miau? ({nome} cheirou e aprovou)'] },
   pipoca: { ate: ['Miau! ({nome} quer ovinho)', 'Prrr… ({nome} comeu e cochilou)', 'Rrrron… ({nome} amou de verdade)'] },
 };
+/** Eating one's own favourite dish (the big reaction): warm lines of its own, so nobody asks for the dish just eaten. */
+const loved: Record<ActorId, string[]> = {
+  bia: ['Batata frita! {nome} amou!', 'Crocante! {nome} pediu bis!', '{nome} dança: batata frita!'],
+  luna: ['Pizza! {nome} nas nuvens!', 'Oba, pizza! {nome} vibrou!', '{nome} sabia: pizza é demais!'],
+  leo: ['Bolo de cenoura! {nome} sorriu!', '{nome} ama esse bolo!', 'Fofinho! {nome} pediu bis!'],
+  rui: ['Pipoca! {nome} pulou de alegria!', 'Ploc, ploc! {nome} amou!', '{nome} comeu pipoca dançando!'],
+  mimi: ['Prrr! ({nome} ama petisco)', 'Miau! ({nome} rolou de alegria)', 'Rrrron… ({nome} no paraíso)'],
+  nino: ['Miau! ({nome} ama leitinho)', 'Prrr… ({nome} lambeu o copo)', 'Miau! ({nome} pediu mais leitinho)'],
+  pipoca: ['Miau! ({nome} ama ovinho)', 'Prrr… ({nome} ronrona de alegria)', 'Rrrron… ({nome} feliz da vida)'],
+};
 /** A cat offered a dish it does not eat sniffs it (§3.2): never disgust, it just prefers fish. Cats only. */
 const sniffed = ['Miau? ({nome}: prefiro peixinho)', 'Sniff… ({nome} quer peixinho)', 'Miau! ({nome} sonha com peixinho)'];
 const spoken = (type: PresentationEvent['type']): type is SpokenEvent => (spokenEvents as readonly string[]).includes(type);
-/** The lines a character takes turns on for `type` (its own, else the shared human or cat ones); null for an event nobody speaks. */
-export function linePool(type: PresentationEvent['type'], id: ActorId, isCat: boolean): readonly string[] | null {
+/** The lines a character takes turns on for `type` (its own, else the shared human or cat ones; its favourite dish has its own);
+ *  null for an event nobody speaks. */
+export function linePool(type: PresentationEvent['type'], id: ActorId, isCat: boolean, favorite = false): readonly string[] | null {
   if (type === 'sniffed') return isCat ? sniffed : null;
+  if (type === 'ate' && favorite) return loved[id];
   if (!spoken(type)) return null;
   return own[id]?.[type] ?? (isCat ? cat : human)[type];
 }
 /** Every line, for the content checks. */
-export const allLines = () => [...[human, cat, ...Object.values(own)].flatMap(pools => Object.values(pools).flat()), ...sniffed];
+export const allLines = () => [...[human, cat, ...Object.values(own)].flatMap(pools => Object.values(pools).flat()), ...sniffed, ...Object.values(loved).flat()];
