@@ -59,6 +59,14 @@ it('o ócio conta por quadros (sem saltos de relógio) e zera com qualquer toque
   expect(clock.tick(t += 16)).toBeGreaterThanOrEqual(idleMs);
   clock.reset(); expect(clock.tick(t + 16)).toBeLessThan(100);
 });
+it('só sob automação o ócio salta: skip soma o tempo de uma vez, sem mudar o passo limitado dos quadros', () => {
+  const clock = idleClock(), first = clock.tick(0);
+  clock.skip(idleMs);
+  expect(clock.tick(16)).toBeCloseTo(first + idleMs + 16);
+  // A negative jump never takes idle time back.
+  clock.skip(-500); expect(clock.tick(32)).toBeCloseTo(first + idleMs + 32);
+  clock.reset(); expect(clock.tick(48)).toBe(16);
+});
 it('a peça favorita do gato está no cômodo: ele vai até ela no chão pintado; sem ela, não vai', () => {
   const world: World = initialWorld();
   const spot = favoriteSpot(world, 'nino')!;

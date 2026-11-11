@@ -9,8 +9,11 @@ export function sceneLife(canvas: () => HTMLCanvasElement) {
   const life = ambientLife(canvas), strolls = strollFigures(canvas);
   return {
     life, strolls,
-    /** Any touch or key restarts the idle time. */
-    listen() { for (const type of ['pointerdown', 'keydown']) window.addEventListener(type, () => life.input(performance.now()), { capture: true }); },
+    /** Any touch or key restarts the idle time. Under automation (`navigator.webdriver`) `window.skipIdle(ms)` jumps it for the E2E fake clock. */
+    listen() {
+      for (const type of ['pointerdown', 'keydown']) window.addEventListener(type, () => life.input(performance.now()), { capture: true });
+      if (navigator.webdriver) Object.assign(window, { skipIdle: (ms: number) => life.skip(ms) });
+    },
     /** A repaint from `previous` to `state`: walks to another place end and the idle life sees the new world. */
     painted(previous: World, state: World) { strolls.leave(previous, state); life.painted(state, performance.now()); },
     /** True while the figure walks: a stroll, an idle wander or, last, a command (`commanded`). */

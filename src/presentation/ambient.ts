@@ -13,6 +13,8 @@ export function ambientLife(canvas: () => HTMLCanvasElement) {
   return {
     /** Any touch or key: the idle time starts over and a strolling cat heads home. */
     input(now: number) { clock.reset(); recall(now); },
+    /** Under automation only (see `sceneLife.listen`): jumps the idle time by `ms`. */
+    skip(ms: number) { clock.skip(ms); },
     /** A repaint: a cat moved by the child forgets its stroll; otherwise it walks home from where it is drawn. */
     painted(world: World, now: number) {
       clock.reset();

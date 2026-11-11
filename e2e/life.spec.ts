@@ -7,18 +7,27 @@ import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { actors } from '../src/content/catalog';
 
 const saveKey = 'mundo-da-bia:neighborhood:v3';
-/** Plays `ms` of scene time as 100 ms frames: idle time counts frame steps up to 100 ms (never bigger clock jumps), with few frames to render. */
-async function advance(page: Page, ms: number) { for (let t = 0; t < ms; t += 100) await page.clock.fastForward(100); }
+/** Plays `ms` of scene time in jumps of up to 1 s, one frame each. Idle life is a pure function of time, except the idle clock, which
+ *  counts a jump as one short frame (a paused clock never wakes a cat): the rest of each jump goes in through the automation-only
+ *  `skipIdle`, so the idle clock sees the whole jump without rendering every 100 ms. */
+async function advance(page: Page, ms: number) {
+  for (let t = 0; t < ms; t += 1000) {
+    const jump = Math.min(1000, ms - t);
+    await page.evaluate(skip => (window as unknown as { skipIdle: (ms: number) => void }).skipIdle(skip), jump - 1000 / 60);
+    await page.clock.fastForward(jump);
+  }
+}
 async function still(page: Page) {
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
   await page.setViewportSize({ width: 1280, height: 800 }); await ready(page);
   await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
 }
-/** Runs 30 s of a scene nobody touches, frame by frame, collecting the micro behaviours shown and a capture the first time each shows. */
+/** Runs 30 s of a scene nobody touches, sampled every second (a glance lasts 1.5 s), collecting the micro behaviours shown and a capture
+ *  the first time each shows. */
 async function watch(page: Page, prefix: string) {
   const seen = new Set<string>();
-  for (let t = 0; t < 30000; t += 500) {
-    await advance(page, 500);
+  for (let t = 0; t < 30000; t += 1000) {
+    await advance(page, 1000);
     for (const name of ((await page.locator('canvas').getAttribute('data-idle')) ?? '').split(' ').filter(Boolean)) {
       if (!seen.has(name)) await page.screenshot({ path: `reports/${prefix}-${name}.png` });
       seen.add(name);

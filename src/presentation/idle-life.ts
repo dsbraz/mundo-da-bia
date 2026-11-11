@@ -39,6 +39,8 @@ export function idleClock() {
   return {
     tick(now: number) { idle += followElapsed(now, previous); previous = now; return idle; },
     reset() { idle = 0; },
+    /** Test-only jump of the idle time (never backwards), so an E2E with a fake clock need not play every frame. */
+    skip(ms: number) { idle += Math.max(0, ms); },
   };
 }
 const favorites: Partial<Record<ActorId, PieceKind>> = { mimi: 'cat-bed', nino: 'sofa', pipoca: 'rug' };
