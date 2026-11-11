@@ -54,5 +54,10 @@ export function townActions(deps: TownDeps) {
     const town = action ? neighborhoodAction(deps.town(), action) : deps.town();
     deps.scene.neighborhood(town); deps.scene.paint(localWorld(town), deps.selected());
   }
-  return { dispatch, undo, remember, preview, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
+  /** The clock's tick: what changed with time is saved and drawn, without interrupting anything; an unchanged neighborhood costs nothing. */
+  function tick(now: number) {
+    const town = deps.town(), next = neighborhoodAction(town, { type: 'tick', now });
+    if (next !== town) { deps.commit(next); deps.refresh(); }
+  }
+  return { dispatch, undo, remember, preview, tick, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

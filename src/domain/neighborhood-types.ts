@@ -25,6 +25,8 @@ export type ModuleAction =
 export type NeighborhoodAction = ModuleAction | OutdoorAction
 
   | { type: 'visit'; location: Location }
+  /** The time has come (ms, from the app's clock): what grows or arrives with time moves on. */
+  | { type: 'tick'; now: number }
   | { type: 'transport'; actor?: ActorId; item?: ItemId; location: Location; point: Point }
   | { type: 'construct'; plot: number; model: BuildingModel }
   | { type: 'facade'; building: number; name?: string; color?: Palette }

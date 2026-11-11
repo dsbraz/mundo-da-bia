@@ -6,6 +6,7 @@ import { viewport, positionTargets, screenScale, streetFrame, pieceSpans, people
 import { actorAt, sourceAt } from '../presentation/targets';
 import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
 import { townActions } from './town-actions';
+import { realClock, startTicks } from './clock';
 import { sceneFeedback } from './scene-feedback';
 import { modeLine, refusal, welcomeLine, nameOf } from '../content/feedback-text';
 import { plaza } from './plaza';
@@ -143,6 +144,8 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
   pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { townActs.dispatch(action); }
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
+/** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
+let ticks = 0; startTicks(realClock, now => { townActs.tick(now); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
   scene.previewLayout(preview.world); scene.placementHint(action?.type === 'move' ? action.id : null, preview.invalid);

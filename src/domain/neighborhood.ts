@@ -4,7 +4,7 @@ import { editModule } from './modules';
 import { sameLocation, validLocation } from './location';
 import { itemKind } from './item-kind';
 import type { Album, World, RoomId } from './types';
-import type { LegacyNeighborhood, Location, Neighborhood, NeighborhoodAction } from './neighborhood-types';
+import type { LegacyNeighborhood, Location, ModuleAction, Neighborhood, NeighborhoodAction } from './neighborhood-types';
 import { initialProgress, nextItemAfter } from './progress';
 import { activeHouse } from './houses';
 import { initialWorld } from './world';
@@ -36,16 +36,24 @@ function albumTown(album: Album): LegacyNeighborhood {
   };
 }
 export function neighborhoodAction(town: Neighborhood, action: NeighborhoodAction): Neighborhood {
+  if (buildingActions.includes(action.type)) return editBuilding(town, action as BuildingAction);
   switch (action.type) {
     case 'outdoor': return interactOutdoor(town, action);
+    case 'tick': return town;
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
     case 'transport': return transport(town, action);
+    default: return editModule(town, action as ModuleAction);
+  }
+}
+const buildingActions: readonly NeighborhoodAction['type'][] = ['construct', 'facade', 'duplicate', 'remove-building', 'move-building'];
+type BuildingAction = Extract<NeighborhoodAction, { type: 'construct' | 'facade' | 'duplicate' | 'remove-building' | 'move-building' }>;
+function editBuilding(town: Neighborhood, action: BuildingAction): Neighborhood {
+  switch (action.type) {
     case 'construct': return construct(town, action.plot, action.model);
     case 'facade': return customize(town, action);
     case 'duplicate': return duplicateBuilding(town, action.building);
     case 'remove-building': return removeBuilding(town, action.building);
-    case 'move-building': return moveBuilding(town, action.building, action.plot);
-    default: return editModule(town, action);
+    default: return moveBuilding(town, action.building, action.plot);
   }
 }
 function localRoom(location: Location, view: Location): RoomId {
