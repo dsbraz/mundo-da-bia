@@ -1,5 +1,5 @@
 import type { Actor, ActorId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
-import type { Progress } from './progress';
+import type { Progress, RecipeId } from './progress';
 export interface Outdoor { bench: ActorId | null; swing: ActorId | null; watered: boolean; mail: number[]; bells: number[] }
 export type OutdoorAction = { type: 'outdoor'; actor: ActorId; target: 'bench' | 'swing' | 'water' | 'leave' | 'bell' | 'mail'; building?: number };
 export type Location = { kind: 'street' } | { kind: 'interior'; building: number; room: RoomId };
@@ -7,7 +7,8 @@ export const buildingModels = ['house', 'apartment', 'shop', 'hospital', 'police
 export type BuildingModel = typeof buildingModels[number];
 export interface Building { id: number; name: string; model: BuildingModel; color: Palette; plot: number; entry: RoomId; layout: Layout; show: boolean }
 export interface Resident extends Actor { location: Location }
-export interface NeighborhoodItem extends Item { location: Location }
+/** A dish carries its recipe (and `fancy` when made fancy). */
+export interface NeighborhoodItem extends Item { location: Location; recipe?: RecipeId; fancy?: true }
 export interface Neighborhood { outdoor: Outdoor; buildings: Building[]; actors: Resident[]; items: NeighborhoodItem[]; location: Location; plots: number; nextBuilding: number;
   /** What the child has gained (save v3). */
   progress: Progress;

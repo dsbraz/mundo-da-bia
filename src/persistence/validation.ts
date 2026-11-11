@@ -5,6 +5,7 @@ import type { RecordValue } from './values';
 import { actorIds, itemIds, lookIds, seatIds, spots } from '../domain/types';
 import type { Actor, Item, World } from '../domain/types';
 import { seatPoint, spotKind } from '../domain/furniture';
+import { fridgeKinds } from '../domain/item-kind';
 import { roomWidth, validPoint } from '../domain/geometry';
 
 function position(value: RecordValue): boolean {
@@ -18,9 +19,11 @@ export function actor(value: unknown): value is Actor {
     && typeof value.fed === 'boolean' && typeof value.resting === 'boolean' && position(value);
 }
 export function item(value: unknown): value is Item {
-  if (!record(value)) return false;
-  return member(itemIds, value.id) && roomId(value.room)
-    && itemSpot(value)
+  return record(value) && member(itemIds, value.id) && portable(value);
+}
+/** Where any object may be: its room, spot (the fridge only for food and dishes), holder and position. */
+export function portable(value: unknown): boolean {
+  return record(value) && roomId(value.room) && itemSpot(value)
     && (value.holder === null || member(actorIds, value.holder)) && position(value);
 }
 function complete<T extends { id: string }>(value: unknown, ids: readonly string[], check: (entry: unknown) => entry is T): value is T[] {
@@ -70,7 +73,7 @@ function itemSpot(value: RecordValue): boolean {
   if (!member(spots, value.spot)) return false;
   if (value.spot === 'floor') return true;
   if (value.holder !== null) return false;
-  return value.spot !== 'fridge' || value.id === 'lanche' || value.id === 'peixe';
+  return value.spot !== 'fridge' || fridgeKinds.some(kind => kind === (value.kind ?? value.id));
 }
 
 export function upgradeRooms(value: unknown): World | null {

@@ -11,13 +11,13 @@ function port(raw: string) {
 }
 
 it('carrega o bairro sem o objeto de tipo desconhecido', () => {
-  const base = town(); const extra = { ...base.items[3]!, id: '1:estetoscopio', kind: 'estetoscopio' };
+  const base = town(); const extra = { ...base.items[3]!, id: '1:telescopio', kind: 'telescopio' };
   const storage = port(JSON.stringify({ version: 2, town: { ...base, items: [...base.items, extra] } }));
   expect(loadNeighborhood(storage)).toEqual(base);
   expect(storage.map.has('mundo-da-bia:neighborhood:v2:recovery')).toBe(false);
 });
 it('solta o objeto desconhecido que estava na mão de alguém e mantém o resto', () => {
-  const base = town(); const extra = { ...base.items[3]!, id: '1:estetoscopio', kind: 'estetoscopio', holder: 'bia' };
+  const base = town(); const extra = { ...base.items[3]!, id: '1:telescopio', kind: 'telescopio', holder: 'bia' };
   expect(decodeNeighborhood(JSON.stringify({ version: 2, town: { ...base, items: [extra, ...base.items] } }))?.items).toEqual(base.items);
 });
 it('veste com o look padrão o personagem de look desconhecido', () => {

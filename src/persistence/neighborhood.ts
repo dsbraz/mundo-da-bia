@@ -4,14 +4,15 @@ import { plotWidth, streetWidth } from '../domain/neighborhood-geometry';
 import { localWorld } from '../domain/neighborhood';
 import type { Building, LegacyNeighborhood, Location, Neighborhood } from '../domain/neighborhood-types';
 import { buildingModels } from '../domain/neighborhood-types';
-import { actorIds, itemIds, paletteIds } from '../domain/types';
+import { actorIds, paletteIds } from '../domain/types';
+import { itemKinds } from '../domain/item-kind';
 import { sameLocation, validLocation } from '../domain/location';
-import { nextItemAfter } from '../domain/progress';
+import { nextItemAfter, recipeIds } from '../domain/progress';
 import { member, positiveId, record, roomId } from './values';
 import { knownContent, knownTown, upgradeToV3 } from './neighborhood-v3';
 import { knownProgress } from './progress-validation';
 import { validLayout } from './layout-validation';
-import { actor, item, consistentWorld } from './validation';
+import { actor, portable, consistentWorld } from './validation';
 export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 3, town }); }
 /** Envelopes v1 and v2 (upgraded to v3) and v3; null when the structure is not valid. */
 export function decodeNeighborhood(raw: string | null): Neighborhood | null {
@@ -31,7 +32,6 @@ function decodeV3(value: unknown): Neighborhood | null {
   const first = nextItemAfter(town.items);
   return { ...town, progress: knownProgress(value.progress), nextItem: positiveId(value.nextItem) && value.nextItem >= first ? value.nextItem : first };
 }
-const itemKinds = [...itemIds, 'bola'];
 function validVersion(town: LegacyNeighborhood, version: number) {
   if (version === 1) return [...town.actors, ...town.items].every(entity => entity.location.kind !== 'street' || entity.x <= town.plots * plotWidth - 60);
   return validOutdoor(town) && town.buildings.every(b => b.layout.rooms[b.entry]!.cell === 0);
@@ -54,8 +54,13 @@ function resident(value: unknown): boolean {
 }
 function object(value: unknown): boolean {
   if (!record(value) || !location(value.location) || !member(itemKinds, value.kind)) return false;
-  return typeof value.id === 'string' && /^[1-9]\d*:(lanche|peixe|microfone|ursinho|bola)$/.test(value.id)
-    && item({ ...value, id: value.kind === 'bola' ? 'ursinho' : value.kind, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
+  return typeof value.id === 'string' && /^[1-9]\d*:[a-z]+$/.test(value.id) && value.id.slice(value.id.indexOf(':') + 1) === value.kind
+    && dish(value) && portable({ ...value, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
+}
+/** Only a dish names a recipe (always a known one) and only a dish may be fancy. */
+function dish(value: Record<string, unknown>): boolean {
+  const isDish = value.kind === 'prato';
+  return (isDish ? member(recipeIds, value.recipe) : value.recipe === undefined) && (value.fancy === undefined || (isDish && value.fancy === true));
 }
 function unique(values: unknown[]): boolean { return new Set(values).size === values.length; }
 function validTown(value: unknown): value is LegacyNeighborhood {

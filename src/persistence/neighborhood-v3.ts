@@ -1,7 +1,8 @@
-import { initialProgress, nextItemAfter } from '../domain/progress';
+import { initialProgress, nextItemAfter, recipeIds } from '../domain/progress';
 import { buildingModels } from '../domain/neighborhood-types';
 import type { LegacyNeighborhood, Neighborhood } from '../domain/neighborhood-types';
-import { itemIds, lookIds, pieceKinds, roomTemplates, seatIds } from '../domain/types';
+import { lookIds, pieceKinds, roomTemplates, seatIds } from '../domain/types';
+import { itemKinds } from '../domain/item-kind';
 import { member, record } from './values';
 import { knownPlant } from './progress-validation';
 
@@ -9,13 +10,12 @@ import { knownPlant } from './progress-validation';
 export function upgradeToV3(town: LegacyNeighborhood): Neighborhood {
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
 }
-const itemKinds = [...itemIds, 'bola'];
-/** Unknown looks become the default one and objects of unknown kinds drop out (whoever held them is left empty-handed). */
+/** Unknown looks become the default one; objects of unknown kinds and dishes of unknown recipes drop out (whoever held them is left empty-handed). */
 export function knownContent(value: unknown): unknown {
   if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return value;
   const unknown = (entry: unknown, field: string, known: readonly string[]) => record(entry) && !member(known, entry[field]);
   return { ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
-    items: value.items.filter(i => !unknown(i, 'kind', itemKinds)) };
+    items: value.items.filter(i => !unknown(i, 'kind', itemKinds) && !(record(i) && i.kind === 'prato' && !member(recipeIds, i.recipe))) };
 }
 /** Save v3: rebuilt with only known fields, and what this build does not know drops out alone; structure is left for validation. */
 export function knownTown(value: unknown): unknown {

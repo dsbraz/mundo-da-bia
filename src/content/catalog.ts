@@ -38,4 +38,6 @@ export const items: Record<ItemKind, { name: string }> = {
   bola: { name: 'Bola da praça' },
   lanche: { name: 'Lanche' }, peixe: { name: 'Comidinha de gato' },
   microfone: { name: 'Microfone' }, ursinho: { name: 'Ursinho' },
+  prato: { name: 'Prato' }, estetoscopio: { name: 'Estetoscópio' }, curativo: { name: 'Curativo' }, regador: { name: 'Regador' },
+  lanterna: { name: 'Lanterna' }, colher: { name: 'Colher de pau' }, cesta: { name: 'Cesta' },
 };

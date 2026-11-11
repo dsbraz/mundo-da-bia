@@ -1,4 +1,4 @@
-import { itemKind } from './item-kind';
+import { fridgeKinds, itemKind } from './item-kind';
 import { fixture, fromPiece } from './layout';
 import { wake } from './care';
 import type { Actor, Home, Item, ItemId, SeatId, Spot, PieceKind, RoomId, Transition, World } from './types';
@@ -36,7 +36,7 @@ export function put(state: World, id: ItemId, spot: Exclude<Spot, 'floor'>): Tra
   const item = state.items.find(i => i.id === id);
   if (!item || !availableSpot(state, spot)) return { state, events: [] };
   if (!reachable(state, item)) return { state, events: [] };
-  if (spot === 'fridge' && itemKind(item) !== 'lanche' && itemKind(item) !== 'peixe') return { state, events: [] };
+  if (spot === 'fridge' && !fridgeKinds.includes(itemKind(item))) return { state, events: [] };
   const index = spot === 'fridge' ? Number(itemKind(item) === 'peixe') : state.items.indexOf(item) % 4;
   const point = fromPiece(fixture(state, spotKind(spot))!, destinations(spot, index));
   return {
