@@ -71,6 +71,8 @@ test('sem texto: com todo texto transparente, o mesmo fluxo faz a panqueca', asy
 test('as dicas não gastam nada: o utensílio certo balança, o fantasma mostra o que falta e o resto vira vapor', async ({ page }) => {
   await kitchen(page, town => ({ ...town, progress: { ...town.progress, basket: { tomate: 2 } } }));
   await openBench(page);
+  // The wobble and the steam last under a second: scene time stops here so a slow machine still sees them.
+  await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 1000);
   const before = await readTown(page);
   await ingredient(page, 'pao').click(); await ingredient(page, 'queijo').click();
   await utensil(page, 'panela').click();
