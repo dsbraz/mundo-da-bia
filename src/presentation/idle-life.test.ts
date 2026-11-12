@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
 import type { World } from '../domain/types';
-import { breath, catTail, curledTail, earTwitch, favoriteSpot, glancing, idleClock, idleMs, phaseOf, stretch, wanderAt, wanderStay } from './idle-life';
+import { breath, catTail, curledTail, earTwitch, favoriteSpot, glancing, idleClock, idleMs, kickAngle, phaseOf, stretch, wanderAt, wanderStay, yawning } from './idle-life';
 import { floorTop } from './floor-band';
 import { strollSpeed } from './stroll';
 
@@ -85,4 +85,12 @@ it('o passeio vai, fica um pouco e volta para onde estava, sem mudar o save', ()
   const recalled = wanderAt({ ...plan, recall: { from: { x: 400, y: 500 }, start: 5000 } }, 5000);
   expect(recalled).toMatchObject({ phase: 'back', point: { x: 400, y: 500 } });
   expect(wanderAt({ ...plan, recall: { from: { x: 400, y: 500 }, start: 5000 } }, 9000).phase).toBe('done');
+});
+it('com sono boceja ~1 s a cada 7 s e, entediada, chuta o chão ~0,6 s a cada 5 s; com movimento reduzido, nada disso', () => {
+  const share = (f: (t: number) => boolean) => Array.from({ length: 700 }, (_, i) => f(i * 100)).filter(Boolean).length / 700;
+  expect(share(t => yawning(t, 1, false))).toBeCloseTo(1.1 / 7, 1);
+  expect(share(t => kickAngle(t, 1, false) !== 0)).toBeCloseTo(.6 / 5, 1);
+  expect(Math.min(...Array.from({ length: 500 }, (_, i) => kickAngle(i * 10, 0, false)))).toBeCloseTo(-.4, 1);
+  expect(share(t => yawning(t, 1, true))).toBe(0);
+  expect(share(t => kickAngle(t, 1, true) !== 0)).toBe(0);
 });

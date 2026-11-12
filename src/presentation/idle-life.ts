@@ -65,3 +65,10 @@ function walk(step: ReturnType<typeof stroll>, now: number, phase: WanderPhase) 
   const at = strollAt(step, now);
   return { phase: at.done ? 'done' as const : phase, point: at.point, walked: at.walked, direction: at.direction };
 }
+/** W3L-12: sleepy (in `precisa`), a character yawns about 1.1 s in every 7 s. Never with reduced motion. */
+export function yawning(time: number, phase: number, reduced: boolean) { return !reduced && (time + phase * 1300) % 7000 < 1100; }
+/** Bored, a standing child kicks the floor: the shin swings out up to 0.4 rad for 0.6 s in every 5 s. Never with reduced motion. */
+export function kickAngle(time: number, phase: number, reduced: boolean) {
+  const t = (time + phase * 1000) % 5000;
+  return reduced || t >= 600 ? 0 : -.4 * Math.sin(t / 600 * Math.PI);
+}

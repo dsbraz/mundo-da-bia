@@ -34,14 +34,14 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   return container;
 }
 /** The face this frame: an expression (from events) and whether the eyes blink. */
-export interface FaceFrame { expression: Expression; blink: boolean }
+export interface FaceFrame { expression: Expression; blink: boolean; arms?: boolean }
 export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false, face?: FaceFrame) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
   figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(lying(actor) && actor.resting);
   pose.x = 0; pose.y = 0;
   shiftFace(pose, 0);
   const shown = face ?? { expression: expressionOf({ ...actor, show: false }, null), blink: actor.resting };
-  paintFace(pose, actor.kind, shown.expression, shown.blink);
+  paintFace(pose, actor.kind, shown.expression, shown.blink, shown.arms);
   bodyLayers(pose, actor, time, reduced);
   const angle = lying(actor) ? -Math.PI / 2 : 0;
   const restingAngle = settlePose(pose.getData('restingAngle') ?? angle, angle, reduced);

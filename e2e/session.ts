@@ -9,6 +9,11 @@ export async function playMinutes(page: Page, minutes: number) {
     await expect(app).toHaveAttribute('data-ticks', String(before + 1));
   }
 }
+/** Plays 30 s ticks until `done` (at most `minutes`), then asserts it: for thresholds that fall on a tick, whatever the page load took. */
+export async function playUntilTrue(page: Page, done: () => Promise<boolean>, minutes: number) {
+  for (let n = 0; n < minutes * 2 && !await done(); n++) await playMinutes(page, .5);
+  expect(await done()).toBe(true);
+}
 /** WCAG contrast ratio of two sRGB colors. */
 export function contrast(a: readonly number[], b: readonly number[]) {
   const lum = (c: readonly number[]) => {

@@ -74,7 +74,7 @@ let cancelInput = () => {};
 let cancelGame = () => {};
 let view: ReturnType<typeof viewport> | undefined;
 const shell = createShell(root, () => cancelInput(), { open: loadDrawerOpen(), remember: open => { saveDrawerOpen(open); } });
-const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected }), announce = feedback.announce, progress = edgeProgress(root);
+const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected, playing: () => !building }), announce = feedback.announce, progress = edgeProgress(root);
 function toggleWardrobe() { cancelGame(); wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
 function openLooks() { closeWardrobe(); shell.looks(); }
@@ -153,7 +153,7 @@ function newBuilding() {
 const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh: then => refresh(then), scene, cue: sound => feedback.sound.cue(sound),
   commit: next => { town = next; state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); },
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
-  feel: next => { town = next; state = feel(state, town); },
+  feel: next => { town = next; state = feel(state, town); scene.feel(state); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
   pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { townActs.dispatch(action); }

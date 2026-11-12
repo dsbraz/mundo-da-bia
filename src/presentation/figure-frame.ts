@@ -4,8 +4,9 @@ import type { Neighborhood } from '../domain/neighborhood-types';
 import { animateActor, gazePose, walkPose } from './art';
 import { contextScale, handAnchor, visualContext } from './pose';
 import { glanceDirection, lifePose } from './life-pose';
+import { phaseOf, yawning } from './idle-life';
 import { expressionOf, type Expression, type faces } from './expression';
-import { plazaSeat, posed as posedIn } from './posture';
+import { plazaSeat, posed as posedIn, sitting } from './posture';
 import type { weightFigures } from './weight-figures';
 
 type Container = Phaser.GameObjects.Container;
@@ -30,7 +31,7 @@ export const blinking = (time: number, index: number) => (time + index * 530) % 
 /** Poses one figure for this frame: face, seat, walk or gaze, ambient life, the swing and whatever it holds; returns the expression shown. */
 export function animateFigure(ctx: FrameContext, figure: Container, actor: Actor, time: number, index: number, reduced: boolean): Expression {
   const { walking, seated, posed } = posture(ctx, figure, actor);
-  const face = faceFrame(ctx, actor, posed, walking, time, index, reduced);
+  const face = faceFrame(ctx, actor, posed, walking || seated, time, index, reduced);
   animateActor(figure, posed, reduced ? 500 : time, index, !reduced && ctx.world.show, reduced, face);
   const pose = figure.getByName<Container>('pose');
   if (!walking) gazePose(figure, face.look);
@@ -63,13 +64,21 @@ export function posture(ctx: FrameContext, figure: Container, actor: Actor) {
   const posed: Actor = standing ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: plazaSeat } : posedIn(ctx.world, actor);
   return { walking, seated, posed };
 }
-/** The expression (events first, a glance makes it curious), the blink and where the eyes look. */
-function faceFrame(ctx: FrameContext, actor: Actor, posed: Actor, walking: boolean, time: number, index: number, reduced: boolean) {
-  const looked = ctx.gaze.get(actor.id) ?? 0, glance = walking || looked ? 0 : glanceDirection(ctx.world, actor, time, reduced);
-  const expression = expressionOf({ ...posed, show: ctx.world.show }, ctx.faces.of(actor.id, ctx.now) ?? (glance ? 'curious' : null));
+/** The expression (events first, a glance makes it curious, then the needs: a sleepy one yawns now and then), the blink, where the eyes
+ *  look, and whether a need's gesture may take an arm (standing still with the hands free). `moving`: walking or on plaza equipment. */
+function faceFrame(ctx: FrameContext, actor: Actor, posed: Actor, moving: boolean, time: number, index: number, reduced: boolean) {
+  const looked = ctx.gaze.get(actor.id) ?? 0, glance = moving || looked ? 0 : glanceDirection(ctx.world, actor, time, reduced);
+  const expression = yawn(expressionOf({ ...posed, show: ctx.world.show }, ctx.faces.of(actor.id, ctx.now) ?? (glance ? 'curious' : null)), posed, time, reduced);
   const blink = blinking(time, index);
   // Asleep, the eyes stay shut; `blinked` is only the blink itself.
-  return { expression, blink: posed.resting || blink, blinked: blink, glance, look: looked || glance };
+  return { expression, blink: posed.resting || blink, blinked: blink, glance, look: looked || glance, arms: !moving && handsFree(ctx, posed) };
+}
+/** Sleepy and awake, now and then a yawn. */
+const yawn = (face: Expression, posed: Actor, time: number, reduced: boolean): Expression =>
+  face === 'sleepy' && !posed.resting && yawning(time, phaseOf(posed.id), reduced) ? 'yawn' : face;
+/** Standing on its own feet with nothing in hand (not seated, not carried). */
+function handsFree(ctx: FrameContext, posed: Actor) {
+  return !sitting(posed) && !ctx.weight.carrying(posed.id) && !ctx.world.items.some(i => i.holder === posed.id);
 }
 function animateSwing(ctx: FrameContext, pose: Container, actor: Actor) {
   if (ctx.town?.outdoor.swing !== actor.id || ctx.moving === actor.id) return;

@@ -40,6 +40,8 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
   const cast = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id), 'character'));
   // The portrait strip shows only the faces (W3L-03): the name is the button's accessible name, its text is hidden there.
   const faces = actorIds.map(id => faceButton(illustratedButton(id, actors[id].name, () => select(id)), actors[id].name));
+  // W3L-12: each portrait knows who it is, for the small bubble of what someone elsewhere asks for.
+  [...cast, ...faces].forEach((b, i) => { b.dataset.actor = actorIds[i % actorIds.length]!; });
   root.querySelector('#play-hint .hint-cast')!.append(...faces);
   const name = actorNames(root, dispatch, getState);
   root.querySelector('#cast')!.append(...cast.map((card, i) => castCard(card, actorIds[i]!, () => name(actorIds[i]!))));

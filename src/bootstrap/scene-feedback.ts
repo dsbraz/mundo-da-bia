@@ -1,12 +1,13 @@
 import type { ActorId, Need, PieceKind, Point, PresentationEvent, World } from '../domain/types';
-import { lineRotation, nameOf, needLine, say } from '../content/feedback-text';
+import { lineRotation, nameOf, needLine, say, thoughtLine } from '../content/feedback-text';
 import { cards, personalities, pickReaction } from '../content/personalities';
 import { createSound } from '../presentation/sound';
 import { missingBubble, missingWay } from '../presentation/missing-bubble';
+import { needBubbles } from '../presentation/need-bubble';
 import { worldToScreen } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import { loadSoundOn, saveSoundOn } from '../persistence/storage';
-interface Deps { root: HTMLElement; scene: PlayScene; state: () => World; selected: () => ActorId }
+interface Deps { root: HTMLElement; scene: PlayScene; state: () => World; selected: () => ActorId; playing: () => boolean }
 /** What a refusal adds: who sits there, the piece that is not in this room, where to point, the screen-reader line. */
 interface Lack { actor?: ActorId | undefined; by?: ActorId | undefined; want?: PieceKind | undefined; point?: Point | undefined; text?: string | undefined }
 /** Feedback near the finger (bubble, motion, sound); `#announcement` only mirrors it for screen readers. */
@@ -19,6 +20,8 @@ export function sceneFeedback(deps: Deps) {
   /** A bubble about who is there points at their head. */
   const pointAt = (by?: ActorId) => by ? deps.scene.head(by) : null;
   const bubble = missingBubble(deps.root, () => deps.root.querySelector('#world')!.getBoundingClientRect());
+  needBubbles(deps.root, { world: deps.state, selected: deps.selected, head: id => deps.scene.head(id), canvas: () => deps.root.querySelector('canvas'),
+    playing: deps.playing, label: (id, need) => thoughtLine(need, nameOf(actor(id)!)) });
   /** The shrug, the drawn bubble (with a door when the piece is in another room) and the soft cue; a piece found nowhere lights its card in Create. */
   function missing(need: Need, lack: Lack = {}) {
     const who = lack.actor ?? deps.selected(), head = deps.scene.shrug(who), canvas = deps.root.querySelector('canvas');

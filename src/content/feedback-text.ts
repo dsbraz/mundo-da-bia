@@ -38,6 +38,9 @@ const needLines: Record<Need, string> = {
   seat: 'Falta um lugar para sentar.', place: 'Aqui não tem lugar.', hands: 'As mãos estão cheias.', food: 'Essa comida não serve.', path: 'Por aqui não passa.', table: 'Falta uma mesa com cadeira.',
 };
 export const needLine = (need: Need, by?: string) => by ? say('{nome} já está aí!', by) : needLines[need];
+/** What a thought bubble means (W3L-12), for screen readers only. */
+const thoughtLines: Record<'fome' | 'sono' | 'tedio', string> = { fome: '{nome} está com fome.', sono: '{nome} está com sono.', tedio: '{nome} quer brincar.' };
+export const thoughtLine = (need: 'fome' | 'sono' | 'tedio', name: string) => say(thoughtLines[need], name);
 
 const outdoorLines: Record<Exclude<OutdoorAction['target'], 'leave'>, string> = {
   bench: '{nome} descansa no banco.', swing: 'Vai e vem, {nome}!', water: '{nome} molhou o jardim!',

@@ -15,14 +15,38 @@ it('cada estado vira uma expressão, nesta prioridade: sono, surpresa, risada, a
   expect(expressionOf(calm, 'laugh')).toBe('laugh');
   expect(expressionOf(calm, 'sleepy')).toBe('sleepy');
 });
+const needs = (fome: number, sono: number, tedio: number, alegria = 0) => ({ fome, sono, tedio, alegria });
+it('as necessidades aparecem no rosto (W3L-12): fome, tédio e sono em precisa; duas em precisa é triste, sem lágrima', () => {
+  expect(expressionOf({ ...calm, needs: needs(80, 0, 0) }, null)).toBe('hungry');
+  expect(expressionOf({ ...calm, needs: needs(20, 0, 75) }, null)).toBe('bored');
+  expect(expressionOf({ ...calm, needs: needs(20, 72, 0) }, null)).toBe('sleepy');
+  expect(expressionOf({ ...calm, needs: needs(80, 72, 0) }, null)).toBe('sad');
+  // `pede` is only the bubble: the face stays calm.
+  expect(expressionOf({ ...calm, needs: needs(60, 60, 60) }, null)).toBe('neutral');
+  // Fed with hunger out of `precisa` (the dish just eaten) is happy at once, also with sleep high; joy too.
+  expect(expressionOf({ ...calm, fed: true, needs: needs(20, 80, 0) }, null)).toBe('happy');
+  expect(expressionOf({ ...calm, needs: needs(90, 90, 0, 1000) }, null)).toBe('happy');
+  // A dish from 100 leaves 40 (`pede`): still the happy face of having eaten. Fed long ago and hungry again shows the hunger.
+  expect(expressionOf({ ...calm, fed: true, needs: needs(40, 74, 0) }, null)).toBe('happy');
+  expect(expressionOf({ ...calm, fed: true, needs: needs(80, 0, 0) }, null)).toBe('hungry');
+  // A glance does not hide a need; a poke, the show and a surprise do, and asleep is always sleepy.
+  expect(expressionOf({ ...calm, needs: needs(80, 0, 0) }, 'curious')).toBe('hungry');
+  expect(expressionOf({ ...calm, needs: needs(80, 72, 0) }, 'laugh')).toBe('laugh');
+  expect(expressionOf({ ...calm, needs: needs(80, 72, 0) }, 'surprise')).toBe('surprise');
+  expect(expressionOf({ ...calm, resting: true, needs: needs(80, 72, 0) }, null)).toBe('sleepy');
+});
+it('o rosto triste não tem lágrima: nenhuma camada de lágrima na arte', () => {
+  expect(faceLayers.human.sad.eyes).toEqual(['eyes']);
+  expect(`${human}${cat}`).not.toMatch(/tear|lagrima|lágrima/);
+});
 it('as cinco expressões e a careta usam camadas que existem na arte, para humanos e gatos', () => {
   const ids = (svg: string) => new Set([...svg.matchAll(/id="([^"]+)"/g)].map(m => m[1]));
   for (const [kind, svg] of [['human', human], ['cat', cat]] as const) {
     const present = ids(svg);
-    expect(Object.keys(faceLayers[kind]).sort()).toEqual(['curious', 'happy', 'laugh', 'neutral', 'silly', 'sleepy', 'surprise']);
+    expect(Object.keys(faceLayers[kind]).sort()).toEqual(['bored', 'curious', 'happy', 'hungry', 'laugh', 'neutral', 'sad', 'silly', 'sleepy', 'surprise', 'yawn']);
     for (const part of faceParts[kind]) expect(present.has(part), `${kind}: ${part}`).toBe(true);
     const looks = new Set(Object.values(faceLayers[kind]).map(l => JSON.stringify(l)));
-    expect(looks.size).toBe(7);
+    expect(looks.size).toBe(11);
   }
 });
 it('olhos 1,4 vez maiores que antes (humano 3 × 4,6 e gato 2,8 × 4)', () => {

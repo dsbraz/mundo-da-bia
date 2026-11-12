@@ -40,6 +40,7 @@ import { hex } from './palette';
 import { screenScale } from './viewport';
 import { doorGlow } from './door-effect';
 import { dayNight } from './day-night';
+import { feel as feelNeeds } from '../domain/needs';
 import type { Phase } from '../domain/clock';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
@@ -61,6 +62,8 @@ export class PlayScene extends Phaser.Scene {
   private faces = faces(); private mirrors = mirrorReflections(this); private drops = dropLights(this); private night = dayNight(this);
   /** The session's day phase (W3L-11): the backdrop's veil, the moon, stars and lit windows cross-fade to it. */
   daylight(phase: Phase) { this.night.set(phase, reducedMotion()); }
+  /** Only the needs changed (§3.1): faces and bubbles read them from the next frame, nothing is repainted. */
+  feel(state: World) { this.world = feelNeeds(this.world, state); }
   readonly ambient = sceneLife(() => this.game.canvas);
   private weight = weightFigures();
   /** Street, plaza and doors: `arrive`, `reaction` to the plaza, `push` the swing and `enterDoor`. */
