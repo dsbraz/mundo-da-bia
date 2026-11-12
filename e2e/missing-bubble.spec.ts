@@ -36,7 +36,7 @@ async function drawnOnly(page: Page) {
 }
 const bia = async (page: Page) => (await read(page)).actors.find(a => a.id === 'bia')!;
 
-for (const [width, height] of [[1024, 768], [768, 1024]] as const) test(`soltar a Bia no sofá do Rui mostra o rosto do Rui e deixa a Bia ao lado, nunca no ponto de partida (${width})`, async ({ page }) => {
+for (const [width, height] of [[1024, 768], [1280, 800]] as const) test(`soltar a Bia no sofá do Rui mostra o rosto do Rui e deixa a Bia ao lado, nunca no ponto de partida (${width})`, async ({ page }) => {
   await page.setViewportSize({ width, height }); await ruiOnSofa(page);
   const start = await bia(page), seat = await onPiece(page, 'sofa', 150, 405);
   const [a, b] = await points(page, [[start.x - 10, start.y - 14], [seat[0] - 10, seat[1] - 14]]);

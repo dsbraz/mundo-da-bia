@@ -42,7 +42,7 @@ test('cancelar objeto e arrastar para o chão mantém identidade e quantidade', 
 });
 test('uma bandeja por vez, teclado, toque e orientações de tablet', async ({ page }) => {
   await ready(page);
-  for (const size of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 915, height: 412 }]) {
+  for (const size of [{ width: 1024, height: 768 }, { width: 915, height: 412 }]) {
     await page.setViewportSize(size); await tray(page, 'Looks'); await expect(page.locator('#cast')).toBeHidden();
     await page.keyboard.press('Escape'); await expect(page.locator('#play-tray')).toBeHidden();
     await page.locator('#build-toggle').click(); await tray(page); await expect(page.locator('#play-tray')).toBeHidden();

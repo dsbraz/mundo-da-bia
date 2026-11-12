@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
+  <!-- A tablet standing up, a curved arrow, and the same tablet lying down with the game's little scene on it. -->
+  <g stroke="#786c62" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="22" y="40" width="88" height="150" rx="14" fill="#fffdf7" opacity=".55"/>
+    <rect x="34" y="54" width="64" height="118" rx="5" fill="#e9e1d4" opacity=".55"/>
+    <path d="M118 62 C150 30 196 30 222 58" fill="none" stroke="#e8735a" stroke-width="8"/>
+    <path d="M208 46 L226 62 L204 70" fill="none" stroke="#e8735a" stroke-width="8"/>
+    <rect x="150" y="96" width="150" height="96" rx="14" fill="#fffdf7"/>
+    <rect x="164" y="108" width="122" height="72" rx="5" fill="#f1e8db"/>
+  </g>
+  <rect x="166" y="152" width="118" height="26" fill="#c9ac88"/>
+  <circle cx="204" cy="140" r="9" fill="#f2b630"/><rect x="196" y="149" width="16" height="16" rx="4" fill="#f2b630"/>
+  <circle cx="240" cy="140" r="9" fill="#7a4a35"/><rect x="232" y="149" width="16" height="16" rx="4" fill="#3f6fc4"/>
+  <circle cx="290" cy="144" r="4" fill="#786c62"/>
+</svg>

@@ -88,20 +88,6 @@ test('ampliar mostra o espaço escolhido no mapa antes de criar o cômodo', asyn
   expect(rooms).toHaveLength(Object.keys(before.buildings[0]!.layout.rooms).length + 1);
 });
 
-for (const width of [390, 768]) test(`organização mantém controles acessíveis em retrato ${width}`, async ({ page }) => {
-  await page.setViewportSize({ width, height: 1024 }); await ready(page);
-  await page.screenshot({ path: `reports/organization-play-${width}.png` });
-  await page.locator('#build-toggle').click();
-  await page.getByRole('button', { name: 'Cozinha', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Adicionar Pia de cozinha', exact: true })).toBeVisible();
-  await page.screenshot({ path: `reports/organization-catalog-${width}.png` });
-  const undo = (await page.locator('#undo').boundingBox())!;
-  expect([undo.width, undo.height]).toEqual([56, 56]); expect(undo.x).toBeGreaterThanOrEqual(0); expect(undo.y + undo.height).toBeLessThanOrEqual(1024);
-  expect(await page.locator('.catalog-categories').evaluate(n => n.scrollWidth <= n.clientWidth)).toBe(true);
-  await page.locator('#map-toggle').click();
-  expect(await page.locator('#room-dialog').evaluate(n => n.scrollWidth <= n.clientWidth)).toBe(true);
-  await page.screenshot({ path: `reports/organization-map-${width}.png` });
-});
 
 test('desfazer atualiza a lista de peças e o inspetor junto com a cena', async ({ page }) => {
   await ready(page); await create(page); await page.locator('#build-toggle').click();
@@ -131,17 +117,18 @@ test('Arrumar reabre o catálogo recolhido', async ({ page }) => {
   await page.locator('#build-toggle').click(); await expect(page.locator('#build-catalog')).toBeVisible();
 });
 
-test('arraste na borda revela terrenos em retrato e Escape não muda a casa', async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
+test('arraste na borda revela terrenos e Escape não muda a casa', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 }); await ready(page);
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await page.locator('#build-toggle').click(); await closeTray(page);
   const before = await readTown(page), canvas = page.locator('canvas');
   const camera = Number(await canvas.getAttribute('data-camera-x'));
   const source = (await page.getByRole('button', { name: 'Mover Minha casa', exact: true }).boundingBox())!;
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
-  await page.mouse.move(760, source.y + source.height / 2, { steps: 8 });
+  const scene = (await page.locator('#world').boundingBox())!;
+  await page.mouse.move(scene.x + scene.width - 8, source.y + source.height / 2, { steps: 8 });
   await expect.poll(async () => Number(await canvas.getAttribute('data-camera-x'))).toBeGreaterThan(camera + 80);
-  await page.screenshot({ path: 'reports/organization-house-drag-768.png' });
+  await page.screenshot({ path: 'reports/organization-house-drag-1024.png' });
   await page.keyboard.press('Escape'); await page.mouse.up(); expect(await readTown(page)).toEqual(before);
 });
 

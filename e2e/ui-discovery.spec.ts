@@ -4,7 +4,7 @@ import { neighborhoodAction } from '../src/domain/neighborhood';
 import { actorIds } from '../src/domain/types';
 import { cards } from '../src/content/personalities';
 
-for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }]) {
+for (const viewport of [{ width: 1280, height: 800 }, { width: 1024, height: 768 }]) {
   // W3L-03: the strip of faces (portrait) or the Turma button (landscape) stays outside the scene and the scene never moves; the actions
   // are a ring inside the scene that goes with the chosen character (above Bia, then above Rui).
   test(`controles fora da cena, cena parada e anel acima de quem foi escolhido ao trocar a seleção ${viewport.width}`, async ({ page }) => {
@@ -74,9 +74,9 @@ test('ações da construção atual aparecem em Organizar sem rolar até o bairr
   await expect(page.locator('#plot-dialog').getByRole('button', { name: 'Excluir Minha casa…', exact: true })).toBeVisible();
 });
 
-test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
-  await page.screenshot({ path: 'reports/initial-768.png' });
+test('a turma nasce espalhada a 1024 px e o cartão mostra a roupa atual', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 }); await ready(page);
+  await page.screenshot({ path: 'reports/initial-1024.png' });
   const actors = (await readTown(page)).actors;
   const boxes = await page.locator('canvas').evaluate((canvas, list) => {
     const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth);
@@ -103,10 +103,10 @@ test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async 
   await page.locator('#play-tray').getByRole('button', { name: 'Looks', exact: true }).click(); await page.getByRole('button', { name: 'Festa' }).click();
   await page.locator('#play-tray').getByRole('button', { name: 'Turma', exact: true }).click();
   await expect.poll(() => card.getAttribute('src')).not.toBe(before);
-  await page.screenshot({ path: 'reports/ui-dock-dressed-768.png' });
+  await page.screenshot({ path: 'reports/ui-dock-dressed-1024.png' });
 });
 
-for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+for (const viewport of [{ width: 844, height: 390 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
   test(`a personagem escolhida nasce a 24 px ou mais da borda da cena a ${viewport.width}`, async ({ page }) => {
     await page.setViewportSize(viewport); await ready(page);
     const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!, scene = (await page.locator('#world').boundingBox())!;
@@ -118,15 +118,15 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
   });
 }
 
-test('a Turma inteira cabe sem rolagem a 768 px, com a frase de cada um e o lápis só no cartão escolhido', async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page); await tray(page, 'Turma');
+test('a Turma inteira cabe sem rolagem a 1024 px, com a frase de cada um e o lápis só no cartão escolhido', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 }); await ready(page); await tray(page, 'Turma');
   await expect(page.locator('#cast .character')).toHaveCount(7);
   await expect(page.locator('#cast .motto')).toHaveText(actorIds.map(id => cards[id].motto));
   for (const motto of await page.locator('#cast .motto').all()) await expect(motto).toBeInViewport({ ratio: 1 });
   await expect(page.locator('#cast .rename:visible')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Mudar o nome de Bia', exact: true })).toBeVisible();
   expect(await page.locator('#play-tray').evaluate(n => n.scrollHeight <= n.clientHeight + 1)).toBe(true);
-  await page.screenshot({ path: 'reports/cast-768.png' });
+  await page.screenshot({ path: 'reports/cast-1024.png' });
 });
 
 test('nenhum ícone se repete entre botões visíveis ao mesmo tempo', async ({ page }) => {

@@ -42,8 +42,8 @@ for (const reduced of [false, true]) test(`num save novo, a página do forno mos
   await expect(book(page).locator('[data-page="segredos"]')).toHaveCount(0);
   await expect(entry(page, 'chocolate-quente')).toHaveCount(0);
   expect(await words(page)).not.toMatch(/\d/);
-  for (const width of [768, 1024, 1280]) {
-    await page.setViewportSize({ width, height: width === 768 ? 1024 : width === 1024 ? 768 : 800 });
+  for (const width of [1024, 1280]) {
+    await page.setViewportSize({ width, height: width === 1024 ? 768 : 800 });
     await page.clock.runFor(150);
     await page.screenshot({ path: `reports/recipe-book-${width}${reduced ? '-reduced' : ''}.png` });
   }

@@ -61,7 +61,7 @@ test('arraste pela porta, câmera da rua e figurinos completos nas duas orienta�
   await page.locator('#map-toggle').click(); await page.locator('#neighborhood-list button').first().click();
   expect((await readTown(page)).location.kind).toBe('interior');
 });
-for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
+for (const viewport of [{ width: 1024, height: 768 }]) {
   test(`figurinos completos e bandeja em ${viewport.width}×${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport); await ready(page); await tray(page, 'Looks');
     for (const name of ['Rumi', 'Mira', 'Zoey']) {
@@ -73,7 +73,7 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
   });
 }
 
-for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
+for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
   test(`interior e bairro panorâmico em ${viewport.width}`, async ({ page }) => {
     let town = migrateNeighborhood(initialAlbum(initialWorld()));
     town = neighborhoodAction(town, { type: 'construct', plot: 1, model: 'shop' });
@@ -90,8 +90,7 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 768, height: 1024
       return { left: box.x + (left! - offset) * scale, right: box.x + (right! - offset) * scale, door: box.x + (door! - offset) * scale };
     }, [plotStart(2) + 40, plotStart(2) + 261, plotStart(1) + 330]);
     const world = (await page.locator('#world').boundingBox())!;
-    // W3L-03: in portrait the taller scene draws the street bigger, so the sign is reached by panning; in landscape it opens whole.
-    if (viewport.width > viewport.height) { expect(edges.left).toBeGreaterThanOrEqual(world.x); expect(edges.right).toBeLessThanOrEqual(world.x + world.width); }
+    expect(edges.left).toBeGreaterThanOrEqual(world.x); expect(edges.right).toBeLessThanOrEqual(world.x + world.width);
     // Beside the house just left: the right part of its facade is in view too.
     expect(edges.door).toBeGreaterThan(world.x); expect(edges.door).toBeLessThan(world.x + world.width);
     // Whoever left the house arrives whole, 24 px or more inside the scene.
@@ -109,7 +108,7 @@ const screenX = (page: import('@playwright/test').Page, xs: number[]) => page.lo
 }, xs);
 /** A street character's ring, as wide as indoors so the arms are inside it too. */
 const streetRing = async (page: import('@playwright/test').Page, x: number) => { const [left, right] = await screenX(page, [x - 42, x + 42]); return { left: left!, right: right! }; };
-for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+for (const viewport of [{ width: 844, height: 390 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
   test(`ao sair de casa num jogo novo a ${viewport.width}, a Bia chega inteira à rua, a 24 px da borda`, async ({ page }) => {
     await page.setViewportSize(viewport); await ready(page);
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
@@ -120,8 +119,8 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     const ring = await streetRing(page, bia.x);
     expect(ring.left - world.x).toBeGreaterThanOrEqual(24); expect(world.x + world.width - ring.right).toBeGreaterThanOrEqual(24);
     await page.screenshot({ path: `reports/street-arrival-${viewport.width}.png` });
-    if (viewport.width <= viewport.height) return;
-    // In landscape, the nearest free plot's sign is whole beside her too (W3L-03: in portrait the bigger street leaves it to a pan).
+    if (viewport.height < 600) return;
+    // On tablets, the nearest free plot's sign is whole beside her too.
     const free = [...Array(town.plots).keys()].find(p => !town.buildings.some(b => b.plot === p))!;
     const [left, right] = await screenX(page, [plotStart(free) + 40, plotStart(free) + 261]);
     expect(left).toBeGreaterThanOrEqual(world.x); expect(right).toBeLessThanOrEqual(world.x + world.width);

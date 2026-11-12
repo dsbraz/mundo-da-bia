@@ -56,12 +56,3 @@ test('Comer no anel, ao lado da personagem, funciona sem abrir a gaveta; os alvo
   await expect(ring.locator('[data-slot=play]')).toBeVisible();
 });
 
-test('em retrato a 768 o dock é uma faixa de retratos de até 90 px e as ações vão para o anel', async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
-  await tap(page, 520, 440);
-  const dock = (await page.locator('#play-hint').boundingBox())!;
-  expect(dock.height).toBeLessThanOrEqual(90);
-  await expect(page.locator('#play-hint .hint-cast button')).toHaveCount(7);
-  const world = (await page.locator('#world').boundingBox())!, ring = (await page.locator('#actor-context').boundingBox())!;
-  expect(ring.y).toBeGreaterThanOrEqual(world.y); expect(ring.y + ring.height).toBeLessThanOrEqual(world.y + world.height);
-});

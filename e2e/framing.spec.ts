@@ -4,7 +4,7 @@ import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { test, expect } from '@playwright/test';
 import { ready, readTown, tray, closeTray, openPlay } from './helpers';
-for (const size of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }, { width: 1792, height: 768 }]) {
+for (const size of [{ width: 1280, height: 800 }, { width: 1792, height: 768 }]) {
   test(`enquadramento integral e alvos acessíveis coincidem em ${size.width}`, async ({ page }) => {
     if (size.width === 1792) {
       const world = initialWorld(); world.layout.rooms.sala.size = 'large';
@@ -50,25 +50,25 @@ for (const size of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }, 
 
 // Drawn human height (hair to shoes) in logical units indoors; the street draws people at 60%.
 const human = 170;
-for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+for (const size of [{ width: 844, height: 390 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
   test(`sem faixa morta: chão sob a turma até 15% e asfalto até 20% da cena a ${size.width}`, async ({ page }) => {
     await page.setViewportSize(size); await ready(page);
     const view = () => page.locator('canvas').evaluate(c => ({ y: Number(c.dataset.viewY), height: Number(c.dataset.viewHeight), scale: c.getBoundingClientRect().width / Number(c.dataset.viewWidth) }));
     const inside = await view(), feet = Math.max(...(await readTown(page)).actors.map(a => a.y));
     expect((inside.y + inside.height - feet) / inside.height).toBeLessThanOrEqual(.15);
-    if (size.width === 768) expect(human * inside.scale).toBeGreaterThanOrEqual(150);
+    if (size.width === 1024) expect(human * inside.scale).toBeGreaterThanOrEqual(150);
     await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
     await expect(page.locator('canvas')).toHaveAttribute('data-street', 'true');
     if (await page.locator('#room-dialog').isVisible()) await page.locator('#close-map').click();
     const street = await view();
     expect(Math.max(0, street.y + street.height - 565) / street.height).toBeLessThanOrEqual(.2);
-    if (size.width === 768) expect(human * .6 * street.scale).toBeGreaterThanOrEqual(110);
+    if (size.width === 1024) expect(human * .6 * street.scale).toBeGreaterThanOrEqual(110);
     await page.screenshot({ path: `reports/framing-street-${size.width}.png` });
   });
 }
 
-test('com a brincadeira aberta a 768, a cena fica estável e o humano com 150 px ou mais', async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
+test('com a brincadeira aberta a 1024, a cena fica estável e o humano com 150 px ou mais', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 }); await ready(page);
   await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
   const scale = () => page.locator('canvas').evaluate(c => c.getBoundingClientRect().width / Number(c.dataset.viewWidth));
   const docked = await scale();
@@ -85,33 +85,5 @@ test('com a brincadeira aberta a 768, a cena fica estável e o humano com 150 px
     const button = (await page.locator(id).boundingBox())!;
     expect(button.y + button.height, id).toBeLessThanOrEqual(panel.y + panel.height);
   }
-  await page.screenshot({ path: 'reports/framing-playing-768.png' });
+  await page.screenshot({ path: 'reports/framing-playing-1024.png' });
 });
-
-// In portrait the dock below the scene (the portrait strip, then the game panel) holds its controls without a big empty band and
-// without scrolling, and never covers the scene; the actions ring floats inside the scene.
-for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }]) {
-  test(`retrato a ${size.width}: painel abaixo da cena compacto, sem vão grande nem rolagem`, async ({ page }) => {
-    await page.setViewportSize(size); await ready(page);
-    const check = async (id: string) => {
-      const dock = await page.locator(id).evaluate(panel => {
-        const box = panel.getBoundingClientRect(), style = getComputedStyle(panel);
-        const kids = [...panel.querySelectorAll<HTMLElement>('button, h2, p, img')].filter(n => n.checkVisibility() && n.getBoundingClientRect().height > 0 && n.textContent!.trim() + n.tagName !== 'P');
-        const top = Math.min(...kids.map(n => n.getBoundingClientRect().top)), bottom = Math.max(...kids.map(n => n.getBoundingClientRect().bottom));
-        return { top: box.top, overflow: panel.scrollHeight - panel.clientHeight, above: top - box.top - Number.parseFloat(style.paddingTop), below: box.bottom - bottom - Number.parseFloat(style.paddingBottom) };
-      });
-      const scene = (await page.locator('#world').boundingBox())!;
-      expect(dock.overflow, `${id} rola`).toBeLessThanOrEqual(1);
-      expect(dock.above, `${id}: vão acima`).toBeLessThanOrEqual(64); expect(dock.below, `${id}: vão abaixo`).toBeLessThanOrEqual(64);
-      expect(scene.y + scene.height, `${id} sobre a cena`).toBeLessThanOrEqual(dock.top + 1);
-    };
-    await check('#play-hint');
-    await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
-    // W3L-03: the actions are a ring over the scene, beside the chosen character, inside it and without scrolling.
-    const ring = (await page.locator('#actor-context').boundingBox())!, scene = (await page.locator('#world').boundingBox())!;
-    expect(ring.y).toBeGreaterThanOrEqual(scene.y); expect(ring.y + ring.height).toBeLessThanOrEqual(scene.y + scene.height + 1);
-    expect(ring.x).toBeGreaterThanOrEqual(scene.x); expect(ring.x + ring.width).toBeLessThanOrEqual(scene.x + scene.width + 1);
-    await openPlay(page); await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
-    await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing'); await check('#game-panel');
-  });
-}

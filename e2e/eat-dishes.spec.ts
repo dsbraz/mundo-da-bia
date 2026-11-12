@@ -64,8 +64,8 @@ test('pegar o ovo mexido pela bandeja e usar Comer: o botão mostra o prato, a B
   const eat = page.getByRole('button', { name: 'Comer', exact: true });
   await expect(eat).toBeEnabled();
   await expect(eat.locator('img')).toHaveAttribute('src', /^data:image\/svg\+xml/);
-  for (const width of [768, 1024, 1280]) {
-    await page.setViewportSize({ width, height: width === 768 ? 1024 : width === 1024 ? 768 : 800 });
+  for (const width of [1024, 1280]) {
+    await page.setViewportSize({ width, height: width === 1024 ? 768 : 800 });
     await page.clock.runFor(150);
     await page.screenshot({ path: `reports/eat-panel-${width}.png` });
   }

@@ -92,7 +92,7 @@ test('o retorno vai para a cena: o anúncio é só para leitor de tela e não h�
   else expect(world.y + world.height).toBeCloseTo(viewport.height, 0);
 });
 
-for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768 }]) test(`tocar no balanço ocupado mostra quem está nele, junto do balanço, com o balão inteiro e acima do rosto a ${viewport.width}`, async ({ page }) => {
+for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }]) test(`tocar no balanço ocupado mostra quem está nele, junto do balanço, com o balão inteiro e acima do rosto a ${viewport.width}`, async ({ page }) => {
   const town = spreadTown();
   town.location = { kind: 'street' };
   town.actors = town.actors.map(a => a.id === 'luna' ? { ...a, location: { kind: 'street' }, x: 400, y: 445 } : a.id === 'bia' ? { ...a, location: { kind: 'street' }, x: 250, y: 520 } : a);

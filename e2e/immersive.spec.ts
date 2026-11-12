@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { ready, readTown, tray, point } from './helpers';
 test('jogo preenche o viewport, separa cena e controles e recolhe as bandejas', async ({ page }) => {
-  for (const size of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }]) {
+  for (const size of [{ width: 1024, height: 768 }, { width: 844, height: 390 }]) {
     await page.setViewportSize(size); await ready(page);
     expect(await page.locator('#app').boundingBox()).toEqual({ x: 0, y: 0, ...size });
     const scene = (await page.locator('#world').boundingBox())!;

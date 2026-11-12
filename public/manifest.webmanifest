@@ -1,0 +1,10 @@
+{
+  "name": "Mundo da Bia",
+  "short_name": "Mundo da Bia",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#faf5e9",
+  "theme_color": "#faf5e9",
+  "icons": [{ "src": "/icons/bia.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

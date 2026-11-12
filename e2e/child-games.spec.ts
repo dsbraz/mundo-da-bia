@@ -47,7 +47,7 @@ const panelTexts = (page: import('@playwright/test').Page) => page.locator('#gam
   return found;
 });
 for (const game of ['Pular corda', 'Amarelinha']) test(`painel de ${game}: ícone e rótulos curtos de 16 px, sem parágrafo de instruções`, async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 }); await playground(page);
+  await page.setViewportSize({ width: 1024, height: 768 }); await playground(page);
   await openPlay(page);
   await page.getByRole('button', { name: game, exact: true }).click();
   await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
@@ -137,29 +137,6 @@ test('corda tem indicação de ritmo e novas tentativas por toque com movimento 
   await expect(page.locator('#game-panel')).toBeHidden();
 });
 
-test('amarelinha por toque mantém os controles abaixo da cena no retrato e cancela ao mudar de modo', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 }); await playground(page);
-  await openPlay(page);
-  await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
-  await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing');
-  const actor = (await readTown(page)).actors[0]!;
-  // The camera glides to frame the board after play starts: tap only once the square's screen point stops moving.
-  let previous = '';
-  await expect.poll(async () => { const now = JSON.stringify(await point(page, actor.x, actor.y - 12)); const settled = now === previous; previous = now; return settled; }).toBe(true);
-  const target = await point(page, actor.x, actor.y - 12); await page.touchscreen.tap(target.x, target.y);
-  await expect(page.locator('#game-jump')).toHaveText('Pular para 2');
-  const world = (await page.locator('#world').boundingBox())!, panel = (await page.locator('#game-panel').boundingBox())!;
-  expect(panel.y).toBeGreaterThanOrEqual(world.y + world.height - 1);
-  await page.screenshot({ path: 'reports/hopscotch-portrait.png' });
-  const vision = await page.context().newCDPSession(page);
-  await page.locator('#game-jump').click(); await expect(page.locator('#game-jump')).toHaveText('Pular para 3 e 4');
-  await vision.send('Emulation.setEmulatedVisionDeficiency', { type: 'deuteranopia' });
-  await page.screenshot({ path: 'reports/hopscotch-portrait-deuteranopia.png' });
-  await vision.send('Emulation.setEmulatedVisionDeficiency', { type: 'none' }); await vision.detach();
-  await page.setViewportSize({ width: 1024, height: 768 });
-  await expect(page.locator('#game-jump')).toBeVisible();
-  await page.locator('#build-toggle').click(); await expect(page.locator('#game-panel')).toBeHidden();
-});
 
 test('cancelar a aproximação invalida o início pendente', async ({ page }) => {
   await playground(page);
@@ -205,7 +182,7 @@ test('quintal pronto permite corda e amarelinha sem retirar a mobília', async (
 });
 
 test('sem espaço livre na sala inicial, a amarelinha leva a criança e a câmera ao chão mais livre, sem texto', async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
+  await page.setViewportSize({ width: 1024, height: 768 }); await ready(page);
   await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
   await openPlay(page);
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
@@ -217,7 +194,7 @@ test('sem espaço livre na sala inicial, a amarelinha leva a criança e a câmer
     return { x: box.x + (x - Number(d.viewX) - Number(d.cameraX)) * scale, y: box.y + (y - Number(d.viewY)) * scale };
   }, [bia.x, bia.y]);
   expect(feet.x).toBeGreaterThan(scene.x); expect(feet.x).toBeLessThan(scene.x + scene.width);
-  await page.screenshot({ path: 'reports/hopscotch-crowded-768.png' });
+  await page.screenshot({ path: 'reports/hopscotch-crowded-1024.png' });
   // A tap on a drawn square jumps.
   for (const cells of ['1', '2', '3 e 4']) { await expect(page.locator('#game-jump')).toHaveText(`Pular para ${cells}`); await expect(page.locator('#game-jump')).toBeEnabled(); await page.locator('#game-jump').click(); }
   await expect(page.locator('#game-jump')).toHaveText('Pular para 5'); await expect(page.locator('#game-jump')).toBeEnabled();
@@ -236,7 +213,7 @@ async function squareCentres(page: import('@playwright/test').Page, origin: { x:
     return points.map(([x, y]) => ({ x: box.x + (x! - Number(d.viewX) - Number(d.cameraX)) * scale, y: box.y + (y! - Number(d.viewY)) * scale }));
   }, hopTiles.map(t => [origin.x + t.x, origin.y + t.y]));
 }
-for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+for (const viewport of [{ width: 844, height: 390 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
   test(`amarelinha na sala inicial a ${viewport.width}: as 8 casas inteiras no quadro e ninguém sobre o giz`, async ({ page }) => {
     await page.setViewportSize(viewport); await ready(page);
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);

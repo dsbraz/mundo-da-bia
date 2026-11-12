@@ -34,7 +34,7 @@ const spilled = (page: Page) => page.evaluate(() => [...document.querySelectorAl
     return found;
   }));
 
-for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
+for (const viewport of [{ width: 844, height: 390 }, { width: 1024, height: 768 }, { width: 1280, height: 800 }]) {
   test(`nenhum rótulo de botão ou aba tem menos de 16 px nem sai do botão a ${viewport.width}`, async ({ page }) => {
     await page.setViewportSize(viewport); await ready(page);
     const check = async (where: string) => { expect.soft(await small(page), where).toEqual([]); expect.soft(await spilled(page), `${where}: contido no botão`).toEqual([]); };

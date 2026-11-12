@@ -98,7 +98,7 @@ test('pelo toque o saco abre sem semente escolhida; pelo teclado o foco vai para
   expect(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.crop)).toBe('alface');
 });
 
-for (const [width, height] of [[768, 1024], [1024, 768]] as const) test(`a ${width}, o saco com as seis sementes sobre um canteiro da direita fica inteiro dentro da cena`, async ({ page }) => {
+for (const [width, height] of [[1024, 768]] as const) test(`a ${width}, o saco com as seis sementes sobre um canteiro da direita fica inteiro dentro da cena`, async ({ page }) => {
   await plaza(page, { x: 760, y: 520 }, t => ({ ...t, progress: { ...t.progress, seeds: ['alface', 'tomate', 'cenoura', 'milho', 'morango', 'abobora'] } }), { width, height });
   const bag = page.locator('#seed-bag');
   for (const plot of ['praca-2', 'praca-4'] as const) {
@@ -167,7 +167,7 @@ test('o tempo faz a planta crescer enquanto ela anda, sem interromper a caminhad
   expect((await readTown(page)).actors[0]!.x).toBeGreaterThan(900);
 });
 
-const sizes = [[390, 844], [768, 1024], [1024, 768], [1280, 800]] as const;
+const sizes = [[844, 390], [1024, 768], [1280, 800]] as const;
 const shown = (t: Neighborhood): Neighborhood => ({ ...t, progress: { ...t.progress, seeds: ['alface', 'tomate', 'cenoura', 'milho', 'morango', 'abobora'], basket: { tomate: 2, alface: 4 },
   plaza: { 'praca-1': { crop: 'tomate', stage: 4, since: 0, watered: false }, 'praca-2': { crop: 'alface', stage: 1, since: 0, watered: false },
     'praca-3': { crop: 'cenoura', stage: 3, since: 0, watered: false }, 'praca-4': { crop: 'morango', stage: 2, since: start.getTime(), watered: true } } } });
@@ -177,15 +177,14 @@ for (const reduced of [false, true]) for (const [width, height] of sizes) test(`
   await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 1000);
   await page.clock.runFor(400);
   await page.screenshot({ path: `reports/plaza-garden-${width}${reduced ? '-reduced' : ''}.png` });
-  // Every plot box lies inside the scene's visible area. W3L-03: at 390 the taller portrait scene draws the plaza bigger and the street
-  // opening does not aim at the garden, so the right column (praca-2, praca-4) can need a pan; the left column must be whole.
+  // Every plot box lies inside the scene's visible area.
   const world = (await page.locator('#world').boundingBox())!;
-  for (const plot of (width === 390 ? ['praca-1', 'praca-3'] : ['praca-1', 'praca-2', 'praca-3', 'praca-4']) as ('praca-1' | 'praca-2' | 'praca-3' | 'praca-4')[]) {
+  for (const plot of ['praca-1', 'praca-2', 'praca-3', 'praca-4'] as const) {
     const left = await page.locator('canvas').evaluate((c, x) => { const b = c.getBoundingClientRect(), s = b.width / Number(c.dataset.viewWidth); return b.x + (x - Number(c.dataset.viewX) - Number(c.dataset.cameraX)) * s; }, plotSpots[plot].x - 38);
     const right = await page.locator('canvas').evaluate((c, x) => { const b = c.getBoundingClientRect(), s = b.width / Number(c.dataset.viewWidth); return b.x + (x - Number(c.dataset.viewX) - Number(c.dataset.cameraX)) * s; }, plotSpots[plot].x + 38);
     expect(left, plot).toBeGreaterThanOrEqual(world.x); expect(right, plot).toBeLessThanOrEqual(world.x + world.width);
   }
-  if (width === 390 || width === 1024) {
+  if (width === 844 || width === 1024) {
     await tap(page, plotSpots['praca-1'].x, plotSpots['praca-1'].y - 40);
     await until(page, async () => !!await canvas(page).getAttribute('data-harvest'));
     await page.clock.runFor(reduced ? 60 : 200);

@@ -4,7 +4,7 @@ import { finger, touchDrag } from './touch';
 
 // W3L-01: dragging a character with a finger, held by the head, the chest or the feet (offsets from the feet, in scene units).
 const grips = { head: { x: 0, y: -150 }, chest: { x: 0, y: -90 }, feet: { x: -10, y: -14 } } as const;
-const sizes = [[1024, 768], [768, 1024]] as const;
+const sizes = [[1024, 768]] as const;
 type Grip = typeof grips[keyof typeof grips];
 async function open(page: Page, width: number, height: number) {
   await page.clock.install({ time: new Date('2026-01-01T10:00:00Z') });

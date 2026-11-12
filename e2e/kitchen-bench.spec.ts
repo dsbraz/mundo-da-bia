@@ -51,8 +51,8 @@ for (const reduced of [false, true]) test(`tocar no fogão, arrastar farinha, ov
   for (let t = 0; t < 1000 && !await data('dishPop'); t += 50) await page.clock.runFor(50);
   expect(await data('dishPop')).toBe((await dishes(page))[0]!.id);
   expect(await data('cooking')).toBe(reduced ? '' : 'steam');
-  for (const width of [768, 1024, 1280]) {
-    await page.setViewportSize({ width, height: width === 768 ? 1024 : width === 1024 ? 768 : 800 });
+  for (const width of [1024, 1280]) {
+    await page.setViewportSize({ width, height: width === 1024 ? 768 : 800 });
     await page.clock.runFor(150);
     await page.screenshot({ path: `reports/kitchen-bench-${width}${reduced ? '-reduced' : ''}.png` });
   }

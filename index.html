@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#faf5e9"><meta name="description" content="Uma casa-ateliê para criar e brincar."><title>Mundo da Bia</title></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#faf5e9"><link rel="manifest" href="/manifest.webmanifest"><meta name="description" content="Uma casa-ateliê para criar e brincar."><title>Mundo da Bia</title></head>
 <body><main id="app">
   <div id="world" tabindex="0" role="group" aria-label="Casa. Arraste o fundo com um dedo para explorar. Use as setas para mover a seleção."></div>
   <header><button id="map-toggle" type="button">Mapa</button><h1>Mundo da <strong>Bia ✦</strong></h1><div class="modes" role="group" aria-label="Modo"><button id="play-mode" type="button" aria-pressed="true">Brincar</button><button id="build-toggle" type="button" aria-pressed="false">Criar</button></div><button id="book-toggle" type="button" aria-expanded="false" aria-controls="recipe-book">Receitas</button><button id="sound-toggle" type="button" aria-label="Som ligado" aria-pressed="true">Som</button><button id="tray-toggle" type="button" aria-expanded="false">Turma</button></header>
@@ -21,4 +21,4 @@
   <section data-home-panel="ideas" hidden><h3>Ideias para criar</h3><div id="project-cards"></div><button id="save-project">Guardar uma versão nas minhas casas</button></section><button id="gather">Reunir todo mundo</button><p id="save-status" role="status"></p></dialog>
   <dialog id="clear-dialog"><h2>Esvaziar este cômodo?</h2><p>Você pode desfazer depois.</p><button id="cancel-clear">Continuar decorando</button><button id="confirm-clear">Esvaziar cômodo</button></dialog>
   <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
-</main><script type="module" src="/src/bootstrap/main.ts"></script></body></html>
+</main><div id="rotate-overlay" role="img" aria-label="Gire o tablet"><img src="/art/rotate.svg" alt="" width="320" height="240"></div><script type="module" src="/src/bootstrap/main.ts"></script></body></html>

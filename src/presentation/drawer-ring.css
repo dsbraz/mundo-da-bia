@@ -30,15 +30,3 @@
   #app .mode-tray,#app #build-inspector,#app #game-panel { z-index:12; box-shadow:-8px 0 24px #343c5322; }
   #app #play-hint { display:none; }
 }
-@media(orientation:portrait) {
-  /* Playing: a strip of portraits only (84 px); the actions are in the ring. */
-  #app:not(.building):not(.tray-open):not(.playing-game) { --dock-height:84px; }
-  #app:not(.building) #play-hint { display:flex!important; flex-direction:row; align-items:center; height:84px; padding:4px 12px; overflow-x:auto; overflow-y:hidden; }
-  #app:not(.building) #play-hint h2,#app:not(.building) #play-hint p { display:none; }
-  #app:not(.building) #play-hint .hint-cast { display:flex; gap:6px; flex-wrap:nowrap; }
-  #app:not(.building) #play-hint .hint-cast button { width:72px; min-width:72px; height:72px; min-height:72px; padding:2px; }
-  #app:not(.building) #play-hint .hint-cast .face-name { display:none; }
-  #app:not(.building) #play-hint .hint-cast img { width:64px; height:64px; }
-  #app.tray-open #play-hint,#app.playing-game #play-hint { display:none!important; }
-  #app .mode-tray { z-index:12; }
-}

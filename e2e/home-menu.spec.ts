@@ -39,14 +39,6 @@ test('Minha casa abre mapa limpo, separa organização e permite excluir com con
   await expect(page.getByRole('button', { name: 'Lugares', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
 
-for (const width of [390, 768]) test(`mapa cabe em retrato ${width} e visita sem reorganizar`, async ({ page }) => {
-  await page.setViewportSize({ width, height: 1024 }); await ready(page); await page.locator('#map-toggle').click();
-  await page.screenshot({ path: `reports/home-map-${width}.png` });
-  expect(await page.locator('#room-dialog').evaluate(n => n.scrollWidth <= n.clientWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Ir para Quarto dos sonhos', exact: true }).click();
-  await expect(page.locator('#room-dialog')).not.toBeVisible();
-  expect((await readTown(page)).location).toMatchObject({ room: 'quarto' });
-});
 
 test('mapa vem antes do bairro e cancelar ampliação devolve o foco', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
