@@ -26,6 +26,15 @@ export function portraitNeed(world: World, id: ActorId): Need | null {
   return actor && actor.room !== world.room ? topNeed(actor)?.need ?? null : null;
 }
 
+type Box = { left: number; top: number; right: number; bottom: number };
+/** Where the bubble's tip goes so the bubble (`size`, drawn above the tip with its 40 px of little clouds) stays clear of the open
+ *  character menu: beside the menu (right, else left, within `width`) when it would sit under it. */
+export function besideMenu(tip: Point, size: { width: number; height: number }, menu: Box | null, width: number): Point {
+  const box = { left: tip.x - size.width / 2, right: tip.x + size.width / 2, top: tip.y - 40 - size.height, bottom: tip.y - 40 };
+  if (!menu || box.right <= menu.left || box.left >= menu.right || box.bottom <= menu.top || box.top >= menu.bottom) return tip;
+  const right = menu.right + 12 + size.width / 2;
+  return { x: right + size.width / 2 <= width ? right : menu.left - 12 - size.width / 2, y: tip.y };
+}
 interface Deps {
   world: () => World; selected: () => ActorId; head: (id: ActorId) => Point | null; canvas: () => HTMLCanvasElement | null;
   /** Only in Brincar. */
@@ -51,7 +60,9 @@ export function needBubbles(host: HTMLElement, deps: Deps) {
     const place = anchor(thought, now);
     if (!place || !thought) { bubble.remove(); return; }
     if (!bubble.isConnected) host.append(bubble);
-    bubble.style.left = `${place.x}px`; bubble.style.top = `${place.y}px`;
+    const menu = host.querySelector<HTMLElement>('#actor-context')?.getBoundingClientRect() ?? null;
+    const tip = besideMenu(place, { width: bubble.offsetWidth, height: bubble.offsetHeight }, menu?.width ? menu : null, window.innerWidth);
+    bubble.style.left = `${tip.x}px`; bubble.style.top = `${tip.y}px`;
     if (image.getAttribute('src') !== thoughtIcon(thought.need)) image.src = thoughtIcon(thought.need);
     bubble.classList.toggle('urgent', thought.band === 'precisa'); bubble.setAttribute('aria-label', deps.label(thought.actor, thought.need));
     if (navigator.webdriver) Object.assign(bubble.dataset, { actor: thought.actor, need: thought.need, band: thought.band });

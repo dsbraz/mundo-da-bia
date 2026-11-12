@@ -158,7 +158,7 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
   feel: next => { town = next; state = feel(state, town); scene.feel(state); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
-  pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
+  pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, busy: () => [games.player()].filter(id => id !== null), structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { townActs.dispatch(action); }
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);

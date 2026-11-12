@@ -64,6 +64,14 @@ it('W3L-13: o tédio só cresce para quem ficou parado desde o tick anterior (me
   actions.tick(180_000, life);
   expect([boredom('bia'), boredom('leo'), boredom('luna')]).toEqual([3.5, 3.5, 7]);
 });
+it('W3L-13: quem está numa brincadeira parada ou no balanço não está parado à toa', () => {
+  const { deps, current } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
+  const life = { elapsed: 60_000, phase: 'manha' as const }, boredom = (id: string) => current().actors.find(a => a.id === id)!.needs?.tedio ?? 0;
+  Object.assign(deps, { busy: () => ['luna'] });
+  const fresh = townActions(deps as never);
+  fresh.tick(60_000, life); fresh.tick(120_000, life);
+  expect([boredom('luna'), boredom('bia')]).toEqual([0, 3.5]);
+});
 it('W3L-13: brincar mexe só nas necessidades, em silêncio (sem salvar nem repintar)', () => {
   const { actions, deps, current } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
   actions.enjoy('rui', 'bola');

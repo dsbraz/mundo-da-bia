@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
 import type { ActorId, Needs, World } from '../domain/types';
-import { portraitNeed, thoughtIcon, thoughtOf, thoughtShown } from './need-bubble';
+import { besideMenu, portraitNeed, thoughtIcon, thoughtOf, thoughtShown } from './need-bubble';
 
 const needs = (fome: number, sono = 0, tedio = 0): Needs => ({ fome, sono, tedio, alegria: 0 });
 const feeling = (world: World, patch: Partial<Record<ActorId, Needs>>): World =>
@@ -37,4 +37,13 @@ it('no retrato da Turma, a bolha pequena é de quem pede algo noutro lugar', () 
   expect(portraitNeed(away, 'rui')).toBe('sono');
   expect(portraitNeed(world, 'luna')).toBeNull();
   expect(portraitNeed(away, 'bia')).toBeNull();
+});
+
+it('a bolha da selecionada não fica embaixo do menu dela: vai para o lado do menu (direita, senão esquerda)', () => {
+  const size = { width: 80, height: 70 }, menu = { left: 300, right: 640, top: 260, bottom: 340 };
+  expect(besideMenu({ x: 470, y: 420 }, size, null, 1024)).toEqual({ x: 470, y: 420 });
+  expect(besideMenu({ x: 470, y: 420 }, size, menu, 1024)).toEqual({ x: 692, y: 420 });
+  expect(besideMenu({ x: 470, y: 420 }, size, { ...menu, right: 980 }, 1024)).toEqual({ x: 248, y: 420 });
+  expect(besideMenu({ x: 470, y: 520 }, size, menu, 1024)).toEqual({ x: 470, y: 520 });
+  expect(besideMenu({ x: 800, y: 420 }, size, menu, 1024)).toEqual({ x: 800, y: 420 });
 });

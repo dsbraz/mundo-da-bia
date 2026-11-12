@@ -79,7 +79,8 @@ export function childGames(root: HTMLElement, actions: Actions) {
     follow(actions, session.game.kind, session.origin, gamePosition(session, now, reducedMotion()));
     frame = requestAnimationFrame(tick);
   }
-  return { cancel, open: view.open };
+  /** Who is in a game now (W3L-13: playing is not standing still). */
+  return { cancel, open: view.open, player: (): ActorId | null => session?.actor ?? null };
 }
 
 /** The panel mirrors the scene: the label of the jump, a short line and, for the rope, the beat. */

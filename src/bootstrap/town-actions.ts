@@ -22,6 +22,8 @@ interface TownDeps {
   pause: () => void;
   scene: Pick<PlayScene, 'captureMotion' | 'outdoor' | 'neighborhood' | 'paint'>; cue: (sound: 'door') => void;
   structure: { open: (building?: number) => void; refresh: () => void };
+  /** Who plays without moving (a rope or hopscotch game): never idle, like whoever rides the swing. */
+  busy?: () => readonly ActorId[];
 }
 /** Who came along through a door, if anyone. */
 const comer = (action: NeighborhoodAction) => action.type === 'transport' ? action.actor : undefined;
@@ -75,7 +77,8 @@ export function townActions(deps: TownDeps) {
     const next = neighborhoodAction(deps.town(), { type: 'tick', now }); if (next !== deps.town()) deps.quiet(next);
     if (!life) return;
     // Boredom grows for whoever stands where she stood at the last tick (the first tick has nothing to compare with).
-    const here = stances(deps.town()), idle = life.idle ?? [...here].filter(([id, at]) => stood.get(id) === at).map(([id]) => id);
+    const here = stances(deps.town()), busy = [...deps.busy?.() ?? [], deps.town().outdoor.swing];
+    const idle = life.idle ?? [...here].filter(([id, at]) => stood.get(id) === at && !busy.includes(id)).map(([id]) => id);
     stood = here;
     const lived = neighborhoodAction(deps.town(), { type: 'live', ...life, idle }); if (lived !== deps.town()) deps.feel(lived);
   }
