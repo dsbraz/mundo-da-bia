@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
-import type { Action, ActorId, EditAction, World } from '../domain/types';
+import type { Action, ActorId, EditAction, Point, World } from '../domain/types';
+import type { PlaceStep } from '../presentation/place-transition';
 import type { Neighborhood, NeighborhoodAction, Location } from '../domain/neighborhood-types';
 import { bindInput } from '../presentation/input';
 import { createBuildGesture } from '../presentation/build-gesture';
@@ -26,12 +27,17 @@ export interface InputWiring {
   poke: (id: ActorId) => void; choosePiece: (id: number | null) => void;
   previewBuild: (action: EditAction | null) => void; dropPiece: (action: EditAction) => void;
   progress: (value: number, side?: string) => void; plot: (plot: number) => void; enter: (destination: Location) => boolean;
+  /** How the next place change looks (a door crossed by drag, a swipe). */
+  place: { next: (step: PlaceStep) => void; screen: (point: Point) => Point };
 }
 /** Binds the canvas: play and build gestures, the camera drag, rooms and doors. Returns the input's cancel. */
 export function wireInput(current: Phaser.Game, deps: InputWiring) {
   const { scene, play, square, walker } = deps, canvas = current.canvas;
   /** Under automation only: how the last character drag ended. */
   const outcome = (value: string) => { if (navigator.webdriver) canvas.dataset.dropOutcome = value; };
+  /** A character dropped on a lit door: the iris closes on that door. The drop unlights the door just before it dispatches, so the light is kept until that turn ends. */
+  let lit: ReturnType<typeof doorBox> | null = null;
+  const crossing = (action: NeighborhoodAction) => { if (lit && action.type === 'transport') deps.place.next({ kind: 'door', at: deps.place.screen({ x: lit.x + lit.width / 2, y: lit.y + lit.height / 2 }) }); };
   return bindInput(canvas, () => scene.visibleWorld(), play.select, point => deps.dispatch({ type: 'move', actor: deps.selected(), point }), {
     walk: point => { deps.view()?.resume(); const target = outdoorAt(deps.town(), point); if (target) square.touch(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch: deps.dispatch, wardrobe: deps.wardrobe, toggleWardrobe: deps.toggleWardrobe, selected: deps.selected, poke: deps.poke, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point, true), roll: (item, point, velocity) => scene.throwBall(item, point, velocity), outcome, choose: play.choose, settle: play.settle,
   }, { enabled: deps.building, gesture: createBuildGesture(deps.state, deps.choosePiece, deps.previewBuild, deps.dropPiece, point => scene.pickPiece(point), () => screenScale(canvas)) }, {
@@ -43,9 +49,9 @@ export function wireInput(current: Phaser.Game, deps: InputWiring) {
     } },
     camera: deps.camera, setCamera: deps.moveCamera,
     building: deps.building, wardrobe: deps.wardrobe, dispatch: deps.dispatch,
-    pan: (room, fraction) => scene.pan(room, fraction),
+    pan: (room, fraction) => scene.pan(room, fraction), slide: (room, fraction) => deps.place.next({ kind: 'swipe', during: ms => scene.finishSlide(room, fraction, ms) }),
     transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
     progress: deps.progress,
-  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: deps.townDispatch, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress,
-    glow: door => scene.glowDoor(door && doorBox(deps.town(), door)), outcome }));
+  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: action => { crossing(action); deps.townDispatch(action); }, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress,
+    glow: door => { const box = door && doorBox(deps.town(), door); scene.glowDoor(box); if (box) lit = box; else { const was = lit; queueMicrotask(() => { if (lit === was) lit = null; }); } }, outcome }));
 }

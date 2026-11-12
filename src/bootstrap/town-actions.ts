@@ -10,7 +10,9 @@ interface TownDeps {
   commit: (town: Neighborhood) => void;
   /** Makes `town` current and saves it when only what grows with time changed: the world, edits, walks and the scene stay; the garden redraws. */
   quiet: (town: Neighborhood) => void;
-  camera: () => number; setCamera: (x: number) => void; refresh: () => void;
+  camera: () => number; setCamera: (x: number) => void;
+  /** Repaints; `then` runs once the new place is painted (after the cover closes, W3L-04). */
+  refresh: (then?: () => void) => void;
   /** Before a neighborhood action: balls settle and every game, walk, drag, input and the wardrobe close. */
   interrupt: () => void;
   /** Before an undo or redo: the game, walk and input stop. */
@@ -38,10 +40,10 @@ export function townActions(deps: TownDeps) {
     const settle = deps.scene.captureMotion();
     const previous = town.location; const exitCamera = streetCamera(town);
     deps.commit(next);
-    if (next.location.kind === 'street' && previous.kind === 'interior') deps.setCamera(exitCamera);
-    if (next.location.kind !== 'street') deps.setCamera(0);
-    deps.refresh();
-    if (action.type === 'visit' || action.type === 'transport') { deps.scene.outdoor.arrive(previous, comer(action)); deps.cue('door'); }
+    deps.setCamera(next.location.kind !== 'street' ? 0 : previous.kind === 'interior' ? exitCamera : deps.camera());
+    const through = action.type === 'visit' || action.type === 'transport';
+    deps.refresh(through ? () => deps.scene.outdoor.arrive(previous, comer(action)) : undefined);
+    if (through) deps.cue('door');
     if (action.type === 'construct') deps.structure.open(next.nextBuilding - 1);
     if (action.type === 'outdoor') { settle(); deps.scene.outdoor.reaction(action); }
   }

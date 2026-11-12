@@ -130,6 +130,10 @@ export class PlayScene extends Phaser.Scene {
     if (this.sliding?.room !== room) { this.paint(this.world, this.selected); this.sliding = slidePreview(this, this.world, room, this.selected, this.building); }
     placeSlide(this.sliding, fraction, logicalWidth(this));
   }
+  /** Finishes a let-go swipe: the preview slides the rest of the way in `ms` (the next room is painted after it). */
+  finishSlide(room: RoomId, from: number, ms: number) {
+    const slide = { t: from }; this.tweens.add({ targets: slide, t: Math.sign(from) || 1, duration: ms, onUpdate: () => this.pan(room, slide.t) });
+  }
   previewTransfer(room: RoomId | null, actor: ActorId | null, item: ItemId | null, point: Point | null) {
     if (!this.ready) return;
     if (!room || !point) { if (this.transferRoom) this.paint(this.world, this.selected); return; }

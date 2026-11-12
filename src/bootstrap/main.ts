@@ -18,6 +18,8 @@ import { structureControls } from '../presentation/structure-controls';
 import { streetWidth } from '../domain/neighborhood-geometry';
 import { walking } from '../presentation/walking';
 import { goTo } from './go';
+import { placeChange } from './place-change';
+import { doorFront } from '../presentation/neighborhood-doors';
 import { doorWalk } from './door-walk';
 import { uiText } from '../content/ui-text';
 import { localWorld, storeWorld } from '../domain/neighborhood';
@@ -47,6 +49,7 @@ import '../presentation/dock-layout.css';
 import '../presentation/kitchen.css';
 import '../presentation/missing-bubble.css';
 import '../presentation/drawer-ring.css';
+import '../presentation/place-transition.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 
@@ -100,8 +103,9 @@ const walker = walking({ reject: point => feedback.refuse('path', refusal('walk'
 const games = childGames(root, { world: () => state, selected: () => selected, prepare: () => { walker.cancel(); cancelInput(); closeWardrobe(); shell.close(); view?.resume(); }, stopWalk: () => walker.cancel(), walk: walker.start, commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), preview: value => scene.previewGame(value), follow: (point, slack) => view?.follow(point, undefined, slack),
   select: id => play.select(id), drop: actor => dispatch({ type: 'drop', actor }, false), stroll: moves => scene.stroll(moves), react: (id, pose, line) => { scene.poke(id, pose, line); feedback.sound.cue(pose === 'goof' ? 'poke' : 'cheer'); } });
 cancelGame = games.cancel;
+const place = placeChange({ root, town: () => town, state: () => state, selected: () => selected });
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
-const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: townDispatch, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
+const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (action.type === 'transport') place.next({ kind: 'door', at: place.screen(doorFront(town, action.location)) }); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
@@ -141,7 +145,7 @@ function newBuilding() {
   root.querySelector<HTMLDialogElement>('#room-dialog')!.close();
   neighborhood.choosePlot();
 }
-const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh: () => refresh(), scene, cue: sound => feedback.sound.cue(sound),
+const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh: then => refresh(then), scene, cue: sound => feedback.sound.cue(sound),
   commit: next => { town = next; state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); },
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
@@ -164,7 +168,7 @@ let stale = false;
 const { refresh: repaint, frameScene, renderControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
   panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); } });
-function refresh() { stale = false; repaint(); }
+function refresh(then?: () => void) { stale = false; place.refresh(repaint, then); }
 function dispatch(action: Action, interrupt = true) {
   if (interrupt) { cancelGame(); walker.cancel(); }
   if ('actor' in action) root.classList.add('actor-chosen');
@@ -196,7 +200,7 @@ void loadFonts().then(() => { game = new Phaser.Game({
     cancelInput = wireInput(current, { root, scene, view: () => view, state: () => state, town: () => town, selected: () => selected, building: () => building, wardrobe: () => wardrobeOpen,
       camera: () => camera, setCamera: x => { camera = x; }, moveCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building); outside(town, selected, camera, building); navigationBar(); },
       play, square, walker, townActs, dispatch, townDispatch, toggleWardrobe, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, choosePiece: id => { selectedPiece = id; refresh(); },
-      previewBuild, dropPiece, progress, plot: neighborhood.plot, enter: enterDoor });
+      previewBuild, dropPiece, progress, plot: neighborhood.plot, enter: enterDoor, place });
   } },
 }); });
 bindKeyboard(root, { building: () => building, state: () => state, piece: () => selectedPiece, actor: () => state.actors.find(a => a.id === selected)!,

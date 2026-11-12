@@ -26,3 +26,14 @@ it('o tick que faz uma planta crescer só troca o bairro em silêncio: sem repin
   expect(deps.commit).not.toHaveBeenCalled(); expect(deps.refresh).not.toHaveBeenCalled(); expect(deps.interrupt).not.toHaveBeenCalled();
   expect(actions.canUndo()).toBe(false);
 });
+
+it('atravessar uma porta: a porta balança e quem veio sai andando só depois que o novo lugar foi pintado (sob a cobertura da transição)', () => {
+  const { actions, deps } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
+  let painted: (() => void) | undefined;
+  deps.refresh.mockImplementation((then?: () => void) => { painted = then; });
+  actions.dispatch({ type: 'transport', actor: 'bia', location: { kind: 'street' }, point: { x: 400, y: 480 } });
+  const outdoor = (deps.scene as unknown as { outdoor: { arrive: ReturnType<typeof vi.fn> } }).outdoor;
+  expect(outdoor.arrive).not.toHaveBeenCalled(); expect(deps.cue).toHaveBeenCalledWith('door');
+  painted!();
+  expect(outdoor.arrive).toHaveBeenCalledWith({ kind: 'interior', building: 1, room: 'sala' }, 'bia');
+});

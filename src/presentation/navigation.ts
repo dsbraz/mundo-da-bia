@@ -1,5 +1,5 @@
 import type { Point, RoomId } from '../domain/types';
-export interface NavigationActions { width: () => number; neighbor: (direction: 'left' | 'right') => RoomId | undefined; preview: (room: RoomId | null, fraction: number) => void; visit: (room: RoomId) => void }
+export interface NavigationActions { width: () => number; neighbor: (direction: 'left' | 'right') => RoomId | undefined; preview: (room: RoomId | null, fraction: number) => void; visit: (room: RoomId, fraction?: number) => void }
 export function navigation(actions: NavigationActions) {
   let active: { id: number; x: number } | null = null;
   function cancel() { active = null; actions.preview(null, 0); }
@@ -14,7 +14,8 @@ export function navigation(actions: NavigationActions) {
     end(id: number, point: Point) {
       if (active?.id !== id) return;
       const delta = point.x - active.x; const room = actions.neighbor(delta < 0 ? 'right' : 'left');
-      cancel(); if (room && Math.abs(delta) >= actions.width() / 4) actions.visit(room);
+      // Going: the preview stays where the finger left it, and the visit finishes the slide; staying: the preview springs back.
+      if (room && Math.abs(delta) >= actions.width() / 4) { active = null; actions.visit(room, Math.max(-1, Math.min(1, delta / actions.width()))); } else cancel();
     }, cancel,
   };
 }

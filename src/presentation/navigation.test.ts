@@ -9,7 +9,7 @@ it('acompanha o dedo após 12px, confirma 25% e não repete no segundo soltar', 
   const { gesture, preview, visit } = setup(); gesture.start(1, { x: 700, y: 100 });
   gesture.update(1, { x: 689, y: 100 }); expect(preview).not.toHaveBeenCalled();
   gesture.update(1, { x: 600, y: 100 }); expect(preview).toHaveBeenLastCalledWith('quarto', -.1);
-  gesture.end(1, { x: 450, y: 100 }); expect(visit).toHaveBeenCalledExactlyOnceWith('quarto');
+  gesture.end(1, { x: 450, y: 100 }); expect(visit).toHaveBeenCalledExactlyOnceWith('quarto', -0.25);
   gesture.end(1, { x: 400, y: 100 }); expect(visit).toHaveBeenCalledTimes(1);
 });
 it('retorna em gesto incompleto, cancelamento e extremos sem circular', () => {

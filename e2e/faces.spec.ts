@@ -26,7 +26,8 @@ test('entrar num cômodo mostra surpresa por cerca de 1,2 s', async ({ page }) =
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
   await ready(page); await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
   await visitNeighbor(page); await bringHere(page);
-  await page.clock.runFor(50);
+  // W3L-04: the new room is painted once the fade has covered the old one (180 ms); the surprise starts with it.
+  await page.clock.runFor(250);
   await expect.poll(async () => (await faces(page)).bia).toBe('surprise');
   await page.screenshot({ path: 'reports/faces-room-surprise.png' });
   await page.clock.runFor(1000); expect((await faces(page)).bia).toBe('surprise');
@@ -37,6 +38,8 @@ test('sair para a rua pela porta também surpreende quem chegou', async ({ page 
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
   await ready(page); await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
+  // W3L-04: the street is painted under the fade, once it has covered the room (180 ms).
+  await page.clock.runFor(200);
   await expect(page.locator('canvas')).toHaveAttribute('data-street', 'true');
   await page.clock.runFor(50);
   await expect.poll(async () => (await faces(page)).bia).toBe('surprise');

@@ -32,7 +32,7 @@ export function bindInput(canvas: HTMLCanvasElement, getState: () => World, sele
   const point = (event: Pick<PointerEvent, 'clientX' | 'clientY'>): Point => screenToWorld(canvas, { x: event.clientX, y: event.clientY });
   canvas.addEventListener('pointerdown', event => {
     wheel?.cancel(); play?.hover?.(null);
-    if (router ? router.start(event.pointerId, point(event), pixels(event)) : current().start(event.pointerId, point(event))) { canvas.setPointerCapture(event.pointerId); canvas.parentElement?.closest('#app')?.classList.add('gesturing'); }
+    if (router ? router.start(event.pointerId, point(event), pixels(event)) : current().start(event.pointerId, point(event))) { capture(canvas, event.pointerId); canvas.parentElement?.closest('#app')?.classList.add('gesturing'); }
   });
   canvas.addEventListener('pointermove', event => {
     if (!event.buttons) play?.hover?.(point(event));
@@ -63,3 +63,5 @@ function within(event: PointerEvent, box: DOMRect) {
   const clientX = Math.max(box.left, Math.min(box.right - 1, event.clientX)), clientY = Math.max(box.top, Math.min(box.bottom - 1, event.clientY));
   return { clientX, clientY, same: clientX === event.clientX && clientY === event.clientY };
 }
+/** A replayed tap (held during a place change, W3L-04) has no live pointer to capture. */
+function capture(canvas: HTMLCanvasElement, id: number) { try { canvas.setPointerCapture(id); } catch { /* not a live pointer */ } }

@@ -14,6 +14,8 @@ export interface HouseInput {
   camera?: () => number; setCamera?: (x: number) => void;
   building: () => boolean; wardrobe: () => boolean; dispatch: (action: Action) => void;
   pan: (room: RoomId | null, fraction: number) => void;
+  /** A swipe let go past a quarter: the slide finishes before the next room is painted (W3L-04). */
+  slide?: (room: RoomId, fraction: number) => void;
   transfer: (room: RoomId | null, actor: ActorId | null, item: ItemId | null, point: Point | null) => void;
   progress: (value: number, side: 'left' | 'right') => void;
 }
@@ -21,7 +23,7 @@ type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, 
 export function houseInput(canvas: HTMLCanvasElement, state: () => World, current: () => Gesture, actions: HouseInput) {
   let active: { id: number; gesture: Gesture; actor: ActorId | null; item: ItemId | null } | null = null;
   const width = () => canvas.parentElement?.getBoundingClientRect().width ?? canvas.getBoundingClientRect().width;
-  const nav = navigation({ width, neighbor: d => state().streetWidth ? undefined : neighbor(state(), d), preview: actions.pan, visit: room => actions.dispatch({ type: 'room', room }) });
+  const nav = navigation({ width, neighbor: d => state().streetWidth ? undefined : neighbor(state(), d), preview: actions.pan, visit: (room, fraction) => { actions.slide?.(room, fraction ?? 0); actions.dispatch({ type: 'room', room }); } });
   const street = streetPan(() => actions.camera?.() ?? 0, x => actions.setCamera?.(x), () => (state().streetWidth ?? 1000) - 1000, width);
   const navigationGesture = { start: (id: number, p: Point) => (state().streetWidth ? street : nav).start(id, p), update: (id: number, p: Point) => (state().streetWidth ? street : nav).update(id, p), end: (id: number, p: Point) => (state().streetWidth ? street : nav).end(id, p), cancel: () => { street.cancel(); nav.cancel(); } };
   const position = (p: Point, room: RoomId): Point => ({ x: Math.max(60, Math.min(roomWidth(state(), room) - 60, p.x / width() * roomWidth(state(), room))), y: Math.max(floorTop(state()), Math.min(540, p.y)) });
