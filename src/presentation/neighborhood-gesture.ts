@@ -2,7 +2,7 @@ import { plotAt } from '../domain/neighborhood-geometry';
 import type { Neighborhood, NeighborhoodAction, Location } from '../domain/neighborhood-types';
 import type { ActorId, ItemId, Point, World } from '../domain/types';
 import type { VisibleWorld } from './targets';
-import { grabActor, sourceAt } from './targets';
+import { actorAt, grabActor, sourceAt } from './targets';
 import { doorAt, doorDropAt, destinationPoint, type Door } from './neighborhood-doors';
 import { onFloor } from './floor-band';
 type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, p: Point) => void; end: (id: number, p: Point) => void; cancel: () => void; transferring?: () => boolean };
@@ -18,7 +18,7 @@ interface Actions {
   /** A character let go on a door went through it. */
   outcome?: (value: string) => void;
 }
-interface Active { id: number; start: Point; offset: Point; actor?: ActorId | undefined; item?: ItemId | undefined; destination?: Location | undefined; ready: boolean; claimed: boolean; door?: Door | undefined }
+interface Active { id: number; start: Point; offset: Point; near?: ActorId | undefined; actor?: ActorId | undefined; item?: ItemId | undefined; destination?: Location | undefined; ready: boolean; claimed: boolean; door?: Door | undefined }
 export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
   let active: Active | null = null, timer: ReturnType<typeof setInterval> | undefined;
   function stop() { clearInterval(timer); timer = undefined; actions.progress(0); }
@@ -44,7 +44,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
   function update(id: number, point: Point) {
     if (active?.id !== id || active.ready) return;
     base.update(id, point);
-    if (active.actor) { light(active, point); return; }
+    if (adopted(active, point)) { light(active, point); return; }
     if (!active.item) return;
     const door = doorAt(actions.town(), point);
     if (JSON.stringify(door?.location) === JSON.stringify(active.destination)) return;
@@ -61,8 +61,9 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
     start(id, point) {
       if (active) return false;
       const world = actions.world(), token = sourceAt(world, point, false);
-      const found = token ? undefined : grabActor(world, point), actor = found?.id;
-      active = { id, start: point, offset: found ? { x: found.x - point.x, y: found.y - point.y } : { x: 0, y: 0 }, ready: false, claimed: claimed(world, point, token), ...(actions.building() ? {} : { actor, item: loose(world, token) }) };
+      // Off the drawing but inside a body's capsule: the character is taken only if the finger moves (a tap stays a tap).
+      const exact = token ? undefined : actorAt(world, point), found = exact ?? (token ? undefined : grabActor(world, point)), actor = exact?.id;
+      active = { id, start: point, offset: found ? { x: found.x - point.x, y: found.y - point.y } : { x: 0, y: 0 }, ready: false, claimed: claimed(world, point, token), ...(actions.building() ? {} : { actor, near: found?.id, item: loose(world, token) }) };
       if (startBase(active, point, actions)) base.start(id, point);
       return true;
     }, update,
@@ -89,12 +90,17 @@ function loose(world: World, token: ReturnType<typeof sourceAt>): ItemId | undef
 }
 
 const moved = (active: Active, point: Point) => Math.hypot(point.x - active.start.x, point.y - active.start.y) >= 12;
+/** The dragged character: touched, or near-missed and moved by the finger. */
+function adopted(active: Active, point: Point) {
+  if (!active.actor && active.near && moved(active, point)) active.actor = active.near;
+  return !!active.actor;
+}
 function dropActor(active: Active, point: Point, actions: Actions) { return !!active.actor && moved(active, point) && !!actions.drop?.(active.actor, point); }
 
 function backgroundTap(active: Active, point: Point) { return !active.claimed && !active.actor && !active.item && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12; }
 
 function startBase(active: Active, point: Point, actions: Actions) {
-  return actions.building() || active.claimed || !doorAt(actions.town(), point) || active.actor || active.item;
+  return actions.building() || active.claimed || !doorAt(actions.town(), point) || active.near || active.item;
 }
 
 /** On the street, Create mode picks any plot; Play mode only answers on a free plot's ground and sign. */

@@ -1,5 +1,5 @@
 import { contextScale, visualContext } from './pose';
-import type { Action, ActorId, ItemId, Point, RoomId, World } from '../domain/types';
+import type { Action, Actor, ActorId, ItemId, Point, RoomId, World } from '../domain/types';
 import { furnitureAt, seatAt, surfaceAt, usableAt, wardrobeHit } from './furniture-targets';
 import { actorAt, grabActor, sourceAt } from './targets';
 import type { DragPreview, DragToken } from './targets';
@@ -24,7 +24,9 @@ export interface PlayInput {
   /** How a character's drag ended (`moved`, `sat`, `crossed`, `missing:<need>`, `cancelled:<why>`), for the tests. */
   outcome?: (value: string) => void;
 }
-interface Active { samples: { t: number; x: number; y: number }[]; again: boolean; dragged: boolean; scale: Point; pointer: number; room: RoomId; token: DragToken | undefined; actor: ActorId | undefined; offset: Point; start: Point; last: Point; chosen?: boolean }
+interface Active { samples: { t: number; x: number; y: number }[]; again: boolean; dragged: boolean; scale: Point; pointer: number; room: RoomId; token: DragToken | undefined; actor: ActorId | undefined; offset: Point; start: Point; last: Point; chosen?: boolean;
+  /** A near miss (inside a body's capsule, off the drawing): taken only if the finger drags; a tap there stays a tap on the floor. */
+  near?: Actor | undefined }
 export function createPlayGesture(getState: () => World, select: (id: ActorId) => void, move: (p: Point) => void, play?: PlayInput) {
   let active: Active | null = null;
   /** With `why`, a character's drag that stops here is told as `cancelled:<why>`. */
@@ -44,6 +46,7 @@ export function createPlayGesture(getState: () => World, select: (id: ActorId) =
       trackDrag(active, point);
       if (!active.dragged) return;
       sample(active, point, play);
+      adopt(active, select, play);
       claimDrag(active, select, play);
       if (active.token) play?.preview({ ...active.token, point });
       else if (active.actor) {
@@ -100,7 +103,7 @@ function flick(id: ItemId, floor: Point, state: World, play: PlayInput, samples:
   play.roll(id, floor, velocity); return true;
 }
 function tapFurniture(state: World, point: Point, token: DragToken | undefined, play: PlayInput): boolean {
-  if (token || grabActor(state, point)) return false;
+  if (token || actorAt(state, point)) return false;
   if (play.interact) return play.interact(point);
   if (wardrobeHit(state, point)) { play.toggleWardrobe(); return true; }
   const target = furnitureAt(state, point);
@@ -129,13 +132,22 @@ function tapToken(active: Active, play?: PlayInput) {
 /** A touch on the already selected actor stays a possible poke: selection and walk are untouched until a drag starts. */
 function begin(pointer: number, state: World, point: Point, select: (id: ActorId) => void, play?: PlayInput): Active {
   const token = play && sourceAt(state, point, play.wardrobe());
-  const actor = token ? undefined : grabActor(state, point);
+  const actor = token ? undefined : actorAt(state, point);
   const active = startDrag(pointer, state, point, token, actor);
+  active.near = nearMiss(state, point, token || actor);
   active.again = isSelected(actor, play);
   active.scale = play?.screenScale?.() ?? { x: 1, y: 1 };
   if (token) interruptWalk(play, true);
   else if (actor && !active.again) { interruptWalk(play, true); choose(active, actor.id, select, play); }
   return active;
+}
+function nearMiss(state: World, point: Point, taken: unknown) { return taken ? undefined : grabActor(state, point); }
+/** The finger that missed the drawing by a little drags: the near character is taken as if touched where the drag began. */
+function adopt(active: Active, select: (id: ActorId) => void, play?: PlayInput) {
+  const near = active.near; if (!near || active.actor || active.token) return;
+  active.near = undefined; active.actor = near.id; active.last = near; active.offset = { x: near.x - active.start.x, y: near.y - active.start.y };
+  interruptWalk(play, true);
+  if (!isSelected(near, play)) choose(active, near.id, select, play);
 }
 function isSelected(actor: { id: ActorId } | undefined, play?: PlayInput) { return !!actor && play?.selected?.() === actor.id; }
 function claimDrag(active: Active, select: (id: ActorId) => void, play?: PlayInput) {

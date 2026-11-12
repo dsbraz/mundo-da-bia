@@ -40,3 +40,15 @@ it('um arraste interrompido por Escape conta como cancelado, e um movimento comu
   gesture.start(2, { x: 520, y: 440 }); gesture.update(2, { x: 600, y: 440 }); gesture.end(2, { x: 600, y: 440 });
   expect(outcome).toHaveBeenLastCalledWith('moved'); expect(move).toHaveBeenCalledExactlyOnceWith({ x: 600, y: 530 });
 });
+it('um toque perto do corpo, fora do desenho, continua sendo um toque no chão; só o arraste leva a personagem', () => {
+  // 20 px right of Bia's body box: inside the grab capsule, off the drawing.
+  const state = { ...initialWorld(), grabSlack: 28 }, near = { x: 520 + 43 + 15, y: 400 };
+  const walk = vi.fn(), move = vi.fn(), select = vi.fn();
+  const play = { dispatch: vi.fn(), preview: vi.fn(), previewActor: vi.fn(), wardrobe: () => false, toggleWardrobe: vi.fn(), walk, selected: () => 'leo' as const };
+  const tapGesture = createPlayGesture(() => state, select, move, play);
+  tapGesture.start(1, near); tapGesture.end(1, near);
+  expect(walk).toHaveBeenCalledWith(near); expect(select).not.toHaveBeenCalled();
+  const dragGesture = createPlayGesture(() => state, select, move, play);
+  dragGesture.start(2, near); dragGesture.update(2, { x: near.x - 60, y: near.y }); dragGesture.end(2, { x: near.x - 60, y: near.y });
+  expect(select).toHaveBeenCalledWith('bia'); expect(move).toHaveBeenCalledWith({ x: 460, y: 530 });
+});
