@@ -8,6 +8,8 @@ import { needsOf, relieve } from './needs';
 export function wake(actor: Pick<Actor, 'resting'>): Pick<Actor, 'resting'> & Partial<Pick<Actor, 'fed'>> {
   return actor.resting ? { resting: false, fed: false } : { resting: false };
 }
+/** The everyday snack or the cat's fish: fed, with hunger −30 (§3.1). */
+export function snack(actor: Pick<Actor, 'needs'>): Pick<Actor, 'fed' | 'needs'> { return { fed: true, needs: relieve(needsOf(actor), 'lanche') }; }
 /** The rest button: falls asleep keeping the meal, or wakes ready to eat again. */
 export function toggleRest(actor: Pick<Actor, 'resting'>): Partial<Actor> { return actor.resting ? wake(actor) : { resting: true }; }
 

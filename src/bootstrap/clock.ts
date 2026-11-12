@@ -1,7 +1,8 @@
 import { dayIndex, eventOfDay, phaseAt, type Phase } from '../domain/clock';
 /** The real clock, as a port the app can replace: the domain only ever gets the time through actions. */
-export interface ClockPort { now(): number; today(): { y: number; m: number; d: number }; every(ms: number, fn: () => void): () => void; onVisible(fn: () => void): () => void }
+export interface ClockPort { hidden?(): boolean; now(): number; today(): { y: number; m: number; d: number }; every(ms: number, fn: () => void): () => void; onVisible(fn: () => void): () => void }
 export const realClock: ClockPort = {
+  hidden: () => document.visibilityState === 'hidden',
   now: () => Date.now(),
   today: () => { const date = new Date(); return { y: date.getFullYear(), m: date.getMonth() + 1, d: date.getDate() }; },
   every: (ms, fn) => { const id = setInterval(fn, ms); return () => clearInterval(id); },
@@ -25,6 +26,8 @@ export function playTime(clock: ClockPort) {
     mode(next: boolean) { settle(clock.now()); playing = next; },
     take(now: number): { elapsed: number; phase: Phase } {
       settle(now);
+      // A hidden tab's throttled timer still ticks: its time waits and counts at most 60 s on the way back.
+      if (clock.hidden?.()) return { elapsed: 0, phase: phaseAt(session, event) };
       const elapsed = Math.min(pending, 60_000), phase = phaseAt(session, event);
       pending = 0; session += elapsed;
       return { elapsed, phase };
