@@ -34,5 +34,7 @@ export function playTime(clock: ClockPort) {
     },
     /** The phase shown now (W3L-11): that of the play time already taken. */
     phase: (): Phase => phaseAt(session, event),
+    /** The play time taken so far (W3L-13: the rhythm of the characters' own acts). */
+    played: () => session,
   };
 }

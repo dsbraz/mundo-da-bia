@@ -1,6 +1,7 @@
 import { localWorld, neighborhoodAction, undoTo } from '../domain/neighborhood';
 import type { LiveAction, NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
 import type { ActorId } from '../domain/types';
+import type { Game } from '../domain/tastes';
 import { streetExit } from '../presentation/street-opening';
 import type { PlayScene } from '../presentation/scene';
 
@@ -24,10 +25,15 @@ interface TownDeps {
 }
 /** Who came along through a door, if anyone. */
 const comer = (action: NeighborhoodAction) => action.type === 'transport' ? action.actor : undefined;
+/** Where each awake character stands (place, spot and seat), to tell who stayed still between two ticks (W3L-13). */
+function stances(town: Neighborhood): Map<ActorId, string> {
+  return new Map(town.actors.filter(a => !a.resting).map(a => [a.id, JSON.stringify([a.location, a.room, a.x, a.y, a.seat])]));
+}
 /** Neighborhood actions with their undo history (the last 50), camera on the street and the scene's answer. */
 export function townActions(deps: TownDeps) {
   let past: Neighborhood[] = [], future: Neighborhood[] = [];
   let opening: ReturnType<typeof streetExit> = { camera: 0, spans: [], people: [] };
+  let stood = new Map<ActorId, string>();
   function remember() { past = [...past.slice(-49), deps.town()]; future = []; }
   function streetCamera(previous: Neighborhood) {
     const where = previous.location;
@@ -68,7 +74,14 @@ export function townActions(deps: TownDeps) {
   function tick(now: number, life?: Omit<LiveAction, 'type'>) {
     const next = neighborhoodAction(deps.town(), { type: 'tick', now }); if (next !== deps.town()) deps.quiet(next);
     if (!life) return;
-    const lived = neighborhoodAction(deps.town(), { type: 'live', ...life }); if (lived !== deps.town()) deps.feel(lived);
+    // Boredom grows for whoever stands where she stood at the last tick (the first tick has nothing to compare with).
+    const here = stances(deps.town()), idle = life.idle ?? [...here].filter(([id, at]) => stood.get(id) === at).map(([id]) => id);
+    stood = here;
+    const lived = neighborhoodAction(deps.town(), { type: 'live', ...life, idle }); if (lived !== deps.town()) deps.feel(lived);
   }
-  return { dispatch, undo, remember, preview, tick, apply, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
+  /** `actor` plays `game` (W3L-13): only the needs change, quietly. */
+  function enjoy(actor: ActorId, game: Game) {
+    const next = neighborhoodAction(deps.town(), { type: 'enjoy', actor, game }); if (next !== deps.town()) deps.feel(next);
+  }
+  return { dispatch, undo, remember, preview, tick, apply, enjoy, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

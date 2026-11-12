@@ -57,6 +57,7 @@ import { landscapeOnly } from '../presentation/landscape-only';
 import '../presentation/place-transition.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
+import { selfCareWiring } from './self-care';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -106,13 +107,15 @@ const editor = createEditorControls(root, {
 const walker = walking({ reject: point => feedback.refuse('path', refusal('walk', ''), { x: point.x, y: point.y - 40 }), state: () => state, selected: () => selected, preview: (id, point) => { scene.previewActor(id, point); if (point) view?.follow({ ...point, x: point.x - camera }); },
   commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), face: (actor, point) => scene.face(actor, point), hint: () => {} });
 const games = childGames(root, { world: () => state, selected: () => selected, prepare: () => { walker.cancel(); cancelInput(); closeWardrobe(); shell.close(); view?.resume(); }, stopWalk: () => walker.cancel(), walk: walker.start, commit: (actor, point) => dispatch({ type: 'move', actor, point }, false), preview: value => scene.previewGame(value), follow: (point, slack) => view?.follow(point, undefined, slack),
-  select: id => play.select(id), drop: actor => dispatch({ type: 'drop', actor }, false), stroll: moves => scene.stroll(moves), react: (id, pose, line) => { scene.poke(id, pose, line); feedback.sound.cue(pose === 'goof' ? 'poke' : 'cheer'); } });
+  select: id => play.select(id), drop: actor => dispatch({ type: 'drop', actor }, false), stroll: moves => scene.stroll(moves), react: (id, pose, line) => { scene.poke(id, pose, line); feedback.sound.cue(pose === 'goof' ? 'poke' : 'cheer'); },
+  played: (id, kind) => townActs.enjoy(id, kind === 'rope' ? 'corda' : 'amarelinha') });
 cancelGame = games.cancel;
 const place = placeChange({ root, town: () => town, state: () => state, selected: () => selected });
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
 const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (action.type === 'transport') place.next({ kind: 'door', at: place.screen(doorFront(town, action.location)) }); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
-scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
-const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback });
+// A kicked or thrown ball came to rest: whoever is selected played ball (W3L-13).
+scene.ballRest = (item, point) => { dispatch({ type: 'place', item, point }, false); townActs.enjoy(selected, 'bola'); };
+const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback, enjoy: id => townActs.enjoy(id, 'regar') });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
 const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), serve: action => dispatch(action, false), looks: openLooks, grimace: (id, mirror) => { scene.poke(id, mirrorFaces[id], ''); const span = mirrorSpan(state, id, mirror); if (span) view?.reveal(span); } });
 const outside = outdoorControls(root, square.use);
@@ -162,7 +165,8 @@ const remember = () => townActs.remember(), streetUndo = (forward: boolean) => t
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
 /** Session time in Brincar (Criar pauses life, §3.1). */
 const life = playTime(realClock);
-let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); scene.daylight(life.phase()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
+const selfCare = selfCareWiring({ root, state: () => state, selected: () => selected, location: () => town.location, stroll: moves => scene.stroll(moves), dispatch: action => dispatch(action, false) });
+let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); scene.daylight(life.phase()); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
   scene.previewLayout(preview.world); scene.placementHint(action?.type === 'move' ? action.id : null, preview.invalid);
@@ -191,12 +195,17 @@ function dispatch(action: Action, interrupt = true) {
   if (action.type === 'room' || action.type === 'travel') { cancelInput(); closeWardrobe(); }
   const settle = scene.captureMotion();
   const before = state, result = transition(state, action);
-  state = result.state;
+  state = result.state; playedWith(action, before, state);
   edits = history(state); selectedPiece = null;
   // A refusal (a `missing` event alone) changes nothing, so nothing is saved.
   if (state !== before) persist();
   refresh();
   settle(); feedback.events(result.events);
+}
+/** Turning the piano or the TV on is playing (W3L-13). */
+function playedWith(action: Action, before: typeof state, after: typeof state) {
+  const piece = action.type === 'use' ? after.layout.pieces.find(p => p.id === action.id && p.active && (p.kind === 'piano' || p.kind === 'tv')) : undefined;
+  if (piece && after !== before) queueMicrotask(() => townActs.enjoy(selected, piece.kind as 'piano' | 'tv'));
 }
 let game: Phaser.Game | undefined;
 void loadFonts().then(() => { game = new Phaser.Game({

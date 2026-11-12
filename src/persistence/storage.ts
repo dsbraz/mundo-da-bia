@@ -89,3 +89,11 @@ export function loadDrawerOpen(storage?: StoragePort): boolean {
 export function saveDrawerOpen(open: boolean, storage?: StoragePort): boolean {
   try { (storage ?? globalThis.localStorage).setItem(drawerKey, open ? 'open' : 'closed'); return true; } catch { return false; }
 }
+const autonomyKey = 'mundo-da-bia:autonomy';
+/** The adult switch of the characters' own acts (W3L-13): on unless an adult turned it off. */
+export function loadAutonomy(storage?: StoragePort): boolean {
+  try { return (storage ?? globalThis.localStorage).getItem(autonomyKey) !== 'off'; } catch { return true; }
+}
+export function saveAutonomy(on: boolean, storage?: StoragePort): boolean {
+  try { (storage ?? globalThis.localStorage).setItem(autonomyKey, on ? 'on' : 'off'); return true; } catch { return false; }
+}

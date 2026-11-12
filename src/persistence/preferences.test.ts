@@ -58,3 +58,18 @@ it('a gaveta da Turma começa fechada e lembra aberta ou fechada numa chave pró
   expect(loadDrawerOpen(storage([], true))).toBe(false);
   expect(saveDrawerOpen(true, storage([], true))).toBe(false);
 });
+it('o interruptor de adulto da autonomia (W3L-13) começa ligado e lembra a escolha numa chave própria, fora do save', async () => {
+  const { loadAutonomy, saveAutonomy } = await import('./storage');
+  const port = storage();
+  expect(loadAutonomy(port)).toBe(true);
+  expect(saveAutonomy(false, port)).toBe(true);
+  expect([...port.map.entries()]).toEqual([['mundo-da-bia:autonomy', 'off']]);
+  expect(loadAutonomy(port)).toBe(false);
+  saveAutonomy(true, port); expect(port.map.get('mundo-da-bia:autonomy')).toBe('on'); expect(loadAutonomy(port)).toBe(true);
+  expect(loadAutonomy(storage([['mundo-da-bia:autonomy', 'talvez']]))).toBe(true);
+  expect(loadAutonomy(storage([], true))).toBe(true);
+  expect(saveAutonomy(false, storage([], true))).toBe(false);
+  vi.stubGlobal('localStorage', storage());
+  expect(saveAutonomy(false)).toBe(true); expect(loadAutonomy()).toBe(false);
+  vi.unstubAllGlobals();
+});

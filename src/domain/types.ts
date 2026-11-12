@@ -49,6 +49,8 @@ export type Action =
   | { type: 'dress'; actor: ActorId; look: LookId }
   | { type: 'pick'; actor: ActorId; item: ItemId }
   | { type: 'give'; actor: ActorId; item: ItemId }
+  /** `actor` hugs `other` (W3L-14): dropped on someone, or the Luna caring on her own. */
+  | { type: 'hug'; actor: ActorId; other: ActorId }
   | { type: 'place'; item: ItemId; point: Point }
   | { type: 'drop' | 'feed' | 'rest'; actor: ActorId }
   | { type: 'room'; room: RoomId }
@@ -59,9 +61,9 @@ export type Action =
 export type Need = 'seat' | 'place' | 'hands' | 'food' | 'path' | 'table';
 export interface PresentationEvent {
   type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'
-    | 'cooked' | 'ate' | 'sniffed' | 'harvested' | 'served' | 'letter' | 'hint' | 'missing';
+    | 'cooked' | 'ate' | 'sniffed' | 'harvested' | 'served' | 'letter' | 'hint' | 'missing' | 'hugged';
   actor?: ActorId; piece?: number;
-  /** On `missing`: what was missing, and who already sits there (a taken seat). */
+  /** On `missing`: what was missing, and who already sits there (a taken seat); on `hugged`, who gave the hug. */
   need?: Need; by?: ActorId;
   /** On `missing`: the piece that is not in this room (a door arrow if it is elsewhere, the Create card if nowhere). */
   want?: PieceKind;

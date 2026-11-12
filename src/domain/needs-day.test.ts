@@ -47,8 +47,8 @@ it('a fome chega a precisa às 8 min 30 s e o sono da Luna às 14 min 30 s', () 
   expect(marks).toEqual({ fome: 510, sono: 870 });
 });
 
-it('pela tabela literal, quem fica parado sem brincar também se entedia: a tristeza vem às 12 min', () => {
-  expect(sadTimes(startTown(), 'luna', ['luna']).sad[0]).toBe(720);
+it('quem fica parado sem brincar também se entedia, mas a tristeza não vem antes da fome e do sono: 14 min 30 s (W3L-13)', () => {
+  expect(sadTimes(startTown(), 'luna', ['luna']).sad[0]).toBe(870);
 });
 
 it('dormir tira o sono e encerra a tristeza: na cama −25/min, no sofá −12/min; ninguém se entedia dormindo', () => {

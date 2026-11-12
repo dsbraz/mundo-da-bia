@@ -1,10 +1,11 @@
-import type { Actor, Item, Transition, World } from './types';
+import type { Actor, ActorId, Item, Transition, World } from './types';
 import type { RecipeId } from './progress';
 import type { NeighborhoodItem } from './neighborhood-types';
 import { tastes } from './tastes';
 import { needsOf, relieve } from './needs';
 import { mealSeat, seatPoint } from './seats';
 import { refuse } from './missing';
+import { roomWidth, validPoint } from './geometry';
 /** The saved `fed` flag's soft cycle: whoever wakes from a rest is ready to eat again. Hunger, sleep, boredom and the sad face are the
  *  session's needs (`needs.ts`, §3.1): they are never saved and always recover with care. */
 export function wake(actor: Pick<Actor, 'resting'>): Pick<Actor, 'resting'> & Partial<Pick<Actor, 'fed'>> {
@@ -44,4 +45,18 @@ function noTable(state: World, actor: Actor, item: Item): Transition {
   const free = item.holder !== actor.id && !state.items.some(i => i.holder === actor.id);
   const items = free ? state.items.map(i => i.id === item.id ? { ...i, holder: actor.id, room: actor.room, spot: 'floor' as const, x: actor.x, y: actor.y } : i) : state.items;
   return refuse({ ...state, items }, 'table', actor.id);
+}
+/** A hug (W3L-14, §3.1): `actor` stands beside `other` on the floor (on the side she came from; at the room's edge, the other side) and
+ *  both lose 20 of boredom, with joy, so a sad face goes at once. Never with herself or with someone in another room. */
+export function hug(state: World, actor: Actor, otherId: ActorId): Transition {
+  const other = state.actors.find(a => a.id === otherId && a.id !== actor.id && a.room === state.room);
+  if (!other) return { state, events: [] };
+  const side = actor.x >= other.x ? 1 : -1, y = Math.max(other.y, 470);
+  const x = [other.x + side * 70, other.x - side * 70].find(x => validPoint({ x, y }, roomWidth(state)))!;
+  const hugged = (a: Actor) => relieve(needsOf(a), 'abraco');
+  return {
+    state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, ...wake(a), x, y, seat: null, needs: hugged(a) }
+      : a.id === other.id ? { ...a, needs: hugged(a) } : a) },
+    events: [{ type: 'hugged', actor: actor.id, by: other.id }, { type: 'hugged', actor: other.id, by: actor.id }],
+  };
 }

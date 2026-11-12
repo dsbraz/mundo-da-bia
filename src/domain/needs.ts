@@ -1,8 +1,8 @@
 import type { Actor, ActorId, Needs } from './types';
-import type { LiveAction, Neighborhood, Resident } from './neighborhood-types';
+import type { EnjoyAction, LiveAction, Neighborhood, Resident } from './neighborhood-types';
 import type { Phase } from './clock';
 import { sameLocation } from './location';
-import { tastes } from './tastes';
+import { tastes, type Game } from './tastes';
 import { parseSeat } from './seats';
 
 /** Hunger, sleep and boredom (§3.1): pure, never saved, and only bands and the mood leave the domain (no number reaches the child). */
@@ -37,12 +37,20 @@ export function relieve(current: Needs, relief: Relief): Needs {
   return next;
 }
 
+/** A game (W3L-13): the favourite one −70 with joy, any other −40. */
+export const played = (actor: ActorId, game: Game): Relief => tastes[actor].game === game ? 'favorita' : 'brincar';
+/** `actor` plays `game`: only her needs change. */
+export function enjoy<T extends { actors: readonly Actor[] }>(place: T, action: EnjoyAction): T {
+  return { ...place, actors: place.actors.map(a => a.id === action.actor ? { ...a, needs: relieve(needsOf(a), played(a.id, action.game)) } : a) };
+}
+
 const sleepy: Record<Phase, number> = { manha: 2, tarde: 2, amanhecer: 2, entardecer: 12, noite: 12 };
-/** Per minute: hunger +6; sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +6 for the idle. */
+/** Per minute: hunger +6; sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +3.5 for the
+ *  idle (W3L-13: so that standing still all day makes nobody sad before hunger and sleep would, about 14 min). */
 function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<Need, number> {
   const pace = tastes[actor.id].pace ?? {}, of = (need: Need, base: number) => base * (pace[need] ?? 1);
   if (actor.resting) return { fome: of('fome', 6), sono: bed ? -25 : -12, tedio: 0 };
-  return { fome: of('fome', 6), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 6) : 0 };
+  return { fome: of('fome', 6), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 3.5) : 0 };
 }
 /** Whether `actor` lies on a bed (W3L-06: the seat names a piece of the building it is in). */
 function inBed(town: Neighborhood, actor: Resident): boolean {

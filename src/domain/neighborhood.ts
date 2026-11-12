@@ -13,7 +13,7 @@ import { construct, duplicateBuilding, customize, moveBuilding } from './buildin
 import { transport } from './neighborhood-transfer';
 import { cook } from './recipes';
 import { garden, gardenActions } from './garden';
-import { feel, live } from './needs';
+import { enjoy, feel, live } from './needs';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -47,6 +47,7 @@ export function neighborhoodAction(town: Neighborhood, action: NeighborhoodActio
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
     case 'transport': return transport(town, action);
     case 'live': return live(town, action);
+    case 'enjoy': return enjoy(town, action);
     default: return editModule(town, action as ModuleAction);
   }
 }

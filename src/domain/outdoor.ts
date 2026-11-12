@@ -1,6 +1,7 @@
 import type { ActorId } from './types';
 import { wake } from './care';
-import type { Neighborhood, Outdoor, OutdoorAction } from './neighborhood-types';
+import { needsOf, played, relieve } from './needs';
+import type { Neighborhood, Outdoor, OutdoorAction, Resident } from './neighborhood-types';
 export const initialOutdoor = (): Outdoor => ({ bench: null, swing: null, watered: false, mail: [], bells: [] });
 export const outdoorPoints = { bench: { x: 180, y: 445 }, swing: { x: 400, y: 445 } };
 export function releaseOutdoor(outdoor: Outdoor, actor: ActorId): Outdoor {
@@ -17,9 +18,11 @@ export function interactOutdoor(town: Neighborhood, action: OutdoorAction): Neig
   if (target === 'leave') return { ...town, outdoor };
   const point = outdoorPoints[target];
   return { ...town, outdoor: { ...outdoor, [target]: action.actor },
-    actors: town.actors.map(a => a.id === action.actor ? { ...a, ...point, seat: null, ...wake(a) } : a),
+    actors: town.actors.map(a => a.id === action.actor ? { ...a, ...point, seat: null, ...wake(a), ...swung(a, target) } : a),
     items: town.items.map(i => i.holder === action.actor ? { ...i, ...point } : i) };
 }
+/** The swing is a game (W3L-13); the bench is only a seat. */
+const swung = (actor: Resident, target: 'bench' | 'swing') => target === 'swing' ? { needs: relieve(needsOf(actor), played(actor.id, 'balanco')) } : {};
 function buildingInteraction(town: Neighborhood, action: OutdoorAction): Neighborhood {
   const id = action.building;
   if (!town.buildings.some(b => b.id === id)) return town;

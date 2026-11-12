@@ -19,6 +19,8 @@ interface Actions {
   stroll: (moves: { actor: ActorId; point: Point }[]) => void;
   /** A reaction drawn in the scene only (pose, face, bubble): cheering, clapping or a funny face. */
   react: (actor: ActorId, pose: ReactionPose, line: string) => void;
+  /** The game really began (W3L-13: playing relieves boredom). */
+  played: (actor: ActorId, kind: GameKind) => void;
 }
 export function childGames(root: HTMLElement, actions: Actions) {
   let session: GamePreview | null = null, frame = 0, pending = false, command = 0, playing: ActorId | null = null, queued: { cell: number | undefined } | null = null;
@@ -46,6 +48,7 @@ export function childGames(root: HTMLElement, actions: Actions) {
       if (command !== token) return;
       pending = false;
       session = { actor: actor.id, origin, point: origin, from: origin, game: startGame(kind, performance.now()), jumpedAt: -Infinity, feet: 2 };
+      actions.played(actor.id, kind);
       actions.preview(session); tick();
     });
   }

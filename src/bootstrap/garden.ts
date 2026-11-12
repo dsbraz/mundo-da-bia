@@ -20,6 +20,8 @@ interface GardenDeps {
   /** Commits a neighborhood the garden changed (saved and drawn), outside the undo history: what she gains only grows. */
   apply: (town: Neighborhood) => void;
   scene: Pick<PlayScene, 'outdoor'>; feedback: Pick<ReturnType<typeof sceneFeedback>, 'events' | 'refuse'>;
+  /** Whoever watered played (W3L-13: Léo's favourite). */
+  enjoy?: (actor: ActorId) => void;
 }
 /** The plaza vegetable garden (§3.3): a touch on a plot walks the selected character beside it, then plants (seed bag), waters,
  *  harvests or just sways the plant; the plaza's can waters the plot nearest to whoever is selected. */
@@ -41,7 +43,7 @@ export function gardenPlay(deps: GardenDeps) {
   }
   /** Beside the plot the drops land on its soil; from farther away (dropped somewhere else) they only fall at her feet. */
   function water(actor: ActorId, plot: PlazaPlot) {
-    deps.apply(neighborhoodAction(deps.town(), { type: 'water-plot', plot, now: deps.now() }));
+    deps.apply(neighborhoodAction(deps.town(), { type: 'water-plot', plot, now: deps.now() })); deps.enjoy?.(actor);
     const who = deps.town().actors.find(a => a.id === actor);
     deps.scene.outdoor.reaction({ type: 'outdoor', actor, target: 'water' }, standPoint(plot).facing, who && beside(who, plot) ? plantBase(plot) : undefined);
   }

@@ -2,6 +2,7 @@ import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, Room
 import type { PlazaPlot, Progress, RecipeId } from './progress';
 import type { Ingredient, Utensil } from './ingredients';
 import type { Phase } from './clock';
+import type { Game } from './tastes';
 export interface Outdoor { bench: ActorId | null; swing: ActorId | null; watered: boolean; mail: number[]; bells: number[] }
 export type OutdoorAction = { type: 'outdoor'; actor: ActorId; target: 'bench' | 'swing' | 'water' | 'leave' | 'bell' | 'mail'; building?: number };
 export type Location = { kind: 'street' } | { kind: 'interior'; building: number; room: RoomId };
@@ -33,7 +34,10 @@ export type GardenAction =
 /** Life goes on (§3.1): `elapsed` ms of session in Brincar since the last `live` (the domain counts at most 60 s), in day `phase`;
  *  boredom grows only for the `idle` (still and not playing; the domain cannot see who walks or plays). Never dispatched in Criar. */
 export type LiveAction = { type: 'live'; elapsed: number; phase: Phase; idle?: readonly ActorId[] };
+/** `actor` plays `game` (W3L-13): a game relieves boredom (never saved, like every need). */
+export type EnjoyAction = { type: 'enjoy'; actor: ActorId; game: Game };
 export type NeighborhoodAction = ModuleAction | OutdoorAction
+  | EnjoyAction
 
   | { type: 'visit'; location: Location }
   /** The time has come (ms, from the app's clock): what grows or arrives with time moves on. */

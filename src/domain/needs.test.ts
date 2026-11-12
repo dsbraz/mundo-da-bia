@@ -48,9 +48,9 @@ describe('necessidades de uma sessão (§3.1)', () => {
     const sleep = (phase: LiveAction['phase']) => needsOf(who(live(startTown(), step(60_000, { phase })), 'luna')).sono;
     expect(['manha', 'tarde', 'amanhecer', 'entardecer', 'noite'].map(p => sleep(p as LiveAction['phase']))).toEqual([2, 2, 2, 12, 12]);
   });
-  it('o tédio cresce +6/min só para quem está parado', () => {
+  it('o tédio cresce +3,5/min só para quem está parado (W3L-13)', () => {
     const town = live(startTown(), step(60_000, { idle: ['bia'] }));
-    expect([needsOf(who(town, 'bia')).tedio, needsOf(who(town, 'luna')).tedio]).toEqual([6, 0]);
+    expect([needsOf(who(town, 'bia')).tedio, needsOf(who(town, 'luna')).tedio]).toEqual([3.5, 0]);
     expect(needsOf(who(live(startTown(), step(60_000)), 'bia')).tedio).toBe(0);
   });
   it('quem está fora do lugar mostrado nunca passa de 69, e quem sai do cômodo volta a 69', () => {
@@ -70,14 +70,14 @@ describe('necessidades de uma sessão (§3.1)', () => {
   });
   it('Rui (tédio ×1,4) fica entediado antes da Bia; Léo tem sono ×1,2; os gatos sono ×1,5 e fome ×0,8', () => {
     const minute = live(startTown(), step(60_000, { phase: 'noite', idle: ['bia', 'rui', 'mimi'] }));
-    expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(8.4);
+    expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(4.9);
     expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(14.4);
     expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(24.8);
     expect(needsOf(who(minute, 'mimi')).sono).toBe(18);
-    const bored = (id: ActorId) => Array.from({ length: 20 }, (_, n) => run(startTown(), n + 1, step(30_000, { idle: [id] })))
+    const bored = (id: ActorId) => Array.from({ length: 30 }, (_, n) => run(startTown(), n + 1, step(30_000, { idle: [id] })))
       .findIndex(t => bandOf(who(t, id), 'tedio') === 'pede');
     expect(bored('rui')).toBeLessThan(bored('bia'));
-    expect([bored('rui'), bored('bia')]).toEqual([9, 13]);
+    expect([bored('rui'), bored('bia')]).toEqual([16, 22]);
   });
   it('as taxas por personalidade moram em tastes.ts', () => {
     expect(Object.fromEntries(Object.entries(tastes).filter(([, t]) => t.pace).map(([id, t]) => [id, t.pace]))).toEqual({

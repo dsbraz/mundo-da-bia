@@ -51,3 +51,23 @@ it('o tick com tempo de Brincar faz a vida seguir em silêncio, só nas necessid
   expect(deps.quiet).not.toHaveBeenCalled(); expect(deps.commit).not.toHaveBeenCalled(); expect(deps.interrupt).not.toHaveBeenCalled();
   expect(actions.canUndo()).toBe(false);
 });
+it('W3L-13: o tédio só cresce para quem ficou parado desde o tick anterior (mesmo lugar, acordado)', () => {
+  const { actions, current } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
+  const life = { elapsed: 60_000, phase: 'manha' as const };
+  const boredom = (id: string) => Math.round((current().actors.find(a => a.id === id)!.needs?.tedio ?? 0) * 100) / 100;
+  actions.tick(60_000, life);
+  // The first tick has nothing to compare with: nobody counts as still yet.
+  expect(boredom('bia')).toBe(0);
+  actions.tick(120_000, life);
+  expect([boredom('bia'), boredom('rui')]).toEqual([3.5, 4.9]);
+  const moved = current(); moved.actors = moved.actors.map(a => a.id === 'bia' ? { ...a, x: a.x + 40 } : a.id === 'leo' ? { ...a, resting: true } : a);
+  actions.tick(180_000, life);
+  expect([boredom('bia'), boredom('leo'), boredom('luna')]).toEqual([3.5, 3.5, 7]);
+});
+it('W3L-13: brincar mexe só nas necessidades, em silêncio (sem salvar nem repintar)', () => {
+  const { actions, deps, current } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
+  actions.enjoy('rui', 'bola');
+  expect(deps.feel).toHaveBeenCalledTimes(1);
+  expect(current().actors.find(a => a.id === 'rui')!.needs?.alegria).toBe(60_000);
+  expect(deps.commit).not.toHaveBeenCalled(); expect(deps.refresh).not.toHaveBeenCalled();
+});

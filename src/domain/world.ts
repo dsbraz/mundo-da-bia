@@ -9,7 +9,7 @@ import { actorIds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
-import { eat, snack, toggleRest, wake } from './care';
+import { eat, hug, snack, toggleRest, wake } from './care';
 import { usePiece } from './use';
 import { refuse } from './missing';
 
@@ -57,17 +57,21 @@ function release(state: World, actor: Actor, feeding: boolean): Transition {
     ? { ...i, ...foodHome(state, i, actor, feeding) } : i) } };
 }
 
+/** Only people change clothes. */
+function dress(state: World, actor: Actor, look: Extract<Action, { type: 'dress' }>['look']): Transition {
+  return actor.kind === 'human' ? changeActor(state, actor, { look }, 'dressed') : { state, events: [] };
+}
 function actorAction(state: World, actor: Actor, action: Action): Transition {
   switch (action.type) {
     case 'move': return moveActor(state, actor, action.point);
     case 'sit': return sit(state, actor, action.seat);
-    case 'dress':
-      return actor.kind === 'human' ? changeActor(state, actor, { look: action.look }, 'dressed') : { state, events: [] };
+    case 'dress': return dress(state, actor, action.look);
     case 'rest': return changeActor(state, actor, toggleRest(actor), 'rested');
     case 'pick': return pick(state, actor, action.item);
     case 'drop': return release(state, actor, false);
     case 'feed': return release(state, actor, true);
     case 'give': return give(state, actor, action.item);
+    case 'hug': return hug(state, actor, action.other);
     default: return { state, events: [] };
   }
 }
