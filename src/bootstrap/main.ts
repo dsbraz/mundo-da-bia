@@ -2,7 +2,8 @@ import { childGames } from '../presentation/child-games';
 import '../presentation/child-games.css';
 import { illustratedChoices } from '../presentation/illustrated-choices';
 import { outdoorControls } from '../presentation/outdoor-controls';
-import { viewport, positionTargets } from '../presentation/viewport';
+import { viewport, positionTargets, trayCover } from '../presentation/viewport';
+import { mirrorSpan } from '../presentation/mirror-reflection';
 import { wireInput } from './input-wiring';
 import { sceneRefresh } from './refresh';
 import { townActions } from './town-actions';
@@ -113,7 +114,7 @@ const enterDoor = doorWalk({ town: () => town, selected: () => selected, buildin
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
-const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), serve: action => dispatch(action, false), looks: openLooks, grimace: id => scene.poke(id, mirrorFaces[id], '') });
+const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), serve: action => dispatch(action, false), looks: openLooks, grimace: (id, mirror) => { scene.poke(id, mirrorFaces[id], ''); const span = mirrorSpan(state, id, mirror); if (span) view?.reveal(span); } });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
@@ -204,7 +205,7 @@ void loadFonts().then(() => { game = new Phaser.Game({
   scene, audio: { noAudio: true }, render: { antialias: true },
   callbacks: { postBoot: current => {
     current.canvas.setAttribute('aria-label', 'Casa de brincar. Abra o armário e arraste roupas, comida e brinquedos até os personagens.');
-    view = viewport(current.canvas, (width, height, x, y) => { scene.frame(width, height, x, y); positionTargets(root); });
+    view = viewport(current.canvas, (width, height, x, y) => { scene.frame(width, height, x, y); positionTargets(root); }, () => trayCover(root));
     frameScene();
     new ResizeObserver(() => { current.scale.getParentBounds(); current.scale.refresh(); view?.render(); }).observe(root.querySelector('#world')!);
     renderControls();

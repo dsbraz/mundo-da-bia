@@ -1,7 +1,9 @@
 import { expect, it } from 'vitest';
 import type { Piece } from '../domain/types';
 import { visualPiecePoint } from './furniture-scale';
-import { echoOf, frontOf, glassOf, reflectionPlace } from './mirror-reflection';
+import { echoOf, frontOf, glassOf, mirrorSpan, reflectionPlace } from './mirror-reflection';
+import { revealX } from './viewport';
+import { initialWorld } from '../domain/world';
 
 const mirror: Piece = { id: 9, kind: 'mirror', room: 'sala', x: 450, y: 140, color: 'original', flipped: false };
 
@@ -31,4 +33,15 @@ it('o reflexo copia a pose de 100 ms atrás (ou a mais antiga que houver)', () =
   expect(echoOf(history, 200)?.t).toBe(90);
   expect(echoOf(history, 230)?.t).toBe(130);
   expect(echoOf([at(500)], 520)?.t).toBe(500);
+});
+
+it('à frente do espelho, a vista mostra o espelho e ela inteiros, deslizando o mínimo (a bandeja aberta tira a direita da vista)', () => {
+  expect(revealX(500, 700, { left: 300, right: 600 })).toBe(500);
+  expect(revealX(350, 700, { left: 680, right: 820 })).toBe(470);
+  expect(revealX(600, 700, { left: 200, right: 300 })).toBe(550);
+  expect(revealX(500, 300, { left: 100, right: 700 })).toBe(250);
+  const world = { ...initialWorld(), layout: { ...initialWorld().layout, pieces: [mirror] } };
+  world.actors = world.actors.map(a => a.id === 'bia' ? { ...a, x: 560, y: 420 } : a);
+  expect(mirrorSpan(world, 'bia', 9)).toEqual({ left: 430, right: 630 });
+  expect(mirrorSpan(world, 'bia', 1)).toBeNull();
 });

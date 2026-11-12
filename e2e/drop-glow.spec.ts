@@ -24,7 +24,8 @@ async function carry(page: Page, from: { x: number; y: number }, feet: { x: numb
 }
 const feetOn = (sofa: Piece, slot: number) => visualPiecePoint(sofa, fromPiece(sofa, seatSlots.sofa![slot]!));
 
-for (const [width, height] of [[1024, 768], [844, 390]] as const) test(`arrastando a Bia, o assento livre e o espelho sob os pés acendem; o assento da Luna mostra o rosto dela (${width})`, async ({ page }) => {
+for (const [width, height, reduced] of [[1024, 768, false], [844, 390, false], [1024, 768, true]] as const) test(`arrastando a Bia, o assento livre e o espelho sob os pés acendem; o assento da Luna mostra o rosto dela (${width}${reduced ? ', movimento reduzido' : ''})`, async ({ page }) => {
+  if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   const world = initialWorld();
   world.layout = { ...world.layout, pieces: [...world.layout.pieces, piece(100, 'mirror', 700, 130)], nextId: 101 };
   await load(page, world, width, height);
@@ -32,15 +33,15 @@ for (const [width, height] of [[1024, 768], [844, 390]] as const) test(`arrastan
   expect(state.actors.find(a => a.id === 'luna')!.seat).toBe('2.1');
   await carry(page, bia, feetOn(sofa, 0));
   await expect(canvas(page)).toHaveAttribute('data-drop-target', 'seat:2.0');
-  await page.screenshot({ path: `reports/wave3-life-1b/drop-seat-${width}.png` });
+  await page.screenshot({ path: `reports/wave3-life-1b/drop-seat-${width}${reduced ? '-reduced' : ''}.png` });
   const taken = await point(page, feetOn(sofa, 1).x, feetOn(sofa, 1).y - 110);
   await page.mouse.move(taken.x, taken.y, { steps: 6 });
   await expect(canvas(page)).toHaveAttribute('data-drop-target', 'seat:2.1:luna');
-  await page.screenshot({ path: `reports/wave3-life-1b/drop-taken-${width}.png` });
+  await page.screenshot({ path: `reports/wave3-life-1b/drop-taken-${width}${reduced ? '-reduced' : ''}.png` });
   const mirror = await point(page, 750, 420 - 110);
   await page.mouse.move(mirror.x, mirror.y, { steps: 10 });
   await expect(canvas(page)).toHaveAttribute('data-drop-target', 'mirror:100');
-  await page.screenshot({ path: `reports/wave3-life-1b/drop-mirror-${width}.png` });
+  await page.screenshot({ path: `reports/wave3-life-1b/drop-mirror-${width}${reduced ? '-reduced' : ''}.png` });
   await page.mouse.up();
   await expect(canvas(page)).toHaveAttribute('data-drop-target', '');
 });

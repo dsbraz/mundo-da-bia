@@ -48,13 +48,15 @@ for (const reduced of [false, true]) test(`soltar a pizza na Luna: ela come, o p
   await expect(canvas(page)).not.toHaveAttribute('data-heart', 'luna');
   for (const width of [1024, 844]) {
     await page.setViewportSize({ width, height: width === 1024 ? 768 : 390 });
-    await page.clock.runFor(50);
+    // A resize clears the canvas: a few frames redraw it before the capture.
+    await page.clock.runFor(100);
     await page.screenshot({ path: `reports/wave3-life-1b/eat-seated-full-${width}${reduced ? '-reduced' : ''}.png` });
   }
-  await page.clock.runFor(1000);
+  // The meal began 0-100 ms before the loop ended and the two captures add 200: 900-1000 ms is half (full with reduced motion), 1700-1800 empty.
+  await page.clock.runFor(700);
   await expect(canvas(page)).toHaveAttribute('data-meal', reduced ? 'full' : 'half');
   if (!reduced) await page.screenshot({ path: 'reports/wave3-life-1b/eat-seated-half-844.png' });
-  await page.clock.runFor(700);
+  await page.clock.runFor(800);
   await expect(canvas(page)).toHaveAttribute('data-meal', 'empty');
   await page.screenshot({ path: `reports/wave3-life-1b/eat-seated-empty-844${reduced ? '-reduced' : ''}.png` });
   for (let t = 0; t < 3000 && await canvas(page).getAttribute('data-meal') !== 'done'; t += 100) await page.clock.runFor(100);

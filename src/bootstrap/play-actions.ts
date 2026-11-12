@@ -16,8 +16,8 @@ interface PlayActions {
   bench: (piece: number) => void;
   /** Applies an action without walking first (the meal once she got to her seat). */
   serve: (action: Action) => void;
-  /** The mirror (W3L-08): opens the Looks, and the face she pulls at it. */
-  looks: () => void; grimace: (id: ActorId) => void;
+  /** The mirror (W3L-08): opens the Looks, and at it she pulls a face (and the view keeps her and the mirror beside the tray). */
+  looks: () => void; grimace: (id: ActorId, mirror: number) => void;
 }
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
@@ -40,7 +40,7 @@ export function playActions(deps: PlayActions) {
     if (!approach(deps.state(), deps.selected(), action)) { deps.refuse('path', blockedMessage); return; }
     if (action.type === 'use' && kind && benchKinds.includes(kind)) { deps.bench(action.id); return; }
     deps.dispatch(action);
-    if (kind === 'mirror') deps.grimace(deps.selected());
+    if (action.type === 'use' && kind === 'mirror') deps.grimace(deps.selected(), action.id);
   }
   function pickup(item: ItemId) {
     pickupItem(item, { state: deps.state, selected: deps.selected, dispatch: deps.dispatch, walk: walker, hint: text => deps.refuse('path', text) });

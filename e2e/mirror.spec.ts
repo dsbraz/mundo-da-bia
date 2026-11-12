@@ -3,32 +3,45 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
+import { glassOf } from '../src/presentation/mirror-reflection';
 import type { Piece, World } from '../src/domain/types';
-import { onPiece, read, ready, tap } from './helpers';
+import { onPiece, point, read, ready, tap } from './helpers';
 
-const mirror: Piece = { id: 100, kind: 'mirror', room: 'sala', x: 380, y: 130, color: 'original', flipped: false };
-/** The living room with a mirror on the wall at x 380 (left of the door, where the open tray leaves it in view) and Bia alone at x 800 (v3 save). */
-async function room(page: Page) {
+const mirrorAt = (x: number): Piece => ({ id: 100, kind: 'mirror', room: 'sala', x, y: 130, color: 'original', flipped: false });
+/** The living room with a mirror on the wall at `x` and Bia alone across the room (v3 save), at `width` × `height`. */
+async function room(page: Page, mirror: Piece, width: number, height: number) {
   const world: World = initialWorld();
   world.layout = { ...world.layout, pieces: [...world.layout.pieces.filter(p => p.room !== 'sala'), mirror], nextId: 101 };
-  world.actors = world.actors.map(a => ({ ...a, room: a.id === 'bia' ? 'sala' : 'quarto', x: a.id === 'bia' ? 800 : 500, y: 520, seat: null }));
+  const start = mirror.x > 500 ? 200 : 800;
+  world.actors = world.actors.map(a => ({ ...a, room: a.id === 'bia' ? 'sala' : 'quarto', x: a.id === 'bia' ? start : 500, y: 520, seat: null }));
   world.items = world.items.map(i => ({ ...i, room: 'quarto', spot: 'floor', x: 500, y: 520 }));
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
-  await ready(page);
+  await page.setViewportSize({ width, height }); await ready(page);
 }
 const canvas = (page: Page) => page.locator('canvas');
+const cases = [
+  { side: 'esquerda', x: 380, width: 1024, height: 768, reduced: false }, { side: 'esquerda', x: 380, width: 1024, height: 768, reduced: true },
+  { side: 'direita', x: 760, width: 1024, height: 768, reduced: false }, { side: 'direita', x: 760, width: 844, height: 390, reduced: false },
+];
 
-for (const reduced of [false, true]) test(`tocar no espelho: a Bia vai até ele, os Looks abrem na hora e o reflexo espelhado troca junto para chef${reduced ? ' (movimento reduzido: reflexo parado)' : ''}`, async ({ page }) => {
+for (const { side, x, width, height, reduced } of cases) test(`tocar no espelho à ${side} (${width}): a Bia vai até ele, faz careta, os Looks abrem na hora e o reflexo espelhado troca junto para chef${reduced ? ' (movimento reduzido: reflexo parado)' : ''}`, async ({ page }) => {
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
-  await room(page);
+  const mirror = mirrorAt(x);
+  await room(page, mirror, width, height);
   const look = (await read(page)).actors.find(a => a.id === 'bia')!.look;
-  await tap(page, ...await onPiece(page, 'mirror', 430, 200));
+  await tap(page, ...await onPiece(page, 'mirror', x + 50, 200));
   await expect(page.locator('#looks')).toBeVisible();
   await expect(canvas(page)).toHaveAttribute('data-reflection', `bia:${look}:-1`, { timeout: 15000 });
+  // At the mirror she pulls her face (a poke with no line), after the use repainted the scene.
+  await expect(canvas(page)).toHaveAttribute('data-reaction', 'bia:');
   const bia = (await read(page)).actors.find(a => a.id === 'bia')!;
-  expect(Math.abs(bia.x - 430)).toBeLessThanOrEqual(110);
-  await expect(canvas(page)).toHaveAttribute('data-faces', /bia:/);
+  expect(Math.abs(bia.x - (x + 50))).toBeLessThanOrEqual(110);
+  // The open tray leaves the mirror and her in view.
+  const tray = (await page.locator('.mode-tray:not([hidden])').boundingBox())!, glass = glassOf(mirror);
+  await expect.poll(async () => (await point(page, glass.x + glass.width, glass.y)).x).toBeLessThan(tray.x);
+  expect((await point(page, bia.x + 40, bia.y)).x).toBeLessThan(tray.x);
+  expect((await point(page, Math.min(glass.x, bia.x - 40), glass.y)).x).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Chef de cozinha', exact: true }).click();
   await expect.poll(async () => (await read(page)).actors.find(a => a.id === 'bia')!.look).toBe('chef');
   await expect(canvas(page)).toHaveAttribute('data-reflection', 'bia:chef:-1');
@@ -36,9 +49,6 @@ for (const reduced of [false, true]) test(`tocar no espelho: a Bia vai até ele,
     await page.waitForTimeout(1200);
     expect(Number(await canvas(page).getAttribute('data-mirror-cost'))).toBeLessThan(1);
   }
-  const sizes: [number, number][] = reduced ? [[1024, 768]] : [[1024, 768], [844, 390]];
-  for (const [width, height] of sizes) {
-    await page.setViewportSize({ width, height }); await page.waitForTimeout(300);
-    await page.screenshot({ path: `reports/wave3-life-1b/mirror-chef-${width}${reduced ? '-reduced' : ''}.png` });
-  }
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `reports/wave3-life-1b/mirror-chef-${side}-${width}${reduced ? '-reduced' : ''}.png` });
 });

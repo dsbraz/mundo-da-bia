@@ -47,4 +47,6 @@ it('antes de comer, quem recebe o prato anda até o assento da refeição; senta
   expect(mealApproach(world, { type: 'give', actor: 'luna', item: 'ursinho' })).toBeNull();
   expect(mealApproach(world, { type: 'move', actor: 'luna', point: { x: 400, y: 500 } })).toBeNull();
   expect(mealApproach({ ...world, items: initialWorld().items }, { type: 'feed', actor: 'bia' })).toBeNull();
+  // On the street she eats standing, as eat() does there: no walk.
+  expect(mealApproach({ ...world, streetWidth: 1600 }, { type: 'give', actor: 'luna', item: '9:prato' })).toBeNull();
 });

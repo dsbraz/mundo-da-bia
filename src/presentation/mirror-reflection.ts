@@ -4,6 +4,7 @@ import { drawActor, animateActor } from './art';
 import { visualPiecePoint } from './furniture-scale';
 import { pieceDepth } from './piece-art';
 import { visualContext } from './pose';
+import type { Span } from './viewport';
 import type { Expression } from './expression';
 
 type Container = Phaser.GameObjects.Container;
@@ -23,6 +24,11 @@ export function frontOf(mirror: Piece, people: readonly { id: ActorId; x: number
 export function reflectionPlace(glass: Glass, x: number): Point & { scaleX: number; scale: number } {
   const middle = glass.x + glass.width / 2, side = Math.max(-glass.width / 4, Math.min(glass.width / 4, (x - middle) * .3));
   return { x: middle + side, y: glass.y + glass.height + 62, scaleX: -.75, scale: .75 };
+}
+/** What must show while she looks into mirror `piece` (the Looks tray covers the right of the scene): the mirror and her, 20 px spare. */
+export function mirrorSpan(world: World, id: ActorId, piece: number): Span | null {
+  const mirror = world.layout.pieces.find(p => p.id === piece && p.kind === 'mirror'), actor = world.actors.find(a => a.id === id);
+  return mirror && actor ? { left: Math.min(mirror.x, actor.x - 50) - 20, right: Math.max(mirror.x + 100, actor.x + 50) + 20 } : null;
 }
 /** The pose a reflection copies: the one its person had 100 ms before (W3L-08). */
 export const echoMs = 100;

@@ -27,6 +27,13 @@ export function openingX(spans: Span[], visible: number, world: number, must: Sp
   const lean = people.length ? people.reduce((sum, s) => sum + s.left + s.right, 0) / people.length / 2 - visible / 2 : middle;
   return allowed.reduce((best, x) => whole(x) > whole(best) || whole(x) === whole(best) && Math.abs(x - lean) < Math.abs(best - lean) ? x : best);
 }
+/** The view's new centre so `span` is inside `visible` units around it, moving the least (it stays put when the span already shows);
+ *  a span wider than the view is shown from its left. */
+export function revealX(center: number, visible: number, span: Span) {
+  const left = center - visible / 2;
+  if (span.right - span.left >= visible || span.left < left) return span.left + visible / 2;
+  return span.right > left + visible ? span.right - visible / 2 : center;
+}
 /** Wider than any room, so one more whole person always beats any amount of furniture. */
 export const personWeight = 10_000;
 /** The chosen character stays this many screen pixels away from the scene's edge when a place opens. */
@@ -36,11 +43,12 @@ const ease = (gap: number, step: number) => Math.abs(gap) < .5 ? gap : gap * ste
 function offset(center: number, world: number, visible: number) {
   return visible >= world ? (world - visible) / 2 : clamp(center - visible / 2, world - visible);
 }
-export function viewport(canvas: HTMLCanvasElement, changed: (width: number, height: number, x: number, y: number) => void) {
+/** `covered`: screen pixels at the right of the scene hidden by an open tray (only a `reveal` slides the view beside it). */
+export function viewport(canvas: HTMLCanvasElement, changed: (width: number, height: number, x: number, y: number) => void, covered: () => number = () => 0) {
   const parent = canvas.parentElement!;
   let center: Point = { x: 500, y: 360 }, width = 1000, frame = 600, room = '', manual = false, followed: number | null = null;
   let opening: { spans: Span[]; must?: Span | Span[] | undefined; people: Span[] } | null = null;
-  let view = { scale: 1, x: 0, y: 0 };
+  let view = { scale: 1, x: 0, y: 0 }, pinned: number | null = null;
   // `center` is the intended focus and survives resizes (a tray opening and closing must not drift the view);
   // panning and following start from what is actually shown.
   const shown = () => { center = { x: view.x + parent.clientWidth / view.scale / 2, y: view.y + parent.clientHeight / view.scale / 2 }; };
@@ -52,6 +60,7 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
       center.x = openingX(opening.spans, visible, width, must, opening.people) + visible / 2; opening = null;
       view = framing(parent.clientWidth, parent.clientHeight, width, center, frame);
     }
+    pin();
     canvas.style.setProperty('--view-width', `${parent.clientWidth}px`);
     canvas.style.setProperty('--view-height', `${parent.clientHeight}px`);
     canvas.style.setProperty('margin', '0', 'important');
@@ -61,20 +70,33 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
     canvas.dataset.viewHeight = String(parent.clientHeight / view.scale);
     changed(parent.clientWidth / view.scale, parent.clientHeight / view.scale, view.x, view.y);
   }
+  /** A revealed view stays where `reveal` put it (even past the world's right edge) while the tray is open, then frames as usual. */
+  function pin() {
+    if (pinned !== null && covered() > 0) view = { ...view, x: pinned };
+    else pinned = null;
+  }
   new ResizeObserver(render).observe(parent);
   return {
     render,
     /** `spans` (pieces), `must` (the chosen character) and `people` pick where a newly entered place opens; without them it opens on its 1000-wide core. */
     scene(key: string, logicalWidth: number, logicalHeight = 600, spans: Span[] = [], must?: Span | Span[], people: Span[] = []) {
       width = logicalWidth; frame = logicalHeight;
-      if (room !== key) { room = key; center = { x: Math.min(width, 1000) / 2, y: 360 }; manual = false; opening = spans.length || must || people.length ? { spans, must, people } : null; }
+      if (room !== key) { room = key; center = { x: Math.min(width, 1000) / 2, y: 360 }; manual = false; pinned = null; opening = spans.length || must || people.length ? { spans, must, people } : null; }
       render();
     },
-    pan(dx: number, dy: number) { manual = true; shown(); center.x -= dx / view.scale; center.y -= dy / view.scale; render(); },
+    pan(dx: number, dy: number) { manual = true; pinned = null; shown(); center.x -= dx / view.scale; center.y -= dy / view.scale; render(); },
+    /** Slides the view the least needed so `span` (scene x) shows in the part of the scene the tray leaves uncovered (W3L-08). */
+    reveal(span: Span) {
+      shown(); manual = false;
+      const uncovered = (parent.clientWidth - covered()) / view.scale;
+      pinned = revealX(view.x + uncovered / 2, uncovered, span) - uncovered / 2;
+      render(); shown();
+    },
     resume() { manual = false; },
     /** Eases toward `point`, letting it move freely within `slack` (a fraction of the view) of the centre; 0 centres it. */
     follow(point: Point, now = performance.now(), slack = .25) {
       if (manual) return;
+      pinned = null;
       const step = followFactor(followElapsed(now, followed)); followed = now; shown();
       const half = { x: parent.clientWidth / view.scale * slack, y: parent.clientHeight / view.scale * slack };
       const dx = point.x - center.x, dy = point.y - 70 - center.y;
@@ -104,4 +126,10 @@ export function positionTargets(root: HTMLElement) {
     const point = worldToScreen(canvas, { x: Number(button.dataset.worldX), y: Number(button.dataset.worldY) });
     button.style.left = `${point.x}px`; button.style.top = `${point.y}px`;
   });
+}
+/** Screen pixels of the scene's right side under the open tray (0 when it is closed). */
+export function trayCover(root: HTMLElement): number {
+  const tray = root.classList.contains('tray-open') ? root.querySelector<HTMLElement>('.mode-tray:not([hidden])') : null, world = root.querySelector('#world');
+  if (!tray || !world) return 0;
+  return Math.max(0, world.getBoundingClientRect().right - tray.getBoundingClientRect().left);
 }
