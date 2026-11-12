@@ -56,7 +56,7 @@ export type Action =
   | { type: 'show' };
 /** Ephemeral: never saved. `cooked`, `ate`, `harvested`, `served`, `letter` and `hint` belong to the wave 3 systems (lines in W3-02). */
 /** What a refusal shows is missing (W3L-02): a free seat, a place to put it, a free hand, the right food, a way there. */
-export type Need = 'seat' | 'place' | 'hands' | 'food' | 'path';
+export type Need = 'seat' | 'place' | 'hands' | 'food' | 'path' | 'table';
 export interface PresentationEvent {
   type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'
     | 'cooked' | 'ate' | 'sniffed' | 'harvested' | 'served' | 'letter' | 'hint' | 'missing';
@@ -65,7 +65,8 @@ export interface PresentationEvent {
   need?: Need; by?: ActorId;
   /** On `missing`: the piece that is not in this room (a door arrow if it is elsewhere, the Create card if nowhere). */
   want?: PieceKind;
-  /** On `ate`: the eater's favourite dish (the big reaction). */
+  /** On `ate`: the dish eaten (a recipe id), and whether it is the eater's favourite (the big reaction). */
+  recipe?: string;
   favorite?: true;
 }
 export interface Transition { state: World; events: PresentationEvent[] }

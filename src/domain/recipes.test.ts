@@ -22,6 +22,8 @@ function kitchen(): Neighborhood {
 const stocked = (town: Neighborhood): Neighborhood => ({ ...town, progress: { ...town.progress, specials: ['chocolate', 'canela', 'mel'],
   basket: { alface: 6, tomate: 6, cenoura: 6, milho: 6, morango: 6, abobora: 6 } } });
 const input = (ingredients: Ingredient[], utensil: Utensil, extra: Partial<CookInput> = {}): CookInput => ({ building: 1, piece: 50, cook: 'bia', ingredients, utensil, ...extra });
+/** Bia with the bear in hand: the dish stays on the floor by the bench (W3L-07). */
+const busy = (town: Neighborhood): Neighborhood => ({ ...town, items: town.items.map(i => i.id === '1:ursinho' ? { ...i, holder: 'bia' as const } : i) });
 
 // The 29 rows of §3.2, typed again here (not read from the table) so a slip in either shows.
 const table: [string, Ingredient[], Utensil][] = [
@@ -45,7 +47,7 @@ describe('as 29 receitas', () => {
       for (const order of [ingredients, [...ingredients].reverse()]) {
         const result = cook(stocked(kitchen()), input(order, utensil));
         expect(result.outcome, id).toMatchObject({ kind: 'dish', recipe: id });
-        expect(result.town.items.at(-1), id).toMatchObject({ kind: 'prato', recipe: id, location: sala, holder: null, spot: 'floor' });
+        expect(result.town.items.at(-1), id).toMatchObject({ kind: 'prato', recipe: id, location: sala, holder: 'bia', spot: 'floor' });
       }
     }
     expect(recipes.map(r => [r.id, [...r.ingredients], r.utensil])).toEqual(table);
@@ -124,9 +126,15 @@ describe('o prato que nasce', () => {
     expect(Object.hasOwn(plain.items.at(-1)!, 'fancy')).toBe(false);
     expect(plain.progress.fancy).toEqual([]);
   });
+  it('o prato pronto nasce na mão de quem cozinhou (W3L-07); com a mão ocupada, vai para junto da bancada', () => {
+    const served = cook(kitchen(), input(['farinha', 'ovo', 'leite'], 'panela')).town, bia = served.actors.find(a => a.id === 'bia')!;
+    expect(served.items.at(-1)).toMatchObject({ kind: 'prato', recipe: 'panqueca', holder: 'bia', location: sala, spot: 'floor', x: bia.x, y: bia.y });
+    const again = cook(served, input(['ovo'], 'panela')).town;
+    expect(again.items.at(-1)).toMatchObject({ recipe: 'ovo-mexido', holder: null, x: 355, y: 414 });
+  });
   it('nasce no piso junto da peça, dentro das margens, e cada prato a seguir fica ao lado', () => {
     const at = (town: Neighborhood) => { const { x, y } = town.items.at(-1)!; return { x, y }; };
-    const first = cook(kitchen(), input(['ovo'], 'panela')).town;
+    const first = cook(busy(kitchen()), input(['ovo'], 'panela')).town;
     expect(at(first)).toEqual({ x: 355, y: 414 });
     const second = cook(first, input(['ovo'], 'panela')).town;
     expect(at(second)).toEqual({ x: 403, y: 414 });
@@ -134,23 +142,23 @@ describe('o prato que nasce', () => {
     expect(at(third)).toEqual({ x: 307, y: 414 });
     const fourth = cook(third, input(['ovo'], 'panela')).town;
     expect(at(fourth)).toEqual({ x: 355, y: 428 });
-    const edge = cook(kitchen(), input(['ovo'], 'panela', { piece: 51 })).town;
+    const edge = cook(busy(kitchen()), input(['ovo'], 'panela', { piece: 51 })).town;
     expect(at(edge)).toEqual({ x: 890, y: 454 });
     const wall = { ...kitchen(), buildings: kitchen().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.id === 51 ? { ...p, kind: 'kitchen-cart' as const, x: 860 } : p) } })) };
-    expect(at(cook(cook(wall, input(['ovo'], 'panela', { piece: 51 })).town, input(['ovo'], 'panela', { piece: 51 })).town)).toEqual({ x: 940, y: 474 });
-    const low = cook({ ...kitchen(), buildings: kitchen().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.id === 51 ? { ...p, x: 0, y: 420 } : p) } })) },
+    expect(at(cook(cook(busy(wall), input(['ovo'], 'panela', { piece: 51 })).town, input(['ovo'], 'panela', { piece: 51 })).town)).toEqual({ x: 940, y: 474 });
+    const low = cook({ ...busy(kitchen()), buildings: kitchen().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.id === 51 ? { ...p, x: 0, y: 420 } : p) } })) },
       input(['ovo'], 'panela', { piece: 51 })).town;
     expect(at(low)).toEqual({ x: 110, y: 540 });
   });
   it('o 7º prato numa casa é recusado e nada muda; pratos na mão ou em outra casa não contam', () => {
-    let town = kitchen();
+    let town = busy(kitchen());
     for (let i = 0; i < 6; i++) town = cook(town, input(['ovo'], 'panela')).town;
     expect(town.items.filter(i => i.kind === 'prato')).toHaveLength(6);
     expect(cook(town, input(['ovo'], 'panela'))).toEqual({ town, outcome: { kind: 'full' } });
     expect(cook(town, input(['pao', 'queijo'], 'panela')).outcome).toEqual({ kind: 'utensil', utensil: 'forno' });
     const held = { ...town, items: town.items.map(i => i.id === '2:prato' ? { ...i, holder: 'luna' as const } : i) };
     expect(cook(held, input(['ovo'], 'panela')).outcome.kind).toBe('dish');
-    const street = spawnItem(kitchen(), { kind: 'prato', recipe: 'pizza', location: { kind: 'street' }, point: { x: 600, y: 520 } });
+    const street = spawnItem(busy(kitchen()), { kind: 'prato', recipe: 'pizza', location: { kind: 'street' }, point: { x: 600, y: 520 } });
     let elsewhere = street; for (let i = 0; i < 6; i++) elsewhere = cook(elsewhere, input(['ovo'], 'panela')).town;
     expect(elsewhere.items.filter(i => i.kind === 'prato')).toHaveLength(7);
   });

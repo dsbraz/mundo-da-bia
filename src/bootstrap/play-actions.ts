@@ -4,6 +4,7 @@ import { pickupItem } from '../presentation/item-pickup';
 import type { walking } from '../presentation/walking';
 import { refusal } from '../content/feedback-text';
 import { benchKinds } from '../domain/recipes';
+import { mealApproach } from '../presentation/meal-walk';
 const blockedMessage = refusal('blocked', '');
 interface PlayActions {
   root: HTMLElement; state: () => World; selected: () => ActorId; choose: (id: ActorId) => void;
@@ -13,6 +14,8 @@ interface PlayActions {
   toggleWardrobe: () => void; refuse: (need: Need, text: string) => void;
   /** Opens the kitchen bench of a stove, counter or cart once the selected character got there. */
   bench: (piece: number) => void;
+  /** Applies an action without walking first (the meal once she got to her seat). */
+  serve: (action: Action) => void;
 }
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
@@ -39,5 +42,13 @@ export function playActions(deps: PlayActions) {
     if (action === 'wardrobe') { walker.cancel(); deps.toggleWardrobe(); } else if (action) perform(action);
     return action !== null;
   }
-  return { select, choose, settle: deps.settle, perform, pickup, interact };
+  /** A dish for a person (W3L-07): she is chosen and walks to her meal seat, then eats there. False when there is no walk to make. */
+  function sitToEat(action: Action): boolean {
+    const walk = mealApproach(deps.state(), action);
+    if (!walk) return false;
+    deps.cancelGame(); select(walk.actor);
+    walker.start(walk.point, () => deps.serve(action));
+    return true;
+  }
+  return { select, choose, settle: deps.settle, perform, pickup, interact, sitToEat };
 }

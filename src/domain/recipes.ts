@@ -87,7 +87,13 @@ function serveDish(town: Neighborhood, input: CookInput, piece: Piece, recipe: R
   const progress = { ...town.progress, basket: useCrops(town.progress, input.ingredients),
     recipes: add(town.progress.recipes, recipe.id, discovered), fancy: add(town.progress.fancy, recipe.id, fancy) };
   const item = (spawned.items.at(-1) as NeighborhoodItem).id;
-  return { town: { ...spawned, progress }, outcome: { kind: 'dish', recipe: recipe.id, item, fancy, discovered } };
+  return { town: { ...handed(spawned, input.cook, item), progress }, outcome: { kind: 'dish', recipe: recipe.id, item, fancy, discovered } };
+}
+/** The ready dish goes to the cook's hand (W3L-07) when it is free; otherwise it stays on the floor by the bench. */
+function handed(town: Neighborhood, cook: ActorId, item: ItemId): Neighborhood {
+  const who = town.actors.find(a => a.id === cook)!;
+  if (town.items.some(i => i.holder === cook)) return town;
+  return { ...town, items: town.items.map(i => i.id === item ? { ...i, holder: cook, x: who.x, y: who.y } : i) };
 }
 /** The cook at the bench: a dish for an exact set and utensil, otherwise a hint that changes nothing (§3.2). */
 export function cook(town: Neighborhood, input: CookInput): Cooked {

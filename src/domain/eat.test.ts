@@ -20,7 +20,7 @@ it('Luna come pizza: o prato some, fed fica true e é o favorito dela (reação 
   const result = transition(before, { type: 'give', actor: 'luna', item: '9:prato' });
   expect(dishes(result.state)).toEqual([]);
   expect(actor(result.state, 'luna')).toMatchObject({ fed: true, resting: false });
-  expect(result.events).toEqual([{ type: 'ate', actor: 'luna', favorite: true }]);
+  expect(result.events).toEqual([{ type: 'ate', actor: 'luna', recipe: 'pizza', favorite: true }]);
   expect(result.state.items).toHaveLength(before.items.length - 1);
 });
 
@@ -35,7 +35,7 @@ it('Pipoca come ovo mexido: o favorito de cada gato é comível por gato', () =>
   const result = transition(withDish('ovo-mexido'), { type: 'give', actor: 'pipoca', item: '9:prato' });
   expect(dishes(result.state)).toEqual([]);
   expect(actor(result.state, 'pipoca').fed).toBe(true);
-  expect(result.events).toEqual([{ type: 'ate', actor: 'pipoca', favorite: true }]);
+  expect(result.events).toEqual([{ type: 'ate', actor: 'pipoca', recipe: 'ovo-mexido', favorite: true }]);
   for (const cat of ['mimi', 'nino', 'pipoca'] as const) expect(catDishes).toContain(tastes[cat].favorite);
 });
 
@@ -50,7 +50,7 @@ it('gato só come petisco de gato, leite batidinho e ovo mexido; humano come qua
 
 it('quem não tem o prato como favorito come sem reação grande', () => {
   const result = transition(withDish('pizza'), { type: 'give', actor: 'bia', item: '9:prato' });
-  expect(result.events).toEqual([{ type: 'ate', actor: 'bia' }]);
+  expect(result.events).toEqual([{ type: 'ate', actor: 'bia', recipe: 'pizza' }]);
   expect(dishes(result.state)).toEqual([]);
 });
 
@@ -59,7 +59,7 @@ it('Comer com o prato na mão: humano come e a mão fica livre; gato com pizza n
   expect(dishes(ate.state)).toEqual([]);
   expect(ate.state.items.some(i => i.holder === 'bia')).toBe(false);
   expect(actor(ate.state, 'bia').fed).toBe(true);
-  expect(ate.events).toEqual([{ type: 'ate', actor: 'bia' }]);
+  expect(ate.events).toEqual([{ type: 'ate', actor: 'bia', recipe: 'torrada' }]);
   const cat = withDish('pizza', 'nino');
   const sniffed = transition(cat, { type: 'feed', actor: 'nino' });
   expect(sniffed.state).toEqual(cat);
@@ -72,14 +72,14 @@ it('o prato na mão da Bia, solto na Luna, é comido por ela; com algo na mão a
   const result = transition(busy, { type: 'give', actor: 'luna', item: '9:prato' });
   expect(dishes(result.state)).toEqual([]);
   expect(result.state.items.find(i => i.id === 'ursinho')!.holder).toBe('luna');
-  expect(result.events).toEqual([{ type: 'ate', actor: 'luna', favorite: true }]);
+  expect(result.events).toEqual([{ type: 'ate', actor: 'luna', recipe: 'pizza', favorite: true }]);
 });
 
 it('quem dorme acorda para comer; o prato de outro cômodo não pode ser dado', () => {
   const asleep = transition(withDish('pipoca'), { type: 'rest', actor: 'rui' }).state;
   const result = transition(asleep, { type: 'give', actor: 'rui', item: '9:prato' });
   expect(actor(result.state, 'rui')).toMatchObject({ fed: true, resting: false });
-  expect(result.events).toEqual([{ type: 'ate', actor: 'rui', favorite: true }]);
+  expect(result.events).toEqual([{ type: 'ate', actor: 'rui', recipe: 'pipoca', favorite: true }]);
   const away = { ...withDish('pizza'), items: [...initialWorld().items, { ...dish('pizza'), room: 'quarto' as const }] };
   expect(transition(away, { type: 'give', actor: 'luna', item: '9:prato' }).state).toBe(away);
 });

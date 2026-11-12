@@ -5,6 +5,7 @@ import { showHeart } from './care-heart';
 import type { Actor, ActorId, Point, PresentationEvent, World } from '../domain/types';
 import { showBook } from './use-effects';
 import { handPoint } from './targets';
+import { showMeal } from './meal';
 /** `said[i]` is the line for `events[i]`, already taken from the rotation by whoever announces it (so bubble and announcement agree). */
 /** `dance` plays the big reaction of a favourite dish (arms up and confetti; with reduced motion only the arms). */
 export function react(scene: Phaser.Scene, state: World, events: PresentationEvent[], said: readonly (string | null)[], selected?: ActorId, dance?: (id: ActorId) => void) {
@@ -14,8 +15,13 @@ export function react(scene: Phaser.Scene, state: World, events: PresentationEve
     if (!actor || actor.room !== state.room) continue;
     const line = said[index] ?? null;
     const scale = contextScale(visualContext(state)), height = (actor.kind === 'cat' ? 100 : 196) * scale;
-    if (line) speechBubble(scene, { x: actor.x, y: actor.y - height }, line, actor.id);
-    meal(scene, event, actor, { x: actor.x - 46 * scale, y: actor.y - height * .8 }, dance);
+    const answer = () => {
+      if (line) speechBubble(scene, { x: actor.x, y: actor.y - height }, line, actor.id);
+      meal(scene, event, actor, { x: actor.x - 46 * scale, y: actor.y - height * .8 }, dance);
+    };
+    // A person eats seated first (W3L-07): three bites, then the line and the heart. A cat eats on the floor at once.
+    if (event.type === 'ate' && event.recipe && actor.kind === 'human') showMeal(scene, state, actor, event.recipe, answer);
+    else answer();
   }
 }
 /** Touching the bookcase on: a book shows in the hand of whoever walked there. */

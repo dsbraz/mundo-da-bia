@@ -39,6 +39,16 @@ export function freeFor(state: World, actor: Actor, seat: SeatRef): boolean {
 }
 /** The first free seat of `piece` for `actor`. */
 export const freeSeat = (state: World, piece: Piece, actor: Actor) => seatsOf(piece).find(seat => freeFor(state, actor, seat));
+/** Seats at a table (W3L-07): eating prefers these. */
+const tableKinds: readonly PieceKind[] = ['chair', 'picnic-table'];
+/** Where `actor` eats seated: the seat she is on (not a bed), else the free seat here at a table, else any other free seat, nearest first. */
+export function mealSeat(state: World, actor: Actor): SeatRef | undefined {
+  const own = actor.seat ? seatPiece(state, actor.seat) : undefined;
+  if (own && !restingKinds.includes(own.kind)) return actor.seat!;
+  const free = seatsIn(state, state.room).filter(seat => freeFor(state, actor, seat) && !restingKinds.includes(seatPiece(state, seat)!.kind));
+  const rank = (seat: SeatRef) => (tableKinds.includes(seatPiece(state, seat)!.kind) ? 0 : 10000) + Math.abs(seatPoint(state, seat)!.x - actor.x);
+  return free.sort((a, b) => rank(a) - rank(b))[0];
+}
 /** Where `actor` sits on `piece`: its first free seat, else its first seat (sitting there tells who is in it). */
 export const pieceSeat = (state: World, piece: Piece, actor: Actor): SeatRef | undefined => freeSeat(state, piece, actor) ?? seatsOf(piece)[0];
 /** The same for any `kind` here: a piece with a free seat first. */

@@ -29,7 +29,7 @@ const utensil = (page: Page, id: string) => bench(page).locator(`[data-utensil="
 async function dragIn(page: Page, ...ids: string[]) { for (const id of ids) await ingredient(page, id).dragTo(bench(page).locator('[data-bowl]')); }
 const dishes = async (page: Page) => (await readTown(page)).items.filter(i => i.kind === 'prato');
 
-for (const reduced of [false, true]) test(`tocar no fogão, arrastar farinha, ovo e leite e tocar na panela faz uma panqueca no chão, junto do fogão${reduced ? ' (movimento reduzido: sem vapor nem quique)' : ''}`, async ({ page }) => {
+for (const reduced of [false, true]) test(`tocar no fogão, arrastar farinha, ovo e leite e tocar na panela faz uma panqueca que nasce na mão da Bia (W3L-07)${reduced ? ' (movimento reduzido: sem vapor nem quique)' : ''}`, async ({ page }) => {
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await kitchen(page);
   await openBench(page);
@@ -40,7 +40,8 @@ for (const reduced of [false, true]) test(`tocar no fogão, arrastar farinha, ov
   // Scene time from here on is played in frames, so the steam is caught while it rises.
   await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 1000);
   await utensil(page, 'panela').click();
-  expect((await dishes(page)).map(d => [d.recipe, d.x, d.y])).toEqual([['panqueca', 355, 414]]);
+  const cook = (await readTown(page)).actors[0]!;
+  expect((await dishes(page)).map(d => [d.recipe, d.holder, d.x, d.y])).toEqual([['panqueca', 'bia', cook.x, cook.y]]);
   await expect(bench(page)).toHaveAttribute('data-bowl', '');
   const motion = await bench(page).locator('[data-bowl]').evaluate(n => getComputedStyle(n).animationName);
   expect(motion === 'none').toBe(reduced);

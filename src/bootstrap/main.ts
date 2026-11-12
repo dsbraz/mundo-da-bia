@@ -112,7 +112,7 @@ const enterDoor = doorWalk({ town: () => town, selected: () => selected, buildin
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
-const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece) });
+const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), serve: action => dispatch(action, false) });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
@@ -175,8 +175,14 @@ const { refresh: repaint, frameScene, renderControls, ui: repaintControls } = sc
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
   panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); } });
 function refresh(then?: () => void) { stale = false; place.refresh(repaint, then, repaintControls); }
+/** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
+function walksFirst(action: Action, interrupt: boolean): boolean {
+  if (!interrupt) return false;
+  if (play.sitToEat(action)) return true;
+  cancelGame(); walker.cancel(); return false;
+}
 function dispatch(action: Action, interrupt = true) {
-  if (interrupt) { cancelGame(); walker.cancel(); }
+  if (walksFirst(action, interrupt)) return;
   if ('actor' in action) root.classList.add('actor-chosen');
   if ('item' in action) scene.balls.forget(action.item);
   if (['room', 'travel', 'cross', 'transfer'].includes(action.type)) scene.balls.settle();

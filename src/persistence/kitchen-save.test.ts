@@ -25,7 +25,7 @@ it('cozinhar qualquer receita, em qualquer canto, até a mesa encher, sobrevive 
     for (const recipe of recipes) {
       // A full table first: the 7th is refused; then the table is cleared and the recipe cooks.
       const action = { type: 'cook' as const, building: 1, piece: 50, cook: 'bia' as const, ingredients: recipe.ingredients, utensil: recipe.utensil };
-      if (town.items.filter(i => i.kind === 'prato').length === 6) {
+      if (town.items.filter(i => i.kind === 'prato' && i.holder === null).length === 6) {
         expect(neighborhoodAction(town, action)).toBe(town);
         town = { ...town, items: town.items.filter(i => i.kind !== 'prato') };
       }

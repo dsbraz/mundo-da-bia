@@ -4,14 +4,18 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { RecipeId } from '../src/domain/progress';
-import type { World } from '../src/domain/types';
+import type { Piece, World } from '../src/domain/types';
 import { closeTray, drag, point, readTown, ready, tray } from './helpers';
 
 const spots = { bia: 760, luna: 300, mimi: 480 } as Record<string, number>;
-/** The living room with Bia, Luna and Mimi and one dish on the floor at x 600 (v3 save); clock installed before loading. */
-async function table(page: Page, recipe: RecipeId) {
+const piece = (id: number, kind: Piece['kind'], x: number, y: number): Piece => ({ id, kind, room: 'sala', x, y, color: 'original', flipped: false });
+/** A table with a chair on each side (W3L-07: a person eats seated), as a new kitchen gets them. */
+const dining = [piece(100, 'table', 380, 300), piece(101, 'chair', 286, 285), piece(102, 'chair', 624, 285)];
+/** The living room with Bia, Luna and Mimi, the dining table (unless `furnished` is false) and one dish on the floor at x 620 (v3 save);
+ *  clock installed before loading. */
+async function table(page: Page, recipe: RecipeId, furnished = true) {
   const world: World = initialWorld();
-  world.layout = { ...world.layout, pieces: world.layout.pieces.filter(p => p.room !== 'sala'), nextId: 100 };
+  world.layout = { ...world.layout, pieces: [...world.layout.pieces.filter(p => p.room !== 'sala'), ...(furnished ? dining : [])], nextId: 103 };
   world.actors = world.actors.map(a => ({ ...a, room: a.id in spots ? 'sala' : 'quarto', x: spots[a.id] ?? 500, y: 520, seat: null }));
   world.items = world.items.map(i => ({ ...i, room: 'quarto', spot: 'floor', x: 500, y: 520 }));
   const town = migrateNeighborhood(initialAlbum(world));
@@ -35,8 +39,26 @@ for (const reduced of [false, true]) test(`soltar a pizza na Luna: ela come, o p
   await table(page, 'pizza');
   await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 1000);
   await drag(page, [620, 490], [300, 420]);
-  await expect.poll(() => dishes(page)).toEqual([]);
-  expect((await actor(page, 'luna')).fed).toBe(true);
+  // W3L-07: she walks to the chair, sits, the plate goes to the table and is eaten in three bites before the reaction.
+  for (let t = 0; t < 8000 && (await dishes(page)).length; t += 100) await page.clock.runFor(100);
+  expect(await dishes(page)).toEqual([]);
+  expect(await actor(page, 'luna')).toMatchObject({ fed: true, seat: '101.0', x: 331, y: 393 });
+  await expect(canvas(page)).toHaveAttribute('data-meal-on', 'table');
+  await expect(canvas(page)).toHaveAttribute('data-meal', 'full');
+  await expect(canvas(page)).not.toHaveAttribute('data-heart', 'luna');
+  for (const width of [1024, 844]) {
+    await page.setViewportSize({ width, height: width === 1024 ? 768 : 390 });
+    await page.clock.runFor(50);
+    await page.screenshot({ path: `reports/wave3-life-1b/eat-seated-full-${width}${reduced ? '-reduced' : ''}.png` });
+  }
+  await page.clock.runFor(1000);
+  await expect(canvas(page)).toHaveAttribute('data-meal', reduced ? 'full' : 'half');
+  if (!reduced) await page.screenshot({ path: 'reports/wave3-life-1b/eat-seated-half-844.png' });
+  await page.clock.runFor(700);
+  await expect(canvas(page)).toHaveAttribute('data-meal', 'empty');
+  await page.screenshot({ path: `reports/wave3-life-1b/eat-seated-empty-844${reduced ? '-reduced' : ''}.png` });
+  for (let t = 0; t < 3000 && await canvas(page).getAttribute('data-meal') !== 'done'; t += 100) await page.clock.runFor(100);
+  await expect(canvas(page)).toHaveAttribute('data-meal-steps', reduced ? 'full empty' : 'full half empty');
   await expect(canvas(page)).toHaveAttribute('data-favorite', 'luna');
   await expect(canvas(page)).toHaveAttribute('data-heart', 'luna');
   await expect(canvas(page)).toHaveAttribute('data-reaction', /^luna:/);
@@ -44,6 +66,16 @@ for (const reduced of [false, true]) test(`soltar a pizza na Luna: ela come, o p
   if (reduced) await expect(canvas(page)).not.toHaveAttribute('data-confetti', 'on'); else await expect(canvas(page)).toHaveAttribute('data-confetti', 'on');
   await page.screenshot({ path: `reports/eat-favorite${reduced ? '-reduced' : ''}.png`, clip: await clip(page, 300) });
   await expect(page.locator('#announcement')).not.toContainText(/\d/);
+});
+
+test('sem assento na sala, soltar a pizza na Luna mostra o balão da mesa com cadeira e o prato fica na mão dela', async ({ page }) => {
+  await table(page, 'pizza', false);
+  await drag(page, [620, 490], [300, 420]);
+  await expect(page.locator('.missing-bubble')).toHaveAttribute('data-need', 'table');
+  await expect(page.locator('.missing-bubble img.need')).toHaveAttribute('src', '/art/needs.svg#table');
+  await expect.poll(async () => (await dishes(page)).map(d => d.holder)).toEqual(['luna']);
+  expect((await actor(page, 'luna')).fed).toBe(false);
+  await page.screenshot({ path: 'reports/wave3-life-1b/no-seat-bubble-1280.png' });
 });
 
 test('soltar a pizza na Mimi: ela cheira, prefere peixinho e o prato fica', async ({ page }) => {

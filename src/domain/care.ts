@@ -3,6 +3,8 @@ import type { RecipeId } from './progress';
 import type { NeighborhoodItem } from './neighborhood-types';
 import { tastes } from './tastes';
 import { needsOf, relieve } from './needs';
+import { mealSeat, seatPoint } from './seats';
+import { refuse } from './missing';
 /** The saved `fed` flag's soft cycle: whoever wakes from a rest is ready to eat again. Hunger, sleep, boredom and the sad face are the
  *  session's needs (`needs.ts`, §3.1): they are never saved and always recover with care. */
 export function wake(actor: Pick<Actor, 'resting'>): Pick<Actor, 'resting'> & Partial<Pick<Actor, 'fed'>> {
@@ -22,14 +24,24 @@ export function edible(actor: Pick<Actor, 'kind'>, item: Item): boolean {
   return !!recipe && (actor.kind === 'human' || catDishes.includes(recipe));
 }
 /** Eating a dish (dropped on someone, or Comer with it in hand): it is gone, the eater wakes fed with hunger −60 (the favourite: hunger 0
- *  and joy), and the favourite says so.
- *  A cat offered another dish only sniffs it: nothing changes. */
+ *  and joy), and the favourite says so. A person eats seated (W3L-07): on her own seat or the free one nearest (a chair or picnic table
+ *  first, never a bed); with none in the room she asks for a table with a chair and keeps the dish in hand. A cat eats on the floor,
+ *  and offered another dish only sniffs it: nothing changes. */
 export function eat(state: World, actor: Actor, item: Item): Transition {
   if (!edible(actor, item)) return { state, events: [{ type: 'sniffed', actor: actor.id }] };
-  const favorite = tastes[actor.id].favorite === recipeOf(item);
+  const seated = actor.kind === 'human' && !state.streetWidth, seat = seated ? mealSeat(state, actor) : undefined;
+  if (seated && !seat) return noTable(state, actor, item);
+  const point = seat ? seatPoint(state, seat) : undefined, place = point ? { seat: seat!, x: point.x, y: point.y } : {};
+  const recipe = recipeOf(item)!, favorite = tastes[actor.id].favorite === recipe;
   return {
     state: { ...state, items: state.items.filter(i => i.id !== item.id), actors: state.actors.map(a => a.id === actor.id
-      ? { ...a, ...wake(a), fed: true, needs: relieve(needsOf(a), favorite ? 'favorito' : 'prato') } : a) },
-    events: [{ type: 'ate', actor: actor.id, ...(favorite ? { favorite: true as const } : {}) }],
+      ? { ...a, ...wake(a), ...place, fed: true, needs: relieve(needsOf(a), favorite ? 'favorito' : 'prato') } : a) },
+    events: [{ type: 'ate', actor: actor.id, recipe, ...(favorite ? { favorite: true as const } : {}) }],
   };
+}
+/** No seat for the meal: the dish goes to her hand when it is free (it stays where it was otherwise) and she asks for a table. */
+function noTable(state: World, actor: Actor, item: Item): Transition {
+  const free = item.holder !== actor.id && !state.items.some(i => i.holder === actor.id);
+  const items = free ? state.items.map(i => i.id === item.id ? { ...i, holder: actor.id, room: actor.room, spot: 'floor' as const, x: actor.x, y: actor.y } : i) : state.items;
+  return refuse({ ...state, items }, 'table', actor.id);
 }
