@@ -1,7 +1,8 @@
 import { canPlace, freePlacement, onFloorPiece } from './placement';
 import type { EditAction, Piece, PieceKind, World } from './types';
 import { fixtures, fromPiece, pieceBounds, toPiece, validPlacement } from './layout';
-import { seatKind, spotKind } from './furniture';
+import { spotKind } from './furniture';
+import { sitsOn } from './seats';
 import { roomWidth, validPoint } from './geometry';
 
 export interface History { past: World[]; present: World; future: World[] }
@@ -42,14 +43,14 @@ function addPiece(state: World, kind: PieceKind, point?: { x: number; y: number 
 function removePiece(state: World, piece: Piece): World {
   return {
     ...state, layout: { ...state.layout, pieces: state.layout.pieces.filter(p => p.id !== piece.id) },
-    actors: state.actors.map(a => a.room === piece.room && a.seat && seatKind(a.seat) === piece.kind ? { ...a, seat: null, resting: false } : a),
+    actors: state.actors.map(a => sitsOn(a, piece) ? { ...a, seat: null, resting: false } : a),
     items: state.items.map(i => i.room === piece.room && i.spot !== 'floor' && spotKind(i.spot) === piece.kind ? { ...i, spot: 'floor' } : i),
   };
 }
 function relocate(state: World, before: Piece, after: Piece): World {
   const point = (p: { x: number; y: number }) => fromPiece(after, toPiece(before, p));
   return { ...state,
-    actors: state.actors.map(a => a.room === before.room && a.seat && seatKind(a.seat) === before.kind ? { ...a, ...point(a) } : a),
+    actors: state.actors.map(a => sitsOn(a, before) ? { ...a, ...point(a) } : a),
     items: state.items.map(i => i.room === before.room && i.spot !== 'floor' && spotKind(i.spot) === before.kind ? { ...i, ...point(i) } : i),
   };
 }

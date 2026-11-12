@@ -16,6 +16,7 @@ export const furnishings: Record<PieceKind, { name: string; category: 'moveis' |
   plant: { name: 'Planta', category: 'decoracao' }, picture: { name: 'Quadro constelação', category: 'decoracao' },
   cushion: { name: 'Almofada estrela', category: 'decoracao' }, neon: { name: 'Letreiro Palco Neon', category: 'neon' },
   speaker: { name: 'Caixa de som', category: 'neon' }, mirror: { name: 'Espelho de camarim', category: 'neon' },
+  chair: { name: 'Cadeira', category: 'moveis' },
 };
 export const palettes: Record<Palette, { name: string; base: string; light: string; dark: string }> = {
   original: { name: 'Original', base: '#efb491', light: '#ffdec7', dark: '#bf835e' },

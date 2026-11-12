@@ -30,7 +30,7 @@ it('pega pela cabeça: soltar com os pés sobre o sofá livre faz sentar e conta
   const gesture = createPlayGesture(() => state, vi.fn(), vi.fn(), { dispatch, outcome, preview: vi.fn(), wardrobe: () => false, toggleWardrobe: vi.fn() });
   // Bia's feet are at 520, 530; held 150 above them, the finger stays over the wall while the feet reach the sofa (150, 405).
   gesture.start(1, { x: 520, y: 380 }); gesture.update(1, { x: 150, y: 255 }); gesture.end(1, { x: 150, y: 255 });
-  expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'sit', actor: 'bia', seat: 'sofa-left' }); expect(outcome).toHaveBeenCalledWith('sat');
+  expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'sit', actor: 'bia', seat: '2.0' }); expect(outcome).toHaveBeenCalledWith('sat');
 });
 it('um arraste interrompido por Escape conta como cancelado, e um movimento comum como movido', () => {
   const state = initialWorld(), outcome = vi.fn(), move = vi.fn();

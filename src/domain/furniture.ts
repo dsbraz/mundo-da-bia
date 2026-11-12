@@ -1,17 +1,11 @@
 import { fridgeKinds, itemKind } from './item-kind';
 import { fixture, fromPiece, pieceBounds } from './layout';
-import { roomWidth } from './geometry';
+import { roomWidth, validPoint } from './geometry';
 import { missingEvent, refuse } from './missing';
-import { seatIds } from './types';
+import { fits, freeFor, occupant, parseSeat, restingKinds, seatPiece, seatPoint, seatsOf } from './seats';
 import { wake } from './care';
-import type { Actor, Home, Item, ItemId, SeatId, Spot, PieceKind, RoomId, Transition, World } from './types';
+import type { Actor, Home, Item, ItemId, Piece, PieceKind, SeatRef, Spot, Transition, World } from './types';
 
-export const seats = {
-  'sofa-left': { x: 150, y: 405, room: 'sala' },
-  'sofa-right': { x: 245, y: 405, room: 'sala' },
-  armchair: { x: 90, y: 145, room: 'sala' },
-  bed: { x: 790, y: 350, room: 'quarto' },
-} as const;
 export function availableSpot(state: World, spot: Spot): boolean {
   if (spot === 'floor') return true;
   if (fixture(state, spotKind(spot))?.room !== state.room) return false;
@@ -21,28 +15,31 @@ export function interact(state: World, target: keyof Home): Transition {
   if (fixture(state, target === 'drawer' ? 'wardrobe' : target)?.room !== state.room) return { state, events: [] };
   return { state: { ...state, home: { ...state.home, [target]: !state.home[target] } }, events: [{ type: 'furniture' }] };
 }
-/** Sitting: on a taken seat she sits on the free seat beside it (or stands beside the piece) and the refusal shows who is there. */
-export function sit(state: World, actor: Actor, seat: SeatId): Transition {
-  const place = seatPoint(state, seat);
-  if (!place || place.room !== state.room) return refuse(state, 'seat', actor.id, undefined, seatKind(seat));
+/** Sitting (W3L-06): on a taken seat she sits on a free seat of the same kind (or stands beside the piece) and the refusal shows who is there.
+ *  A piece in another room is named (the bubble points to it); a seat she does not fit, or off the reachable floor, is refused. */
+export function sit(state: World, actor: Actor, seat: SeatRef): Transition {
+  const piece = seatPiece(state, seat), place = seatPoint(state, seat);
+  if (!piece || !place) return refuse(state, 'seat', actor.id, undefined, elsewhere(state, seat));
+  if (!fits(piece.kind, actor) || !validPoint(place, roomWidth(state))) return refuse(state, 'seat', actor.id);
   const by = occupant(state, actor, seat);
-  return by ? besideSeat(state, actor, seat, by) : seated(state, actor, seat, place);
+  return by ? besideSeat(state, actor, piece, by) : seated(state, actor, seat, piece);
 }
-function seated(state: World, actor: Actor, seat: SeatId, place: { x: number; y: number }): Transition {
+const elsewhere = (state: World, seat: SeatRef) => state.layout.pieces.find(p => p.id === parseSeat(seat)?.piece)?.kind;
+function seated(state: World, actor: Actor, seat: SeatRef, piece: Piece): Transition {
+  const place = seatPoint(state, seat)!, rest = restingKinds.includes(piece.kind) ? { resting: true } : wake(actor);
   return {
-    state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, x: place.x, y: place.y, seat, ...(seat === 'bed' ? { resting: true } : wake(a)) } : a) },
+    state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, x: place.x, y: place.y, seat, ...rest } : a) },
     events: [{ type: 'rested', actor: actor.id }],
   };
 }
-const occupant = (state: World, actor: Actor, seat: SeatId) => state.actors.find(a => a.id !== actor.id && a.room === state.room && a.seat === seat)?.id;
-function besideSeat(state: World, actor: Actor, seat: SeatId, by: Actor['id']): Transition {
-  const free = seatIds.find(id => id !== seat && seatKind(id) === seatKind(seat) && seatPoint(state, id)?.room === state.room && !occupant(state, actor, id));
-  const result = free ? seated(state, actor, free, seatPoint(state, free)!) : standBeside(state, actor, seat);
+function besideSeat(state: World, actor: Actor, piece: Piece, by: Actor['id']): Transition {
+  const free = state.layout.pieces.filter(p => p.room === state.room && p.kind === piece.kind).flatMap(seatsOf).find(seat => freeFor(state, actor, seat));
+  const result = free ? seated(state, actor, free, seatPiece(state, free)!) : standBeside(state, actor, piece);
   return { ...result, events: [...result.events, missingEvent('seat', actor.id, by)] };
 }
 /** On the floor just past the piece's side she came from. */
-function standBeside(state: World, actor: Actor, seat: SeatId): Transition {
-  const piece = fixture(state, seatKind(seat))!, width = pieceBounds[piece.kind].width;
+function standBeside(state: World, actor: Actor, piece: Piece): Transition {
+  const width = pieceBounds[piece.kind].width;
   const x = actor.x >= piece.x + width / 2 ? piece.x + width + 25 : piece.x - 25;
   const point = { x: Math.max(60, Math.min(roomWidth(state) - 60, x)), y: 480 };
   return { state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, ...point, seat: null, ...wake(a) } : a) }, events: [{ type: 'moved', actor: actor.id }] };
@@ -76,8 +73,3 @@ function destinations(spot: Exclude<Spot, 'floor'>, index: number) {
 }
 
 export function spotKind(spot: Exclude<Spot, 'floor'>): PieceKind { return spot === 'drawer' ? 'wardrobe' : spot; }
-export function seatKind(seat: SeatId): PieceKind { return seat.startsWith('sofa') ? 'sofa' : seat as 'bed' | 'armchair'; }
-export function seatPoint(state: World, seat: SeatId, room: RoomId = state.room) {
-  const piece = fixture(state, seatKind(seat), room);
-  return piece ? { ...fromPiece(piece, seats[seat]), room: piece.room } : undefined;
-}

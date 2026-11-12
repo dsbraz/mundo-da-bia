@@ -16,7 +16,7 @@ it('cria um estúdio amplo, nomeia, posiciona e recupera após salvar', () => {
 it('permite camas em quartos distintos sem mover ou ocupar a cama errada', () => {
   let state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
   state = transition(state, { type: 'summon' }).state;
-  state = transition(state, { type: 'sit', actor: 'bia', seat: 'bed' }).state;
+  state = transition(state, { type: 'sit', actor: 'bia', seat: '8.0' }).state;
   state = addRoom(state, { name: 'Outro quarto', template: 'bedroom', size: 'medium', cell: 2 });
   expect(state.layout.pieces.filter(p => p.kind === 'bed')).toHaveLength(2);
   const bed = state.layout.pieces.find(p => p.kind === 'bed' && p.room === state.room)!;

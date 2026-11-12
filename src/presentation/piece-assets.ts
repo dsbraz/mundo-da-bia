@@ -4,6 +4,7 @@ import type Phaser from 'phaser';
 import type { Palette, PieceKind, World } from '../domain/types';
 import { pieceBounds } from '../domain/layout';
 import { recolor, svgFragment } from './svg-source';
+import { chairImage, chairReady } from './chair-art';
 import sala from './assets/sala.svg?raw';
 import quarto from './assets/quarto.svg?raw';
 import workshop from './assets/workshop.svg?raw';
@@ -30,14 +31,16 @@ function source(kind: PieceKind) {
   return ['plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror'].includes(kind) ? decor : sala;
 }
 export function pieceImage(kind: PieceKind, color: Palette = 'original', preview = false): string {
+  if (kind === 'chair') return chairImage(color);
   const parts = [...(layers[kind] ?? [kind])];
   if (preview) parts.push(...(extras[kind] ?? []).filter(id => id.endsWith('closed') || id === 'lamp-on'));
   return svgFragment(recolor(source(kind), color), parts, pieceBounds[kind], furnitureTransform(kind));
 }
 export function loadPieces(scene: Phaser.Scene, state: World) {
   const unique = new Map(state.layout.pieces.map(piece => [`${piece.kind}-${piece.color}`, piece]));
+  const chair = chairReady(scene);
   unique.forEach(({ kind, color }) => {
-    if (scene.textures.exists(`piece-${kind}-${color}`)) return;
+    if (scene.textures.exists(`piece-${kind}-${color}`) || (kind === 'chair' && !chair)) return;
     loadSvg(scene, `piece-${kind}-${color}`, pieceImage(kind, color));
     (extras[kind] ?? []).forEach(part => loadSvg(scene, `piece-${part}-${color}`, svgFragment(recolor(source(kind), color), [part], pieceBounds[kind], furnitureTransform(kind))));
   });

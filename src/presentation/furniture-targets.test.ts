@@ -20,11 +20,11 @@ it('móveis e destinos respeitam cômodo e portas', () => {
   const open = transition(state, { type: 'interact', target: 'drawer' }).state;
   expect(surfaceAt(open, at('wardrobe', 350, 370))).toBe('drawer');
   expect(surfaceAt(state, at('fridge', 680, 320))).toBe('fridge');
-  expect(seatAt(state, { x: 150, y: 400 })).toBe('sofa-left');
+  expect(seatAt(state, { x: 150, y: 400 })).toBe('2.0');
   const away = transition(state, { type: 'room', room: 'quarto' }).state;
   expect(furnitureAt(away, at('lamp', 50, 200))).toBeUndefined();
   expect(surfaceAt(away, at('table', 300, 450))).toBeUndefined();
-  expect(seatAt(away, { x: 790, y: 350 })).toBe('bed');
+  expect(seatAt(away, { x: 790, y: 350 })).toBe('8.0');
 });
 
 it('objeto guardado some com gaveta fechada e volta no mesmo lugar', () => {
@@ -46,13 +46,13 @@ it('gestos entregam à mesa e sentam apenas ao concluir, sem sentar no cancelame
   expect(state.actors[0]?.seat).toBeNull();
   expect(state.actors[0]).toMatchObject({ x: 520, y: 530 });
   gesture.start(1, { x: 520, y: 390 }); gesture.end(1, { x: 150, y: 405 });
-  expect(state.actors[0]?.seat).toBe('sofa-left');
+  expect(state.actors[0]?.seat).toBe('2.0');
 });
 
 it('personagem deitado pode ser pego pelo corpo na cama', () => {
   let state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
   state = transition(state, { type: 'summon' }).state;
-  state = transition(state, { type: 'sit', actor: 'bia', seat: 'bed' }).state;
+  state = transition(state, { type: 'sit', actor: 'bia', seat: '8.0' }).state;
   state.actors = state.actors.filter(a => a.id === 'bia');
   expect(actorAt(state, { x: 650, y: 350 })?.id).toBe('bia');
   expect(actorAt(state, { x: 790, y: 200 })).toBeUndefined();
@@ -62,7 +62,7 @@ it('objeto na mão acompanha o corpo deitado', () => {
   let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
   state = transition(state, { type: 'room', room: 'quarto' }).state;
   state = transition(state, { type: 'summon' }).state;
-  state = transition(state, { type: 'sit', actor: 'bia', seat: 'bed' }).state;
+  state = transition(state, { type: 'sit', actor: 'bia', seat: '8.0' }).state;
   expect(itemPoint(state, state.items[3]!)).toEqual({ x: 733.2, y: 336 });
 });
 
@@ -81,13 +81,13 @@ it('soltar um objeto sobre o sofá não teletransporta quem o estava segurando',
 
 it('aceita deitar em toda a área do colchão e ignora a cabeceira', () => {
   const state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
-  expect(seatAt(state, at('bed', 620, 300))).toBe('bed');
-  expect(seatAt(state, at('bed', 910, 370))).toBe('bed');
+  expect(seatAt(state, at('bed', 620, 300))).toBe('8.0');
+  expect(seatAt(state, at('bed', 910, 370))).toBe('8.0');
   expect(seatAt(state, at('bed', 620, 190))).toBeUndefined();
 });
 it('encaixa um brinquedo no centro do colo quando sentado', () => {
   let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
-  state = transition(state, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  state = transition(state, { type: 'sit', actor: 'bia', seat: '2.0' }).state;
   expect(itemPoint(state, state.items[3]!)).toEqual({ x: 152.7, y: 373.3 });
 });
 it('tapping the stage starts the show from the scene, not from the panel', () => {

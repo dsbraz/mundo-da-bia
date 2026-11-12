@@ -119,7 +119,7 @@ it('v3 com planta fora da horta em caixa, planta inválida e assento desconhecid
   expect(loaded.find(p => p.id === 98)!.plant).toEqual(good);
   expect(town.actors.find(a => a.id === 'leo')!.seat).toBeNull();
   expect(town).not.toHaveProperty('moedas');
-  expect(decodeNeighborhood(JSON.stringify({ version: 3, town: { ...raw, actors: base.actors.map(a => a.id === 'leo' ? { ...a, seat: 'bed' } : a) } }))).toBeNull();
+  expect(decodeNeighborhood(JSON.stringify({ version: 3, town: { ...raw, actors: base.actors.map(a => a.id === 'leo' ? { ...a, seat: 'bed' } : a) } }))!.actors.find(a => a.id === 'leo')!.seat).toBeNull();
 });
 it('nextItem ausente ou até o maior prefixo é recalculado; um maior é mantido', () => {
   const base = upgradeToV3(richTown), first = base.nextItem;

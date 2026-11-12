@@ -1,12 +1,13 @@
 import { pieceBounds, fixture } from '../domain/layout';
-import { seatPoint } from '../domain/furniture';
+import { seatPiece, seatPoint } from '../domain/seats';
+import { usableKinds } from '../domain/use';
 import type { Action, ActorId, Point, World } from '../domain/types';
 import { walkingPath } from './walking-path';
 import { onFloor } from './floor-band';
 import { furnitureAt, seatAt, stageHit, usableAt, wardrobeHit } from './furniture-targets';
 export function equipmentAction(world: World, actor: ActorId, point: Point): Action | 'wardrobe' | null {
   if (wardrobeHit(world, point)) return 'wardrobe';
-  const seat = seatAt(world, point); if (seat) return { type: 'sit', actor, seat };
+  const seat = seatAt(world, point); if (seat && !usableKinds.includes(seatPiece(world, seat)!.kind)) return { type: 'sit', actor, seat };
   const target = furnitureAt(world, point); if (target) return { type: 'interact', target };
   if (stageHit(world, point)) return { type: 'show' };
   const piece = usableAt(world, point); return piece ? { type: 'use', id: piece.id } : null;

@@ -1,3 +1,4 @@
+import { lying, posed } from './posture';
 import { supportedActor, visualPiecePoint } from './furniture-scale';
 import { handAnchor, posePoint, contextScale, visualContext } from './pose';
 import type { VisualContext } from './pose';
@@ -28,20 +29,20 @@ export function slotsFor(state: World) {
 export function actorAt(state: VisibleWorld, p: Point) {
   return [...state.actors].sort((a, b) => (state.visibleDepth?.get(a.id) ?? a.y) - (state.visibleDepth?.get(b.id) ?? b.y)).reverse().find(a => a.room === state.room
     && (state.visibleDepth?.get(a.id) ?? a.y) >= (state.occludingDepth?.(p) ?? 0)
-    && (state.actorHit ? state.actorHit(a, p) : actorContains(a, p, visualContext(state))));
+    && (state.actorHit ? state.actorHit(a, p) : actorContains(posed(state, a), p, visualContext(state))));
 }
 /** Who a touch at `p` takes: the drawn pixel first, then, among bodies whose capsule (the body widened by `grabSlack`) holds the
  *  point, the selected one or else the nearest, in front of furniture. */
 export function grabActor(state: VisibleWorld, p: Point) {
   const exact = actorAt(state, p); if (exact || !state.grabSlack) return exact;
   const context = visualContext(state), slack = state.grabSlack;
-  const near = state.actors.filter(a => a.room === state.room && actorContains(a, p, context, slack));
+  const near = state.actors.filter(a => a.room === state.room && actorContains(posed(state, a), p, context, slack));
   return near.find(a => a.id === state.grabFirst) ?? near.sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x))[0];
 }
 export function itemPoint(state: VisibleWorld, item: Item): Point | null {
   const visible = state.visibleItems?.get(item.id); if (visible) return visible;
   const holder = state.actors.find(a => a.id === item.holder);
-  if (holder) return holder.room === state.room ? handPoint(state.visibleItems ? holder : supportedActor(state, holder), visualContext(state)) : null;
+  if (holder) return holder.room === state.room ? handPoint(state.visibleItems ? posed(state, holder) : supportedActor(state, holder), visualContext(state)) : null;
   if (item.room !== state.room || !availableSpot(state, item.spot)) return null;
   const point = { x: item.x, y: restingY(state, item) - 28 * contextScale(visualContext(state)) };
   const support = item.spot !== 'floor' && fixture(state, spotKind(item.spot));
@@ -67,7 +68,7 @@ export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): Drag
 function actorContains(actor: Actor, point: Point, context: VisualContext, slack = 0): boolean {
   const scale = contextScale(context), m = slack / scale;
   const p = { x: actor.x + (point.x - actor.x) / scale, y: actor.y + (point.y - actor.y) / scale };
-  if (actor.seat === 'bed') return p.x >= actor.x - 185 - m && p.x <= actor.x + 20 + m && Math.abs(p.y - actor.y) < 45 + m;
+  if (lying(actor)) return p.x >= actor.x - 185 - m && p.x <= actor.x + 20 + m && Math.abs(p.y - actor.y) < 45 + m;
   return Math.abs(actor.x - p.x) < 43 + m && p.y <= actor.y + 20 + m && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175) - m;
 }
 

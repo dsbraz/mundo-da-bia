@@ -18,7 +18,7 @@ test('arraste cancelado preserva posição, teclado move e dados inválidos recu
   await page.reload(); expect((await read(page)).actors).toHaveLength(7); expect((await read(page)).actors[0]!.x).toBe(520);
 });
 test('móveis, alimentação e guardar objeto continuam respondendo na cena', async ({ page }) => {
-  await ready(page); await drag(page, [520, 420], [150, 405]); expect((await read(page)).actors[0]!.seat).toBe('sofa-left');
+  await ready(page); await drag(page, [520, 420], [150, 405]); expect((await read(page)).actors[0]!.seat).toBe('2.0');
   await drag(page, await onPiece(page, 'fridge', 680, 282), await onPiece(page, 'table', 260, 450)); expect((await read(page)).items[0]!.spot).toBe('table');
   await drag(page, await onPiece(page, 'table', 260, 447), [150, 350]); expect((await read(page)).actors[0]!.fed).toBe(true);
   await drag(page, await onPiece(page, 'fridge', 680, 332), [335, 515]); expect((await read(page)).actors[4]!.fed).toBe(true);

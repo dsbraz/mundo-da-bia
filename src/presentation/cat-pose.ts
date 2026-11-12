@@ -1,3 +1,4 @@
+import { lying } from './posture';
 import type Phaser from 'phaser';
 import type { Actor } from '../domain/types';
 import { faceParts } from './expression';
@@ -19,7 +20,7 @@ export function poseTail(pose: Container, angles: { base: number; tip: number },
   tail.getByName<Image>('tail-tip').setRotation(angles.tip);
 }
 /** A cat resting off the bed lies curled up (in bed it lies under the blanket). */
-export const curled = (actor: Actor) => actor.kind === 'cat' && actor.resting && actor.seat !== 'bed';
+export const curled = (actor: Actor) => actor.kind === 'cat' && actor.resting && !lying(actor);
 /** Shows the curled drawing (lying, head down, the tail around the body, eyes shut) or the sitting one, every frame both ways. */
 export function curlLayers(pose: Container, curl: boolean) {
   for (const part of ['tail', 'ears', 'body']) pose.getByName<Image>(part).setVisible(!curl);

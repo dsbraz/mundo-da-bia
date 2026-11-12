@@ -1,6 +1,8 @@
 import { visualPiecePoint } from './furniture-scale';
 import { furnishings } from '../content/furnishings';
 import { pieceBounds } from '../domain/layout';
+import { pieceSeat, seatsOf } from '../domain/seats';
+import { usableKinds } from '../domain/use';
 import { positionTargets } from './viewport';
 import type { Action, ActorId, Piece, World } from '../domain/types';
 export function sceneControls(root: HTMLElement, select: (id: number) => void, dispatch: (action: Action) => void, dress: () => void) {
@@ -25,7 +27,12 @@ function usePiece(piece: Piece, actor: ActorId, world: World, dispatch: (action:
   if (piece.kind === 'stage') { dispatch({ type: 'show' }); return; }
   if (piece.kind === 'lamp' || piece.kind === 'fridge') { dispatch({ type: 'interact', target: piece.kind }); return; }
   if (piece.kind === 'table') { const item = world.items.find(i => i.holder === actor); if (item) dispatch({ type: 'put', item: item.id, spot: 'table' }); return; }
-  const seat = { sofa: 'sofa-left', bed: 'bed', armchair: 'armchair' } as const;
-  if (piece.kind in seat) { dispatch({ type: 'sit', actor, seat: seat[piece.kind as keyof typeof seat] }); return; }
+  const seat = seatFor(world, piece, actor);
+  if (seat) { dispatch({ type: 'sit', actor, seat }); return; }
   dispatch({ type: 'use', id: piece.id });
+}
+/** A seat that is not also a toy (a desk or picnic table is used by a tap): where the selected character sits on it. */
+function seatFor(world: World, piece: Piece, actor: ActorId) {
+  const who = world.actors.find(a => a.id === actor);
+  return who && seatsOf(piece).length && !usableKinds.includes(piece.kind) ? pieceSeat(world, piece, who) : undefined;
 }

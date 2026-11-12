@@ -2,9 +2,11 @@ import { initialLayout, fixture } from '../domain/layout';
 import { validLayout } from './layout-validation';
 import { member, record, roomId, validHome } from './values';
 import type { RecordValue } from './values';
-import { actorIds, itemIds, lookIds, seatIds, spots } from '../domain/types';
+import { actorIds, itemIds, lookIds, spots } from '../domain/types';
 import type { Actor, Item, World } from '../domain/types';
-import { seatPoint, spotKind } from '../domain/furniture';
+import { spotKind } from '../domain/furniture';
+import { parseSeat, seatPoint } from '../domain/seats';
+import { seatedWorld } from './seats';
 import { fridgeKinds } from '../domain/item-kind';
 import { roomWidth, validPoint } from '../domain/geometry';
 
@@ -52,12 +54,12 @@ export function savedWorld(value: unknown): World | null {
   if (!record(value)) return null;
   if (value.version === 1) return legacyWorld(value.state);
   if (value.version === 2 && record(value.state)) {
-    const state = { ...value.state, layout: initialLayout() };
+    const state = seatedWorld({ ...value.state, layout: initialLayout() });
     return validWorld(state) ? state : null;
   }
   if (value.version === 3) return upgradeRooms(value.state);
-  if (value.version !== 4 || !validWorld(value.state)) return null;
-  return value.state;
+  const state = value.version === 4 ? seatedWorld(value.state) : null;
+  return validWorld(state) ? state : null;
 }
 function legacyWorld(value: unknown): World | null {
   if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return null;
@@ -68,7 +70,7 @@ function legacyWorld(value: unknown): World | null {
   };
   return validWorld(state) ? state : null;
 }
-function validSeat(value: unknown): boolean { return value === null || member(seatIds, value); }
+function validSeat(value: unknown): boolean { return value === null || (typeof value === 'string' && parseSeat(value) !== null); }
 function itemSpot(value: RecordValue): boolean {
   if (!member(spots, value.spot)) return false;
   if (value.spot === 'floor') return true;
@@ -83,7 +85,7 @@ export function upgradeRooms(value: unknown): World | null {
   const layout = { ...value.layout, nextRoomId: 3, rooms: {
     sala: { ...defaults.rooms.sala, ...rooms.sala }, quarto: { ...defaults.rooms.quarto, ...rooms.quarto },
   } };
-  const state = { ...value, layout };
+  const state = seatedWorld({ ...value, layout });
   return validWorld(state) ? state : null;
 }
 

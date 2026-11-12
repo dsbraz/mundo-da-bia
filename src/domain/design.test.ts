@@ -34,11 +34,11 @@ it('edita acabamentos, duplica decoração e rejeita gestos fora da casa', () =>
 });
 
 it('mover sofá leva quem está sentado, e remover devolve ao chão', () => {
-  const seated = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  const seated = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: '2.0' }).state;
   seated.layout.pieces = seated.layout.pieces.filter(p => p.kind === 'sofa');
   const sofa = seated.layout.pieces.find(p => p.kind === 'sofa')!;
   const moved = editWorld(seated, { type: 'move', id: sofa.id, point: { x: sofa.x + 100, y: sofa.y } });
-  expect(moved.actors[0]).toMatchObject({ x: 250, y: 405, seat: 'sofa-left' });
+  expect(moved.actors[0]).toMatchObject({ x: 250, y: 405, seat: '2.0' });
   expect(editWorld(moved, { type: 'remove', id: sofa.id }).actors[0]?.seat).toBeNull();
 });
 

@@ -16,11 +16,11 @@ it('mantém a profundidade dos pés ao soltar e permite passar diante de móveis
 it('deitado fica sobre o colchão, mesmo com pés acima da base da cama', () => {
   let state = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;
   state = transition(state, { type: 'summon' }).state;
-  state = transition(state, { type: 'sit', actor: 'bia', seat: 'bed' }).state;
+  state = transition(state, { type: 'sit', actor: 'bia', seat: '8.0' }).state;
   expect(actorDepth(state, state.actors[0]!)).toBeGreaterThan(pieceDepth(fixture(state, 'bed')!));
 });
 it('o corpo sentado fica à frente do encosto para receber objetos no colo', () => {
-  const world = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  const world = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: '2.0' }).state;
   expect(actorDepth(world, world.actors[0]!)).toBeGreaterThan(pieceDepth(fixture(world, 'sofa')!));
 });
 it('keeps the initial loose microphone in front of the stage', () => {

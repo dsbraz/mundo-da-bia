@@ -87,7 +87,7 @@ describe('posições iniciais de saves novos', () => {
   it('espalha a turma sem sobreposição: alguém no sofá, alguém perto do microfone e gatos separados', () => {
     const world = initialWorld(), standing = world.actors.filter(a => !a.seat);
     expect(world.actors.map(a => [a.id, a.x, a.y, a.seat])).toEqual([
-      ['bia', 520, 530, null], ['luna', 245, 405, 'sofa-right'], ['leo', 420, 530, null], ['rui', 830, 530, null],
+      ['bia', 520, 530, null], ['luna', 245, 405, '2.1'], ['leo', 420, 530, null], ['rui', 830, 530, null],
       ['mimi', 330, 540, null], ['nino', 740, 540, null], ['pipoca', 610, 540, null],
     ]);
     // Compact enough for one opening at 768 px (about 790 logical units visible): the whole group fits with room to spare.

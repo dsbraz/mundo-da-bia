@@ -9,24 +9,24 @@ const holding = (world: World) => transition(world, { type: 'pick', actor: 'bia'
 describe('missing', () => {
   it('sentar no sofá ocupado: mostra quem está lá e senta no lugar livre do lado', () => {
     // Luna starts on the sofa's right seat; the left one is free.
-    const result = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-right' });
+    const result = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: '2.1' });
     expect(result.events).toContainEqual({ type: 'missing', actor: 'bia', need: 'seat', by: 'luna' });
-    expect(result.state.actors.find(a => a.id === 'bia')).toMatchObject({ seat: 'sofa-left', x: 150, y: 405 });
+    expect(result.state.actors.find(a => a.id === 'bia')).toMatchObject({ seat: '2.0', x: 150, y: 405 });
   });
   it('sentar no sofá todo ocupado: fica em pé ao lado, no chão, do lado de onde veio, nunca no ponto de partida', () => {
-    const full = transition(initialWorld(), { type: 'sit', actor: 'leo', seat: 'sofa-left' }).state;
-    const result = transition(full, { type: 'sit', actor: 'bia', seat: 'sofa-right' });
+    const full = transition(initialWorld(), { type: 'sit', actor: 'leo', seat: '2.0' }).state;
+    const result = transition(full, { type: 'sit', actor: 'bia', seat: '2.1' });
     expect(result.events).toContainEqual({ type: 'missing', actor: 'bia', need: 'seat', by: 'luna' });
     const bia = result.state.actors.find(a => a.id === 'bia')!;
     expect(bia).toMatchObject({ seat: null, x: 355, y: 480 });
-    const fromLeft = transition({ ...full, actors: full.actors.map(a => a.id === 'bia' ? { ...a, x: 70 } : a) }, { type: 'sit', actor: 'bia', seat: 'sofa-left' });
+    const fromLeft = transition({ ...full, actors: full.actors.map(a => a.id === 'bia' ? { ...a, x: 70 } : a) }, { type: 'sit', actor: 'bia', seat: '2.0' });
     expect(fromLeft.events).toContainEqual({ type: 'missing', actor: 'bia', need: 'seat', by: 'leo' });
     expect(fromLeft.state.actors.find(a => a.id === 'bia')).toMatchObject({ seat: null, x: 60, y: 480 });
   });
   it('sentar onde não há assento neste cômodo: falta assento, sem dono, e diz qual peça falta', () => {
     const away = transition(initialWorld(), { type: 'summon' }).state;
     const quarto = { ...away, room: 'quarto' as const, actors: away.actors.map(a => ({ ...a, room: 'quarto' as const })) };
-    expect(missing(quarto, { type: 'sit', actor: 'bia', seat: 'sofa-left' })).toEqual({ type: 'missing', actor: 'bia', need: 'seat', want: 'sofa' });
+    expect(missing(quarto, { type: 'sit', actor: 'bia', seat: '2.0' })).toEqual({ type: 'missing', actor: 'bia', need: 'seat', want: 'sofa' });
   });
   it('pôr na mesa de outro cômodo, na geladeira fechada, ou peixe na gaveta: falta o lugar', () => {
     const bia = holding(initialWorld());
@@ -61,7 +61,7 @@ describe('missing', () => {
   it('nenhuma das recusas acima devolve events vazio', () => {
     const fish = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'peixe' }).state;
     const refusals: [World, Action][] = [
-      [initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-right' }], [initialWorld(), { type: 'put', item: 'ursinho', spot: 'fridge' }],
+      [initialWorld(), { type: 'sit', actor: 'bia', seat: '2.1' }], [initialWorld(), { type: 'put', item: 'ursinho', spot: 'fridge' }],
       [holding(initialWorld()), { type: 'pick', actor: 'bia', item: 'microfone' }], [fish, { type: 'feed', actor: 'bia' }],
       [initialWorld(), { type: 'give', actor: 'bia', item: 'peixe' }], [initialWorld(), { type: 'move', actor: 'bia', point: { x: 500, y: 100 } }],
     ];

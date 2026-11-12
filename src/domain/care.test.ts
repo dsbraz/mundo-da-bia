@@ -67,9 +67,9 @@ describe('ciclo de cuidado suave', () => {
   });
   it('sentar no sofá acorda e esvazia; deitar na cama mantém a barriga', () => {
     const asleep = sleepyFed();
-    expect(bia(transition(asleep, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state)).toMatchObject({ seat: 'sofa-left', resting: false, fed: false });
+    expect(bia(transition(asleep, { type: 'sit', actor: 'bia', seat: '2.0' }).state)).toMatchObject({ seat: '2.0', resting: false, fed: false });
     const bedroom = transition({ ...asleep, actors: asleep.actors.map(a => a.id === 'bia' ? { ...a, room: 'quarto' } : a) }, { type: 'room', room: 'quarto' }).state;
-    expect(bia(transition(bedroom, { type: 'sit', actor: 'bia', seat: 'bed' }).state)).toMatchObject({ seat: 'bed', resting: true, fed: true });
+    expect(bia(transition(bedroom, { type: 'sit', actor: 'bia', seat: '8.0' }).state)).toMatchObject({ seat: '8.0', resting: true, fed: true });
   });
   it('ir a outro cômodo acorda e esvazia a barriga', () => {
     const asleep = sleepyFed();

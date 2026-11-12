@@ -31,8 +31,10 @@ export const pieceBounds: Record<PieceKind, Point & { width: number; height: num
   neon: { x: 0, y: 0, width: 160, height: 75 },
   speaker: { x: 0, y: 0, width: 65, height: 95 },
   mirror: { x: 0, y: 0, width: 100, height: 150 },
+  chair: { x: 0, y: 0, width: 90, height: 130 },
 };
-export const fixtures: readonly PieceKind[] = ['armchair', 'sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed'];
+/** One of each per room: the pieces the home's switches and spots belong to (seats may repeat, W3L-06). */
+export const fixtures: readonly PieceKind[] = ['wardrobe', 'fridge', 'lamp', 'table', 'stage'];
 export function initialLayout(): Layout {
   const kinds: PieceKind[] = ['rug', 'sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed'];
   return {

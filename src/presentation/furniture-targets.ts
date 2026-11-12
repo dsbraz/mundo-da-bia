@@ -1,14 +1,15 @@
 import { visualPiecePoint, logicalPiecePoint } from './furniture-scale';
-import { seatPoint, seatKind } from '../domain/furniture';
+import { seatPiece, seatPoint, seatRef, seatsOf } from '../domain/seats';
 import { fixture, pieceBounds, toPiece } from '../domain/layout';
-import { seatIds } from '../domain/types';
 import { usableKinds } from '../domain/use';
 import { benchKinds } from '../domain/recipes';
-import type { Home, PieceKind, Point, Spot, World } from '../domain/types';
+import type { Home, Piece, PieceKind, Point, SeatRef, Spot, World } from '../domain/types';
 
 function hit(state: World, kind: PieceKind, p: Point, x: number, y: number, width: number, height: number) {
   const piece = fixture(state, kind);
-  if (!piece || piece.room !== state.room) return false;
+  return !!piece && piece.room === state.room && inside(piece, p, x, y, width, height);
+}
+function inside(piece: Piece, p: Point, x: number, y: number, width: number, height: number) {
   const point = toPiece(piece, logicalPiecePoint(piece, p));
   return point.x >= x && point.x <= x + width && point.y >= y && point.y <= y + height;
 }
@@ -24,13 +25,14 @@ export function surfaceAt(state: World, p: Point): Exclude<Spot, 'floor'> | unde
   if (state.home.fridge && hit(state, 'fridge', p, 625, 270, 120, 115)) return 'fridge';
   return undefined;
 }
-export function seatAt(state: World, p: Point) {
-  if (hit(state, 'bed', p, 565, 271, 404, 110)) return 'bed';
-  return seatIds.find(id => {
-    const saved = seatPoint(state, id), piece = fixture(state, seatKind(id));
-    const seat = saved && piece ? { ...saved, ...visualPiecePoint(piece, saved) } : saved;
-    return seat && seat.room === state.room && Math.abs(seat.x - p.x) <= 45 && Math.abs(seat.y - p.y) <= 55;
-  });
+/** The seat under `p` (W3L-06): any bed's mattress lies down there, otherwise the nearest drawn seat within 45 × 55 px. */
+export function seatAt(state: World, p: Point): SeatRef | undefined {
+  const pieces = state.layout.pieces.filter(piece => piece.room === state.room);
+  const bed = [...pieces].reverse().find(piece => piece.kind === 'bed' && inside(piece, p, 565, 271, 404, 110));
+  if (bed) return seatRef(bed.id, 0);
+  const near = pieces.flatMap(seatsOf).map(seat => ({ seat, at: visualPiecePoint(seatPiece(state, seat)!, seatPoint(state, seat)!) }))
+    .filter(({ at }) => Math.abs(at.x - p.x) <= 45 && Math.abs(at.y - p.y) <= 55);
+  return near.sort((a, b) => Math.hypot(a.at.x - p.x, a.at.y - p.y) - Math.hypot(b.at.x - p.x, b.at.y - p.y))[0]?.seat;
 }
 export function stageHit(state: World, p: Point) { return hit(state, 'stage', p, 830, 80, 170, 340); }
 export function wardrobeHit(state: World, p: Point) { return hit(state, 'wardrobe', p, 305, 150, 195, 195); }

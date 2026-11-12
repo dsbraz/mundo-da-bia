@@ -5,6 +5,7 @@ import { animateActor, gazePose, walkPose } from './art';
 import { contextScale, handAnchor, visualContext } from './pose';
 import { glanceDirection, lifePose } from './life-pose';
 import { expressionOf, type Expression, type faces } from './expression';
+import { plazaSeat, posed as posedIn } from './posture';
 import type { weightFigures } from './weight-figures';
 
 type Container = Phaser.GameObjects.Container;
@@ -59,7 +60,7 @@ export function posture(ctx: FrameContext, figure: Container, actor: Actor) {
   const seated = [ctx.town?.outdoor.bench, ctx.town?.outdoor.swing].includes(actor.id), walking = ctx.walking(figure, actor);
   // Carried by the finger (never walking) or walking, the character is drawn standing and awake.
   const standing = walking || ctx.weight.carrying(actor.id);
-  const posed: Actor = standing ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: 'armchair' } : actor;
+  const posed: Actor = standing ? { ...actor, seat: null, resting: false } : seated ? { ...actor, seat: plazaSeat } : posedIn(ctx.world, actor);
   return { walking, seated, posed };
 }
 /** The expression (events first, a glance makes it curious), the blink and where the eyes look. */

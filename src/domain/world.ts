@@ -16,7 +16,7 @@ import { refuse } from './missing';
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
 const start: readonly Pick<Actor, 'x' | 'y' | 'seat'>[] = [
-  { x: 520, y: 530, seat: null }, { x: 245, y: 405, seat: 'sofa-right' }, { x: 420, y: 530, seat: null }, { x: 830, y: 530, seat: null },
+  { x: 520, y: 530, seat: null }, { x: 245, y: 405, seat: '2.1' }, { x: 420, y: 530, seat: null }, { x: 830, y: 530, seat: null },
   { x: 330, y: 540, seat: null }, { x: 740, y: 540, seat: null }, { x: 610, y: 540, seat: null },
 ];
 export function initialWorld(): World {
