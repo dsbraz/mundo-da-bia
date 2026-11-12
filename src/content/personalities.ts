@@ -61,3 +61,5 @@ export function pickReaction(size: number, previous: number | undefined, random:
   const offset = 1 + Math.min(size - 2, Math.floor(random() * (size - 1)));
   return (previous + offset) % size;
 }
+/** The face each one pulls at the mirror (W3L-08): Bia and Rui goof, Luna wiggles, Léo stretches, the cats purr. */
+export const mirrorFaces: Record<ActorId, ReactionPose> = { bia: 'goof', luna: 'wiggle', leo: 'stretch', rui: 'goof', mimi: 'purr', nino: 'purr', pipoca: 'purr' };

@@ -18,7 +18,8 @@ import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
 import { chooseFigure, drawFigures, headOf, moveFigure, pokeActor, ringTarget, shrugActor } from './scene-figures';
 import { animateFigure, type FrameContext } from './figure-frame';
-import { faceEvents, faces, pokeFace } from './expression';
+import { faceEvents, faces, pokeFace, type Expression } from './expression';
+import { mirrorReflections } from './mirror-reflection';
 import { drawPieces, drawObjects, pickPiece, pieceDepth } from './piece-art';
 import { actorAt, previewPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
@@ -54,7 +55,7 @@ export class PlayScene extends Phaser.Scene {
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private gaze = new Map<ActorId, number>();
-  private faces = faces();
+  private faces = faces(); private mirrors = mirrorReflections(this);
   readonly ambient = sceneLife(() => this.game.canvas);
   private weight = weightFigures();
   /** Street, plaza and doors: `arrive`, `reaction` to the plaza, `push` the swing and `enterDoor`. */
@@ -119,7 +120,7 @@ export class PlayScene extends Phaser.Scene {
     this.load.once('complete', () => this.paint(this.world, this.selected)); this.load.start(); return false;
   }
   private paintPlay(state: World, selected: ActorId) {
-    this.figures = drawFigures(this, state, selected);
+    this.figures = drawFigures(this, state, selected); this.mirrors.paint(state, this.figures);
     this.objects = drawObjects(this, state);
     drawLighting(this, state);
     if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700);
@@ -217,14 +218,14 @@ export class PlayScene extends Phaser.Scene {
   private mark(key: string, value: string) { if (this.game.canvas.dataset[key] !== value) this.game.canvas.dataset[key] = value; }
   update(time: number) {
     const reduced = reducedMotion(); this.outdoor.swing.step(performance.now(), reduced);
-    const ctx = this.frameContext, shown: string[] = [];
+    const ctx = this.frameContext, shown: string[] = [], expressions = new Map<string, Expression>();
     this.ambient.life.tick(this.world, this.selected, ctx.now, !reduced && !this.building && !this.wardrobe && !this.moving && !this.gameArt?.active() && !this.game.canvas.dataset.strolling);
     this.figures.forEach((figure, index) => {
       const actor = this.world.actors.find(a => a.id === figure.name)!;
-      shown.push(`${actor.id}:${animateFigure(ctx, figure, actor, time, index, reduced)}`);
+      const expression = animateFigure(ctx, figure, actor, time, index, reduced); expressions.set(actor.id, expression); shown.push(`${actor.id}:${expression}`);
       this.gameArt?.animate(figure, performance.now(), reduced);
     });
-    this.balls.step(this.world, this.objects, this.kicker(), ctx.now);
+    this.mirrors.frame(time, this.figures, expressions, reduced); this.balls.step(this.world, this.objects, this.kicker(), ctx.now);
     this.ambient.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
     this.outdoor.frame(time, reduced);

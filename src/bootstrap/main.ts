@@ -23,6 +23,7 @@ import { placeChange } from './place-change';
 import { doorFront } from '../presentation/neighborhood-doors';
 import { doorWalk } from './door-walk';
 import { uiText } from '../content/ui-text';
+import { mirrorFaces } from '../content/personalities';
 import { localWorld, storeWorld } from '../domain/neighborhood';
 import type { NeighborhoodAction } from '../domain/neighborhood-types';
 import { neighborhoodControls } from '../presentation/neighborhood-controls';
@@ -112,7 +113,7 @@ const enterDoor = doorWalk({ town: () => town, selected: () => selected, buildin
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
-const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), serve: action => dispatch(action, false) });
+const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), serve: action => dispatch(action, false), looks: openLooks, grimace: id => scene.poke(id, mirrorFaces[id], '') });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });

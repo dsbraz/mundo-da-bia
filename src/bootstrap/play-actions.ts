@@ -1,4 +1,4 @@
-import type { Action, ActorId, ItemId, Need, Point, World } from '../domain/types';
+import type { Action, ActorId, ItemId, Need, PieceKind, Point, World } from '../domain/types';
 import { approach, equipmentAction } from '../presentation/equipment-interaction';
 import { pickupItem } from '../presentation/item-pickup';
 import type { walking } from '../presentation/walking';
@@ -16,6 +16,8 @@ interface PlayActions {
   bench: (piece: number) => void;
   /** Applies an action without walking first (the meal once she got to her seat). */
   serve: (action: Action) => void;
+  /** The mirror (W3L-08): opens the Looks, and the face she pulls at it. */
+  looks: () => void; grimace: (id: ActorId) => void;
 }
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
@@ -28,11 +30,17 @@ export function playActions(deps: PlayActions) {
     walker.cancel();
     const point = approach(deps.state(), deps.selected(), action);
     if (!point) { deps.refuse('path', blockedMessage); return; }
-    const bench = action.type === 'use' && deps.state().layout.pieces.some(p => p.id === action.id && benchKinds.includes(p.kind));
-    walker.start(point, () => {
-      if (approach(deps.state(), deps.selected(), action)) { if (bench) deps.bench(action.id); else deps.dispatch(action); }
-      else deps.refuse('path', blockedMessage);
-    });
+    const kind = action.type === 'use' ? deps.state().layout.pieces.find(p => p.id === action.id)?.kind : undefined;
+    // The mirror (W3L-08): the Looks open at once while she walks there.
+    if (kind === 'mirror') deps.looks();
+    walker.start(point, () => arrived(action, kind));
+  }
+  /** At the piece: the bench opens, otherwise the action applies (at the mirror she pulls her face too); no way there is refused. */
+  function arrived(action: Action, kind: PieceKind | undefined) {
+    if (!approach(deps.state(), deps.selected(), action)) { deps.refuse('path', blockedMessage); return; }
+    if (action.type === 'use' && kind && benchKinds.includes(kind)) { deps.bench(action.id); return; }
+    deps.dispatch(action);
+    if (kind === 'mirror') deps.grimace(deps.selected());
   }
   function pickup(item: ItemId) {
     pickupItem(item, { state: deps.state, selected: deps.selected, dispatch: deps.dispatch, walk: walker, hint: text => deps.refuse('path', text) });
