@@ -30,7 +30,7 @@ export async function bringHere(page: Page) {
 export async function point(page: Page, x: number, y: number) {
   return (await points(page, [[x, y]]))[0]!;
 }
-async function points(page: Page, positions: [number, number][]) {
+export async function points(page: Page, positions: [number, number][]) {
   const project = () => page.locator('canvas').evaluate((canvas, positions) => {
     const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth);
     return positions.map(([x, y]) => ({ x: box.x + (x - Number(canvas.dataset.viewX) - Number(canvas.dataset.cameraX)) * scale,

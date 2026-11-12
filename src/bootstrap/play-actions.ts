@@ -7,6 +7,8 @@ import { benchKinds } from '../domain/recipes';
 const blockedMessage = refusal('blocked', '');
 interface PlayActions {
   root: HTMLElement; state: () => World; selected: () => ActorId; choose: (id: ActorId) => void;
+  /** Chooses `id` mid-touch without a repaint (the ring moves); `settle` repaints when the touch is over. */
+  light: (id: ActorId) => void; settle: () => void;
   cancelGame: () => void; walker: ReturnType<typeof walking>; dispatch: (action: Action) => void;
   toggleWardrobe: () => void; refuse: (text: string) => void;
   /** Opens the kitchen bench of a stove, counter or cart once the selected character got there. */
@@ -15,6 +17,7 @@ interface PlayActions {
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
   function select(id: ActorId) { deps.cancelGame(); walker.cancel(); deps.root.classList.add('actor-chosen'); deps.choose(id); }
+  function choose(id: ActorId) { deps.cancelGame(); walker.cancel(); deps.root.classList.add('actor-chosen'); deps.light(id); }
   function perform(action: Action) {
     deps.cancelGame();
     if (action.type === 'pick') { pickup(action.item); return; }
@@ -36,5 +39,5 @@ export function playActions(deps: PlayActions) {
     if (action === 'wardrobe') { walker.cancel(); deps.toggleWardrobe(); } else if (action) perform(action);
     return action !== null;
   }
-  return { select, perform, pickup, interact };
+  return { select, choose, settle: deps.settle, perform, pickup, interact };
 }

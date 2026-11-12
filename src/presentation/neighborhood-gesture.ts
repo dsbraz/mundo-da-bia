@@ -2,8 +2,9 @@ import { plotAt } from '../domain/neighborhood-geometry';
 import type { Neighborhood, NeighborhoodAction, Location } from '../domain/neighborhood-types';
 import type { ActorId, ItemId, Point, World } from '../domain/types';
 import type { VisibleWorld } from './targets';
-import { actorAt, sourceAt } from './targets';
-import { doorAt, destinationPoint } from './neighborhood-doors';
+import { grabActor, sourceAt } from './targets';
+import { doorAt, doorDropAt, destinationPoint, type Door } from './neighborhood-doors';
+import { onFloor } from './floor-band';
 type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, p: Point) => void; end: (id: number, p: Point) => void; cancel: () => void; transferring?: () => boolean };
 interface Actions {
   drop?: (actor: ActorId, point: Point) => boolean;
@@ -12,19 +13,39 @@ interface Actions {
   town: () => Neighborhood; world: () => World; building: () => boolean;
   dispatch: (action: NeighborhoodAction) => void; plot: (plot: number) => void;
   preview: (action: NeighborhoodAction | null) => void; progress: (value: number) => void;
+  /** The door the dragged character's feet are over lights up (null: none). */
+  glow?: (door: Door | null) => void;
+  /** A character let go on a door went through it. */
+  outcome?: (value: string) => void;
 }
-interface Active { id: number; start: Point; actor?: ActorId | undefined; item?: ItemId | undefined; destination?: Location | undefined; ready: boolean; claimed: boolean }
+interface Active { id: number; start: Point; offset: Point; actor?: ActorId | undefined; item?: ItemId | undefined; destination?: Location | undefined; ready: boolean; claimed: boolean; door?: Door | undefined }
 export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
   let active: Active | null = null, timer: ReturnType<typeof setInterval> | undefined;
   function stop() { clearInterval(timer); timer = undefined; actions.progress(0); }
-  function cancel() { const previewed = active?.ready; stop(); active = null; base.cancel(); if (previewed) actions.preview(null); }
+  function cancel() { const previewed = active?.ready, lit = active?.door; stop(); active = null; base.cancel(); if (previewed) actions.preview(null); if (lit) actions.glow?.(null); }
+  /** The door under the character's feet, as drawn or past the floor's edge (never just under the finger: the feet decide). */
+  function feetDoor(a: Active, point: Point) {
+    const raw = { x: point.x + a.offset.x, y: point.y + a.offset.y };
+    return [onFloor(actions.world(), raw), raw].map(p => doorDropAt(actions.town(), p)).find(Boolean);
+  }
+  /** A character let go on a door goes through it at once. */
+  function through(a: Active, point: Point) {
+    const door = a.actor && moved(a, point) ? feetDoor(a, point) : undefined;
+    if (!door) return false;
+    a.destination = door.location; const action = transfer(a); cancel(); actions.dispatch(action); actions.outcome?.('crossed'); return true;
+  }
+  function light(a: Active, point: Point) {
+    const door = feetDoor(a, point);
+    if (door?.name !== a.door?.name) { a.door = door; actions.glow?.(door ?? null); }
+  }
   function transfer(a: Active): NeighborhoodAction {
     return { type: 'transport', ...(a.actor ? { actor: a.actor } : { item: a.item! }), location: a.destination!, point: destinationPoint(actions.town(), a.destination!) };
   }
   function update(id: number, point: Point) {
     if (active?.id !== id || active.ready) return;
     base.update(id, point);
-    if (!active.actor && !active.item) return;
+    if (active.actor) { light(active, point); return; }
+    if (!active.item) return;
     const door = doorAt(actions.town(), point);
     if (JSON.stringify(door?.location) === JSON.stringify(active.destination)) return;
     stop(); active.destination = door?.location;
@@ -40,8 +61,8 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
     start(id, point) {
       if (active) return false;
       const world = actions.world(), token = sourceAt(world, point, false);
-      const actor = token ? undefined : actorAt(world, point)?.id;
-      active = { id, start: point, ready: false, claimed: claimed(world, point, token), ...(actions.building() ? {} : { actor, item: loose(world, token) }) };
+      const found = token ? undefined : grabActor(world, point), actor = found?.id;
+      active = { id, start: point, offset: found ? { x: found.x - point.x, y: found.y - point.y } : { x: 0, y: 0 }, ready: false, claimed: claimed(world, point, token), ...(actions.building() ? {} : { actor, item: loose(world, token) }) };
       if (startBase(active, point, actions)) base.start(id, point);
       return true;
     }, update,
@@ -49,6 +70,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
       if (active?.id !== id) return;
       const a = active;
       if (a.ready) { const action = transfer(a); cancel(); actions.dispatch(action); return; }
+      if (through(a, point)) return;
       if (dropActor(a, point, actions)) { cancel(); return; }
       const tapped = backgroundTap(a, point) ? backgroundAction(actions, point) : null;
       if (tapped) { cancel(); tapped(); return; }
@@ -66,7 +88,8 @@ function loose(world: World, token: ReturnType<typeof sourceAt>): ItemId | undef
   return token?.kind === 'item' && world.items.some(i => i.id === token.id && !i.holder && i.spot === 'floor') ? token.id : undefined;
 }
 
-function dropActor(active: Active, point: Point, actions: Actions) { return !!active.actor && Math.hypot(point.x - active.start.x, point.y - active.start.y) >= 12 && !!actions.drop?.(active.actor, point); }
+const moved = (active: Active, point: Point) => Math.hypot(point.x - active.start.x, point.y - active.start.y) >= 12;
+function dropActor(active: Active, point: Point, actions: Actions) { return !!active.actor && moved(active, point) && !!actions.drop?.(active.actor, point); }
 
 function backgroundTap(active: Active, point: Point) { return !active.claimed && !active.actor && !active.item && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12; }
 

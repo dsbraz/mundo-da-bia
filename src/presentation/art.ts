@@ -64,7 +64,7 @@ function pulseStar(figure: Phaser.GameObjects.Container, time: number, reduced: 
 function danceAngle(time: number, index: number, dancing: boolean) { return dancing ? Math.sin(time / 220 + index) * 0.06 : 0; }
 
 
-function actorLabel(actor: Actor) { return actor.name ?? actors[actor.id].name; }
+export function actorLabel(actor: Actor) { return actor.name ?? actors[actor.id].name; }
 
 function cover(scene: Phaser.Scene, container: Phaser.GameObjects.Container, cat: boolean) {
   const width = cat ? 62 : 104;

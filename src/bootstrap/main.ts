@@ -103,7 +103,7 @@ const enterDoor = doorWalk({ town: () => town, selected: () => selected, buildin
 scene.ballRest = (item, point) => dispatch({ type: 'place', item, point }, false);
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
-const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece) });
+const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece) });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
@@ -157,9 +157,12 @@ function dropPiece(action: EditAction) {
   if (action.type !== 'move') { applyEdit(action); return; }
   applyEdit(settleMove(state, action) ?? action); scene.slidePiece(action.id, action.point);
 }
-const { refresh, frameScene, renderControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
+/** A choice made mid-touch left the scene and panels behind until the next repaint. */
+let stale = false;
+const { refresh: repaint, frameScene, renderControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
   panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); } });
+function refresh() { stale = false; repaint(); }
 function dispatch(action: Action, interrupt = true) {
   if (interrupt) { cancelGame(); walker.cancel(); }
   if ('actor' in action) root.classList.add('actor-chosen');

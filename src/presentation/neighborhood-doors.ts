@@ -3,7 +3,8 @@ import { plotStart } from '../domain/neighborhood-geometry';
 import type { Location, Neighborhood } from '../domain/neighborhood-types';
 import type { Point } from '../domain/types';
 import { streetArrival } from './street-opening';
-export function doors(town: Neighborhood): { location: Location; name: string; point: Point }[] {
+export interface Door { location: Location; name: string; point: Point }
+export function doors(town: Neighborhood): Door[] {
   const location = town.location;
   if (location.kind === 'street') return town.buildings.map(b => ({ location: { kind: 'interior', building: b.id, room: b.entry }, name: b.name, point: { x: plotStart(b.plot) + doorway.facade.x + doorway.facade.width / 2, y: doorway.facade.y + doorway.facade.height / 2 } }));
   const building = town.buildings.find(b => b.id === location.building)!;
@@ -20,6 +21,16 @@ export function destinationPoint(town: Neighborhood, destination: Location): Poi
 export function doorAt(town: Neighborhood, point: Point) {
   const geometry = town.location.kind === 'street' ? doorway.facade : doorway.interior;
   return doors(town).find(d => Math.abs(d.point.x - point.x) <= geometry.width / 2 && Math.abs(d.point.y - point.y) <= geometry.height / 2);
+}
+/** The door a dragged character's feet at `feet` stand in: the doorway, or the strip of floor right in front of its sill. */
+export function doorDropAt(town: Neighborhood, feet: Point): Door | undefined {
+  const geometry = town.location.kind === 'street' ? doorway.facade : doorway.interior;
+  return doors(town).find(d => Math.abs(d.point.x - feet.x) <= geometry.width / 2 && feet.y >= d.point.y - geometry.height / 2 && feet.y <= d.point.y + geometry.height / 2 + 24);
+}
+/** The doorway's box (scene units) of `door`, as drawn on this place. */
+export function doorBox(town: Neighborhood, door: Door) {
+  const geometry = town.location.kind === 'street' ? doorway.facade : doorway.interior;
+  return { x: door.point.x - geometry.width / 2, y: door.point.y - geometry.height / 2, width: geometry.width, height: geometry.height };
 }
 /** Where the chosen character walks before going through the door to `destination` (the facade door on the street, the "Rua" door inside). */
 export function doorFront(town: Neighborhood, destination: Location): Point {

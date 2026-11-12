@@ -2,7 +2,8 @@ import type Phaser from 'phaser';
 import type { Actor, ActorId, Point, World } from '../domain/types';
 import { supportedActor } from './furniture-scale';
 import { contextScale, visualContext } from './pose';
-import { drawActor } from './art';
+import { actorLabel, drawActor } from './art';
+import { drawSelection } from './selection-art';
 import { actorDepth } from './piece-art';
 import { handPoint } from './targets';
 import { trackSteps } from './scene-life';
@@ -56,4 +57,11 @@ export function refuseNear(scene: Phaser.Scene, figures: Figure[], selected: Act
 export function ringTarget(hint: Phaser.GameObjects.Graphics, target: Actor | undefined) {
   hint.clear();
   if (target) hint.lineStyle(3, 0x477e86).strokeEllipse(target.x, target.y + 3, 76, 22);
+}
+/** Moves the selection (halo, name and star) to `id`'s figure without repainting anyone. */
+export function chooseFigure(scene: Phaser.Scene, figures: Figure[], world: World, id: ActorId) {
+  figures.forEach(f => ['selection-halo', 'selection-label', 'selection-star'].forEach(name => f.getByName(name)?.destroy()));
+  const figure = figures.find(f => f.name === id), actor = world.actors.find(a => a.id === id);
+  if (figure && actor) drawSelection(scene, figure, supportedActor(world, actor), actorLabel(actor), visualContext(world));
+  if (navigator.webdriver) scene.game.canvas.dataset.chosen = id;
 }

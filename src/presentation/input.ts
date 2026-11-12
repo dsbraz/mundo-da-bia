@@ -27,8 +27,9 @@ export function bindInput(canvas: HTMLCanvasElement, getState: () => World, sele
     else if (wheel?.wheel(event)) event.preventDefault();
   }, { passive: false });
   const cancel = () => { canvas.parentElement?.closest('#app')?.classList.remove('gesturing'); wheel?.cancel(); router?.reset?.(); gesture.cancel(); build?.gesture.cancel(); };
-  const pixels = (e: PointerEvent) => ({ x: e.clientX - (canvas.parentElement ?? canvas).getBoundingClientRect().left, y: e.clientY });
-  const point = (event: PointerEvent): Point => screenToWorld(canvas, { x: event.clientX, y: event.clientY });
+  const stopped = (why: string) => { gesture.cancel(why); cancel(); };
+  const pixels = (e: Pick<PointerEvent, 'clientX' | 'clientY'>) => ({ x: e.clientX - (canvas.parentElement ?? canvas).getBoundingClientRect().left, y: e.clientY });
+  const point = (event: Pick<PointerEvent, 'clientX' | 'clientY'>): Point => screenToWorld(canvas, { x: event.clientX, y: event.clientY });
   canvas.addEventListener('pointerdown', event => {
     wheel?.cancel(); play?.hover?.(null);
     if (router ? router.start(event.pointerId, point(event), pixels(event)) : current().start(event.pointerId, point(event))) { canvas.setPointerCapture(event.pointerId); canvas.parentElement?.closest('#app')?.classList.add('gesturing'); }
@@ -39,9 +40,10 @@ export function bindInput(canvas: HTMLCanvasElement, getState: () => World, sele
   });
   canvas.addEventListener('pointerleave', () => play?.hover?.(null));
   canvas.addEventListener('pointerup', event => {
-    const box = (canvas.parentElement ?? canvas).getBoundingClientRect();
-    if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) cancel();
-    if (router) router.end(event.pointerId, point(event), pixels(event)); else current().end(event.pointerId, point(event));
+    // Let go over the panels: Create puts the piece back; in play the drag ends at the scene's edge, where it was last shown.
+    const inside = within(event, (canvas.parentElement ?? canvas).getBoundingClientRect());
+    if (!inside.same && build?.enabled()) cancel();
+    if (router) router.end(event.pointerId, point(inside), pixels(inside)); else current().end(event.pointerId, point(inside));
     canvas.parentElement?.closest('#app')?.classList.remove('gesturing');
   });
   const cancelledPointer = (event: PointerEvent) => {
@@ -51,7 +53,13 @@ export function bindInput(canvas: HTMLCanvasElement, getState: () => World, sele
   };
   canvas.addEventListener('pointercancel', cancelledPointer);
   canvas.addEventListener('lostpointercapture', cancelledPointer);
-  window.addEventListener('blur', () => { cancel(); router?.reset?.(); });
-  window.addEventListener('keydown', event => { if (event.key === 'Escape') cancel(); });
+  window.addEventListener('blur', () => { stopped('blur'); router?.reset?.(); });
+  window.addEventListener('keydown', event => { if (event.key === 'Escape') stopped('escape'); });
   return cancel;
+}
+
+/** The pointer's position held inside `box`; `same` when it already was. */
+function within(event: PointerEvent, box: DOMRect) {
+  const clientX = Math.max(box.left, Math.min(box.right - 1, event.clientX)), clientY = Math.max(box.top, Math.min(box.bottom - 1, event.clientY));
+  return { clientX, clientY, same: clientX === event.clientX && clientY === event.clientY };
 }

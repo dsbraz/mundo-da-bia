@@ -54,3 +54,12 @@ function doorway(town: Neighborhood, previous: Location) {
   const building = town.buildings.find(b => b.id === previous.building)!;
   return { ...geometry.facade, x: plotStart(building.plot) + geometry.facade.x };
 }
+/** A warm light around a doorway: the drop here goes through it. */
+export function doorGlow(scene: Phaser.Scene, { x, y, width, height }: Rect) {
+  // Under automation only, the canvas tells whether a doorway is lit.
+  const mark = (lit: boolean) => { if (navigator.webdriver) scene.game.canvas.dataset.doorGlow = String(lit); };
+  mark(true);
+  return scene.add.graphics().setDepth(154).fillStyle(0xffe08a, .28).fillRoundedRect(x - 6, y - 6, width + 12, height + 12, 14)
+    .lineStyle(6, 0xf2b84b, .95).strokeRoundedRect(x - 6, y - 6, width + 12, height + 12, 14)
+    .once('destroy', () => mark(false));
+}

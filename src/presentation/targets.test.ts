@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { initialWorld, transition } from '../domain/world';
-import { itemPoint, sourceAt } from './targets';
+import { grabActor, itemPoint, sourceAt } from './targets';
 import { createPlayGesture } from './play-gesture';
 
 it('um objeto na mão aparece sobre a roupa do armário e deve receber o toque', () => {
@@ -46,4 +46,20 @@ it('a floor object saved outside the floor band is drawn resting on the floor wi
   world.items = world.items.map(i => i.id === 'ursinho' ? { ...i, spot: 'floor', x: 350, y: 120 } : i);
   expect(itemPoint(world, world.items.find(i => i.id === 'ursinho')!)).toEqual({ x: 350, y: 410 - 28 });
   expect(world.items.find(i => i.id === 'ursinho')!.y).toBe(120);
+});
+it('a cápsula de pega: um toque ao lado do braço, fora do desenho, ainda pega a personagem mais perto', () => {
+  const state = initialWorld(), beside = { x: 520 + 43 + 20, y: 400 };
+  expect(grabActor(state, beside)).toBeUndefined();
+  expect(grabActor({ ...state, grabSlack: 28 }, beside)?.id).toBe('bia');
+  expect(grabActor({ ...state, grabSlack: 28 }, { x: 520 + 43 + 30, y: 400 })).toBeUndefined();
+  // Exactly drawn wins over the capsule, and between two capsules the nearest body wins.
+  expect(grabActor({ ...state, grabSlack: 28 }, { x: 520, y: 400 })?.id).toBe('bia');
+  expect(grabActor({ ...state, grabSlack: 60 }, { x: 476, y: 400 })?.id).toBe('bia');
+});
+it('um toque entre a Bia escolhida e a Pipoca, fora dos dois desenhos, fica com quem está escolhida', () => {
+  // 20 screen px beside Bia's arm lands closer to Pipoca's body box; the child aimed at the one she is playing with.
+  const state = { ...initialWorld(), grabSlack: 25 }, near = { x: 572, y: 435 };
+  expect(grabActor(state, near)?.id).toBe('pipoca');
+  expect(grabActor({ ...state, grabFirst: 'bia' }, near)?.id).toBe('bia');
+  expect(grabActor({ ...state, grabFirst: 'leo' }, near)?.id).toBe('pipoca');
 });

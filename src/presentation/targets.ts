@@ -12,6 +12,10 @@ export type VisibleWorld = World & {
   visibleItems?: ReadonlyMap<ItemId, Point>; visibleDepth?: ReadonlyMap<string, number>;
   occludingDepth?: (point: Point) => number; itemDepth?: ReadonlyMap<ItemId, number>;
   actorHit?: (actor: Actor, point: Point) => boolean;
+  /** How far around a character's body (scene units) a finger still takes it: 28 screen pixels, so a child's finger never misses. */
+  grabSlack?: number;
+  /** Who wins a near miss shared with others: the one being played with. */
+  grabFirst?: Actor['id'];
 };
 export type DragToken = { kind: 'item'; id: ItemId } | { kind: 'look'; id: LookId };
 export type DragPreview = DragToken & { point: Point };
@@ -25,6 +29,14 @@ export function actorAt(state: VisibleWorld, p: Point) {
   return [...state.actors].sort((a, b) => (state.visibleDepth?.get(a.id) ?? a.y) - (state.visibleDepth?.get(b.id) ?? b.y)).reverse().find(a => a.room === state.room
     && (state.visibleDepth?.get(a.id) ?? a.y) >= (state.occludingDepth?.(p) ?? 0)
     && (state.actorHit ? state.actorHit(a, p) : actorContains(a, p, visualContext(state))));
+}
+/** Who a touch at `p` takes: the drawn pixel first, then, among bodies whose capsule (the body widened by `grabSlack`) holds the
+ *  point, the selected one or else the nearest, in front of furniture. */
+export function grabActor(state: VisibleWorld, p: Point) {
+  const exact = actorAt(state, p); if (exact || !state.grabSlack) return exact;
+  const context = visualContext(state), slack = state.grabSlack;
+  const near = state.actors.filter(a => a.room === state.room && actorContains(a, p, context, slack));
+  return near.find(a => a.id === state.grabFirst) ?? near.sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x))[0];
 }
 export function itemPoint(state: VisibleWorld, item: Item): Point | null {
   const visible = state.visibleItems?.get(item.id); if (visible) return visible;
@@ -52,11 +64,11 @@ export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): Drag
   return undefined;
 }
 
-function actorContains(actor: Actor, point: Point, context: VisualContext): boolean {
-  const scale = contextScale(context);
+function actorContains(actor: Actor, point: Point, context: VisualContext, slack = 0): boolean {
+  const scale = contextScale(context), m = slack / scale;
   const p = { x: actor.x + (point.x - actor.x) / scale, y: actor.y + (point.y - actor.y) / scale };
-  if (actor.seat === 'bed') return p.x >= actor.x - 185 && p.x <= actor.x + 20 && Math.abs(p.y - actor.y) < 45;
-  return Math.abs(actor.x - p.x) < 43 && p.y <= actor.y + 20 && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175);
+  if (actor.seat === 'bed') return p.x >= actor.x - 185 - m && p.x <= actor.x + 20 + m && Math.abs(p.y - actor.y) < 45 + m;
+  return Math.abs(actor.x - p.x) < 43 + m && p.y <= actor.y + 20 + m && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175) - m;
 }
 
 export function handPoint(actor: Actor, context: VisualContext = 'interior'): Point {

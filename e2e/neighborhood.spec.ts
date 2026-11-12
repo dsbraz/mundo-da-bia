@@ -51,7 +51,8 @@ test('arraste pela porta, c√¢mera da rua e figurinos completos nas duas orienta√
   await ready(page);
   const a = await point(page, 520, 450), b = await point(page, 550, 335);
   await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 4 });
-  await expect(page.locator('#edge-progress')).toBeVisible(); await expect(page.locator('#edge-progress')).toBeHidden();
+  // The doorway lights up under her feet at once, with no wait; she goes through only when let go.
+  await expect(page.locator('canvas')).toHaveAttribute('data-door-glow', 'true');
   expect((await readTown(page)).location.kind).toBe('interior'); await page.mouse.up();
   expect((await readTown(page)).actors[0]!.location).toEqual({ kind: 'street' });
   await swipe(page, 700, 300); expect(Number(await page.locator('canvas').getAttribute('data-camera-x'))).toBeGreaterThan(380);

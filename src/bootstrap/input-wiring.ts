@@ -4,8 +4,9 @@ import type { Neighborhood, NeighborhoodAction, Location } from '../domain/neigh
 import { bindInput } from '../presentation/input';
 import { createBuildGesture } from '../presentation/build-gesture';
 import { neighborhoodGesture } from '../presentation/neighborhood-gesture';
-import { actorAt, sourceAt } from '../presentation/targets';
+import { grabActor, sourceAt } from '../presentation/targets';
 import { outdoorAt } from '../presentation/outdoor-controls';
+import { doorBox } from '../presentation/neighborhood-doors';
 import { screenScale, type viewport } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import type { playActions } from './play-actions';
@@ -29,10 +30,12 @@ export interface InputWiring {
 /** Binds the canvas: play and build gestures, the camera drag, rooms and doors. Returns the input's cancel. */
 export function wireInput(current: Phaser.Game, deps: InputWiring) {
   const { scene, play, square, walker } = deps, canvas = current.canvas;
+  /** Under automation only: how the last character drag ended. */
+  const outcome = (value: string) => { if (navigator.webdriver) canvas.dataset.dropOutcome = value; };
   return bindInput(canvas, () => scene.visibleWorld(), play.select, point => deps.dispatch({ type: 'move', actor: deps.selected(), point }), {
-    walk: point => { deps.view()?.resume(); const target = outdoorAt(deps.town(), point); if (target) square.touch(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch: deps.dispatch, wardrobe: deps.wardrobe, toggleWardrobe: deps.toggleWardrobe, selected: deps.selected, poke: deps.poke, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point, true), roll: (item, point, velocity) => scene.throwBall(item, point, velocity),
+    walk: point => { deps.view()?.resume(); const target = outdoorAt(deps.town(), point); if (target) square.touch(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch: deps.dispatch, wardrobe: deps.wardrobe, toggleWardrobe: deps.toggleWardrobe, selected: deps.selected, poke: deps.poke, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point, true), roll: (item, point, velocity) => scene.throwBall(item, point, velocity), outcome, choose: play.choose, settle: play.settle,
   }, { enabled: deps.building, gesture: createBuildGesture(deps.state, deps.choosePiece, deps.previewBuild, deps.dropPiece, point => scene.pickPiece(point), () => screenScale(canvas)) }, {
-    view: { background: p => { const world = scene.visibleWorld(); return deps.building() ? !scene.pickPiece(p) : !sourceAt(world, p, deps.wardrobe()) && !actorAt(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
+    view: { background: p => { const world = scene.visibleWorld(); return deps.building() ? !scene.pickPiece(p) : !sourceAt(world, p, deps.wardrobe()) && !grabActor(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
       // On the street the drag moves the 1000-wide window first; what is left past its ends pans the closer view inside it.
       const state = deps.state(), scale = screenScale(canvas), wanted = deps.camera() - dx / scale;
       if (state.streetWidth) { deps.setCamera(Math.max(0, Math.min(state.streetWidth - 1000, wanted))); scene.camera(deps.camera()); }
@@ -43,5 +46,6 @@ export function wireInput(current: Phaser.Game, deps: InputWiring) {
     pan: (room, fraction) => scene.pan(room, fraction),
     transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
     progress: deps.progress,
-  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: deps.townDispatch, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress }));
+  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: deps.townDispatch, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress,
+    glow: door => scene.glowDoor(door && doorBox(deps.town(), door)), outcome }));
 }

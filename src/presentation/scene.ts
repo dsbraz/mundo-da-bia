@@ -16,7 +16,7 @@ import type { Actor, ActorId, Piece, Point, PresentationEvent, World } from '../
 import { roomWidth } from '../domain/geometry';
 import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
-import { drawFigures, moveFigure, pokeActor, refuseNear, ringTarget } from './scene-figures';
+import { chooseFigure, drawFigures, moveFigure, pokeActor, refuseNear, ringTarget } from './scene-figures';
 import { animateFigure, type FrameContext } from './figure-frame';
 import { faceEvents, faces, pokeFace } from './expression';
 import { drawPieces, drawObjects, pickPiece, pieceDepth } from './piece-art';
@@ -35,6 +35,8 @@ import type { ReactionPose } from '../content/personalities';
 import { reducedMotion } from './motion';
 import { cookedEffect, hopDishes } from './kitchen-art';
 import { hex } from './palette';
+import { screenScale } from './viewport';
+import { doorGlow } from './door-effect';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
   previewGame(value: GamePreview | null) { this.gameArt?.paint(value); }
@@ -72,6 +74,11 @@ export class PlayScene extends Phaser.Scene {
   private ghost: Phaser.GameObjects.Image | null = null;
   private hint: Phaser.GameObjects.Graphics | null = null;
   private objects: Phaser.GameObjects.Image[] = [];
+  private doorLight: Phaser.GameObjects.Graphics | null = null;
+  /** The doorway a dragged character would go through lights up (null: none). */
+  glowDoor(box: { x: number; y: number; width: number; height: number } | null) {
+    this.doorLight?.destroy(); this.doorLight = box && this.ready ? doorGlow(this, box) : null;
+  }
   constructor(state: World) { super('play'); this.world = state; }
   preload() { this.load.text('art-dishes', '/art/dishes.svg'); this.load.text('art-plants', '/art/plants.svg'); loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); actorIds.forEach(id => this.load.svg(`face-${id}`, `/icons/${id}.svg`, { width: 112, height: 112 })); }
   create() {
@@ -90,7 +97,7 @@ export class PlayScene extends Phaser.Scene {
     this.cameras.main.scrollX = Number(this.game.canvas.dataset.viewX ?? 0) + (state.streetWidth ? this.cameraX : 0);
     this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(state.streetWidth ? this.cameraX : 0);
     this.sliding = null; this.transferRoom = null;
-    this.children.removeAll(true); this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
+    this.children.removeAll(true); this.doorLight = null; this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
     this.outdoor.paint(state, selected);
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
@@ -158,8 +165,8 @@ export class PlayScene extends Phaser.Scene {
     return () => settle(this.figures, this.objects, this.world.room, this.world.items.some(i => i.id === name && !i.holder) ? { name: name!, fall: objectFall(contextScale(visualContext(this.world))) } : null);
   }
   visibleWorld(): VisibleWorld {
-    return shownWorld({ world: this.world, figures: this.figures, objects: this.objects, moving: this.moving, pickPiece: p => this.pickPiece(p),
-      actorHit: (actor, point) => { const pose = this.figures.find(f => f.name === actor.id)?.getByName<Phaser.GameObjects.Container>('pose'); return !!pose && visibleHit(this, pose, point); } });
+    return { ...shownWorld({ world: this.world, figures: this.figures, objects: this.objects, moving: this.moving, pickPiece: p => this.pickPiece(p),
+      actorHit: (actor, point) => { const pose = this.figures.find(f => f.name === actor.id)?.getByName<Phaser.GameObjects.Container>('pose'); return !!pose && visibleHit(this, pose, point); } }), grabSlack: 28 / screenScale(this.game.canvas), grabFirst: this.selected };
   }
   hover(point: Point | null) {
     this.hint?.clear();
@@ -171,6 +178,8 @@ export class PlayScene extends Phaser.Scene {
   face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) { this.gaze.set(id, Math.sign(point.x - actor.x)); this.faces.trigger(id, 'curious', performance.now()); } }
   refuse(point: Point, text: string, face?: ActorId) { if (this.ready) refuseNear(this, this.figures, this.selected, point, text, face); }
   poke(id: ActorId, pose: ReactionPose, line: string) { if (this.ready) pokeActor({ scene: this, world: this.world, figures: this.figures }, this.faces, id, pose, line); else this.faces.trigger(id, pokeFace(pose), performance.now(), 900); }
+  /** Someone new is chosen mid-touch: only the ring moves; the next `paint` draws the rest. */
+  choose(id: ActorId) { this.selected = id; if (this.ready) chooseFigure(this, this.figures, this.world, id); }
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }

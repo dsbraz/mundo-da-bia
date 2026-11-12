@@ -3,7 +3,9 @@ import { twoFinger } from './two-finger';
 import type { Action, ActorId, ItemId, Point, RoomId, World } from '../domain/types';
 import { roomWidth } from '../domain/geometry';
 import { neighbor } from '../domain/doors';
-import { actorAt, sourceAt } from './targets';
+import { grabActor, sourceAt } from './targets';
+import { houseEdgePan } from './house-edge-pan';
+import { screenToWorld } from './viewport';
 import { navigation } from './navigation';
 import { edgeTransfer } from './edge-transfer';
 import { floorTop } from './floor-band';
@@ -32,7 +34,9 @@ export function houseInput(canvas: HTMLCanvasElement, state: () => World, curren
     if (actor) { actions.dispatch({ type: 'travel', actor, room }); actions.dispatch({ type: 'move', actor, point }); }
     else if (item) actions.dispatch({ type: 'transfer', item, room, point });
   }
-  function cancel() { active?.gesture.cancel(); active = null; nav.cancel(); edge.cancel(); }
+  // A character held at the scene's side slides the view (it never changes room by waiting there); objects keep the edge transfer.
+  const slide = houseEdgePan(canvas.parentElement ?? canvas, dx => actions.view?.pan(-dx, 0), e => { if (active) active.gesture.update(active.id, screenToWorld(canvas, { x: e.clientX, y: e.clientY })); });
+  function cancel() { active?.gesture.cancel(); active = null; nav.cancel(); edge.cancel(); slide(null); }
   return twoFinger({
     start(id: number, p: Point) {
       if (active) return false;
@@ -45,7 +49,8 @@ export function houseInput(canvas: HTMLCanvasElement, state: () => World, curren
       if (active?.id !== id) return;
       if (!edge.crossed()) active.gesture.update(id, p);
       if (active.gesture.transferring?.()) { edge.cancel(); return; }
-      if (active.actor || active.item) edge.update({ x: pixels.x, y: p.y });
+      if (active.item) edge.update({ x: pixels.x, y: p.y });
+      else if (active.actor) slide({ clientX: pixels.x + (canvas.parentElement ?? canvas).getBoundingClientRect().left, clientY: pixels.y });
     },
     end(id: number, p: Point, pixels: Point) {
       if (active?.id !== id) return;
@@ -60,7 +65,7 @@ export function houseInput(canvas: HTMLCanvasElement, state: () => World, curren
 
 function owner(world: World, p: Point, actions: HouseInput) {
   const token = actions.building() ? undefined : sourceAt(world, p, actions.wardrobe());
-  const actor = actions.building() || token ? null : actorAt(world, p)?.id ?? null;
+  const actor = actions.building() || token ? null : grabActor(world, p)?.id ?? null;
   const item = looseItem(world, token);
   return { actor, item };
 }
