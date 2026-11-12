@@ -6,6 +6,7 @@ import type { DragPreview, DragToken } from './targets';
 import { onFloor } from './floor-band';
 import { throwVelocity } from './ball-motion';
 import { itemKind } from '../domain/item-kind';
+import { hugTarget } from './drop-target';
 export interface PlayInput {
   hover?: (point: Point | null) => void;
   pickup?: (item: ItemId) => void; screenScale?: () => Point;
@@ -80,9 +81,14 @@ function finish(active: Active, point: Point, state: World, move: (p: Point) => 
   finishActor(active, point, state, move, play);
 }
 function finishActor(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
+  const actor = active.actor; if (!actor) return;
+  const done = (action: Action, outcome: string) => { play?.dispatch(action); play?.outcome?.(outcome); };
   const seat = dropPoints(active, point, state).map(p => seatAt(state, p)).find(Boolean);
-  if (active.actor && seat) { play?.dispatch({ type: 'sit', actor: active.actor, seat }); play?.outcome?.('sat'); return; }
-  if (active.actor && Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) { move(destination(active, point, state)); play?.outcome?.('moved'); }
+  if (seat) { done({ type: 'sit', actor, seat }, 'sat'); return; }
+  // Feet over someone else's (W3L-14): a hug.
+  const friend = hugTarget(state, actor, destination(active, point, state));
+  if (friend) { done({ type: 'hug', actor, other: friend.id }, 'hugged'); return; }
+  if (Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) { move(destination(active, point, state)); play?.outcome?.('moved'); }
 }
 function deliver(token: DragToken, point: Point, state: World, play: PlayInput, samples: Active['samples']) {
   const actor = actorAt(state, point); const surface = surfaceAt(state, point);

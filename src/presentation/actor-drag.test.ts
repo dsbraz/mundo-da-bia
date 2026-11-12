@@ -37,8 +37,9 @@ it('um arraste interrompido por Escape conta como cancelado, e um movimento comu
   const gesture = createPlayGesture(() => state, vi.fn(), move, { dispatch: vi.fn(), outcome, preview: vi.fn(), previewActor: vi.fn(), wardrobe: () => false, toggleWardrobe: vi.fn() });
   gesture.start(1, { x: 520, y: 440 }); gesture.update(1, { x: 600, y: 440 }); gesture.cancel('escape');
   expect(outcome).toHaveBeenLastCalledWith('cancelled:escape');
-  gesture.start(2, { x: 520, y: 440 }); gesture.update(2, { x: 600, y: 440 }); gesture.end(2, { x: 600, y: 440 });
-  expect(outcome).toHaveBeenLastCalledWith('moved'); expect(move).toHaveBeenCalledExactlyOnceWith({ x: 600, y: 530 });
+  // An empty spot between Pipoca (610) and Nino (740): over someone's feet the drop would be a hug (W3L-14).
+  gesture.start(2, { x: 520, y: 440 }); gesture.update(2, { x: 680, y: 440 }); gesture.end(2, { x: 680, y: 440 });
+  expect(outcome).toHaveBeenLastCalledWith('moved'); expect(move).toHaveBeenCalledExactlyOnceWith({ x: 680, y: 530 });
 });
 it('um toque perto do corpo, fora do desenho, continua sendo um toque no chão; só o arraste leva a personagem', () => {
   // 20 px right of Bia's body box: inside the grab capsule, off the drawing.
@@ -51,4 +52,11 @@ it('um toque perto do corpo, fora do desenho, continua sendo um toque no chão; 
   const dragGesture = createPlayGesture(() => state, select, move, play);
   dragGesture.start(2, near); dragGesture.update(2, { x: near.x - 60, y: near.y }); dragGesture.end(2, { x: near.x - 60, y: near.y });
   expect(select).toHaveBeenCalledWith('bia'); expect(move).toHaveBeenCalledWith({ x: 460, y: 530 });
+});
+it('soltar a Bia com os pés sobre os do Léo é um abraço, não um passo (W3L-14)', () => {
+  const state = initialWorld(), outcome = vi.fn(), move = vi.fn(), dispatch = vi.fn();
+  const gesture = createPlayGesture(() => state, vi.fn(), move, { dispatch, outcome, preview: vi.fn(), previewActor: vi.fn(), wardrobe: () => false, toggleWardrobe: vi.fn() });
+  gesture.start(1, { x: 520, y: 440 }); gesture.update(1, { x: 420, y: 440 }); gesture.end(1, { x: 420, y: 440 });
+  expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'hug', actor: 'bia', other: 'leo' });
+  expect(outcome).toHaveBeenLastCalledWith('hugged'); expect(move).not.toHaveBeenCalled();
 });

@@ -19,13 +19,19 @@ export function drawnBox(piece: Piece): Rect {
   const box = pieceBounds[piece.kind], a = visualPiecePoint(piece, { x: piece.x, y: piece.y }), b = visualPiecePoint(piece, { x: piece.x + box.width, y: piece.y + box.height });
   return { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y };
 }
-/** Under the feet of `mover`, dragged to `feet`: the seat a drop sits on, else the mirror she would stand in front of. */
+/** Someone else in the room whose feet overlap `feet` (35 across, 45 deep) (W3L-14: a drop there is a hug), the nearest. */
+export function hugTarget(world: World, mover: ActorId, feet: Point): Actor | undefined {
+  const near = world.actors.filter(a => a.id !== mover && a.room === world.room && Math.abs(a.x - feet.x) <= 35 && Math.abs(a.y - feet.y) <= 45);
+  return near.sort((a, b) => Math.abs(a.x - feet.x) - Math.abs(b.x - feet.x))[0];
+}
+/** Under the feet of `mover`, dragged to `feet`: the seat a drop sits on, else someone to hug, else the mirror she would stand in front of. */
 export function actorDropTarget(world: World, mover: ActorId, feet: Point): DropTarget | null {
   const seat = seatAt(world, feet);
   if (seat) {
     const piece = seatPiece(world, seat)!, by = occupant(world, { id: mover }, seat), at = visualPiecePoint(piece, seatPoint(world, seat)!);
     return { kind: 'seat', seat, ...(by ? { by } : {}), box: drawnBox(piece), at, depth: pieceDepth(piece) + .5 };
   }
+  const friend = hugTarget(world, mover, feet); if (friend) return personTarget(friend);
   const mirror = world.layout.pieces.find(p => p.kind === 'mirror' && p.room === world.room && Math.abs(p.x + 50 - feet.x) <= 70);
   return mirror ? { kind: 'mirror', piece: mirror.id, box: glassOf(mirror), depth: pieceDepth(mirror) + .7 } : null;
 }

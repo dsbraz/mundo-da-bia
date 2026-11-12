@@ -49,20 +49,22 @@ for (const [width, height] of sizes) test.describe(`${width}×${height}`, () => 
     test(`pega ${name}: no pé da cena o boneco encosta no chão e segue o x do dedo`, async ({ page }) => {
       await open(page, width, height);
       const start = await bia(page), [a] = await points(page, [[start.x + grip.x, start.y + grip.y]]);
-      const low = await screen(page, { x: start.x + grip.x, y: 590 }), side = await screen(page, { x: start.x + grip.x - 120, y: 590 });
+      // 150 to the left: clear floor between Mimi (330) and Léo (420); over someone's feet the drop would be a hug (W3L-14).
+      const low = await screen(page, { x: start.x + grip.x, y: 590 }), side = await screen(page, { x: start.x + grip.x - 150, y: 590 });
       const f = await finger(page);
       await f.down(a!); await f.move(low, 10); await f.move(side, 6);
       expect(Number(await data(page, 'walk-y'))).toBe(540);
-      expect(Math.abs(Number(await data(page, 'walk-x')) - (start.x - 120))).toBeLessThanOrEqual(3);
+      expect(Math.abs(Number(await data(page, 'walk-x')) - (start.x - 150))).toBeLessThanOrEqual(3);
       await f.up(); await f.detach();
-      expect(await bia(page)).toMatchObject({ x: expect.closeTo(start.x - 120, 0), y: 540 });
+      expect(await bia(page)).toMatchObject({ x: expect.closeTo(start.x - 150, 0), y: 540 });
     });
   }
   test('um toque 20 px ao lado do braço arrasta a Bia e não move a vista', async ({ page }) => {
     await open(page, width, height);
     const start = await bia(page), [chest] = await points(page, [[start.x, start.y - 95]]), [arm] = await points(page, [[start.x + armEdge, start.y - 95]]);
     const a = { x: arm!.x + 20, y: chest!.y }, view = await data(page, 'view-x');
-    await touchDrag(page, a, { x: a.x - 90, y: a.y + 10 });
+    // Short of Léo's feet (a drop there would be a hug, W3L-14).
+    await touchDrag(page, a, { x: a.x - 60, y: a.y + 10 });
     expect(await data(page, 'view-x')).toBe(view);
     expect((await bia(page)).x).toBeLessThan(start.x - 40);
   });
@@ -91,7 +93,8 @@ for (const [width, height] of sizes) test.describe(`${width}×${height}`, () => 
     await f.move({ x: box.x + box.width + 30, y: box.y + box.height + 30 }, 6, 2); await f.up(2);
     await f.move({ x: a!.x - 60, y: a!.y }, 4, 1); await f.up(1); await f.detach();
     const [again] = await points(page, [[(await bia(page)).x, (await bia(page)).y - 90]]);
-    await touchDrag(page, again!, { x: again!.x - 120, y: again!.y });
+    // Clear floor between Mimi and Léo (over someone's feet the drop would be a hug, W3L-14).
+    await touchDrag(page, again!, await screen(page, { x: start.x - 150, y: start.y - 90 }));
     expect((await bia(page)).x).toBeLessThan(start.x - 60);
   });
 });
