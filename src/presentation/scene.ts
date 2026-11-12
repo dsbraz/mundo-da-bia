@@ -20,6 +20,7 @@ import { chooseFigure, drawFigures, headOf, moveFigure, pokeActor, ringTarget, s
 import { animateFigure, type FrameContext } from './figure-frame';
 import { faceEvents, faces, pokeFace, type Expression } from './expression';
 import { mirrorReflections } from './mirror-reflection';
+import { actorDropTarget, dropLights, personTarget } from './drop-target';
 import { drawPieces, drawObjects, pickPiece, pieceDepth } from './piece-art';
 import { actorAt, previewPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
@@ -55,7 +56,7 @@ export class PlayScene extends Phaser.Scene {
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private gaze = new Map<ActorId, number>();
-  private faces = faces(); private mirrors = mirrorReflections(this);
+  private faces = faces(); private mirrors = mirrorReflections(this); private drops = dropLights(this);
   readonly ambient = sceneLife(() => this.game.canvas);
   private weight = weightFigures();
   /** Street, plaza and doors: `arrive`, `reaction` to the plaza, `push` the swing and `enterDoor`. */
@@ -98,7 +99,7 @@ export class PlayScene extends Phaser.Scene {
     this.cameras.main.scrollX = Number(this.game.canvas.dataset.viewX ?? 0) + (state.streetWidth ? this.cameraX : 0);
     this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(state.streetWidth ? this.cameraX : 0);
     this.sliding = null; this.transferRoom = null;
-    this.children.removeAll(true); this.doorLight = null; this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
+    this.children.removeAll(true); this.drops.reset(); this.doorLight = null; this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
     this.outdoor.paint(state, selected);
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
@@ -161,6 +162,8 @@ export class PlayScene extends Phaser.Scene {
   /** `carried`: the finger drags the figure (it hangs, never walks); without `id` whoever moved is let go. */
   previewActor(id: ActorId | null, point: Point | null, carried = false) {
     this.moving = moveFigure({ scene: this, world: this.world, figures: this.figures, objects: this.objects, gaze: this.gaze, weight: this.weight, moving: this.moving }, id, point, carried);
+    // W3L-09: while the finger carries her, what her feet are over lights up warm.
+    if (carried || !id) this.drops.show(id && point && this.ready ? actorDropTarget(this.world, id, point) : null);
   }
   /** Whoever moves for a game walks there (fades with reduced motion); call it before committing the moves. */
   stroll(moves: { actor: ActorId; point: Point }[]) { this.ambient.strolls.start(this.figures, moves); }
@@ -195,14 +198,14 @@ export class PlayScene extends Phaser.Scene {
   preview(drag: DragPreview | null) {
     if (!this.ready) return;
     this.objects.forEach(o => o.setAlpha(drag?.kind === 'item' && o.name === drag.id ? .25 : 1));
-    if (!drag) { this.clearPreview(); return; }
+    if (!drag) { this.clearPreview(); this.drops.show(null); return; }
     const key = drag.kind === 'look' ? `look-${drag.id}` : itemTexture(this.world.items.find(i => i.id === drag.id)!);
     if (!this.ghost) this.ghost = this.add.image(drag.point.x, drag.point.y, key).setDepth(1000);
     const target = actorAt(this.visibleWorld(), drag.point);
     const point = previewPoint(this.visibleWorld(), drag);
     snapGhost(this, this.ghost, point, drag.kind === 'item' ? target?.id ?? null : null);
     this.ghost.setTexture(key).setName(drag.id).setDisplaySize(drag.kind === 'look' ? 64 : ballSize(key as ItemKind, visualContext(this.world)), drag.kind === 'look' ? 56 : ballSize(key as ItemKind, visualContext(this.world)));
-    this.highlight(target);
+    this.drops.show(personTarget(target));
   }
   private highlight(target: Actor | undefined) {
     if (!this.hint) this.hint = this.add.graphics().setDepth(999);

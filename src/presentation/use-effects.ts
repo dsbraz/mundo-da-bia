@@ -3,13 +3,15 @@ import { pieceBounds } from '../domain/layout';
 import type { Piece, PieceKind, Point } from '../domain/types';
 import { reducedFadeMs, reducedMotion } from './motion';
 import { hex } from './palette';
+import { playPainters } from './play-effects';
 
 type Container = Phaser.GameObjects.Container;
 type Graphics = Phaser.GameObjects.Graphics;
 const drawn: readonly PieceKind[] = ['sink', 'washer', 'planter', 'bookcase', 'picnic-table'];
+const paint = (kind: PieceKind) => painters[kind] ?? playPainters[kind];
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
-/** The everyday pieces answer with a drawn, moving effect; the older ones keep their small sign. */
-export const drawnUse = (kind: PieceKind) => drawn.includes(kind);
+/** Every piece that is on answers with a drawn, moving effect (W3L-09: the playroom and workshop ones too, no text sign left). */
+export const drawnUse = (kind: PieceKind) => drawn.includes(kind) || !!playPainters[kind];
 
 /** Six bubbles rising out of the sink basin (local art coordinates), fading near the top. Still with reduced motion. */
 export function bubbleFrame(time: number, reduced: boolean) {
@@ -76,15 +78,13 @@ export function steam(g: Graphics, x: number, y: number, time: number, reduced: 
     g.strokePath();
   }
 }
-/** Every frame: the old signs bob (still with reduced motion) and the everyday effects move. Returns the kinds showing an effect. */
+/** Every frame the effects of the pieces that are on move. Returns the kinds showing an effect. */
 export function animatePieces(pieces: Map<number, Container>, time: number, reduced: boolean): string {
   const shown: string[] = [];
   pieces.forEach(piece => {
-    const sign = piece.getByName<Phaser.GameObjects.Text>('effect');
-    if (sign) sign.y = 6 + (reduced ? 0 : Math.sin(time / 400) * 4);
     const layer = piece.getByName<Container>('use-effect'); if (!layer) return;
     const kind = layer.getData('kind') as PieceKind;
-    painters[kind]!(layer.getByName<Graphics>('fx').clear(), time, reduced);
+    paint(kind)!(layer.getByName<Graphics>('fx').clear(), time, reduced);
     layer.getByName<Graphics>('sprout')?.setRotation(sproutAngle(time, reduced));
     shown.push(kind);
   });
