@@ -65,3 +65,15 @@ it('dormir tira o sono e encerra a tristeza: na cama −25/min, no sofá −12/m
   for (let n = 0; n < 5; n++) rest = neighborhoodAction(rest, { type: 'live', elapsed: 60_000, phase: 'noite' });
   expect(needsOf(who(rest, 'luna')).sono).toBe(0);
 });
+
+it('a cama conta pela peça do assento no cômodo onde a pessoa está: na rua, noutro cômodo ou sem assento é −12/min', () => {
+  const night = play(startTown(), 16 * 60), inside = who(night, 'luna').location as Extract<Resident['location'], { kind: 'interior' }>;
+  const drop = (patch: Partial<Resident>) => {
+    const town = withActor(night, 'luna', { resting: true, ...patch });
+    return needsOf(who(town, 'luna')).sono - needsOf(who(neighborhoodAction(town, { type: 'live', elapsed: 60_000, phase: 'noite' }), 'luna')).sono;
+  };
+  expect(drop({ seat: '8.0', room: 'quarto', location: { ...inside, room: 'quarto' } })).toBe(25);
+  expect(drop({ seat: '8.0', room: 'sala', location: { ...inside, room: 'sala' } })).toBe(12);
+  expect(drop({ seat: '8.0', room: 'quarto', location: { kind: 'street' } as Resident['location'] })).toBe(12);
+  expect(drop({ seat: null, room: 'quarto', location: { ...inside, room: 'quarto' } })).toBe(12);
+});

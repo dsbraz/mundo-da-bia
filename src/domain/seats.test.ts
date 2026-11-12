@@ -3,7 +3,7 @@ import { initialWorld, transition } from './world';
 import { editWorld } from './design';
 import { addRoom } from './rooms';
 import { fixture } from './layout';
-import { freeSeat, seatPiece, seatPoint, seatsOf, seatsIn } from './seats';
+import { freeFor, freeSeat, mealSeat, occupant, parseSeat, pieceSeat, seatOfKind, seatPiece, seatPoint, seatsOf, seatsIn, sitsOn } from './seats';
 import type { Piece, World } from './types';
 
 const sala = (state: World) => ({ ...state, actors: state.actors.map(a => ({ ...a, room: 'sala' as const, seat: null, x: 500, y: 530 })) });
@@ -76,6 +76,49 @@ it('uma vaga fora do chão alcançável não senta', () => {
   const result = transition(state, { type: 'sit', actor: 'bia', seat: '42.0' });
   expect(result.state).toBe(state);
   expect(result.events).toEqual([{ type: 'missing', actor: 'bia', need: 'seat' }]);
+});
+it('o id de vaga é só `<peça>.<vaga>` inteiros sem zero à esquerda; peça que não é assento não tem vaga', () => {
+  expect(parseSeat('12.10')).toEqual({ piece: 12, slot: 10 });
+  for (const seat of ['x2.0', '2.0x', '02.0', '2.01', 'sofa-left']) expect(parseSeat(seat)).toBeNull();
+  const state = initialWorld(), rug = state.layout.pieces.find(p => p.kind === 'rug')!;
+  expect(seatPiece(state, `${rug.id}.0`)).toBeUndefined();
+});
+it('sentar numa peça, ocupar e caber: em outro cômodo ou com id antigo não está nela; a própria pessoa não ocupa a vaga; a caminha não cabe gente', () => {
+  const state = transition(sala(initialWorld()), { type: 'sit', actor: 'bia', seat: '2.0' }).state, sofa = fixture(state, 'sofa')!, bia = state.actors[0]!;
+  expect(sitsOn(bia, sofa)).toBe(true);
+  expect(sitsOn({ ...bia, room: 'quarto' }, sofa)).toBe(false);
+  expect(sitsOn({ ...bia, seat: null }, sofa)).toBe(false);
+  expect(sitsOn({ ...bia, seat: 'sofa-left' as never }, sofa)).toBe(false);
+  expect(occupant(state, bia, '2.0')).toBeUndefined();
+  expect(occupant(state, state.actors[1]!, '2.0')).toBe('bia');
+  expect(freeFor(state, state.actors[1]!, '2.1')).toBe(true);
+  expect(freeFor(state, state.actors[1]!, '99.0')).toBe(false);
+  const quarto = { ...state, room: 'quarto' as const }, cat = fixture(quarto, 'cat-bed')!;
+  expect(freeFor(quarto, bia, `${cat.id}.0`)).toBe(false);
+  expect(freeFor(quarto, state.actors[4]!, `${cat.id}.0`)).toBe(true);
+});
+it('para comer: fica no assento em que está (menos a cama), senão a cadeira livre mais perto, mesmo longe de um sofá', () => {
+  const state = withPieces(sala(initialWorld()), { id: 41, kind: 'chair', x: 100, y: 300 }, { id: 42, kind: 'chair', x: 700, y: 300 });
+  const at = (x: number) => ({ ...state.actors[0]!, x });
+  expect(mealSeat(state, at(760))).toBe('42.0');
+  expect(mealSeat(state, at(150))).toBe('41.0');
+  expect(mealSeat(state, at(300))).toBe('41.0');
+  const sofa = transition(state, { type: 'sit', actor: 'bia', seat: '2.0' }).state;
+  expect(mealSeat(sofa, sofa.actors[0]!)).toBe('2.0');
+  expect(mealSeat(sala(initialWorld()), at(0))).toBe('2.0');
+  expect(mealSeat(sala(initialWorld()), at(1000))).toBe('2.1');
+});
+it('sentar numa peça ou num tipo: a primeira vaga livre, senão a primeira (para dizer quem está nela)', () => {
+  let state = withPieces(sala(initialWorld()), { id: 41, kind: 'chair', x: 100, y: 300 }, { id: 42, kind: 'chair', x: 700, y: 300 });
+  const luna = state.actors[1]!, chair = (id: number) => state.layout.pieces.find(p => p.id === id)!;
+  expect(pieceSeat(state, fixture(state, 'sofa')!, luna)).toBe('2.0');
+  expect(seatOfKind(state, 'chair', luna)).toBe('41.0');
+  state = transition(state, { type: 'sit', actor: 'bia', seat: '41.0' }).state;
+  expect(pieceSeat(state, chair(41), luna)).toBe('41.0');
+  expect(seatOfKind(state, 'chair', luna)).toBe('42.0');
+  state = transition(state, { type: 'sit', actor: 'leo', seat: '42.0' }).state;
+  expect(seatOfKind(state, 'chair', luna)).toBe('41.0');
+  expect(seatOfKind({ ...state, room: 'quarto' }, 'chair', luna)).toBeUndefined();
 });
 it.each([['kitchen', 'table'], ['dining', 'picnic-table']] as const)('a %s nova ganha duas cadeiras junto da mesa, com vagas alcançáveis', (template, table) => {
   for (const size of ['small', 'medium', 'large'] as const) {
