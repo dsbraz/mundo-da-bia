@@ -87,14 +87,14 @@ function castCard(card: HTMLButtonElement, id: ActorId, rename: () => void) {
   group.append(card, pencil, motto);
   return group;
 }
-/** The action ring (W3L-03) floats just above the selected character's head, centred on them, whole inside the scene. */
+/** The action ring (W3L-03) floats above the selected character's head and their speech bubble, centred on them, whole inside the scene. */
 export function positionContext(root: HTMLElement, actor: Actor, state: World) {
   const context = root.querySelector<HTMLElement>('#actor-context')!, canvas = root.querySelector('canvas');
   context.classList.toggle('absent', actor.room !== state.room);
   const world = root.querySelector('#world')?.getBoundingClientRect();
   if (!canvas || !world?.width) return;
   const app = root.getBoundingClientRect(), scale = screenScale(canvas), feet = worldToScreen(canvas, actor);
-  const width = context.offsetWidth || ringWidth(context), height = context.offsetHeight || 84, tall = (actor.kind === 'cat' ? 110 : 225) * scale;
+  const width = context.offsetWidth || ringWidth(context), height = context.offsetHeight || 84, tall = (actor.kind === 'cat' ? 170 : 300) * scale;
   const x = feet.x - width / 2, y = feet.y - tall - height;
   context.style.setProperty('--ring-x', `${Math.round(Math.max(world.left + 8, Math.min(world.right - width - 8, x)) - app.left)}px`);
   context.style.setProperty('--ring-y', `${Math.round(Math.max(world.top + 8, Math.min(world.bottom - height - 8, y)) - app.top)}px`);
