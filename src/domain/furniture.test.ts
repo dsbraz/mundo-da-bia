@@ -43,18 +43,18 @@ it('pega lanche da geladeira, coloca na mesa e come sem duplicar', () => {
 
 it('assentos acomodam uma pessoa, acordam ao levantar e respeitam cômodo', () => {
   const before = initialWorld();
-  const seated = transition(before, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
-  expect(seated.actors[0]).toMatchObject({ seat: 'sofa-left', x: 150, y: 405, resting: false });
-  expect(transition(seated, { type: 'sit', actor: 'luna', seat: 'sofa-left' }).state).toEqual(seated);
-  expect(transition(seated, { type: 'sit', actor: 'bia', seat: 'bed' }).state).toEqual(seated);
+  const seated = transition(before, { type: 'sit', actor: 'bia', seat: '2.0' }).state;
+  expect(seated.actors[0]).toMatchObject({ seat: '2.0', x: 150, y: 405, resting: false });
+  expect(transition(seated, { type: 'sit', actor: 'luna', seat: '2.0' }).state).toEqual(seated);
+  expect(transition(seated, { type: 'sit', actor: 'bia', seat: '8.0' }).state).toEqual(seated);
   const moved = transition(seated, { type: 'move', actor: 'bia', point: { x: 500, y: 480 } }).state;
   expect(moved.actors[0]?.seat).toBeNull();
   const room = transition(seated, { type: 'room', room: 'quarto' }).state;
-  expect(transition(room, { type: 'sit', actor: 'bia', seat: 'bed' }).state).toEqual(room);
+  expect(transition(room, { type: 'sit', actor: 'bia', seat: '8.0' }).state).toEqual(room);
   const all = transition(room, { type: 'summon' }).state;
   expect(all.actors.every(a => a.seat === null)).toBe(true);
-  const sleep = transition(all, { type: 'sit', actor: 'mimi', seat: 'bed' }).state;
-  expect(sleep.actors[4]).toMatchObject({ seat: 'bed', resting: true });
+  const sleep = transition(all, { type: 'sit', actor: 'mimi', seat: '8.0' }).state;
+  expect(sleep.actors[4]).toMatchObject({ seat: '8.0', resting: true });
 });
 
 it('recusa destinos inacessíveis, objetos ausentes e conteúdo escondido', () => {
@@ -86,8 +86,8 @@ it('devolve ambas comidas à geladeira e permite guardar objetos da mão', () =>
 
 it('sentar novamente no próprio lugar é válido e não afeta os demais', () => {
   const before = initialWorld();
-  const seated = transition(before, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
-  expect(seated.actors[0]).toMatchObject({ seat: 'sofa-left', x: 150, y: 405, room: 'sala', resting: false });
+  const seated = transition(before, { type: 'sit', actor: 'bia', seat: '2.0' }).state;
+  expect(seated.actors[0]).toMatchObject({ seat: '2.0', x: 150, y: 405, room: 'sala', resting: false });
   expect(seated.actors.slice(1)).toEqual(before.actors.slice(1));
-  expect(transition(seated, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state).toEqual(seated);
+  expect(transition(seated, { type: 'sit', actor: 'bia', seat: '2.0' }).state).toEqual(seated);
 });

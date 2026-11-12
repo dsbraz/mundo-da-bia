@@ -6,10 +6,10 @@ import { pieceKinds } from './types';
 import { availableSpot, foodHome } from './furniture';
 
 it('espelha sofá, ocupante e coordenadas sem perder identidade', () => {
-  const state = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  const state = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: '2.0' }).state;
   const sofa = fixture(state, 'sofa')!;
   const flipped = editWorld(state, { type: 'flip', id: sofa.id });
-  expect(flipped.actors[0]).toMatchObject({ x: 240, y: 405, seat: 'sofa-left' });
+  expect(flipped.actors[0]).toMatchObject({ x: 240, y: 405, seat: '2.0' });
   const piece = fixture(flipped, 'sofa')!;
   expect(fromPiece(piece, { x: 150, y: 405 })).toEqual({ x: 240, y: 405 });
   expect(toPiece(piece, { x: 240, y: 405 })).toEqual({ x: 150, y: 405 });
@@ -19,7 +19,7 @@ it('impede mover peças de outro cômodo e duplicar móveis interativos', () => 
   const state = initialWorld();
   expect(editWorld(state, { type: 'remove', id: 999 })).toBe(state);
   expect(editWorld(state, { type: 'remove', id: fixture(state, 'bed', 'quarto')!.id })).toBe(state);
-  expect(editWorld(state, { type: 'add', kind: 'sofa' })).toBe(state);
+  expect(editWorld(state, { type: 'add', kind: 'fridge' })).toBe(state);
 });
 it.each(pieceKinds)('adiciona %s com posição válida numa casa vazia', kind => {
   let state = editWorld(initialWorld(), { type: 'clear' });
@@ -42,7 +42,7 @@ it('remove suporte sem perder objetos e bloqueia suas ações', () => {
   expect(state.items.slice(0, 2).every(i => i.spot === 'floor')).toBe(true);
   expect(availableSpot(state, 'fridge')).toBe(false);
   expect(transition(state, { type: 'interact', target: 'fridge' }).state).toBe(state);
-  expect(transition(state, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state).toBe(state);
+  expect(transition(state, { type: 'sit', actor: 'bia', seat: '2.0' }).state).toBe(state);
   expect(foodHome(state, state.items[0]!, state.actors[0]!, true)).toMatchObject({ spot: 'floor', x: 520, y: 530 });
 });
 it('desfaz e refaz na ordem e limita histórico às últimas cinquenta edições', () => {

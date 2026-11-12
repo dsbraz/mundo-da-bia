@@ -1,5 +1,7 @@
-import { pieceBounds, fixture } from '../domain/layout';
-import { seatKind } from '../domain/furniture';
+import { pieceBounds } from '../domain/layout';
+import { seatPiece } from '../domain/seats';
+import { posed } from './posture';
+import type { Posed } from './posture';
 import type { Actor, Piece, PieceKind, Point, World } from '../domain/types';
 import { floorTop } from './floor-band';
 const scales: Record<PieceKind, readonly [number, number]> = {
@@ -10,7 +12,7 @@ const scales: Record<PieceKind, readonly [number, number]> = {
   dresser: [.92, .8], shelf: [.92, .96], bookcase: [.96, .96], 'kitchen-cart': [.94, .88],
   'picnic-table': [.96, .88], piano: [.96, .9], tv: [.94, .9], aquarium: [.94, .9],
   stage: [.94, .9], planter: [.94, .9], plant: [1, 1], picture: [1, 1], rug: [1, 1],
-  cushion: [.9, .9], neon: [1, 1], speaker: [.92, .94], mirror: [.94, .96],
+  cushion: [.9, .9], neon: [1, 1], speaker: [.92, .94], mirror: [.94, .96], chair: [1, 1],
 };
 export function visualPiecePoint(piece: Piece, point: Point): Point {
   const box = pieceBounds[piece.kind], [x, y] = scales[piece.kind];
@@ -26,7 +28,8 @@ export function furnitureTransform(kind: PieceKind) {
   const box = pieceBounds[kind], [x, y] = scales[kind];
   return `translate(${(box.x + box.width / 2) * (1 - x)} ${(box.y + box.height) * (1 - y)}) scale(${x} ${y})`;
 }
-export function supportedActor(world: World, actor: Actor): Actor {
-  const piece = actor.seat && fixture(world, seatKind(actor.seat), actor.room);
-  return piece ? { ...actor, ...visualPiecePoint(piece, actor) } : { ...actor, y: Math.max(floorTop(world), actor.y) };
+/** Where a character is drawn: on its seat's drawn piece (lying on a bed), or with the feet on the painted floor. */
+export function supportedActor(world: World, actor: Actor): Posed {
+  const piece = actor.seat ? seatPiece(world, actor.seat, actor.room) : undefined;
+  return piece ? { ...posed(world, actor), ...visualPiecePoint(piece, actor) } : { ...actor, y: Math.max(floorTop(world), actor.y) };
 }

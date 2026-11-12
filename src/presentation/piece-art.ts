@@ -1,5 +1,5 @@
 import { contactShadow } from './contact-shadow';
-import { seatKind } from '../domain/furniture';
+import { seatPiece, sitsOn } from '../domain/seats';
 import { textStyle } from './text-style';
 import { rasterScale } from './rendering';
 import type Phaser from 'phaser';
@@ -72,7 +72,7 @@ export function pickPiece(scene: Phaser.Scene, state: World, point: { x: number;
 }
 
 export function actorDepth(state: World, actor: Actor) {
-  const support = actor.seat && fixture(state, seatKind(actor.seat));
+  const support = actor.seat ? seatPiece(state, actor.seat, actor.room) : undefined;
   return support ? pieceDepth(support) + 1 : Math.max(floorTop(state), actor.y);
 }
 
@@ -84,7 +84,7 @@ export function objectDepth(state: World, item: import('../domain/types').Item) 
 }
 
 function seatFront(scene: Phaser.Scene, piece: Piece, state: World) {
-  if (!state.actors.some(a => a.room === piece.room && a.seat && seatKind(a.seat) === piece.kind)) return;
+  if (!state.actors.some(a => sitsOn(a, piece))) return;
   const box = pieceBounds[piece.kind], top = Math.round(box.height * .82);
   scene.add.image(piece.x + box.width / 2, piece.y + box.height / 2, `piece-${piece.kind}-${piece.color}`)
     .setDisplaySize(box.width, box.height).setFlipX(piece.flipped).setCrop(0, top * rasterScale, box.width * rasterScale, (box.height - top) * rasterScale).setDepth(pieceDepth(piece) + 2);

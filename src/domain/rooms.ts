@@ -2,7 +2,8 @@ import type { PieceKind, Room, RoomId, RoomSize, RoomTemplate, World } from './t
 import { editWorld } from './design';
 import { freePlacement } from './placement';
 import { pieceBounds } from './layout';
-import { roomWidth } from './geometry';
+import { roomWidth, validPoint } from './geometry';
+import { seatPoint } from './seats';
 import { enterRoom } from './room-state';
 export interface NewRoom { name: string; template: RoomTemplate; size: RoomSize; cell: number }
 const furnishings: Record<RoomTemplate, PieceKind[]> = {
@@ -41,7 +42,21 @@ export function furnishRoom(state: World, template: RoomTemplate): World {
     const point = freePlacement(next, { id: next.layout.nextId, kind, room: next.room, color: 'original', flipped: false, x, y: (playground && index === 2 ? 390 : 450) - box.height });
     if (point) next = editWorld(next, { type: 'add', kind, point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } });
   });
-  return next;
+  const table = { kitchen: 'table', dining: 'picnic-table' }[template as string] as PieceKind | undefined;
+  return table ? chairsBeside(next, table) : next;
+}
+/** Two chairs at the table (W3L-06): either side when there is room, else both on the free side, else the nearest free floor. */
+function chairsBeside(state: World, kind: PieceKind): World {
+  const table = state.layout.pieces.find(p => p.room === state.room && p.kind === kind);
+  if (!table) return state;
+  const box = pieceBounds.chair, y = table.y + pieceBounds[kind].height - box.height, right = table.x + pieceBounds[kind].width + 4;
+  return [table.x - box.width - 4, right, table.x - 2 * box.width - 8, right + box.width + 4].reduce((next, x) => {
+    if (next.layout.pieces.filter(p => p.room === next.room && p.kind === 'chair').length >= 2) return next;
+    const point = freePlacement(next, { id: next.layout.nextId, kind: 'chair', room: next.room, color: 'original', flipped: false, x, y });
+    const added = point ? editWorld(next, { type: 'add', kind: 'chair', point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } }) : next;
+    const seat = seatPoint(added, `${added.layout.nextId - 1}.0`);
+    return seat && validPoint(seat, roomWidth(added)) ? added : next;
+  }, state);
 }
 export function renameRoom(state: World, name: string): World {
   const trimmed = name.trim().slice(0, 32);

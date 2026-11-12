@@ -10,7 +10,7 @@ import { touchDrag } from './touch';
 const saveKey = 'mundo-da-bia:neighborhood:v3';
 async function ruiOnSofa(page: Page) {
   const world = initialWorld();
-  world.actors = world.actors.map(a => a.id === 'rui' ? { ...a, x: 150, y: 405, seat: 'sofa-left' } : a);
+  world.actors = world.actors.map(a => a.id === 'rui' ? { ...a, x: 150, y: 405, seat: '2.0' } : a);
   await open(page, migrateNeighborhood(initialAlbum(world)));
 }
 async function open(page: Page, town: ReturnType<typeof migrateNeighborhood>) {

@@ -1,4 +1,4 @@
-import { fixture } from '../domain/layout';
+import { seatOfKind } from '../domain/seats';
 import { panelButtons, statusBadges } from './panel';
 import { panelControls, renderBadges } from './panel-controls';
 import { objectControls } from './object-controls';
@@ -107,6 +107,7 @@ function ringWidth(context: HTMLElement) {
 }
 function rest(state: World, actor: ActorId, dispatch: (action: Action) => void) {
   const value = state.actors.find(a => a.id === actor)!;
-  if (!value.resting && fixture(state, 'bed')?.room === state.room) dispatch({ type: 'sit', actor, seat: 'bed' });
+  const bed = seatOfKind(state, 'bed', value);
+  if (!value.resting && bed) dispatch({ type: 'sit', actor, seat: bed });
   else dispatch({ type: 'rest', actor });
 }

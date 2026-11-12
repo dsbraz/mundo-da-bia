@@ -1,7 +1,8 @@
 import { initialProgress, nextItemAfter, recipeIds } from '../domain/progress';
 import { buildingModels } from '../domain/neighborhood-types';
 import type { LegacyNeighborhood, Neighborhood } from '../domain/neighborhood-types';
-import { lookIds, pieceKinds, roomTemplates, seatIds } from '../domain/types';
+import { lookIds, pieceKinds, roomTemplates } from '../domain/types';
+import { seatedTown } from './seats';
 import { itemKinds } from '../domain/item-kind';
 import { member, record } from './values';
 import { knownPlant } from './progress-validation';
@@ -17,19 +18,20 @@ export function unfelt<T>(actor: T): T {
   const rest = { ...actor }; delete rest.needs; return rest as T;
 }
 export const unwatered = <T extends LegacyNeighborhood>(town: T): T => ({ ...town, outdoor: { ...town.outdoor, watered: false } });
-/** Unknown looks become the default one; objects of unknown kinds and dishes of unknown recipes drop out (whoever held them is left empty-handed). */
+/** Unknown looks become the default one; objects of unknown kinds and dishes of unknown recipes drop out (whoever held them is left empty-handed);
+ *  seats are read (W3L-06: old ids converted, unknown ones null). */
 export function knownContent(value: unknown): unknown {
   if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return value;
   const unknown = (entry: unknown, field: string, known: readonly string[]) => record(entry) && !member(known, entry[field]);
-  return { ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
-    items: value.items.filter(i => !unknown(i, 'kind', itemKinds) && !(record(i) && i.kind === 'prato' && !member(recipeIds, i.recipe))) };
+  return seatedTown({ ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
+    items: value.items.filter(i => !unknown(i, 'kind', itemKinds) && !(record(i) && i.kind === 'prato' && !member(recipeIds, i.recipe))) });
 }
 /** Save v3: rebuilt with only known fields, and what this build does not know drops out alone; structure is left for validation. */
 export function knownTown(value: unknown): unknown {
   if (!record(value)) return value;
   const { outdoor, buildings, actors, items, location, plots, nextBuilding } = value;
-  return seated(knownContent({ outdoor, buildings: Array.isArray(buildings) ? buildings.map(knownBuilding) : buildings,
-    actors: Array.isArray(actors) ? actors.map(unfelt) : actors, items, location, plots, nextBuilding }));
+  return knownContent({ outdoor, buildings: Array.isArray(buildings) ? buildings.map(knownBuilding) : buildings,
+    actors: Array.isArray(actors) ? actors.map(unfelt) : actors, items, location, plots, nextBuilding });
 }
 function knownBuilding(value: unknown): unknown {
   if (!record(value) || !record(value.layout)) return value;
@@ -46,9 +48,4 @@ function knownPiece(piece: unknown): unknown {
   if (!record(piece) || !Object.hasOwn(piece, 'plant')) return piece;
   const { plant, ...rest } = piece, known = piece.kind === 'planter' ? knownPlant(plant) : null;
   return known ? { ...rest, plant: known } : rest;
-}
-/** A seat this build does not know belonged to a piece that dropped out: whoever sat there stands where they were. */
-function seated(value: unknown): unknown {
-  if (!record(value) || !Array.isArray(value.actors)) return value;
-  return { ...value, actors: value.actors.map(a => record(a) && a.seat !== null && !member(seatIds, a.seat) ? { ...a, seat: null } : a) };
 }

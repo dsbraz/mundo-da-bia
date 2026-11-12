@@ -28,7 +28,8 @@ it('valida identificadores, acabamentos e unicidade dos móveis interativos', ()
   expect(validLayout({ ...layout, rooms: { ...layout.rooms, sala: { wall: 'mint', floor: 'red' } } })).toBe(false);
   expect(validLayout({ ...layout, pieces: [null] })).toBe(false);
   expect(validLayout({ ...layout, pieces: [...layout.pieces, layout.pieces[0]] })).toBe(false);
-  expect(validLayout({ ...layout, nextId: 12, pieces: [...layout.pieces, { ...layout.pieces[1], id: 11 }] })).toBe(false);
+  expect(validLayout({ ...layout, nextId: 12, pieces: [...layout.pieces, { ...layout.pieces[2], id: 11 }] })).toBe(false);
+  expect(validLayout({ ...layout, nextId: 12, pieces: [...layout.pieces, { ...layout.pieces[1], id: 11, x: 600 }] })).toBe(true);
   expect(validLayout({ ...layout, nextId: 12, pieces: [...layout.pieces, { ...layout.pieces[0], id: 11 }] })).toBe(true);
 });
 it.each([null, 'null', '{}', '{"version":3}', '{"version":1,"album":null}'])('rejeita envelope %s', raw => {

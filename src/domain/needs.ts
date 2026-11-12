@@ -1,8 +1,9 @@
 import type { Actor, ActorId, Needs } from './types';
-import type { LiveAction, Neighborhood } from './neighborhood-types';
+import type { LiveAction, Neighborhood, Resident } from './neighborhood-types';
 import type { Phase } from './clock';
 import { sameLocation } from './location';
 import { tastes } from './tastes';
+import { parseSeat } from './seats';
 
 /** Hunger, sleep and boredom (§3.1): pure, never saved, and only bands and the mood leave the domain (no number reaches the child). */
 export type Need = 'fome' | 'sono' | 'tedio';
@@ -38,13 +39,20 @@ export function relieve(current: Needs, relief: Relief): Needs {
 
 const sleepy: Record<Phase, number> = { manha: 2, tarde: 2, amanhecer: 2, entardecer: 12, noite: 12 };
 /** Per minute: hunger +6; sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +6 for the idle. */
-function rates(actor: Actor, phase: Phase, idle: boolean): Record<Need, number> {
+function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<Need, number> {
   const pace = tastes[actor.id].pace ?? {}, of = (need: Need, base: number) => base * (pace[need] ?? 1);
-  if (actor.resting) return { fome: of('fome', 6), sono: actor.seat === 'bed' ? -25 : -12, tedio: 0 };
+  if (actor.resting) return { fome: of('fome', 6), sono: bed ? -25 : -12, tedio: 0 };
   return { fome: of('fome', 6), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 6) : 0 };
 }
-function grow(actor: Actor, elapsed: number, phase: Phase, idle: boolean, shown: boolean): Needs {
-  const current = needsOf(actor), rate = rates(actor, phase, idle), top = shown ? ceiling : unseen;
+/** Whether `actor` lies on a bed (W3L-06: the seat names a piece of the building it is in). */
+function inBed(town: Neighborhood, actor: Resident): boolean {
+  const where = actor.location, ref = actor.seat ? parseSeat(actor.seat) : null;
+  if (!ref || where.kind !== 'interior') return false;
+  const building = town.buildings.find(b => b.id === where.building);
+  return building?.layout.pieces.find(p => p.id === ref.piece && p.room === actor.room)?.kind === 'bed';
+}
+function grow(actor: Actor, elapsed: number, phase: Phase, idle: boolean, shown: boolean, bed: boolean): Needs {
+  const current = needsOf(actor), rate = rates(actor, phase, idle, bed), top = shown ? ceiling : unseen;
   const next = { ...current, alegria: Math.max(0, current.alegria - elapsed) };
   for (const need of needs) next[need] = Math.min(top, Math.max(0, current[need] + rate[need] * elapsed / minute));
   return next;
@@ -56,7 +64,7 @@ export function live(town: Neighborhood, action: LiveAction): Neighborhood {
   if (elapsed <= 0) return town;
   const idle: readonly ActorId[] = action.idle ?? [];
   return { ...town, actors: town.actors.map(a => ({ ...a,
-    needs: grow(a, elapsed, action.phase, idle.includes(a.id), sameLocation(a.location, town.location)) })) };
+    needs: grow(a, elapsed, action.phase, idle.includes(a.id), sameLocation(a.location, town.location), inBed(town, a)) })) };
 }
 /** The needs of `from` copied into `world`'s characters (the local copy, or an undone neighborhood: time never goes back). */
 export function feel<W extends { actors: readonly Actor[] }>(world: W, from: { actors: readonly Actor[] }): W {

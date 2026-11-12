@@ -35,8 +35,9 @@ it('falha de armazenamento é explícita e leitura inválida recupera legado', (
 it('valida invariantes de cômodos, assentos, mãos e terrenos', () => {
   const town = loadNeighborhood(storage());
   const changed = (edit: (copy: typeof town) => void) => { const copy = structuredClone(town); edit(copy); return decodeNeighborhood(encodeNeighborhood(copy)); };
-  expect(changed(t => { t.actors[0]!.seat = 'bed'; })).toBeNull();
-  expect(changed(t => { t.actors[0]!.location = { kind: 'street' }; t.actors[0]!.seat = 'bed'; })).toBeNull();
+  expect(changed(t => { t.actors[0]!.seat = '2.0'; })).toBeNull();
+  expect(changed(t => { t.actors[0]!.seat = 'bed' as never; })?.actors[0]!.seat).toBeNull();
+  expect(changed(t => { t.actors[0]!.location = { kind: 'street' }; t.actors[0]!.seat = '2.0'; })?.actors[0]!.seat).toBeNull();
   expect(changed(t => { t.items[0]!.location = { kind: 'street' }; })).toBeNull();
   expect(changed(t => { t.items[0]!.holder = 'bia'; t.items[0]!.spot = 'floor'; t.items[1]!.holder = 'bia'; t.items[1]!.spot = 'floor'; })).toBeNull();
   expect(changed(t => { t.items[2]!.holder = 'bia'; t.items[2]!.location = { kind: 'street' }; })).toBeNull();

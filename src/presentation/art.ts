@@ -1,3 +1,4 @@
+import { lying, sitting } from './posture';
 import type { VisualContext } from './pose';
 import { textStyle } from './text-style';
 import { actorScale, settlePose, contextScale } from './pose';
@@ -15,8 +16,8 @@ import type { Actor } from '../domain/types';
 
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, context?: VisualContext): Phaser.GameObjects.Container {
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
-  const labelX = actor.seat === 'bed' ? -80 : 0;
-  const shadow = contactShadow(scene, labelX, 2, actor.seat === 'bed' ? 140 : 56, 8, 0x716858).setScale(contextScale(context));
+  const labelX = lying(actor) ? -80 : 0;
+  const shadow = contactShadow(scene, labelX, 2, lying(actor) ? 140 : 56, 8, 0x716858).setScale(contextScale(context));
   shadow.setData('base', shadow.scaleX);
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
@@ -29,20 +30,20 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   animateActor(container, actor, 500, 0, false);
   coverActor(scene, container, actor);
   if (selected) drawSelection(scene, container, actor, actorLabel(actor), context);
-  if (actor.resting) container.add(scene.add.text(actor.seat === 'bed' ? -175 : 24, actor.seat === 'bed' ? -60 : -185, 'z z Z', textStyle('mark')));
+  if (actor.resting) container.add(scene.add.text(lying(actor) ? -175 : 24, lying(actor) ? -60 : -185, 'z z Z', textStyle('mark')));
   return container;
 }
 /** The face this frame: an expression (from events) and whether the eyes blink. */
 export interface FaceFrame { expression: Expression; blink: boolean }
 export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false, face?: FaceFrame) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
-  figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(actor.seat === 'bed' && actor.resting);
+  figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(lying(actor) && actor.resting);
   pose.x = 0; pose.y = 0;
   shiftFace(pose, 0);
   const shown = face ?? { expression: expressionOf({ ...actor, show: false }, null), blink: actor.resting };
   paintFace(pose, actor.kind, shown.expression, shown.blink);
   bodyLayers(pose, actor, time, reduced);
-  const angle = actor.seat === 'bed' ? -Math.PI / 2 : 0;
+  const angle = lying(actor) ? -Math.PI / 2 : 0;
   const restingAngle = settlePose(pose.getData('restingAngle') ?? angle, angle, reduced);
   pose.setData('restingAngle', restingAngle);
   pose.rotation = restingAngle + danceAngle(time, index, show && !actor.resting);
@@ -78,7 +79,7 @@ function cover(scene: Phaser.Scene, container: Phaser.GameObjects.Container, cat
 
 function actorHeight(actor: Actor) { return actor.kind === 'cat' ? 120 : 220; }
 function coverActor(scene: Phaser.Scene, container: Phaser.GameObjects.Container, actor: Actor) {
-  if (actor.seat === 'bed' && actor.resting) cover(scene, container, actor.kind === 'cat');
+  if (lying(actor) && actor.resting) cover(scene, container, actor.kind === 'cat');
 }
 
 function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor: Actor, part: string) {
@@ -98,7 +99,7 @@ function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor:
 }
 
 function seatLayers(pose: Phaser.GameObjects.Container, actor: Actor, reduced: boolean) {
-  const seated = !!actor.seat && actor.seat !== 'bed';
+  const seated = sitting(actor);
   const amount = settlePose(pose.getData('seatAmount') ?? Number(seated), Number(seated), reduced);
   pose.setData('seatAmount', amount); pose.y = 22 * amount * pose.scaleY;
   const knees = pose.getByName<Phaser.GameObjects.Container>('knees');

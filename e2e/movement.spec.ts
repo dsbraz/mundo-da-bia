@@ -40,7 +40,7 @@ test('walk, pick up, sit, leave, travel, drop and reload preserve the object', a
   await tap(page, 700, 502);
   await expect.poll(async () => (await read(page)).items.find(i => i.id.endsWith('ursinho'))!.holder).toBe('bia');
   await tap(page, 150, 405);
-  await expect.poll(async () => (await read(page)).actors[0]!.seat).toBe('sofa-left');
+  await expect.poll(async () => (await read(page)).actors[0]!.seat).toBe('2.0');
   await tap(page, 450, 530);
   await expect.poll(async () => (await read(page)).actors[0]!.seat).toBeNull();
   await expect(page.locator('canvas')).toHaveAttribute('data-walking', '');

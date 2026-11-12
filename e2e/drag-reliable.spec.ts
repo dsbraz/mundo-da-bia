@@ -32,7 +32,7 @@ for (const [width, height] of sizes) test.describe(`${width}×${height}`, () => 
       const seat = await onPiece(page, 'sofa', 150, 405), start = await bia(page);
       const [a, b] = await points(page, [[start.x + grip.x, start.y + grip.y], [seat[0] + grip.x, seat[1] + grip.y]]);
       await touchDrag(page, a!, b!);
-      await expect.poll(async () => (await bia(page)).seat).toBe('sofa-left');
+      await expect.poll(async () => (await bia(page)).seat).toBe('2.0');
     });
     test(`pega ${name}: soltar 40 px além da borda da cena leva até a borda`, async ({ page }) => {
       await open(page, width, height);

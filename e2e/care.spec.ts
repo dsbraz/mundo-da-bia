@@ -27,20 +27,20 @@ test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar',
   let world = initialWorld(); world.actors[1]!.room = 'quarto'; world.actors[1]!.seat = null;
   world = transition(world, { type: 'dress', actor: 'bia', look: 'rumi' }).state;
   world = transition(world, { type: 'pick', actor: 'bia', item: world.items[3]!.id }).state;
-  world = transition(world, { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
+  world = transition(world, { type: 'sit', actor: 'bia', seat: '2.0' }).state;
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await page.emulateMedia({ reducedMotion: 'reduce' }); await ready(page);
   await visitNeighbor(page); await bringHere(page);
   const bia = (await read(page)).actors[0]!;
   await drag(page, [bia.x, bia.y - 110], await onPiece(page, 'bed', 620, 300));
-  expect((await read(page)).actors[0]).toMatchObject({ seat: 'bed', resting: true });
+  expect((await read(page)).actors[0]).toMatchObject({ seat: '8.0', resting: true });
   expect((await read(page)).items[3]!.holder).toBe('bia');
   await page.screenshot({ path: 'reports/care-bed.png' });
   await page.getByRole('button', { name: 'Acordar', exact: true }).click();
   expect((await read(page)).actors[0]!.resting).toBe(false);
   await page.getByRole('button', { name: 'Deitar', exact: true }).click();
   // With reduced motion the short walk to the pillow is slow, not instant: lying down happens when it arrives.
-  await expect.poll(async () => (await read(page)).actors[0]).toMatchObject({ seat: 'bed', resting: true });
+  await expect.poll(async () => (await read(page)).actors[0]).toMatchObject({ seat: '8.0', resting: true });
   const state = await read(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
   expect(await read(page)).toEqual(state);
 });

@@ -54,7 +54,8 @@ it('pela tabela literal, quem fica parado sem brincar também se entedia: a tris
 it('dormir tira o sono e encerra a tristeza: na cama −25/min, no sofá −12/min; ninguém se entedia dormindo', () => {
   const night = play(startTown(), 16 * 60);
   expect(mood(who(night, 'luna'))).toBe('triste');
-  let rest = withActor(withActor(night, 'luna', { resting: true, seat: 'bed' }), 'leo', { resting: true, seat: 'sofa-left' });
+  const inside = who(night, 'luna').location as Extract<Resident['location'], { kind: 'interior' }>;
+  let rest = withActor(withActor(night, 'luna', { resting: true, seat: '8.0', room: 'quarto', location: { ...inside, room: 'quarto' } }), 'leo', { resting: true, seat: '2.0' });
   const sleepy = needsOf(who(rest, 'leo')).sono;
   rest = neighborhoodAction(rest, { type: 'live', elapsed: 60_000, phase: 'noite', idle: ['luna', 'leo'] });
   expect(needsOf(who(rest, 'luna')).sono).toBe(needsOf(who(night, 'luna')).sono - 25);

@@ -80,7 +80,7 @@ export class PlayScene extends Phaser.Scene {
     this.doorLight?.destroy(); this.doorLight = box && this.ready ? doorGlow(this, box) : null;
   }
   constructor(state: World) { super('play'); this.world = state; }
-  preload() { this.load.text('art-dishes', '/art/dishes.svg'); this.load.text('art-plants', '/art/plants.svg'); loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); actorIds.forEach(id => this.load.svg(`face-${id}`, `/icons/${id}.svg`, { width: 112, height: 112 })); }
+  preload() { this.load.text('art-dishes', '/art/dishes.svg'); this.load.text('art-plants', '/art/plants.svg'); this.load.text('art-chair', '/art/chair.svg'); loadArt(this, this.world, this.town); [...itemIds, 'bola'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); actorIds.forEach(id => this.load.svg(`face-${id}`, `/icons/${id}.svg`, { width: 112, height: 112 })); }
   create() {
     this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true;
     const view = this.game.canvas.dataset;

@@ -18,8 +18,8 @@ function cast(look: LookId): World {
   world.items = world.items.map(i => ({ ...i, spot: 'floor' }));
   world.actors = world.actors.map((a, i) => ({ ...a, look, x: [330, 150, 1085, 780, 450, 650, 1000][i]!, y: 530, seat: null }));
   world.actors.slice(0, 4).forEach((a, index) => { world = transition(world, { type: 'pick', actor: a.id, item: world.items[index]!.id }).state; });
-  world = transition(world, { type: 'sit', actor: 'luna', seat: 'sofa-left' }).state;
-  world = transition(world, { type: 'sit', actor: 'leo', seat: 'bed' }).state;
+  world = transition(world, { type: 'sit', actor: 'luna', seat: '1.0' }).state;
+  world = transition(world, { type: 'sit', actor: 'leo', seat: '2.0' }).state;
   return { ...world, show: false };
 }
 for (const look of lookIds) test(`visual: ${look}, corpo, roupa e objeto em poses e caminhada`, async ({ page }) => {

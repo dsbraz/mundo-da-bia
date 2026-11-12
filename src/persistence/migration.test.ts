@@ -18,7 +18,7 @@ it('migra a brincadeira v1 preservando roupa, posições e objetos nas mãos', (
 it('preserva luz, gaveta, conteúdo e assentos na versão nova', () => {
   let state = transition(initialWorld(), { type: 'interact', target: 'drawer' }).state;
   state = transition(state, { type: 'put', item: 'ursinho', spot: 'drawer' }).state;
-  state = transition(state, { type: 'sit', actor: 'bia', seat: 'sofa-right' }).state;
+  state = transition(state, { type: 'sit', actor: 'bia', seat: '2.1' }).state;
   state = transition(state, { type: 'interact', target: 'lamp' }).state;
   expect(decode(encode(state))).toEqual(state);
 });
@@ -30,11 +30,14 @@ it.each([
   expect(decode(JSON.stringify({ version: 4, state: { ...initialWorld(), show: true, ...patch } }))).toEqual(initialWorld());
 });
 
-it.each([
-  ['seat', 'roof'], ['seat', 1], ['seat', 'bed'],
-])('rejeita assento incoerente %s %s', (key, value) => {
+it.each(['roof', 1, 'bed', '2.9', '1.0'])('assento desconhecido %j carrega como null (W3L-06)', value => {
   const state = initialWorld(); state.show = true;
-  const actors = state.actors.map((actor, index) => index === 0 ? { ...actor, [key]: value } : actor);
+  const actors = state.actors.map((actor, index) => index === 0 ? { ...actor, seat: value } : actor);
+  expect(decode(JSON.stringify({ version: 4, state: { ...state, actors } }))).toEqual(state);
+});
+it('assento conhecido fora do lugar ainda recusa o save', () => {
+  const state = initialWorld(); state.show = true;
+  const actors = state.actors.map((actor, index) => index === 0 ? { ...actor, seat: '2.1' } : actor);
   expect(decode(JSON.stringify({ version: 4, state: { ...state, actors } }))).toEqual(initialWorld());
 });
 
@@ -47,12 +50,12 @@ it.each([
 });
 
 it('rejeita assentos duplicados ou com posição e cômodo incompatíveis', () => {
-  const state = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: 'sofa-left' }).state;
-  for (const patch of [{ x: 151 }, { y: 406 }, { room: 'quarto' }]) {
+  const state = transition(initialWorld(), { type: 'sit', actor: 'bia', seat: '2.0' }).state;
+  for (const patch of [{ x: 151 }, { y: 406 }]) {
     const actors = state.actors.map((a, index) => index === 0 ? { ...a, ...patch } : a);
     expect(decode(JSON.stringify({ version: 4, state: { ...state, actors } }))).toEqual(initialWorld());
   }
-  state.actors[1] = { ...state.actors[1]!, seat: 'sofa-left', x: 150, y: 405 };
+  state.actors[1] = { ...state.actors[1]!, seat: '2.0', x: 150, y: 405 };
   expect(decode(encode(state))).toEqual(initialWorld());
 });
 
