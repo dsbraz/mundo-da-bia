@@ -22,10 +22,11 @@ export function placeChange(deps: PlaceDeps) {
     /** The screen point of a scene point (for a door). */
     screen(point: Point) { const c = canvas(); return c ? worldToScreen(c, point) : point; },
     /** Repaints now, or under the cover when the place changed; while the cover closes, the paint under it shows the latest state.
-     *  `then` runs right after that paint (whoever came through the door walks out of it in the new place). */
-    refresh(repaint: () => void, then?: () => void) {
+     *  `then` runs right after that paint (whoever came through the door walks out of it in the new place); `controls` updates the
+     *  buttons and trays at once while the cover is closing, so a tap on them never reads a stale mode. */
+    refresh(repaint: () => void, then?: () => void, controls?: () => void) {
       if (then) after.push(then);
-      if (places.busy()) return;
+      if (places.busy()) { controls?.(); return; }
       const now = key(), changed = shown !== '' && now !== shown && canvas()?.dataset.ready === 'true';
       shown = now;
       const current = step; step = { kind: 'fade' };

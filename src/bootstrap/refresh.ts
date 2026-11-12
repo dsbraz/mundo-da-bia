@@ -28,6 +28,12 @@ export function sceneRefresh(deps: RefreshDeps) {
     scene.buildMode(building, deps.piece());
     scene.paint(state, deps.selected()); deps.controls(state, deps.selected(), deps.saved()); deps.mode(building, town.location.kind === 'street', constructing);
     frameScene();
+    ui();
+  }
+  /** The controls alone (mode, trays, panels), without touching the scene: while a place change covers it, they still answer at once. */
+  function ui() {
+    const town = deps.town(), building = deps.building(), constructing = deps.constructing();
+    deps.mode(building, town.location.kind === 'street', constructing);
     renderControls();
     root.querySelector<HTMLButtonElement>('#construct-structure')!.textContent = town.location.kind === 'street' ? 'Escolher construção para ampliar' : 'Adicionar cômodo ou andar';
     root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
@@ -50,5 +56,5 @@ export function sceneRefresh(deps: RefreshDeps) {
     root.querySelector<HTMLElement>('#build-history')!.hidden = !deps.building() && !deps.townActs().canUndo() && !deps.townActs().canRedo();
     root.querySelector<HTMLButtonElement>('#undo')!.disabled = !deps.townActs().canUndo(); root.querySelector<HTMLButtonElement>('#redo')!.disabled = !deps.townActs().canRedo();
   }
-  return { refresh, frameScene, renderControls };
+  return { refresh, frameScene, renderControls, ui };
 }
