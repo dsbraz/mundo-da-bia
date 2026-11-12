@@ -35,8 +35,9 @@ for (const { side, x, width, height, reduced } of cases) test(`tocar no espelho 
   await expect(canvas(page)).toHaveAttribute('data-reflection', `bia:${look}:-1`, { timeout: 15000 });
   // At the mirror she pulls her face (a poke with no line), after the use repainted the scene.
   await expect(canvas(page)).toHaveAttribute('data-reaction', 'bia:');
+  // The reflection shows as her figure walks past; the save holds her place once she has arrived.
+  await expect.poll(async () => Math.abs((await read(page)).actors.find(a => a.id === 'bia')!.x - (x + 50))).toBeLessThanOrEqual(110);
   const bia = (await read(page)).actors.find(a => a.id === 'bia')!;
-  expect(Math.abs(bia.x - (x + 50))).toBeLessThanOrEqual(110);
   // The open tray leaves the mirror and her in view.
   const tray = (await page.locator('.mode-tray:not([hidden])').boundingBox())!, glass = glassOf(mirror);
   await expect.poll(async () => (await point(page, glass.x + glass.width, glass.y)).x).toBeLessThan(tray.x);
