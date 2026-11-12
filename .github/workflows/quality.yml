@@ -1,7 +1,10 @@
 name: Quality
+# One CI run per delivery: work branches do not trigger it. Push the finished
+# delivery to a `delivery/**` branch (or dispatch by hand); main re-runs it in
+# full after the fast-forward to refresh the baseline.
 on:
   push:
-    branches: ['**']
+    branches: ['main', 'delivery/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,7 +13,7 @@ concurrency:
   group: quality-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  ci:
+  checks:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
       - name: Install pinned dependencies
         run: npm ci --no-audit --no-fund
       - name: Require isolated policy changes
@@ -26,12 +30,67 @@ jobs:
           BASE_SHA: ${{ github.ref == 'refs/heads/main' && github.event.before || 'origin/main' }}
           HEAD_SHA: ${{ github.sha }}
         run: node scripts/policy-change.mjs
-      - run: npx playwright install --with-deps chromium
       - name: Retrieve last successful main baseline
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/baseline.mjs
-      - run: npm run quality:ci
+      - run: npm run quality:ci-checks
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-checks
+          path: reports/
+          if-no-files-found: error
+  e2e:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: E2E shard ${{ matrix.shard }}/4
+        env:
+          PLAYWRIGHT_BLOB_OUTPUT_DIR: blob
+        run: npx playwright test --shard=${{ matrix.shard }}/4 --reporter=list,blob
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blob-${{ matrix.shard }}
+          path: blob/
+          if-no-files-found: error
+  ci:
+    if: always() && needs.checks.result == 'success'
+    needs: [checks, e2e]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: quality-checks
+          path: reports
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: blob-*
+          path: reports/blob
+          merge-multiple: true
+      - name: Merge shards into the ci report
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: reports/e2e.json
+        run: npm run quality:ci-merge
+      - name: Every shard must have finished
+        run: test "${{ needs.e2e.result }}" = success
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -45,8 +104,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
       - run: npm ci --no-audit --no-fund
+      # Delivery branches reuse main's last results and only re-test mutants whose
+      # code or tests changed; main re-tests everything (--force) and saves the cache.
+      - uses: actions/cache/restore@v4
+        if: github.ref != 'refs/heads/main'
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.sha }}
+          restore-keys: stryker-incremental-
       - run: npm run quality:mutation
+        env:
+          STRYKER_INCREMENTAL: ${{ github.ref == 'refs/heads/main' && 'force' || 'reuse' }}
+      - uses: actions/cache/save@v4
+        if: always() && github.ref == 'refs/heads/main'
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.sha }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

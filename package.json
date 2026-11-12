@@ -17,6 +17,8 @@
     "e2e": "playwright test",
     "quality:fast": "node scripts/quality.mjs fast",
     "quality:ci": "node scripts/quality.mjs ci",
+    "quality:ci-checks": "node scripts/quality.mjs ci-checks",
+    "quality:ci-merge": "node scripts/quality.mjs ci-merge",
     "quality:mutation": "node scripts/quality.mjs mutation",
     "quality": "node scripts/quality.mjs all",
     "test:gates": "node scripts/test-gates.mjs",
