@@ -1,5 +1,5 @@
 import { localWorld, neighborhoodAction, undoTo } from '../domain/neighborhood';
-import type { NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
+import type { LiveAction, NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
 import type { ActorId } from '../domain/types';
 import { streetExit } from '../presentation/street-opening';
 import type { PlayScene } from '../presentation/scene';
@@ -10,6 +10,8 @@ interface TownDeps {
   commit: (town: Neighborhood) => void;
   /** Makes `town` current and saves it when only what grows with time changed: the world, edits, walks and the scene stay; the garden redraws. */
   quiet: (town: Neighborhood) => void;
+  /** Makes `town` current when only the needs changed (§3.1, never saved): nothing is saved, redrawn or interrupted. */
+  feel: (town: Neighborhood) => void;
   camera: () => number; setCamera: (x: number) => void; refresh: () => void;
   /** Before a neighborhood action: balls settle and every game, walk, drag, input and the wardrobe close. */
   interrupt: () => void;
@@ -59,7 +61,12 @@ export function townActions(deps: TownDeps) {
   }
   /** Saves and draws `next` without interrupting anything and outside the undo history; an unchanged neighborhood costs nothing. */
   function apply(next: Neighborhood) { if (next !== deps.town()) { deps.commit(next); deps.refresh(); } }
-  /** The clock's tick: what changed with time is applied quietly, without interrupting a walk, a drag or a game. */
-  function tick(now: number) { const next = neighborhoodAction(deps.town(), { type: 'tick', now }); if (next !== deps.town()) deps.quiet(next); }
+  /** The clock's tick: what changed with time is applied quietly, without interrupting a walk, a drag or a game; with `life` (only in
+   *  Brincar) the needs move on too. */
+  function tick(now: number, life?: Omit<LiveAction, 'type'>) {
+    const next = neighborhoodAction(deps.town(), { type: 'tick', now }); if (next !== deps.town()) deps.quiet(next);
+    if (!life) return;
+    const lived = neighborhoodAction(deps.town(), { type: 'live', ...life }); if (lived !== deps.town()) deps.feel(lived);
+  }
   return { dispatch, undo, remember, preview, tick, apply, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

@@ -9,6 +9,7 @@ import { actorIds } from '../domain/types';
 import type { PieceKind } from '../domain/types';
 
 const roundTrip = (town: Neighborhood) => decodeNeighborhood(encodeNeighborhood(town));
+const unfelt = (town: Neighborhood) => ({ ...town, actors: town.actors.map(a => ({ ...a, needs: undefined })) });
 /** House 1 with one bench piece at `x`, `y` of the living room, a chef Bia and a full pantry. */
 function kitchen(kind: PieceKind, x: number, y: number): Neighborhood {
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
@@ -45,13 +46,14 @@ it('cada personagem recebendo cada prato (come ou cheira) e comendo com o botão
     let town = cooked;
     for (const actor of actorIds) {
       const next = storeWorld(cooked, transition(localWorld(cooked), { type: 'give', actor, item: plate.id }).state);
-      expect(roundTrip(next), `${actor} ${recipe.id}`).toEqual(next);
+      // Eating moves the needs (§3.1), which are never saved: they come back as the morning's.
+      expect(roundTrip(next), `${actor} ${recipe.id}`).toEqual(unfelt(next));
       if (!next.items.some(i => i.id === plate.id) && town === cooked) town = next;
     }
     expect(town.items.some(i => i.id === plate.id), recipe.id).toBe(false);
     const held = transition(localWorld(cooked), { type: 'pick', actor: 'bia', item: plate.id }).state;
     const fed = storeWorld(cooked, transition(held, { type: 'feed', actor: 'bia' }).state);
     expect(fed.items.some(i => i.id === plate.id)).toBe(false);
-    expect(roundTrip(fed)).toEqual(fed);
+    expect(roundTrip(fed)).toEqual(unfelt(fed));
   }
 });

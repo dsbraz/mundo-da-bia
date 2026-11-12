@@ -1,6 +1,7 @@
 import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
 import type { PlazaPlot, Progress, RecipeId } from './progress';
 import type { Ingredient, Utensil } from './ingredients';
+import type { Phase } from './clock';
 export interface Outdoor { bench: ActorId | null; swing: ActorId | null; watered: boolean; mail: number[]; bells: number[] }
 export type OutdoorAction = { type: 'outdoor'; actor: ActorId; target: 'bench' | 'swing' | 'water' | 'leave' | 'bell' | 'mail'; building?: number };
 export type Location = { kind: 'street' } | { kind: 'interior'; building: number; room: RoomId };
@@ -29,11 +30,15 @@ export type GardenAction =
   | { type: 'water-plot'; plot: PlazaPlot; now: number }
   | { type: 'harvest'; plot: PlazaPlot }
   | { type: 'rain'; now: number };
+/** Life goes on (§3.1): `elapsed` ms of session in Brincar since the last `live` (the domain counts at most 60 s), in day `phase`;
+ *  boredom grows only for the `idle` (still and not playing; the domain cannot see who walks or plays). Never dispatched in Criar. */
+export type LiveAction = { type: 'live'; elapsed: number; phase: Phase; idle?: readonly ActorId[] };
 export type NeighborhoodAction = ModuleAction | OutdoorAction
 
   | { type: 'visit'; location: Location }
   /** The time has come (ms, from the app's clock): what grows or arrives with time moves on. */
   | { type: 'tick'; now: number }
+  | LiveAction
   | GardenAction
   /** At the bench of `piece`: `cook` mixes 1 to 3 ingredients with a utensil (§3.2). */
   | { type: 'cook'; building: number; piece: number; cook: ActorId; ingredients: readonly Ingredient[]; utensil: Utensil }

@@ -9,11 +9,12 @@ import { itemKinds } from '../domain/item-kind';
 import { sameLocation, validLocation } from '../domain/location';
 import { nextItemAfter, recipeIds } from '../domain/progress';
 import { member, positiveId, record, roomId } from './values';
-import { knownContent, knownTown, unwatered, upgradeToV3 } from './neighborhood-v3';
+import { knownContent, knownTown, unfelt, unwatered, upgradeToV3 } from './neighborhood-v3';
 import { knownProgress } from './progress-validation';
 import { validLayout } from './layout-validation';
 import { actor, portable, consistentWorld } from './validation';
-export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 3, town }); }
+/** The session's needs (§3.1) never reach the save: the bytes are the same with or without them. */
+export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 3, town: { ...town, actors: town.actors.map(unfelt) } }); }
 /** Envelopes v1 and v2 (upgraded to v3) and v3; null when the structure is not valid. */
 export function decodeNeighborhood(raw: string | null): Neighborhood | null {
   try {
