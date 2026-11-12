@@ -1,0 +1,44 @@
+/* W3L-03: the scene takes the whole width; the Turma drawer overlays it and the selected character's actions float in a ring beside them. */
+#app #tray-toggle.cast-stack { display:inline-flex; align-items:center; gap:8px; min-height:56px; padding:4px 14px 4px 8px; }
+#app #tray-toggle.cast-stack::before { display:none; }
+#tray-toggle .stack { display:inline-flex; }
+#tray-toggle .stack img { width:40px; height:40px; border-radius:50%; background:#fffdf7; border:2px solid #f9f3e7; box-shadow:0 1px 3px #343c5333; }
+#tray-toggle .stack img + img { margin-left:-16px; }
+/* On a phone the header is tight: the faces sit small above the word, like the other header buttons. */
+@media(max-width:599px) {
+  #app #tray-toggle.cast-stack { flex-direction:column; gap:2px; padding:4px 6px; }
+  #tray-toggle .stack img { width:26px; height:26px; border-width:1px; } #tray-toggle .stack img + img { margin-left:-10px; }
+}
+/* The ring: up to four big icons and "mais" (the rest), in an arc just above the character's head, over the scene (the floor, the
+   people beside them and what they hold stay free to touch). */
+#app #actor-context { inset:var(--ring-y,40%) auto auto var(--ring-x,60%)!important; width:auto; height:auto; max-width:none; padding:8px; border:2px solid #cec5b5; border-radius:28px; background:#fffdf8ee; box-shadow:0 6px 18px #343c5326; overflow:visible; z-index:9; display:grid; grid-auto-flow:column; gap:6px; }
+/* While the character walks the ring steps aside (it would stay behind, over what the child taps next) and comes back beside them. */
+#app:has(canvas[data-walking]:not([data-walking=""])) #actor-context { display:none; }
+#app #actor-context #selected,#app #actor-context #actor-status { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; margin:0; }
+#app #actor-context .actions { display:contents; }
+#app #actor-context .panel-button { width:64px; min-width:64px; height:64px; min-height:64px; padding:0; margin:0; border-radius:50%; }
+#app #actor-context .panel-button span { display:none; }
+#app #actor-context .panel-button img { width:42px; height:42px; }
+#app #actor-context [data-slot=eat] { order:1; } #app #actor-context [data-slot=drop] { order:2; } #app #actor-context [data-slot=rest] { order:3; }
+#app #actor-context [data-slot=wear] { order:4; } #app #actor-context [data-slot=play] { order:6; display:none; }
+#app #actor-context.more [data-slot=play] { display:flex; }
+#app #actor-context #more-actions { order:5; align-self:center; width:56px; min-width:56px; height:56px; min-height:56px; padding:0; border-radius:50%; font-size:0!important; }
+#app #actor-context #more-actions.illustrated::before { width:24px; height:24px; flex-basis:24px; }
+@media(max-width:599px) { #app #actor-context .panel-button { width:56px; min-width:56px; height:56px; min-height:56px; } #app #actor-context .panel-button img { width:36px; height:36px; } }
+@media(orientation:landscape) {
+  #app #world { inset:82px 0 var(--footer-height) 0; }
+  #app .mode-tray,#app #build-inspector,#app #game-panel { z-index:12; box-shadow:-8px 0 24px #343c5322; }
+  #app #play-hint { display:none; }
+}
+@media(orientation:portrait) {
+  /* Playing: a strip of portraits only (84 px); the actions are in the ring. */
+  #app:not(.building):not(.tray-open):not(.playing-game) { --dock-height:84px; }
+  #app:not(.building) #play-hint { display:flex!important; flex-direction:row; align-items:center; height:84px; padding:4px 12px; overflow-x:auto; overflow-y:hidden; }
+  #app:not(.building) #play-hint h2,#app:not(.building) #play-hint p { display:none; }
+  #app:not(.building) #play-hint .hint-cast { display:flex; gap:6px; flex-wrap:nowrap; }
+  #app:not(.building) #play-hint .hint-cast button { width:72px; min-width:72px; height:72px; min-height:72px; padding:2px; }
+  #app:not(.building) #play-hint .hint-cast .face-name { display:none; }
+  #app:not(.building) #play-hint .hint-cast img { width:64px; height:64px; }
+  #app.tray-open #play-hint,#app.playing-game #play-hint { display:none!important; }
+  #app .mode-tray { z-index:12; }
+}

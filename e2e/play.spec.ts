@@ -28,10 +28,10 @@ test('móveis, alimentação e guardar objeto continuam respondendo na cena', as
   await drag(page, [640, 430], await onPiece(page, 'wardrobe', 460, 370)); expect((await read(page)).items[3]!.spot).toBe('drawer');
   await tap(page, ...await onPiece(page, 'wardrobe', 320, 390)); await expect.poll(async () => (await read(page)).home.drawer, { timeout: 10000 }).toBe(false);
 });
-test('microfone e luminária respondem com as ações recolhidas', async ({ page }) => {
+test('microfone e luminária respondem com o anel de ações aberto sobre a personagem', async ({ page }) => {
+  // W3L-03: "Recolher ações" is gone; the ring floats above the head and leaves the stage free.
   await ready(page); await tap(page, 520, 420);
-  await page.getByRole('button', { name: 'Recolher ações', exact: true }).click();
-  await expect(page.locator('#actions')).toBeHidden();
+  await expect(page.locator('#actions')).toBeVisible(); await expect(page.locator('#context-toggle')).toHaveCount(0);
   const performer = (await read(page)).actors[0]!; await drag(page, [600, 402], [performer.x, performer.y - 140]); expect((await read(page)).show).toBe(true);
   await tap(page, ...await onPiece(page, 'lamp', 60, 200)); await expect.poll(async () => (await read(page)).home.lamp).toBe(false);
 });
@@ -64,17 +64,18 @@ test('os 16 looks da Bia e roupas arrastadas para outro humano funcionam', async
 test('o painel tem cinco botões de ícone fixos que não mudam de lugar ao pegar e soltar', async ({ page }) => {
   await ready(page); await tap(page, 520, 420);
   const panel = page.locator('#actions button');
-  const boxes = async () => Promise.all((await panel.all()).map(b => b.boundingBox()));
+  // W3L-03: the buttons are a ring that follows the chosen character (taking the snack walks her to it); inside the ring each keeps its slot.
+  const boxes = async () => { const ring = (await page.locator('#actor-context').boundingBox())!; return Promise.all((await panel.all()).map(async b => { const box = await b.boundingBox(); return box && { ...box, x: box.x - ring.x, y: box.y - ring.y }; })); };
   await expect(panel).toHaveCount(5);
   expect(await panel.allTextContents()).toEqual(['Vestir', 'Jogar', 'Descansar', 'Soltar', 'Comer']);
   for (const button of await panel.all()) await expect(button.locator('img')).toHaveAttribute('src', /\.svg$/);
   await expect(page.locator('#actor-context')).not.toContainText('Pronto para');
-  const before = await boxes(); await page.locator('#actions').screenshot({ path: 'reports/panel-before.png' });
+  const before = await boxes(); await page.locator('#actor-context').screenshot({ path: 'reports/panel-before.png' });
   await expect(page.getByRole('button', { name: 'Soltar', exact: true })).toBeDisabled();
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Lanche', exact: true }).click(); await closeTray(page);
   await expect(page.getByRole('button', { name: 'Comer', exact: true })).toBeEnabled();
-  expect(await boxes()).toEqual(before); await page.locator('#actions').screenshot({ path: 'reports/panel-holding.png' });
+  expect(await boxes()).toEqual(before); await page.locator('#actor-context').screenshot({ path: 'reports/panel-holding.png' });
   await page.getByRole('button', { name: 'Soltar', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Soltar', exact: true })).toBeDisabled();
-  expect(await boxes()).toEqual(before); await page.locator('#actions').screenshot({ path: 'reports/panel-after.png' });
+  expect(await boxes()).toEqual(before); await page.locator('#actor-context').screenshot({ path: 'reports/panel-after.png' });
 });

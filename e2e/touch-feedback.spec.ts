@@ -85,9 +85,10 @@ test('o retorno vai para a cena: o anúncio é só para leitor de tela e não h�
   const status = (await page.locator('#announcement').boundingBox())!;
   expect(status.width).toBeLessThanOrEqual(1); expect(status.height).toBeLessThanOrEqual(1);
   await expect(page.locator('#announcement')).toHaveAttribute('role', 'status');
-  const world = (await page.locator('#world').boundingBox())!, dock = (await page.locator('#play-hint').boundingBox())!;
+  // W3L-03: in landscape there is no dock (the faces are in the Turma drawer); the scene goes down to the bottom.
+  const world = (await page.locator('#world').boundingBox())!, dock = await page.locator('#play-hint').boundingBox();
   const viewport = page.viewportSize()!;
-  if (dock.y > world.y) expect(dock.y + dock.height).toBeCloseTo(viewport.height, 0);
+  if (dock && dock.y > world.y) expect(dock.y + dock.height).toBeCloseTo(viewport.height, 0);
   else expect(world.y + world.height).toBeCloseTo(viewport.height, 0);
 });
 

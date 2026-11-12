@@ -46,3 +46,15 @@ it('sem armazenamento a mão aparece e dispensar não quebra', () => {
   expect(saveFirstTouchSeen()).toBe(true); expect(loadFirstTouchSeen()).toBe(true);
   vi.unstubAllGlobals();
 });
+it('a gaveta da Turma começa fechada e lembra aberta ou fechada numa chave própria (W3L-03)', async () => {
+  const { loadDrawerOpen, saveDrawerOpen } = await import('./storage');
+  const port = storage();
+  expect(loadDrawerOpen(port)).toBe(false);
+  expect(saveDrawerOpen(true, port)).toBe(true);
+  expect([...port.map.entries()]).toEqual([['mundo-da-bia:drawer', 'open']]);
+  expect(loadDrawerOpen(port)).toBe(true);
+  saveDrawerOpen(false, port); expect(port.map.get('mundo-da-bia:drawer')).toBe('closed'); expect(loadDrawerOpen(port)).toBe(false);
+  expect(loadDrawerOpen(storage([['mundo-da-bia:drawer', 'talvez']]))).toBe(false);
+  expect(loadDrawerOpen(storage([], true))).toBe(false);
+  expect(saveDrawerOpen(true, storage([], true))).toBe(false);
+});

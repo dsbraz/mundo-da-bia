@@ -3,7 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { ready, readTown, tray, closeTray, point } from './helpers';
+import { ready, readTown, tray, closeTray, point, openPlay } from './helpers';
 
 async function playground(page: Page) {
   const world = initialWorld(); world.layout.pieces = [];
@@ -15,7 +15,7 @@ async function playground(page: Page) {
 /** Starts hopscotch with a paused clock, letting the walk to the board run frame by frame until play begins. */
 async function hopscotch(page: Page) {
   await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') }); await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z'));
-  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await openPlay(page);
   await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
   await expect.poll(async () => { await page.clock.runFor(250); return page.locator('#game-panel').getAttribute('data-phase'); }).toBe('playing');
 }

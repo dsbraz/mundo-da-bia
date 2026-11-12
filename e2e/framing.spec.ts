@@ -3,7 +3,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { test, expect } from '@playwright/test';
-import { ready, readTown, tray, closeTray } from './helpers';
+import { ready, readTown, tray, closeTray, openPlay } from './helpers';
 for (const size of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }, { width: 1792, height: 768 }]) {
   test(`enquadramento integral e alvos acessíveis coincidem em ${size.width}`, async ({ page }) => {
     if (size.width === 1792) {
@@ -23,10 +23,15 @@ for (const size of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }, 
     expect(frame.rasterWidth / 2).toBeCloseTo(frame.visibleWidth, 0);
     expect(frame.rasterHeight / 2).toBeCloseTo(frame.visibleHeight, 0);
     expect(frame.width).toBe(frame.parentWidth); expect(frame.height).toBe(frame.parentHeight);
-    // The scene is filled: the whole wall-to-floor height (600) shows, with no band above the ceiling or below the floor,
-    // and the view never leaves the room sideways; the rest of a wide room is reached by panning.
+    // The scene is filled: no band above the ceiling, below the floor or beside the walls; the rest of a wide room is reached by panning.
+    // W3L-03: the scene now takes the whole width, so on a screen wider than the room at full height (1280×800, 1792×768) the room
+    // fills the width and a little of the ceiling and floor is cut evenly, never the floor where the turma stands.
     expect(frame.scale).toBeCloseTo(Math.max(frame.height / 600, frame.width / frame.world));
-    expect(frame.y).toBeCloseTo(0); expect(frame.visibleHeight).toBeCloseTo(600);
+    if (frame.width / frame.world <= frame.height / 600) { expect(frame.y).toBeCloseTo(0); expect(frame.visibleHeight).toBeCloseTo(600); }
+    else {
+      expect(frame.visibleWidth).toBeCloseTo(frame.world); expect(frame.y).toBeGreaterThanOrEqual(0); expect(frame.y + frame.visibleHeight).toBeLessThanOrEqual(600.1);
+      for (const actor of saved.actors) expect(actor.y, actor.id).toBeLessThanOrEqual(frame.y + frame.visibleHeight - 20);
+    }
     expect(frame.x).toBeGreaterThanOrEqual(-.1); expect(frame.x + frame.visibleWidth).toBeLessThanOrEqual(frame.world + .1);
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
     expect(await inspect()).toEqual(frame);
@@ -62,17 +67,19 @@ for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, {
   });
 }
 
-test('com a brincadeira aberta a 768, a cena não encolhe: mesma escala do painel e humano com 150 px ou mais', async ({ page }) => {
+test('com a brincadeira aberta a 768, a cena fica estável e o humano com 150 px ou mais', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
   await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
   const scale = () => page.locator('canvas').evaluate(c => c.getBoundingClientRect().width / Number(c.dataset.viewWidth));
   const docked = await scale();
-  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
+  await openPlay(page);
   await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
   await expect(page.locator('#game-panel')).toBeVisible();
   const playing = await scale();
-  expect(playing).toBeCloseTo(docked, 3);
-  expect(human * playing).toBeGreaterThanOrEqual(150);
+  // W3L-03: while playing freely the dock is only the 84 px portrait strip, so the scene is bigger than before; the game panel needs
+  // more room, so the scene gives it back while the game runs (without jumping again) and the characters stay big.
+  expect(playing).toBeLessThanOrEqual(docked); expect(human * playing).toBeGreaterThanOrEqual(150);
+  await page.waitForTimeout(1000); expect(await scale()).toBeCloseTo(playing, 3);
   const panel = (await page.locator('#game-panel').boundingBox())!;
   for (const id of ['#game-jump', '#game-stop']) {
     const button = (await page.locator(id).boundingBox())!;
@@ -81,7 +88,8 @@ test('com a brincadeira aberta a 768, a cena não encolhe: mesma escala do paine
   await page.screenshot({ path: 'reports/framing-playing-768.png' });
 });
 
-// In portrait the dock below the scene holds its controls without a big empty band and without scrolling, and never covers the scene.
+// In portrait the dock below the scene (the portrait strip, then the game panel) holds its controls without a big empty band and
+// without scrolling, and never covers the scene; the actions ring floats inside the scene.
 for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }]) {
   test(`retrato a ${size.width}: painel abaixo da cena compacto, sem vão grande nem rolagem`, async ({ page }) => {
     await page.setViewportSize(size); await ready(page);
@@ -99,8 +107,11 @@ for (const size of [{ width: 390, height: 844 }, { width: 768, height: 1024 }]) 
     };
     await check('#play-hint');
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
-    await check('#actor-context');
-    await page.getByRole('button', { name: 'Jogar', exact: true }).click(); await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
+    // W3L-03: the actions are a ring over the scene, beside the chosen character, inside it and without scrolling.
+    const ring = (await page.locator('#actor-context').boundingBox())!, scene = (await page.locator('#world').boundingBox())!;
+    expect(ring.y).toBeGreaterThanOrEqual(scene.y); expect(ring.y + ring.height).toBeLessThanOrEqual(scene.y + scene.height + 1);
+    expect(ring.x).toBeGreaterThanOrEqual(scene.x); expect(ring.x + ring.width).toBeLessThanOrEqual(scene.x + scene.width + 1);
+    await openPlay(page); await page.getByRole('button', { name: 'Amarelinha', exact: true }).click();
     await expect(page.locator('#game-panel')).toHaveAttribute('data-phase', 'playing'); await check('#game-panel');
   });
 }

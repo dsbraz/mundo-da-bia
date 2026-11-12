@@ -5,8 +5,10 @@ test('jogo preenche o viewport, separa cena e controles e recolhe as bandejas', 
     await page.setViewportSize(size); await ready(page);
     expect(await page.locator('#app').boundingBox()).toEqual({ x: 0, y: 0, ...size });
     const scene = (await page.locator('#world').boundingBox())!;
-    const hint = (await page.locator('#play-hint').boundingBox())!;
-    expect(Math.max(hint.x - scene.x - scene.width, hint.y - scene.y - scene.height)).toBeGreaterThanOrEqual(0);
+    // W3L-03: in portrait the strip of faces is below the scene; in landscape the scene takes the width and the Turma button is above it.
+    const hint = await page.locator('#play-hint').boundingBox(), turma = (await page.locator('#tray-toggle').boundingBox())!;
+    if (hint) expect(Math.max(hint.x - scene.x - scene.width, hint.y - scene.y - scene.height)).toBeGreaterThanOrEqual(0);
+    else { expect(turma.y + turma.height).toBeLessThanOrEqual(scene.y); expect(scene.width).toBeGreaterThanOrEqual(size.width * .95); }
     const area = await page.locator('#world').evaluate(n => ({ width: n.clientWidth, height: n.clientHeight }));
     const canvas = (await page.locator('canvas').boundingBox())!;
     expect(canvas.width).toBeGreaterThanOrEqual(area.width - 1); expect(canvas.height).toBeGreaterThanOrEqual(area.height - 1);

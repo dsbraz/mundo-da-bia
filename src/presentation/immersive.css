@@ -21,8 +21,7 @@ select{display:none!important}.street .choice-cards[aria-label=Andar]{display:no
 
 #world canvas{width:var(--view-width,100%)!important;height:var(--view-height,100%)!important;margin:0!important}
 
-#actor-context.folded>:not(#selected):not(#context-toggle){display:none!important}
-#actor-context #selected{display:inline-block;margin-right:12px}#context-toggle{font-size:16px!important;min-height:44px!important}
+#actor-context #selected{display:inline-block;margin-right:12px}
 #app{user-select:none}input,textarea{user-select:text}
 /* Stable header: Map left, Brincar/Criar switch in the middle, the mode's tray on the right, each mode with its own colour. */
 .modes{margin:0 auto;padding:3px;border-radius:16px;background:#fff7ddcc}.modes #play-mode[aria-pressed=true]{background:#bfe6df;border-color:var(--turquoise);color:#1d5a55}.modes #build-toggle[aria-pressed=true]{background:#f8d2c6;border-color:var(--coral);color:#7a3424}

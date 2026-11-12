@@ -5,22 +5,32 @@ import { actorIds } from '../src/domain/types';
 import { cards } from '../src/content/personalities';
 
 for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }]) {
-  test(`controles ficam fora da cena e no mesmo lugar ao trocar a seleção ${viewport.width}`, async ({ page }) => {
+  // W3L-03: the strip of faces (portrait) or the Turma button (landscape) stays outside the scene and the scene never moves; the actions
+  // are a ring inside the scene that goes with the chosen character (above Bia, then above Rui).
+  test(`controles fora da cena, cena parada e anel acima de quem foi escolhido ao trocar a seleção ${viewport.width}`, async ({ page }) => {
     await page.setViewportSize(viewport); await ready(page);
     const initialScene = (await page.locator('#world').boundingBox())!;
-    const hint = (await page.locator('#play-hint').boundingBox())!;
-    expect(Math.max(hint.x - initialScene.x - initialScene.width, hint.y - initialScene.y - initialScene.height)).toBeGreaterThanOrEqual(0);
-    await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+    const hint = await page.locator('#play-hint').boundingBox(), turma = (await page.locator('#tray-toggle').boundingBox())!;
+    if (hint) expect(Math.max(hint.x - initialScene.x - initialScene.width, hint.y - initialScene.y - initialScene.height)).toBeGreaterThanOrEqual(0);
+    else expect(turma.y + turma.height).toBeLessThanOrEqual(initialScene.y);
     const panel = page.locator('#actor-context');
-    const bounds = async () => ({ panel: (await panel.boundingBox())!, scene: (await page.locator('#world').boundingBox())! });
-    await expect.poll(async () => { const b = await bounds(); return Math.max(b.panel.y - b.scene.y - b.scene.height, b.panel.x - b.scene.x - b.scene.width); }).toBeGreaterThanOrEqual(0);
-    expect((await bounds()).scene).toEqual(initialScene);
-    const before = (await bounds()).panel;
+    const above = async (id: string) => {
+      const actor = (await readTown(page)).actors.find(a => a.id === id)!, feet = await point(page, actor.x, actor.y);
+      const ring = (await panel.boundingBox())!, scene = (await page.locator('#world').boundingBox())!;
+      expect(ring.y, id).toBeGreaterThanOrEqual(scene.y); expect(ring.y + ring.height, id).toBeLessThan(feet.y);
+      expect(ring.x, id).toBeGreaterThanOrEqual(scene.x); expect(ring.x + ring.width, id).toBeLessThanOrEqual(scene.x + scene.width + 1);
+      if (feet.x > scene.x + ring.width / 2 && feet.x < scene.x + scene.width - ring.width / 2) { expect(ring.x, id).toBeLessThanOrEqual(feet.x); expect(ring.x + ring.width, id).toBeGreaterThanOrEqual(feet.x); }
+    };
+    await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await closeTray(page);
+    await expect(panel).toBeVisible(); await above('bia');
+    expect(await page.locator('#world').boundingBox()).toEqual(initialScene);
     await tray(page, 'Turma'); await page.getByRole('button', { name: 'Rui', exact: true }).click(); await closeTray(page);
-    expect((await bounds()).panel.x).toBe(before.x); expect((await bounds()).panel.y).toBe(before.y);
+    await expect(panel).toBeVisible(); await above('rui');
+    expect(await page.locator('#world').boundingBox()).toEqual(initialScene);
     await tray(page);
     const scene = (await page.locator('#world').boundingBox())!, choices = (await page.locator('#play-tray').boundingBox())!;
-    expect(Math.max(choices.y - scene.y - scene.height, choices.x - scene.x - scene.width)).toBeGreaterThanOrEqual(0);
+    if (hint) expect(Math.max(choices.y - scene.y - scene.height, choices.x - scene.x - scene.width)).toBeGreaterThanOrEqual(0);
+    else expect(scene).toEqual(initialScene);
     await page.screenshot({ path: `reports/ui-dock-${viewport.width}.png` });
   });
 }
@@ -76,12 +86,14 @@ test('a turma nasce espalhada a 768 px e o cartão mostra a roupa atual', async 
       return { left: x - width / 2, right: x + width / 2, top: y - height, bottom: y, inside: x > box.x && x < box.x + box.width };
     });
   }, actors.map(a => ({ x: a.x, y: a.y, cat: ['mimi', 'nino', 'pipoca'].includes(a.id), seated: !!a.seat })));
-  expect(boxes.every(b => b.inside)).toBe(true);
+  // W3L-03: with the 84 px strip the portrait scene is taller, so the room is drawn bigger and about half of its width shows at once;
+  // Bia (the chosen one) opens whole in view, and the rest is reached by panning.
+  expect(boxes[actors.findIndex(a => a.id === 'bia')]!.inside).toBe(true);
   for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(true);
-  // Every character opens whole inside the scene, before any pan.
+  // Nobody is cut by the scene's edge before any pan: each character is either whole in view or wholly out of it.
   const scene = (await page.locator('#world').boundingBox())!;
-  for (const b of boxes) { expect(b.left).toBeGreaterThanOrEqual(scene.x); expect(b.right).toBeLessThanOrEqual(scene.x + scene.width); }
-  for (const a of actors) {
+  const shown = actors.filter((_, i) => boxes[i]!.right > scene.x && boxes[i]!.left < scene.x + scene.width);
+  for (const a of shown) {
     const half = (['mimi', 'nino', 'pipoca'].includes(a.id) ? 35 : 42);
     const [left, right] = [await point(page, a.x - half, a.y), await point(page, a.x + half, a.y)];
     expect(left.x, a.id).toBeGreaterThanOrEqual(scene.x); expect(right.x, a.id).toBeLessThanOrEqual(scene.x + scene.width);

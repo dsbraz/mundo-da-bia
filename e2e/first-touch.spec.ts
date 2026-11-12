@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, tap } from './helpers';
+import { ready, tap, tray } from './helpers';
 
 test('primeira abertura a 768 px: fileira de retratos, sem parágrafos longos, e a mão-fantasma até o primeiro toque', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 }); await ready(page);
@@ -22,7 +22,8 @@ test('sem armazenamento (navegação privada) o jogo abre normalmente com a mão
   await page.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } }));
   await ready(page);
   await expect(page.locator('#first-touch')).toBeVisible();
-  await page.locator('#play-hint button').nth(1).click();
+  // W3L-03: in landscape the portraits are in the Turma drawer, closed by default (and without storage, it cannot remember).
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Luna', exact: true }).click();
   await expect(page.locator('#selected')).toHaveText('Luna');
   await expect(page.locator('#first-touch')).toHaveCount(0);
 });

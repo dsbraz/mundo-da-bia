@@ -6,6 +6,7 @@ import { actorNames } from './actor-names';
 import { portrait } from './portrait';
 import { roomWidth } from '../domain/geometry';
 import { actorAt } from './targets';
+import { screenScale, worldToScreen } from './viewport';
 import { trayDrag } from './tray-drag';
 import { lookImage } from './look-image';
 import { actors, looks } from '../content/catalog';
@@ -28,11 +29,17 @@ function illustratedButton(id: string, label: string, run: () => void, className
   element.prepend(icon);
   return element;
 }
+function faceButton(element: HTMLButtonElement, label: string) {
+  const text = document.createElement('span'); text.className = 'face-name';
+  text.append(...Array.from(element.childNodes).filter(node => node.nodeType === Node.TEXT_NODE));
+  element.append(text); element.setAttribute('aria-label', label); return element;
+}
 export interface PanelActions { looks: () => void; games: () => void }
 export function createControls(root: HTMLElement, dispatch: (action: Action) => void, select: (id: ActorId) => void, getState: () => World, building: () => boolean, panelActions: PanelActions) {
   let selected: ActorId = 'bia';
   const cast = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id), 'character'));
-  const faces = actorIds.map(id => illustratedButton(id, actors[id].name, () => select(id)));
+  // The portrait strip shows only the faces (W3L-03): the name is the button's accessible name, its text is hidden there.
+  const faces = actorIds.map(id => faceButton(illustratedButton(id, actors[id].name, () => select(id)), actors[id].name));
   root.querySelector('#play-hint .hint-cast')!.append(...faces);
   const name = actorNames(root, dispatch, getState);
   root.querySelector('#cast')!.append(...cast.map((card, i) => castCard(card, actorIds[i]!, () => name(actorIds[i]!))));
@@ -80,10 +87,24 @@ function castCard(card: HTMLButtonElement, id: ActorId, rename: () => void) {
   group.append(card, pencil, motto);
   return group;
 }
+/** The action ring (W3L-03) floats just above the selected character's head, centred on them, whole inside the scene. */
 export function positionContext(root: HTMLElement, actor: Actor, state: World) {
-  root.querySelector<HTMLElement>('#actor-context')!.classList.toggle('absent', actor.room !== state.room);
+  const context = root.querySelector<HTMLElement>('#actor-context')!, canvas = root.querySelector('canvas');
+  context.classList.toggle('absent', actor.room !== state.room);
+  const world = root.querySelector('#world')?.getBoundingClientRect();
+  if (!canvas || !world?.width) return;
+  const app = root.getBoundingClientRect(), scale = screenScale(canvas), feet = worldToScreen(canvas, actor);
+  const width = context.offsetWidth || ringWidth(context), height = context.offsetHeight || 84, tall = (actor.kind === 'cat' ? 110 : 225) * scale;
+  const x = feet.x - width / 2, y = feet.y - tall - height;
+  context.style.setProperty('--ring-x', `${Math.round(Math.max(world.left + 8, Math.min(world.right - width - 8, x)) - app.left)}px`);
+  context.style.setProperty('--ring-y', `${Math.round(Math.max(world.top + 8, Math.min(world.bottom - height - 8, y)) - app.top)}px`);
 }
 
+/** The ring's width while it is hidden (a tray open): its big buttons, "mais", the gaps and the padding (drawer-ring.css). */
+function ringWidth(context: HTMLElement) {
+  const shown = context.querySelectorAll('.panel-button').length - (context.classList.contains('more') ? 0 : 1);
+  return shown * 70 + 56 + 20;
+}
 function rest(state: World, actor: ActorId, dispatch: (action: Action) => void) {
   const value = state.actors.find(a => a.id === actor)!;
   if (!value.resting && fixture(state, 'bed')?.room === state.room) dispatch({ type: 'sit', actor, seat: 'bed' });

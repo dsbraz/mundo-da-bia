@@ -17,7 +17,7 @@ export function panelControls(container: Element, run: Record<PanelSlot, () => v
     const button = buttons[index]!;
     const icon = button.querySelector('img')!;
     if (icon.getAttribute('src') !== value.icon) icon.src = value.icon;
-    button.querySelector('span')!.textContent = value.label;
+    button.querySelector('span')!.textContent = value.label; button.setAttribute('aria-label', value.label);
     button.disabled = !value.enabled;
   });
 }

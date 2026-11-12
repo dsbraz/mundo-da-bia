@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { ready, tray, closeTray } from './helpers';
+import { ready, tray, closeTray, openPlay } from './helpers';
 
 // Every visible text inside a visible button or tab (buttons, Map tabs, <summary>, including spans and <small> inside cards)
 // is drawn with a computed font-size of 16 px or more.
@@ -42,7 +42,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     for (const tab of ['Turma', 'Looks', 'Objetos']) { await tray(page, tab); await check(`bandeja ${tab}`); }
     await tray(page, 'Turma'); await page.locator('#cast .character').first().click(); await closeTray(page);
     await expect(page.locator('#actor-context')).toBeVisible(); await check('painel da Bia');
-    await page.getByRole('button', { name: 'Jogar', exact: true }).click(); await check('escolha da brincadeira');
+    await openPlay(page); await check('escolha da brincadeira');
     await page.getByRole('button', { name: 'Pular corda', exact: true }).click();
     await expect(page.locator('#game-panel')).toBeVisible(); await check('brincadeira');
     await page.locator('#game-stop').click();

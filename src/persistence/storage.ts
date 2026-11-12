@@ -81,3 +81,11 @@ export function loadFirstTouchSeen(storage?: StoragePort): boolean {
 export function saveFirstTouchSeen(storage?: StoragePort): boolean {
   try { (storage ?? globalThis.localStorage).setItem(firstTouchKey, 'seen'); return true; } catch { return false; }
 }
+const drawerKey = 'mundo-da-bia:drawer';
+/** The Turma drawer (W3L-03): closed unless the child left it open. */
+export function loadDrawerOpen(storage?: StoragePort): boolean {
+  try { return (storage ?? globalThis.localStorage).getItem(drawerKey) === 'open'; } catch { return false; }
+}
+export function saveDrawerOpen(open: boolean, storage?: StoragePort): boolean {
+  try { (storage ?? globalThis.localStorage).setItem(drawerKey, open ? 'open' : 'closed'); return true; } catch { return false; }
+}

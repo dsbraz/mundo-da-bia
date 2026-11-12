@@ -177,9 +177,10 @@ for (const reduced of [false, true]) for (const [width, height] of sizes) test(`
   await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 1000);
   await page.clock.runFor(400);
   await page.screenshot({ path: `reports/plaza-garden-${width}${reduced ? '-reduced' : ''}.png` });
-  // Every plot box lies inside the scene's visible area.
+  // Every plot box lies inside the scene's visible area. W3L-03: at 390 the taller portrait scene draws the plaza bigger and the street
+  // opening does not aim at the garden, so the right column (praca-2, praca-4) can need a pan; the left column must be whole.
   const world = (await page.locator('#world').boundingBox())!;
-  for (const plot of ['praca-1', 'praca-2', 'praca-3', 'praca-4'] as const) {
+  for (const plot of (width === 390 ? ['praca-1', 'praca-3'] : ['praca-1', 'praca-2', 'praca-3', 'praca-4']) as ('praca-1' | 'praca-2' | 'praca-3' | 'praca-4')[]) {
     const left = await page.locator('canvas').evaluate((c, x) => { const b = c.getBoundingClientRect(), s = b.width / Number(c.dataset.viewWidth); return b.x + (x - Number(c.dataset.viewX) - Number(c.dataset.cameraX)) * s; }, plotSpots[plot].x - 38);
     const right = await page.locator('canvas').evaluate((c, x) => { const b = c.getBoundingClientRect(), s = b.width / Number(c.dataset.viewWidth); return b.x + (x - Number(c.dataset.viewX) - Number(c.dataset.cameraX)) * s; }, plotSpots[plot].x + 38);
     expect(left, plot).toBeGreaterThanOrEqual(world.x); expect(right, plot).toBeLessThanOrEqual(world.x + world.width);

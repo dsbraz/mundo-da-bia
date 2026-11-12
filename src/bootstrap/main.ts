@@ -36,7 +36,7 @@ import { dragPreview, settleMove } from '../presentation/build-preview';
 import Phaser from 'phaser';
 import { loadFonts } from '../presentation/text-style';
 import { transition } from '../domain/world';
-import { loadFirstTouchSeen, loadNeighborhood, saveFirstTouchSeen, saveNeighborhood } from '../persistence/storage';
+import { loadDrawerOpen, loadFirstTouchSeen, loadNeighborhood, saveDrawerOpen, saveFirstTouchSeen, saveNeighborhood } from '../persistence/storage';
 import { firstTouch } from '../presentation/first-touch';
 import { createControls, positionContext } from '../presentation/controls';
 import { PlayScene } from '../presentation/scene';
@@ -46,6 +46,7 @@ import '../presentation/home-menu.css';
 import '../presentation/dock-layout.css';
 import '../presentation/kitchen.css';
 import '../presentation/missing-bubble.css';
+import '../presentation/drawer-ring.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 
@@ -64,7 +65,7 @@ let wardrobeOpen = false;
 let cancelInput = () => {};
 let cancelGame = () => {};
 let view: ReturnType<typeof viewport> | undefined;
-const shell = createShell(root, () => cancelInput());
+const shell = createShell(root, () => cancelInput(), { open: loadDrawerOpen(), remember: open => { saveDrawerOpen(open); } });
 const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected }), announce = feedback.announce, progress = edgeProgress(root);
 function toggleWardrobe() { cancelGame(); wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
