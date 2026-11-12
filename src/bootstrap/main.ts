@@ -6,7 +6,8 @@ import { viewport, positionTargets } from '../presentation/viewport';
 import { wireInput } from './input-wiring';
 import { sceneRefresh } from './refresh';
 import { townActions } from './town-actions';
-import { realClock, startTicks } from './clock';
+import { playTime, realClock, startTicks } from './clock';
+import { feel } from '../domain/needs';
 import { sceneFeedback } from './scene-feedback';
 import { modeLine, refusal, welcomeLine, nameOf } from '../content/feedback-text';
 import { plaza } from './plaza';
@@ -124,7 +125,7 @@ function persist() { town = storeWorld(town, state); saved = saveNeighborhood(to
 function toggleBuild() {
   cancelGame();
   constructing = false;
-  closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; selectedPiece = null; edits = history(state);
+  closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; life.mode(!building); selectedPiece = null; edits = history(state);
   shell.close();
   refresh();
   announceMode();
@@ -150,13 +151,16 @@ function newBuilding() {
 const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh: then => refresh(then), scene, cue: sound => feedback.sound.cue(sound),
   commit: next => { town = next; state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); },
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
+  feel: next => { town = next; state = feel(state, town); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
   pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { townActs.dispatch(action); }
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
-let ticks = 0; startTicks(realClock, now => { townActs.tick(now); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
+/** Session time in Brincar (Criar pauses life, §3.1). */
+const life = playTime(realClock);
+let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
   scene.previewLayout(preview.world); scene.placementHint(action?.type === 'move' ? action.id : null, preview.invalid);

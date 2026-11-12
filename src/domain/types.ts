@@ -28,7 +28,12 @@ export interface Actor extends Point {
   look: LookId;
   fed: boolean;
   resting: boolean;
+  /** Hunger, sleep and boredom of this session (`needs.ts`); never saved, absent means the morning's 20/0/0. */
+  needs?: Needs;
 }
+/** 0 is "bem" and 100 the ceiling; fractions accumulate between ticks and only bands leave the domain. `alegria`: ms of play left on
+ *  the last joy (favourite dish, favourite game, hug), 0 when there is none. */
+export interface Needs { fome: number; sono: number; tedio: number; alegria: number }
 export interface Item extends Point { id: ItemId; kind?: ItemKind; room: RoomId; holder: ActorId | null; spot: Spot }
 export interface World { streetWidth?: number; layout: Layout; home: Home; room: RoomId; actors: Actor[]; items: Item[]; show: boolean }
 export type Action =

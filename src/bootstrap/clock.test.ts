@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { startTicks, type ClockPort } from './clock';
+import { playTime, startTicks, type ClockPort } from './clock';
 
 function fakeClock() {
   let now = 1000, timer: (() => void) | null = null, visible: (() => void) | null = null, period = 0;
@@ -15,4 +15,25 @@ it('despacha um tick com a hora a cada 30 s e ao voltar a aba, e para', () => {
   clock.advance(30_000); clock.show();
   expect(ticks).toEqual([31_000, 31_000]);
   stop(); expect(clock.armed()).toBe(false);
+});
+function manualClock() {
+  let now = 5000;
+  const port: ClockPort = { now: () => now, today: () => ({ y: 2026, m: 11, d: 12 }), every: () => () => {}, onVisible: () => () => {} };
+  return { port, wait: (ms: number) => { now += ms; return now; } };
+}
+it('o tempo de Brincar chega ao live em passos de no máximo 60 s, com a fase do dia no começo de cada passo', () => {
+  const clock = manualClock(), life = playTime(clock.port);
+  const steps = Array.from({ length: 21 }, () => life.take(clock.wait(30_000)));
+  expect(steps.every(s => s.elapsed === 30_000)).toBe(true);
+  expect([steps[0]!.phase, steps[19]!.phase, steps[20]!.phase]).toEqual(['manha', 'tarde', 'entardecer']);
+  expect(life.take(clock.wait(3 * 24 * 3600_000)).elapsed).toBe(60_000);
+  expect(life.take(clock.port.now()).elapsed).toBe(0);
+});
+it('o tempo em Criar não conta: a vida pausa e volta de onde parou', () => {
+  const clock = manualClock(), life = playTime(clock.port);
+  clock.wait(20_000); life.mode(false);
+  clock.wait(40_000); life.mode(true);
+  expect(life.take(clock.wait(10_000))).toEqual({ elapsed: 30_000, phase: 'manha' });
+  life.mode(false); life.mode(false);
+  expect(life.take(clock.wait(30_000)).elapsed).toBe(0);
 });

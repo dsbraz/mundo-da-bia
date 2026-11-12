@@ -13,6 +13,7 @@ import { construct, duplicateBuilding, customize, moveBuilding } from './buildin
 import { transport } from './neighborhood-transfer';
 import { cook } from './recipes';
 import { garden, gardenActions } from './garden';
+import { feel, live } from './needs';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -45,6 +46,7 @@ export function neighborhoodAction(town: Neighborhood, action: NeighborhoodActio
     case 'cook': return cook(town, action).town;
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
     case 'transport': return transport(town, action);
+    case 'live': return live(town, action);
     default: return editModule(town, action as ModuleAction);
   }
 }
@@ -103,5 +105,5 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
  *  undo removes goes with it), and item ids never go back. */
 export function undoTo(next: Neighborhood, current: Neighborhood): Neighborhood {
   const dishes = current.items.filter(i => i.kind === 'prato' && validLocation(next, i.location));
-  return { ...next, progress: current.progress, nextItem: Math.max(next.nextItem, current.nextItem), items: [...next.items.filter(i => i.kind !== 'prato'), ...dishes] };
+  return { ...feel(next, current), progress: current.progress, nextItem: Math.max(next.nextItem, current.nextItem), items: [...next.items.filter(i => i.kind !== 'prato'), ...dishes] };
 }

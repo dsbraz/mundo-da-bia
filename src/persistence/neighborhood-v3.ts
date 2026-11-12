@@ -11,6 +11,11 @@ import { knownPlant } from './progress-validation';
 export function upgradeToV3(town: LegacyNeighborhood): Neighborhood {
   return { ...unwatered(town), progress: initialProgress(), nextItem: nextItemAfter(town.items) };
 }
+/** Without the session's needs (§3.1), which are never saved nor loaded. */
+export function unfelt<T>(actor: T): T {
+  if (!record(actor) || !Object.hasOwn(actor, 'needs')) return actor;
+  const rest = { ...actor }; delete rest.needs; return rest as T;
+}
 export const unwatered = <T extends LegacyNeighborhood>(town: T): T => ({ ...town, outdoor: { ...town.outdoor, watered: false } });
 /** Unknown looks become the default one; objects of unknown kinds and dishes of unknown recipes drop out (whoever held them is left empty-handed). */
 export function knownContent(value: unknown): unknown {
@@ -23,7 +28,8 @@ export function knownContent(value: unknown): unknown {
 export function knownTown(value: unknown): unknown {
   if (!record(value)) return value;
   const { outdoor, buildings, actors, items, location, plots, nextBuilding } = value;
-  return seated(knownContent({ outdoor, buildings: Array.isArray(buildings) ? buildings.map(knownBuilding) : buildings, actors, items, location, plots, nextBuilding }));
+  return seated(knownContent({ outdoor, buildings: Array.isArray(buildings) ? buildings.map(knownBuilding) : buildings,
+    actors: Array.isArray(actors) ? actors.map(unfelt) : actors, items, location, plots, nextBuilding }));
 }
 function knownBuilding(value: unknown): unknown {
   if (!record(value) || !record(value.layout)) return value;
