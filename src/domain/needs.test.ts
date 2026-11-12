@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { initialAlbum } from './houses';
-import { migrateNeighborhood, neighborhoodAction, undoTo } from './neighborhood';
+import { localWorld, migrateNeighborhood, neighborhoodAction, storeWorld, undoTo } from './neighborhood';
 import { initialWorld, transition } from './world';
 import { band, bandOf, feel, initialNeeds, live, mood, needsOf, relieve } from './needs';
 import { tastes } from './tastes';
@@ -133,6 +133,13 @@ describe('o que satisfaz', () => {
     }
     expect([needsOf(who(world, 'bia')).fome, needsOf(who(world, 'mimi')).fome]).toEqual([20, 15]);
   });
+  it('arrastar o lanche ou o peixe até alguém também tira 30', () => {
+    let world = withNeeds(withNeeds(initialWorld(), 'leo', { fome: 80 }), 'nino', { fome: 31 });
+    world = transition(world, { type: 'give', actor: 'leo', item: 'lanche' }).state;
+    world = transition(world, { type: 'give', actor: 'nino', item: 'peixe' }).state;
+    expect([needsOf(who(world, 'leo')).fome, needsOf(who(world, 'nino')).fome]).toEqual([50, 1]);
+    expect(who(transition(withNeeds(initialWorld(), 'luna', { fome: 50 }), { type: 'give', actor: 'luna', item: 'ursinho' }).state, 'luna').needs!.fome).toBe(50);
+  });
 });
 
 describe('as necessidades acompanham o mundo', () => {
@@ -145,6 +152,15 @@ describe('as necessidades acompanham o mundo', () => {
     expect(felt.actors.map(a => a.needs)).toEqual(town.actors.map(a => a.needs));
     expect(felt.actors.map(a => ({ ...a, needs: undefined }))).toEqual(world.actors);
     expect(feel(world, startTown()).actors).toEqual(world.actors);
+  });
+  it('a cópia local e o bairro não se apagam: live → feel → andar → storeWorld guarda as necessidades, e comer → storeWorld → live guarda o alívio', () => {
+    const town = live(startTown(), step(60_000, { idle: ['bia'] }));
+    const moved = transition(feel(localWorld(startTown()), town), { type: 'move', actor: 'bia', point: { x: 600, y: 520 } }).state;
+    expect(storeWorld(town, moved).actors.map(a => a.needs)).toEqual(town.actors.map(a => a.needs));
+    const hungry = withNeeds(startTown(), 'bia', { fome: 60 });
+    let world = transition(localWorld(hungry), { type: 'pick', actor: 'bia', item: '1:lanche' }).state;
+    world = transition(world, { type: 'feed', actor: 'bia' }).state;
+    expect(needsOf(who(live(storeWorld(hungry, world), step(10_000)), 'bia')).fome).toBe(31);
   });
   it('desfazer volta as casas, nunca as necessidades', () => {
     const before = startTown(), now = live(before, step(60_000, { idle: ['bia'] }));

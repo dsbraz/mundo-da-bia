@@ -17,9 +17,9 @@ it('despacha um tick com a hora a cada 30 s e ao voltar a aba, e para', () => {
   stop(); expect(clock.armed()).toBe(false);
 });
 function manualClock() {
-  let now = 5000;
-  const port: ClockPort = { now: () => now, today: () => ({ y: 2026, m: 11, d: 12 }), every: () => () => {}, onVisible: () => () => {} };
-  return { port, wait: (ms: number) => { now += ms; return now; } };
+  let now = 5000, hidden = false;
+  const port: ClockPort = { hidden: () => hidden, now: () => now, today: () => ({ y: 2026, m: 11, d: 12 }), every: () => () => {}, onVisible: () => () => {} };
+  return { port, wait: (ms: number) => { now += ms; return now; }, hide: (value: boolean) => { hidden = value; } };
 }
 it('o tempo de Brincar chega ao live em passos de no máximo 60 s, com a fase do dia no começo de cada passo', () => {
   const clock = manualClock(), life = playTime(clock.port);
@@ -36,4 +36,12 @@ it('o tempo em Criar não conta: a vida pausa e volta de onde parou', () => {
   expect(life.take(clock.wait(10_000))).toEqual({ elapsed: 30_000, phase: 'manha' });
   life.mode(false); life.mode(false);
   expect(life.take(clock.wait(30_000)).elapsed).toBe(0);
+});
+it('uma aba escondida não acumula vida a cada tick: uma hora fora conta 60 s na volta', () => {
+  const clock = manualClock(), life = playTime(clock.port);
+  clock.hide(true);
+  const hidden = Array.from({ length: 120 }, () => life.take(clock.wait(30_000)).elapsed);
+  expect(hidden.every(elapsed => elapsed === 0)).toBe(true);
+  clock.hide(false);
+  expect(life.take(clock.wait(1000))).toEqual({ elapsed: 60_000, phase: 'manha' });
 });

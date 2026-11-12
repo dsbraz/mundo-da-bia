@@ -9,10 +9,9 @@ import { actorIds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
-import { eat, toggleRest, wake } from './care';
+import { eat, snack, toggleRest, wake } from './care';
 import { usePiece } from './use';
 import { refuse } from './missing';
-import { needsOf, relieve } from './needs';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -52,7 +51,7 @@ function release(state: World, actor: Actor, feeding: boolean): Transition {
   if (feeding && item.kind === 'prato') return eat(state, actor, item);
   const food = actor.kind === 'cat' ? 'peixe' : 'lanche';
   if (feeding && itemKind(item) !== food) return refuse(state, 'food', actor.id);
-  const result = feeding ? changeActor(state, actor, { fed: true, resting: false, needs: relieve(needsOf(actor), 'lanche') }, 'fed')
+  const result = feeding ? changeActor(state, actor, { ...snack(actor), resting: false }, 'fed')
     : { state, events: [{ type: 'dropped' as const, actor: actor.id }] };
   return { ...result, state: { ...result.state, items: state.items.map(i => i.id === item.id
     ? { ...i, ...foodHome(state, i, actor, feeding) } : i) } };
