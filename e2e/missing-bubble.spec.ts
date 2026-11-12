@@ -29,7 +29,7 @@ async function open(page: Page, town: ReturnType<typeof migrateNeighborhood>) {
 type Seen = { bubbles: { images: string[]; text: string }[]; written: string[] };
 async function drawnOnly(page: Page) {
   await expect(page.locator('.missing-bubble')).toBeVisible();
-  const seen = await page.evaluate(() => window as unknown as Seen);
+  const seen = await page.evaluate(() => { const w = window as unknown as Seen; return { bubbles: w.bubbles, written: w.written }; });
   expect(seen.bubbles.length).toBeGreaterThan(0);
   for (const bubble of seen.bubbles) { expect(bubble.images.some(src => src.startsWith('/art/needs.svg#'))).toBe(true); expect(bubble.text).toBe(''); }
   expect(seen.written).toEqual([]);
@@ -67,7 +67,10 @@ test('nenhuma recusa produz texto sem desenho: sofá ocupado', async ({ page }) 
   await drawnOnly(page);
 });
 test('nenhuma recusa produz texto sem desenho: balanço ocupado na praça', async ({ page }) => {
-  const town = migrateNeighborhood(initialAlbum(initialWorld()));
+  // The same plaza as touch-feedback.spec: only the sofa inside, the Turma spread out.
+  const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
+  world.actors = world.actors.map((a, i) => ({ ...a, room: 'sala', x: 130 + i * 125, y: 530, seat: null }));
+  const town = migrateNeighborhood(initialAlbum(world));
   town.location = { kind: 'street' };
   town.actors = town.actors.map(a => a.id === 'luna' ? { ...a, location: { kind: 'street' }, x: 400, y: 445 } : a.id === 'bia' ? { ...a, location: { kind: 'street' }, x: 250, y: 520 } : a);
   town.outdoor.swing = 'luna';

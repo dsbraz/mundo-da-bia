@@ -16,11 +16,13 @@ export function sceneFeedback(deps: Deps) {
   const sound = createSound({ button: deps.root.querySelector<HTMLButtonElement>('#sound-toggle')!, enabled: loadSoundOn(), remember: on => { saveSoundOn(on); }, unlock: window });
   const actor = (id: ActorId) => deps.state().actors.find(a => a.id === id);
   const last = new Map<ActorId, number>(), line = lineRotation();
+  /** A bubble about who is there points at their head. */
+  const pointAt = (by?: ActorId) => by ? deps.scene.head(by) : null;
   const bubble = missingBubble(deps.root, () => deps.root.querySelector('#world')!.getBoundingClientRect());
   /** The shrug, the drawn bubble (with a door when the piece is in another room) and the soft cue; a piece found nowhere lights its card in Create. */
   function missing(need: Need, lack: Lack = {}) {
     const who = lack.actor ?? deps.selected(), head = deps.scene.shrug(who), canvas = deps.root.querySelector('canvas');
-    const anchor = lack.point ?? head ?? above(actor(who));
+    const anchor = pointAt(lack.by) || lack.point || head || above(actor(who));
     const label = lack.text ?? needLine(need, lack.by && nameOf(actor(lack.by)!));
     bubble({ need, ...(lack.by ? { by: lack.by } : {}), door: elsewhere(deps.root, deps.state(), lack.want), label }, canvas ? worldToScreen(canvas, anchor) : anchor);
     announce(label); sound.cue('refuse');

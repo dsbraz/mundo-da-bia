@@ -51,7 +51,11 @@ export function pokeActor(s: Pick<FigureState, 'scene' | 'world' | 'figures'>, e
 /** Something is missing: `id` shrugs (curious face, palms up) and the point just above its head is returned for the bubble. */
 export function shrugActor(s: Pick<FigureState, 'scene' | 'world' | 'figures'>, expressions: ReturnType<typeof faces>, id: ActorId): Point | null {
   pokeActor(s, expressions, id, 'shrug', '');
-  const figure = s.figures.find(f => f.name === id); if (!figure) return null;
+  return headOf(s.figures, id);
+}
+/** Just above `id`'s drawn head (scene units), when drawn here. */
+export function headOf(figures: Figure[], id: ActorId): Point | null {
+  const figure = figures.find(f => f.name === id); if (!figure) return null;
   const head = figure.getBounds(); return { x: head.centerX, y: head.top - 6 };
 }
 /** The ring under the character a drag would reach. */

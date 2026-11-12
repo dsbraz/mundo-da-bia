@@ -16,7 +16,7 @@ import type { Actor, ActorId, Piece, Point, PresentationEvent, World } from '../
 import { roomWidth } from '../domain/geometry';
 import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
-import { chooseFigure, drawFigures, moveFigure, pokeActor, ringTarget, shrugActor } from './scene-figures';
+import { chooseFigure, drawFigures, headOf, moveFigure, pokeActor, ringTarget, shrugActor } from './scene-figures';
 import { animateFigure, type FrameContext } from './figure-frame';
 import { faceEvents, faces, pokeFace } from './expression';
 import { drawPieces, drawObjects, pickPiece, pieceDepth } from './piece-art';
@@ -177,6 +177,8 @@ export class PlayScene extends Phaser.Scene {
   }
   face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) { this.gaze.set(id, Math.sign(point.x - actor.x)); this.faces.trigger(id, 'curious', performance.now()); } }
   /** `id` shrugs; returns the point above its head (scene units) when it is drawn here. */
+  /** Just above `id`'s head (scene units) when drawn here: a bubble about who is there points at them. */
+  head(id: ActorId): Point | null { return this.ready ? headOf(this.figures, id) : null; }
   shrug(id: ActorId): Point | null { return this.ready ? shrugActor({ scene: this, world: this.world, figures: this.figures }, this.faces, id) : null; }
   poke(id: ActorId, pose: ReactionPose, line: string) { if (this.ready) pokeActor({ scene: this, world: this.world, figures: this.figures }, this.faces, id, pose, line); else this.faces.trigger(id, pokeFace(pose), performance.now(), 900); }
   /** Someone new is chosen mid-touch: only the ring moves; the next `paint` draws the rest. */
