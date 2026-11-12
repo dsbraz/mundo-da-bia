@@ -32,5 +32,7 @@ export function playTime(clock: ClockPort) {
       pending = 0; session += elapsed;
       return { elapsed, phase };
     },
+    /** The phase shown now (W3L-11): that of the play time already taken. */
+    phase: (): Phase => phaseAt(session, event),
   };
 }

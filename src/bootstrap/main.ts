@@ -162,7 +162,7 @@ const remember = () => townActs.remember(), streetUndo = (forward: boolean) => t
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
 /** Session time in Brincar (Criar pauses life, §3.1). */
 const life = playTime(realClock);
-let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
+let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); scene.daylight(life.phase()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
   scene.previewLayout(preview.world); scene.placementHint(action?.type === 'move' ? action.id : null, preview.invalid);

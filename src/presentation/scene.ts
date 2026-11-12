@@ -39,6 +39,8 @@ import { cookedEffect, hopDishes } from './kitchen-art';
 import { hex } from './palette';
 import { screenScale } from './viewport';
 import { doorGlow } from './door-effect';
+import { dayNight } from './day-night';
+import type { Phase } from '../domain/clock';
 export class PlayScene extends Phaser.Scene {
   private gameArt: ReturnType<typeof childGameArt> | null = null;
   previewGame(value: GamePreview | null) { this.gameArt?.paint(value); }
@@ -56,7 +58,9 @@ export class PlayScene extends Phaser.Scene {
   private selected: ActorId = 'bia';
   private figures: Phaser.GameObjects.Container[] = [];
   private gaze = new Map<ActorId, number>();
-  private faces = faces(); private mirrors = mirrorReflections(this); private drops = dropLights(this);
+  private faces = faces(); private mirrors = mirrorReflections(this); private drops = dropLights(this); private night = dayNight(this);
+  /** The session's day phase (W3L-11): the backdrop's veil, the moon, stars and lit windows cross-fade to it. */
+  daylight(phase: Phase) { this.night.set(phase, reducedMotion()); }
   readonly ambient = sceneLife(() => this.game.canvas);
   private weight = weightFigures();
   /** Street, plaza and doors: `arrive`, `reaction` to the plaza, `push` the swing and `enterDoor`. */
@@ -100,7 +104,7 @@ export class PlayScene extends Phaser.Scene {
     this.game.canvas.dataset.street = String(!!state.streetWidth); this.game.canvas.dataset.cameraX = String(state.streetWidth ? this.cameraX : 0);
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.drops.reset(); this.doorLight = null; this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
-    this.outdoor.paint(state, selected);
+    this.outdoor.paint(state, selected); this.night.paint(state, this.town);
     this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
@@ -231,7 +235,7 @@ export class PlayScene extends Phaser.Scene {
     this.mirrors.frame(time, this.figures, expressions, reduced); this.balls.step(this.world, this.objects, this.kicker(), ctx.now);
     this.ambient.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
-    this.outdoor.frame(time, reduced);
+    this.outdoor.frame(time, reduced); this.night.frame(time, reduced);
     this.mark('uses', animatePieces(this.pieces, time, reduced));
   }
 }

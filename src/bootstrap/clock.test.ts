@@ -37,6 +37,14 @@ it('o tempo em Criar não conta: a vida pausa e volta de onde parou', () => {
   life.mode(false); life.mode(false);
   expect(life.take(clock.wait(30_000)).elapsed).toBe(0);
 });
+it('a fase mostrada (W3L-11) é a do tempo de Brincar já jogado: noite aos 12 min, e Criar não a avança', () => {
+  const clock = manualClock(), life = playTime(clock.port);
+  expect(life.phase()).toBe('manha');
+  for (let n = 0; n < 24; n++) life.take(clock.wait(30_000));
+  expect(life.phase()).toBe('noite');
+  life.mode(false); life.take(clock.wait(10 * 60_000));
+  expect(life.phase()).toBe('noite');
+});
 it('uma aba escondida não acumula vida a cada tick: uma hora fora conta 60 s na volta', () => {
   const clock = manualClock(), life = playTime(clock.port);
   clock.hide(true);
