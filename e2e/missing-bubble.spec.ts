@@ -70,11 +70,12 @@ test('nenhuma recusa produz texto sem desenho: balanço ocupado na praça', asyn
   // The same plaza as touch-feedback.spec: only the sofa inside, the Turma spread out.
   const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
   world.actors = world.actors.map((a, i) => ({ ...a, room: 'sala', x: 130 + i * 125, y: 530, seat: null }));
+  world.items = world.items.map((i, n) => ({ ...i, room: 'sala', spot: 'floor', x: 400 + n * 80, y: 300 }));
   const town = migrateNeighborhood(initialAlbum(world));
   town.location = { kind: 'street' };
   town.actors = town.actors.map(a => a.id === 'luna' ? { ...a, location: { kind: 'street' }, x: 400, y: 445 } : a.id === 'bia' ? { ...a, location: { kind: 'street' }, x: 250, y: 520 } : a);
   town.outdoor.swing = 'luna';
-  await open(page, town);
+  await page.setViewportSize({ width: 1024, height: 768 }); await open(page, town);
   await tap(page, 400, 490);
   await drawnOnly(page);
   await expect(page.locator('.missing-bubble img.face')).toHaveAttribute('src', '/icons/luna.svg');
