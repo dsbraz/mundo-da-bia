@@ -11,6 +11,7 @@ import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
 import { eat, toggleRest, wake } from './care';
 import { usePiece } from './use';
+import { refuse } from './missing';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -36,9 +37,8 @@ function changeActor(state: World, actor: Actor, patch: Partial<Actor>, type: Pr
 
 function pick(state: World, actor: Actor, itemId: import('./types').ItemId): Transition {
   const item = visibleItem(state, itemId);
-  if (!item || item.holder || item.room !== state.room || state.items.some(i => i.holder === actor.id)) {
-    return { state, events: [] };
-  }
+  if (state.items.some(i => i.holder === actor.id)) return refuse(state, 'hands', actor.id);
+  if (!item || item.holder || item.room !== state.room) return refuse(state, 'place', actor.id);
   return {
     state: { ...state, items: state.items.map(i => i.id === itemId ? { ...i, holder: actor.id, spot: 'floor' } : i) },
     events: [{ type: 'picked', actor: actor.id }],
@@ -47,10 +47,10 @@ function pick(state: World, actor: Actor, itemId: import('./types').ItemId): Tra
 
 function release(state: World, actor: Actor, feeding: boolean): Transition {
   const item = state.items.find(i => i.holder === actor.id);
-  if (!item) return { state, events: [] };
+  if (!item) return feeding ? refuse(state, 'food', actor.id) : { state, events: [] };
   if (feeding && item.kind === 'prato') return eat(state, actor, item);
   const food = actor.kind === 'cat' ? 'peixe' : 'lanche';
-  if (feeding && itemKind(item) !== food) return { state, events: [] };
+  if (feeding && itemKind(item) !== food) return refuse(state, 'food', actor.id);
   const result = feeding ? changeActor(state, actor, { fed: true, resting: false }, 'fed')
     : { state, events: [{ type: 'dropped' as const, actor: actor.id }] };
   return { ...result, state: { ...result.state, items: state.items.map(i => i.id === item.id
@@ -93,7 +93,7 @@ function playTransition(state: World, action: Exclude<Action, { type: 'name' }>)
 }
 
 function moveActor(state: World, actor: Actor, point: Point): Transition {
-  return validPoint(point, roomWidth(state)) ? changeActor(state, actor, { ...point, ...wake(actor), seat: null }, 'moved') : { state, events: [] };
+  return validPoint(point, roomWidth(state)) ? changeActor(state, actor, { ...point, ...wake(actor), seat: null }, 'moved') : refuse(state, 'path', actor.id);
 }
 
 function navigate(state: World, action: Extract<Action, { room: RoomId }>): Transition {

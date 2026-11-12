@@ -47,7 +47,7 @@ export function gardenPlay(deps: GardenDeps) {
   }
   function gather(actor: ActorId, plot: PlazaPlot) {
     const crop = deps.town().progress.plaza[plot]!.crop, result = harvest(deps.town(), plot);
-    if (!result.amount) { deps.scene.outdoor.garden.full(); deps.feedback.refuse(fullBasketLine, undefined, actor); return; }
+    if (!result.amount) { deps.scene.outdoor.garden.full(); deps.feedback.refuse('place', fullBasketLine); return; }
     deps.apply(result.town);
     deps.scene.outdoor.garden.harvested(plot, crop, result.amount); deps.feedback.events([{ type: 'harvested', actor }]);
   }

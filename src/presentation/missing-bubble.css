@@ -1,0 +1,9 @@
+/* W3L-02: what is missing, drawn (never written), above the character who needs it. */
+.missing-bubble{position:fixed;z-index:20;transform:translate(-50%,calc(-100% - 16px));display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bubble-bg);border:3px solid var(--outline);border-radius:30px;box-shadow:0 6px 16px #343c5333;pointer-events:none;animation:missing-pop .18s ease-out}
+.missing-bubble::after{content:"";position:absolute;left:50%;bottom:-15px;width:22px;height:22px;background:var(--bubble-bg);border:solid var(--outline);border-width:0 3px 3px 0;transform:translateX(-50%) rotate(45deg) scale(.8,1);border-bottom-right-radius:6px}
+.missing-bubble img{display:block;width:72px;height:72px;pointer-events:none}
+.missing-bubble .face{width:58px;height:58px;border-radius:50%;background:#fffdf7;border:3px solid var(--outline)}
+.missing-bubble .door{width:60px;height:60px}
+@keyframes missing-pop{from{transform:translate(-50%,calc(-100% - 16px)) scale(.6);opacity:0}to{transform:translate(-50%,calc(-100% - 16px)) scale(1);opacity:1}}
+#build-toggle.wanted,.catalog-piece.wanted{box-shadow:0 0 0 4px #f2b630,0 0 18px 6px #f2b630aa;animation:wanted-glow 1.4s ease-in-out infinite alternate}
+@keyframes wanted-glow{from{box-shadow:0 0 0 3px #f2b630,0 0 8px 2px #f2b63088}to{box-shadow:0 0 0 5px #f2b630,0 0 22px 8px #f2b630bb}}

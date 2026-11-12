@@ -3,7 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { read, ready, tap } from './helpers';
+import { points, read, ready, tap } from './helpers';
 const saveKey = 'mundo-da-bia:neighborhood:v3';
 function spreadTown() {
   const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
@@ -98,20 +98,18 @@ for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768
   town.outdoor.swing = 'luna';
   await page.setViewportSize(viewport); await seed(page, town);
   await tap(page, 400, 490);
-  await expect(page.locator('canvas')).toHaveAttribute('data-said', /Luna/);
-  await expect(page.locator('canvas')).toHaveAttribute('data-said-face', 'luna');
+  // W3L-02: the refusal is drawn (the swing is taken: Luna's face), never written; the sentence only reaches screen readers.
+  const bubble = page.locator('.missing-bubble');
+  await expect(bubble.locator('img.face')).toHaveAttribute('src', '/icons/luna.svg');
+  expect(await bubble.innerText()).toBe('');
+  await expect(page.locator('canvas')).not.toHaveAttribute('data-said', /Luna/);
   await expect(page.locator('#announcement')).toHaveText(/Luna/);
-  expect(Math.abs(Number(await page.locator('canvas').getAttribute('data-said-x')) - 400)).toBeLessThan(60);
-  // The bubble is whole inside the scene and entirely above Luna on the swing: seat at y 445, the top of her hair about y 340-355, her face below.
-  const box = await page.locator('canvas').evaluate(c => {
-    const [x, y, w, h] = c.dataset.saidBox!.split(',').map(Number), r = c.getBoundingClientRect(), d = c.dataset, scale = r.width / Number(d.viewWidth);
-    const at = (px: number, py: number) => ({ x: r.x + (px - Number(d.viewX) - Number(d.cameraX)) * scale, y: r.y + (py - Number(d.viewY)) * scale });
-    return { a: at(x!, y!), b: at(x! + w!, y! + h!), bottom: y! + h! };
-  });
+  // The bubble is whole inside the scene, near the swing and entirely above Luna's face (the top of her hair about y 340-355).
+  const box = (await bubble.boundingBox())!, [swing, hair] = await points(page, [[400, 445], [400, 340]]);
+  expect(Math.abs(box.x + box.width / 2 - swing!.x)).toBeLessThan(80);
   const scene = (await page.locator('#world').boundingBox())!;
-  expect(box.a.x).toBeGreaterThanOrEqual(scene.x); expect(box.b.x).toBeLessThanOrEqual(scene.x + scene.width);
-  expect(box.a.y).toBeGreaterThanOrEqual(scene.y); expect(box.b.y).toBeLessThanOrEqual(scene.y + scene.height);
-  expect(box.bottom).toBeLessThanOrEqual(340);
+  expect(box.x).toBeGreaterThanOrEqual(scene.x); expect(box.x + box.width).toBeLessThanOrEqual(scene.x + scene.width);
+  expect(box.y).toBeGreaterThanOrEqual(scene.y); expect(box.y + box.height).toBeLessThanOrEqual(hair!.y);
   await page.screenshot({ path: `reports/plaza-swing-occupied-${viewport.width}.png` });
   expect((await page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v3')!).town.outdoor.swing))).toBe('luna');
 });

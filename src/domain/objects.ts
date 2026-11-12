@@ -2,6 +2,7 @@ import { itemKind } from './item-kind';
 import { availableSpot, foodHome } from './furniture';
 import type { Actor, Item, ItemId, Transition, World } from './types';
 import { eat, wake } from './care';
+import { refuse } from './missing';
 
 export function visibleItem(state: World, id: ItemId): Item | undefined {
   return state.items.find(item => item.id === id && (item.holder
@@ -13,10 +14,11 @@ export function give(state: World, actor: Actor, id: ItemId): Transition {
   const item = visibleItem(state, id);
   if (item?.kind === 'prato') return eat(state, actor, item);
   const occupied = state.items.some(i => i.holder === actor.id && i.id !== id);
-  if (!item || occupied) return { state, events: [] };
+  if (!item) return refuse(state, 'place', actor.id);
+  if (occupied) return refuse(state, 'hands', actor.id);
   const kind = itemKind(item);
   const food = kind === 'lanche' || kind === 'peixe';
-  if (food && kind !== (actor.kind === 'cat' ? 'peixe' : 'lanche')) return { state, events: [] };
+  if (food && kind !== (actor.kind === 'cat' ? 'peixe' : 'lanche')) return refuse(state, 'food', actor.id);
   return deliver(state, actor, item, food);
 }
 

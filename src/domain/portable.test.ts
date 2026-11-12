@@ -35,5 +35,5 @@ it('prato vai para a geladeira; microfone continua sem ir', () => {
   const withDish = spawnItem(town(), { kind: 'prato', recipe: 'panqueca', location: kitchen, point: { x: 520, y: 530 } });
   const world = localWorld(withDish);
   expect(put(world, '7:prato', 'fridge').state.items.find(i => i.id === '7:prato')!.spot).toBe('fridge');
-  expect(put(world, '1:microfone', 'fridge').events).toEqual([]);
+  expect(put(world, '1:microfone', 'fridge').events).toEqual([{ type: 'missing', need: 'place' }]);
 });

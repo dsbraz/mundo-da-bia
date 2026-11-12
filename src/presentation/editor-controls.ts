@@ -1,7 +1,7 @@
 import { everydayGroups } from './everyday-groups';
 import { roomWidth } from '../domain/geometry';
 import { catalogDrag } from './catalog-drag';
-import type { Album, EditAction, PieceKind } from '../domain/types';
+import type { Album, EditAction, PieceKind, World } from '../domain/types';
 import type { History } from '../domain/design';
 import { paletteIds, pieceKinds } from '../domain/types';
 import { fixtures } from '../domain/layout';
@@ -50,10 +50,16 @@ export function createEditorControls(root: HTMLElement, actions: EditorActions) 
     root.querySelector('#piece-name')!.textContent = piece ? furnishings[piece.kind].name : 'Escolha uma peça na casa';
     colors.forEach((button, index) => { button.disabled = !piece; button.setAttribute('aria-pressed', String(piece?.color === paletteIds[index])); });
     catalog.forEach((button, kind) => { const present = fixtures.includes(kind) && state.layout.pieces.some(p => p.kind === kind && p.room === state.room); button.dataset.unavailable = String(present); button.title = present ? 'Já tem neste cômodo: veja onde está.' : ''; });
+    unwant(root, state, catalog, building);
     updateHouseList(root, album);
     presentPieces(root, state, actions.select, selected);
     for (const surface of ['wall', 'floor'] as const) root.querySelector<HTMLSelectElement>(`#finish-${surface}`)!.value = state.layout.rooms[state.room]![surface];
   };
+}
+/** The glow left by a missing piece (W3L-02) goes once that piece exists in the house; the Create button's glow goes once Create opens. */
+function unwant(root: HTMLElement, state: World, catalog: Map<PieceKind, HTMLButtonElement>, building: boolean) {
+  catalog.forEach((button, kind) => { if (state.layout.pieces.some(p => p.kind === kind)) button.classList.remove('wanted'); });
+  if (building) root.querySelector('#build-toggle')!.classList.remove('wanted');
 }
 function createCatalog(root: HTMLElement, { edit, blink }: EditorActions, width: () => number) {
   const buttons = new Map<PieceKind, HTMLButtonElement>();
@@ -62,7 +68,7 @@ function createCatalog(root: HTMLElement, { edit, blink }: EditorActions, width:
     const img = document.createElement('img'); img.src = pieceImage(kind, 'original', true); img.alt = '';
     const label = document.createElement('span'); label.textContent = furnishings[kind].name;
     button.append(img, label); button.setAttribute('aria-label', `Adicionar ${furnishings[kind].name}`);
-    button.dataset.category = furnishings[kind].category;
+    button.dataset.category = furnishings[kind].category; button.dataset.kind = kind;
     catalogDrag(button, kind, edit, width);
     button.addEventListener('click', () => { if (button.dataset.unavailable === 'true') blink(kind); else edit({ type: 'add', kind }); });
     root.querySelector('#piece-catalog')!.append(button); buttons.set(kind, button);

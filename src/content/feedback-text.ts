@@ -1,4 +1,4 @@
-import type { ActorId, PresentationEvent } from '../domain/types';
+import type { ActorId, Need, PresentationEvent } from '../domain/types';
 import type { OutdoorAction } from '../domain/neighborhood-types';
 import { actors } from './catalog';
 import { linePool } from './lines';
@@ -33,6 +33,11 @@ const refusals: Record<Refusal, string> = {
   edit: 'Aqui não cabe. Tenta outro cantinho?',
 };
 export const refusal = (kind: Refusal, name: string) => say(refusals[kind], name);
+/** What a missing bubble means, for screen readers only (W3L-02): the bubble itself is a drawing. */
+const needLines: Record<Need, string> = {
+  seat: 'Falta um lugar para sentar.', place: 'Aqui não tem lugar.', hands: 'As mãos estão cheias.', food: 'Essa comida não serve.', path: 'Por aqui não passa.',
+};
+export const needLine = (need: Need, by?: string) => by ? say('{nome} já está aí!', by) : needLines[need];
 
 const outdoorLines: Record<Exclude<OutdoorAction['target'], 'leave'>, string> = {
   bench: '{nome} descansa no banco.', swing: 'Vai e vem, {nome}!', water: '{nome} molhou o jardim!',

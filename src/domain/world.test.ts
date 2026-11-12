@@ -20,7 +20,7 @@ describe('brincadeira', () => {
   });
   it.each([{ x: -1, y: 400 }, { x: 1001, y: 400 }, { x: NaN, y: 400 }, { x: 300, y: Infinity }, { x: 300, y: 279 }, { x: 300, y: 541 }])('preserva posição válida em movimento inválido %j', point => {
     const before = initialWorld();
-    expect(transition(before, { type: 'move', actor: 'bia', point })).toEqual({ state: before, events: [] });
+    expect(transition(before, { type: 'move', actor: 'bia', point })).toEqual({ state: before, events: [{ type: 'missing', actor: 'bia', need: 'path' }] });
   });
   it('aceita os limites de movimento', () => {
     for (const point of [{ x: 60, y: 280 }, { x: 940, y: 540 }]) {

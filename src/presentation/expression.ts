@@ -54,4 +54,4 @@ export function faceEvents(store: ReturnType<typeof faces>, events: Presentation
   }
 }
 /** A poke that tickles or makes them hop gets a laugh; the others a happy face. */
-export const pokeFace = (pose: ReactionPose): Expression => pose === 'goof' ? 'silly' : ['hop', 'wiggle', 'clap', 'cheer'].includes(pose) ? 'laugh' : 'happy';
+export const pokeFace = (pose: ReactionPose): Expression => pose === 'goof' ? 'silly' : pose === 'shrug' ? 'curious' : ['hop', 'wiggle', 'clap', 'cheer'].includes(pose) ? 'laugh' : 'happy';

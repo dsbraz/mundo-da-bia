@@ -48,7 +48,7 @@ export function kitchen(deps: KitchenDeps) {
     if (outcome.kind === 'dish') { deps.scene.cooked(at, outcome.item); deps.feedback.events([{ type: 'cooked', actor }]); }
     if (outcome.kind === 'utensil' || outcome.kind === 'ghost') deps.feedback.events([{ type: 'hint', actor }]);
     if (outcome.kind === 'steam') { deps.scene.poke(actor, 'goof', ''); deps.feedback.sound.cue('poke'); }
-    if (outcome.kind === 'full') { deps.scene.cooked(at, null); deps.feedback.refuse(fullTableLine, undefined, actor); }
+    if (outcome.kind === 'full') { deps.scene.cooked(at, null); deps.feedback.refuse('place', fullTableLine); }
   }
   /** After every refresh: the bench closes in Create, away from its piece's room, or when the cook is somewhere else. */
   function refresh() {

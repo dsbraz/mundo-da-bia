@@ -1,4 +1,4 @@
-import type { ActorId, Point } from '../domain/types';
+import type { ActorId, Need, Point } from '../domain/types';
 import type { Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { outdoorAt } from '../presentation/outdoor-controls';
 import type { OutdoorTarget } from '../presentation/outdoor-controls';
@@ -7,7 +7,7 @@ import { nameOf, refusal } from '../content/feedback-text';
 import type { gardenPlay } from './garden';
 interface Plaza {
   town: () => Neighborhood; selected: () => ActorId; walker: ReturnType<typeof walking>;
-  dispatch: (action: NeighborhoodAction) => void; refuse: (text: string, point: Point, face?: ActorId) => void;
+  dispatch: (action: NeighborhoodAction) => void; refuse: (need: Need, text: string, point: Point, face?: ActorId) => void;
   /** A push on the swing, drawn only. */
   push: (rider: ActorId) => void;
   garden: Pick<ReturnType<typeof gardenPlay>, 'touch' | 'can' | 'drop'>;
@@ -29,7 +29,7 @@ export function plaza(deps: Plaza) {
     if (target.target === 'bench' || target.target === 'swing') {
       const occupant = deps.town().outdoor[target.target];
       if (occupant === selected) { getDown(selected); return; }
-      if (occupant && occupant !== selected) { deps.refuse(refusal('outdoor', nameOf(deps.town().actors.find(a => a.id === occupant)!)), { x: target.point.x, y: target.point.y - 60 }, occupant); return; }
+      if (occupant && occupant !== selected) { deps.refuse('seat', refusal('outdoor', nameOf(deps.town().actors.find(a => a.id === occupant)!)), { x: target.point.x, y: target.point.y - 60 }, occupant); return; }
     }
     deps.walker.start({ x: target.point.x, y: 510 }, () => play(selected, target as Equipment));
   }

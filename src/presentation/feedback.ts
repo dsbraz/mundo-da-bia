@@ -49,13 +49,6 @@ export function speechBubble(scene: Phaser.Scene, anchor: Point, text: string, o
 }
 
 /** A refusal: gentle shake of whoever tried, and a neutral bubble near the target. Never a red "×". */
-export function refuseAt(scene: Phaser.Scene, point: Point, text: string, figure?: Container, face?: string) {
-  speechBubble(scene, point, text, 'refusal', 'neutral', face);
-  if (!figure || reducedMotion()) return;
-  const state = { x: -1 };
-  scene.tweens.add({ targets: state, x: 1, duration: 70, yoyo: true, repeat: 2, onUpdate: () => figure.setData('shake', state.x * 4), onComplete: () => figure.setData('shake', 0) });
-}
-
 type PoseFrame = { hop?: number; tilt?: number; shake?: number; squash?: number; arms?: number };
 const poses: Record<ReactionPose, (t: number) => PoseFrame> = {
   hop: t => ({ hop: -Math.sin(t * Math.PI) * 22, squash: Math.sin(t * Math.PI * 2) * .06 }),
@@ -68,17 +61,20 @@ const poses: Record<ReactionPose, (t: number) => PoseFrame> = {
   cheer: t => ({ hop: -Math.sin(t * Math.PI) * 26, squash: Math.sin(t * Math.PI * 2) * .05, arms: 1 }),
   // A funny face after a miss: a wobbly shake of the head.
   goof: t => ({ tilt: Math.sin(t * Math.PI * 6) * .1 * (1 - t), shake: Math.sin(t * Math.PI * 10) * 2 * (1 - t) }),
+  // Something is missing: palms up, shoulders in, a small tilt of the head (W3L-02).
+  shrug: t => ({ arms: t > .1 && t < .85 ? 1 : 0, squash: -Math.sin(t * Math.PI) * .04, tilt: Math.sin(t * Math.PI) * .06 }),
 };
-const poseMs: Partial<Record<ReactionPose, number>> = { clap: 700, cheer: 900, goof: 600 };
+const poseMs: Partial<Record<ReactionPose, number>> = { clap: 700, cheer: 900, goof: 600, shrug: 400 };
+const stillArms: ReactionPose[] = ['cheer', 'shrug'];
 const frameKeys = ['hop', 'tilt', 'shake', 'squash', 'arms'] as const;
 /** Presentation-only touch reaction: no dispatch, nothing saved, walking untouched. With reduced motion only the bubble (and the face)
- *  shows, and a cheer keeps the arms up for a moment, without moving. */
+ *  shows, and a cheer or a shrug keeps the arms up for a moment, without moving. */
 export function pokeFigure(scene: Phaser.Scene, figure: Container, pose: ReactionPose, line: string, height: number) {
   scene.game.canvas.dataset.reaction = `${figure.name}:${line}`;
   if (line) speechBubble(scene, { x: figure.x, y: figure.y - height - 8 }, line, figure.name);
   const write = (value: PoseFrame) => frameKeys.forEach(k => figure.setData(k, value[k] ?? 0));
   const duration = poseMs[pose] ?? 360;
-  if (reducedMotion()) { if (pose === 'cheer') { write({ arms: 1 }); scene.time.delayedCall(duration, () => write({})); } return; }
+  if (reducedMotion()) { if (stillArms.includes(pose)) { write({ arms: 1 }); scene.time.delayedCall(duration, () => write({})); } return; }
   const state = { t: 0 };
   scene.tweens.add({ targets: state, t: 1, duration, ease: 'Sine.Out', onUpdate: () => write(poses[pose](state.t)), onComplete: () => write({}) });
   if (pose === 'cheer') chalkConfetti(scene, { x: figure.x, y: figure.y - height }, duration);

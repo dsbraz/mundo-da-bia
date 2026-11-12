@@ -7,7 +7,7 @@ import { drawSelection } from './selection-art';
 import { actorDepth } from './piece-art';
 import { handPoint } from './targets';
 import { trackSteps } from './scene-life';
-import { pokeFigure, refuseAt } from './feedback';
+import { pokeFigure } from './feedback';
 import { pokeFace, type faces } from './expression';
 import type { weightFigures } from './weight-figures';
 import type { ReactionPose } from '../content/personalities';
@@ -48,10 +48,11 @@ export function pokeActor(s: Pick<FigureState, 'scene' | 'world' | 'figures'>, e
   const figure = s.figures.find(f => f.name === id), actor = s.world.actors.find(a => a.id === id);
   if (figure && actor) pokeFigure(s.scene, figure, pose, line, (actor.kind === 'cat' ? 100 : 196) * contextScale(visualContext(s.world)));
 }
-/** With `face` (who is there), the bubble points at that character's head from above, never over the face. */
-export function refuseNear(scene: Phaser.Scene, figures: Figure[], selected: ActorId, point: Point, text: string, face?: ActorId) {
-  const owner = face && figures.find(f => f.name === face), head = owner ? owner.getBounds() : null;
-  refuseAt(scene, head ? { x: head.centerX, y: head.top - 6 } : point, text, figures.find(f => f.name === selected), face);
+/** Something is missing: `id` shrugs (curious face, palms up) and the point just above its head is returned for the bubble. */
+export function shrugActor(s: Pick<FigureState, 'scene' | 'world' | 'figures'>, expressions: ReturnType<typeof faces>, id: ActorId): Point | null {
+  pokeActor(s, expressions, id, 'shrug', '');
+  const figure = s.figures.find(f => f.name === id); if (!figure) return null;
+  const head = figure.getBounds(); return { x: head.centerX, y: head.top - 6 };
 }
 /** The ring under the character a drag would reach. */
 export function ringTarget(hint: Phaser.GameObjects.Graphics, target: Actor | undefined) {

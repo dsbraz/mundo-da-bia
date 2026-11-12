@@ -47,7 +47,7 @@ it('acorda ao comer, preserva show e não deixa comida na mão', () => {
 it('recusa comida incompatível, mãos ocupadas e objetos ou personagens ausentes', () => {
   const before = initialWorld();
   for (const [actor, item] of [['bia', 'peixe'], ['mimi', 'lanche']] as const) {
-    expect(transition(before, { type: 'give', actor, item })).toEqual({ state: before, events: [] });
+    expect(transition(before, { type: 'give', actor, item })).toEqual({ state: before, events: [{ type: 'missing', actor, need: 'food' }] });
   }
   const busy = transition(before, { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
   expect(transition(busy, { type: 'give', actor: 'bia', item: 'microfone' }).state).toEqual(busy);

@@ -60,13 +60,13 @@ it('assentos acomodam uma pessoa, acordam ao levantar e respeitam cômodo', () =
 it('recusa destinos inacessíveis, objetos ausentes e conteúdo escondido', () => {
   const before = initialWorld();
   const missing = { ...before, items: [] };
-  expect(transition(missing, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: missing, events: [] });
+  expect(transition(missing, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: missing, events: [{ type: 'missing', need: 'place' }] });
   const away = transition(before, { type: 'room', room: 'quarto' }).state;
-  expect(transition(away, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: away, events: [] });
+  expect(transition(away, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: away, events: [{ type: 'missing', need: 'place', want: 'table' }] });
   const closed = transition(before, { type: 'interact', target: 'fridge' }).state;
-  expect(transition(closed, { type: 'put', item: 'lanche', spot: 'table' })).toEqual({ state: closed, events: [] });
+  expect(transition(closed, { type: 'put', item: 'lanche', spot: 'table' })).toEqual({ state: closed, events: [{ type: 'missing', need: 'place' }] });
   const elsewhere = structuredClone(before); elsewhere.items[3]!.room = 'quarto';
-  expect(transition(elsewhere, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: elsewhere, events: [] });
+  expect(transition(elsewhere, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: elsewhere, events: [{ type: 'missing', need: 'place' }] });
 });
 
 it('devolve ambas comidas à geladeira e permite guardar objetos da mão', () => {
@@ -79,7 +79,7 @@ it('devolve ambas comidas à geladeira e permite guardar objetos da mão', () =>
   }
   const held = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
   const hidden = structuredClone(held); hidden.actors[0]!.room = 'quarto';
-  expect(transition(hidden, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: hidden, events: [] });
+  expect(transition(hidden, { type: 'put', item: 'ursinho', spot: 'table' })).toEqual({ state: hidden, events: [{ type: 'missing', need: 'place' }] });
   const result = transition(held, { type: 'put', item: 'ursinho', spot: 'table' }).state;
   expect(result.items[3]).toMatchObject({ spot: 'table', holder: null, x: 350, y: 475 });
 });

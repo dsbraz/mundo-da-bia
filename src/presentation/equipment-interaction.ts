@@ -14,7 +14,6 @@ export function equipmentAction(world: World, actor: ActorId, point: Point): Act
 export function approach(world: World, actor: ActorId, action: Action): Point | null {
   const resident = world.actors.find(a => a.id === actor)!;
   if (resident.room !== world.room) return null;
-  if (action.type === 'sit' && world.actors.some(a => a.id !== actor && a.room === world.room && a.seat === action.seat)) return null;
   const anchor = targetPoint(world, action); if (!anchor) return null;
   return nearestApproach(world, resident, anchor);
 }

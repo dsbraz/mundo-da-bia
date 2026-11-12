@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
-import { bubbleDuration, bubblePlace, pokeFigure, refuseAt, speechBubble } from './feedback';
+import { bubbleDuration, bubblePlace, pokeFigure, speechBubble } from './feedback';
 afterEach(() => vi.unstubAllGlobals());
 
 function fakeScene() {
@@ -54,22 +54,23 @@ it('com movimento reduzido o balão não sobe e some por fade de 120 ms', () => 
   expect(s.tweens[0]).toMatchObject({ alpha: 0, duration: 120 });
 });
 
-it('recusa é um tremor suave com balão neutro perto do alvo', () => {
+it('quando falta algo, dar de ombros: palmas para cima por 400 ms, sem balão de texto; com movimento reduzido só as palmas', () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
-  const s = fakeScene(), figure = s.object('figure');
-  refuseAt(s.scene, { x: 500, y: 300 }, 'Lia está aqui agora!', figure as unknown as Phaser.GameObjects.Container);
-  expect(s.canvas.dataset.said).toBe('Lia está aqui agora!');
-  expect(s.tweens.some(t => t.targets !== undefined && JSON.stringify(t).includes('"yoyo":true'))).toBe(true);
-  expect(s.texts[0]!.style.color).not.toBe('#a25240');
-});
-
-it('recusa no lugar ocupado mostra o rosto de quem está lá, dentro do balão', () => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false }));
-  const s = fakeScene();
-  refuseAt(s.scene, { x: 400, y: 380 }, 'Luna está aqui agora!', undefined, 'luna');
-  expect(s.images).toEqual(['face-luna']); expect(s.canvas.dataset.saidFace).toBe('luna');
-  refuseAt(s.scene, { x: 400, y: 380 }, 'Hmm, por aqui não passa.');
-  expect(s.images).toEqual(['face-luna']); expect(s.canvas.dataset.saidFace).toBe('');
+  const s = fakeScene(), figure = Object.assign(s.object('figure'), { name: 'bia', x: 300, y: 520 });
+  pokeFigure(s.scene, figure as unknown as Phaser.GameObjects.Container, 'shrug', '', 196);
+  expect(s.texts).toHaveLength(0);
+  const motion = s.tweens[0]! as { duration: number; targets: { t: number }; onUpdate: () => void };
+  expect(motion.duration).toBe(400);
+  motion.targets.t = .5; motion.onUpdate();
+  const get = (k: string) => (figure as unknown as { getData: (k: string) => unknown }).getData(k);
+  expect(get('arms')).toBe(1); expect(Number(get('tilt'))).toBeGreaterThan(0);
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  const still = fakeScene(), other = Object.assign(still.object('figure'), { name: 'leo' });
+  let later: (() => void) | undefined;
+  (still.scene as unknown as { time: unknown }).time = { delayedCall: (ms: number, fn: () => void) => { expect(ms).toBe(400); later = fn; } };
+  pokeFigure(still.scene, other as unknown as Phaser.GameObjects.Container, 'shrug', '', 196);
+  expect(still.tweens).toHaveLength(0); expect((other as unknown as { getData: (k: string) => unknown }).getData('arms')).toBe(1);
+  later!(); expect((other as unknown as { getData: (k: string) => unknown }).getData('arms')).toBe(0);
 });
 
 it('o toque de reação anima a pose, fala e marca a reação no canvas', () => {

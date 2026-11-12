@@ -1,10 +1,14 @@
-import type { ActorId, Point, PresentationEvent, World } from '../domain/types';
-import { lineRotation, nameOf, say } from '../content/feedback-text';
+import type { ActorId, Need, PieceKind, Point, PresentationEvent, World } from '../domain/types';
+import { lineRotation, nameOf, needLine, say } from '../content/feedback-text';
 import { cards, personalities, pickReaction } from '../content/personalities';
 import { createSound } from '../presentation/sound';
+import { missingBubble, missingWay } from '../presentation/missing-bubble';
+import { worldToScreen } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import { loadSoundOn, saveSoundOn } from '../persistence/storage';
 interface Deps { root: HTMLElement; scene: PlayScene; state: () => World; selected: () => ActorId }
+/** What a refusal adds: who sits there, the piece that is not in this room, where to point, the screen-reader line. */
+interface Lack { actor?: ActorId | undefined; by?: ActorId | undefined; want?: PieceKind | undefined; point?: Point | undefined; text?: string | undefined }
 /** Feedback near the finger (bubble, motion, sound); `#announcement` only mirrors it for screen readers. */
 export function sceneFeedback(deps: Deps) {
   const status = deps.root.querySelector('#announcement')!;
@@ -12,19 +16,26 @@ export function sceneFeedback(deps: Deps) {
   const sound = createSound({ button: deps.root.querySelector<HTMLButtonElement>('#sound-toggle')!, enabled: loadSoundOn(), remember: on => { saveSoundOn(on); }, unlock: window });
   const actor = (id: ActorId) => deps.state().actors.find(a => a.id === id);
   const last = new Map<ActorId, number>(), line = lineRotation();
+  const bubble = missingBubble(deps.root, () => deps.root.querySelector('#world')!.getBoundingClientRect());
+  /** The shrug, the drawn bubble (with a door when the piece is in another room) and the soft cue; a piece found nowhere lights its card in Create. */
+  function missing(need: Need, lack: Lack = {}) {
+    const who = lack.actor ?? deps.selected(), head = deps.scene.shrug(who), canvas = deps.root.querySelector('canvas');
+    const anchor = lack.point ?? head ?? above(actor(who));
+    const label = lack.text ?? needLine(need, lack.by && nameOf(actor(lack.by)!));
+    bubble({ need, ...(lack.by ? { by: lack.by } : {}), door: elsewhere(deps.root, deps.state(), lack.want), label }, canvas ? worldToScreen(canvas, anchor) : anchor);
+    announce(label); sound.cue('refuse');
+  }
   return {
-    announce, sound,
+    announce, sound, missing,
     events(events: PresentationEvent[]) {
       // Each line is taken from the rotation once: the bubble and the announcement say the same.
       const said = events.map(event => { const who = event.actor && actor(event.actor); return line(event.type, who || undefined, who ? who.kind === 'cat' : false, event.favorite === true); });
       deps.scene.react(events, said); sound.events(events, id => actor(id)?.kind === 'cat', id => deps.state().layout.pieces.find(p => p.id === id && p.active)?.kind);
       if (said[0]) announce(said[0]);
+      events.forEach(event => { if (event.type === 'missing') missing(event.need!, event); });
     },
-    refuse(text: string, point?: Point, face?: ActorId) {
-      const self = actor(deps.selected());
-      announce(text); sound.cue('refuse');
-      deps.scene.refuse(point ?? { x: self?.x ?? 500, y: (self?.y ?? 520) - 200 }, text, face);
-    },
+    /** A refusal from outside the domain (no way there, a full basket, a taken swing): always a drawing, never a sentence on screen. */
+    refuse(need: Need, text?: string, point?: Point, face?: ActorId) { missing(need, { text, point, by: face }); },
     poke(id: ActorId) {
       const who = actor(id); if (!who) return;
       const pool = personalities[id], index = pickReaction(pool.length, last.get(id), Math.random), reaction = pool[index]!;
@@ -33,4 +44,11 @@ export function sceneFeedback(deps: Deps) {
       deps.scene.poke(id, reaction.pose, line); sound.cue(reaction.cue, cards[id].voice); announce(line);
     },
   };
+}
+const above = (who?: { x: number; y: number }): Point => ({ x: who?.x ?? 500, y: (who?.y ?? 520) - 200 });
+/** A door in the bubble when `want` is in another room of this house; found nowhere, its Create card and the Create button glow. */
+function elsewhere(root: HTMLElement, state: World, want?: PieceKind) {
+  const way = missingWay(state, want);
+  if (way === 'create') { root.querySelector('#build-toggle')?.classList.add('wanted'); root.querySelector(`.catalog-piece[data-kind="${want}"]`)?.classList.add('wanted'); }
+  return way === 'door';
 }

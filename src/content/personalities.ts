@@ -1,6 +1,6 @@
 import type { ActorId, CropId } from '../domain/types';
 
-export type ReactionPose = 'hop' | 'wiggle' | 'stretch' | 'purr' | 'clap' | 'cheer' | 'goof';
+export type ReactionPose = 'hop' | 'wiggle' | 'stretch' | 'purr' | 'clap' | 'cheer' | 'goof' | 'shrug';
 export interface Reaction { pose: ReactionPose; line: string; cue: 'poke' | 'cheer' | 'meow' | 'purr' }
 /** What each character says when touched (W3-01): the Bia is affectionate, clever and does things on her own (family, 11/2026). */
 export const personalities: Record<ActorId, Reaction[]> = {
