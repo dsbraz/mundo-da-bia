@@ -1,10 +1,10 @@
-import { roomWidth } from '../domain/geometry';
 import { childGames } from '../presentation/child-games';
 import '../presentation/child-games.css';
 import { illustratedChoices } from '../presentation/illustrated-choices';
-import { viewport, positionTargets, screenScale, streetFrame, pieceSpans, peopleSpans } from '../presentation/viewport';
-import { actorAt, sourceAt } from '../presentation/targets';
-import { outdoorControls, outdoorAt } from '../presentation/outdoor-controls';
+import { outdoorControls } from '../presentation/outdoor-controls';
+import { viewport, positionTargets } from '../presentation/viewport';
+import { wireInput } from './input-wiring';
+import { sceneRefresh } from './refresh';
 import { townActions } from './town-actions';
 import { realClock, startTicks } from './clock';
 import { sceneFeedback } from './scene-feedback';
@@ -23,7 +23,6 @@ import { uiText } from '../content/ui-text';
 import { localWorld, storeWorld } from '../domain/neighborhood';
 import type { NeighborhoodAction } from '../domain/neighborhood-types';
 import { neighborhoodControls } from '../presentation/neighborhood-controls';
-import { neighborhoodGesture } from '../presentation/neighborhood-gesture';
 import { buttonArt } from '../presentation/button-art';
 import { cancelTrayDrag } from '../presentation/tray-drag';
 import { sceneControls } from '../presentation/scene-controls';
@@ -33,7 +32,6 @@ import { addRoom, renameRoom } from '../domain/rooms';
 import type { Action, ActorId, Album, EditAction } from '../domain/types';
 import { editWorld, history, recordEdit } from '../domain/design';
 import { createEditorControls } from '../presentation/editor-controls';
-import { createBuildGesture } from '../presentation/build-gesture';
 import { dragPreview, settleMove } from '../presentation/build-preview';
 import Phaser from 'phaser';
 import { loadFonts } from '../presentation/text-style';
@@ -41,7 +39,6 @@ import { transition } from '../domain/world';
 import { loadFirstTouchSeen, loadNeighborhood, saveFirstTouchSeen, saveNeighborhood } from '../persistence/storage';
 import { firstTouch } from '../presentation/first-touch';
 import { createControls, positionContext } from '../presentation/controls';
-import { bindInput } from '../presentation/input';
 import { PlayScene } from '../presentation/scene';
 import '../presentation/style.css';
 import '../presentation/immersive.css';
@@ -142,7 +139,7 @@ function newBuilding() {
   root.querySelector<HTMLDialogElement>('#room-dialog')!.close();
   neighborhood.choosePlot();
 }
-const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh, scene, cue: sound => feedback.sound.cue(sound),
+const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh: () => refresh(), scene, cue: sound => feedback.sound.cue(sound),
   commit: next => { town = next; state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); },
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
@@ -160,34 +157,9 @@ function dropPiece(action: EditAction) {
   if (action.type !== 'move') { applyEdit(action); return; }
   applyEdit(settleMove(state, action) ?? action); scene.slidePiece(action.id, action.point);
 }
-function refresh() {
-  camera = Math.min(camera, streetWidth(town.plots) - 1000);
-  scene.neighborhood(town); scene.camera(camera);
-  scene.buildMode(building, selectedPiece);
-  scene.paint(state, selected); controls(state, selected, saved); shell.mode(building, town.location.kind === 'street', constructing);
-  frameScene();
-  renderControls();
-  root.querySelector<HTMLButtonElement>('#construct-structure')!.textContent = town.location.kind === 'street' ? 'Escolher construção para ampliar' : 'Adicionar cômodo ou andar';
-  root.querySelector('#construct-mode')!.setAttribute('aria-pressed', String(constructing));
-  root.querySelector('#build-toggle')!.setAttribute('aria-pressed', String(building));
-  root.querySelector('#decorate-mode')!.setAttribute('aria-pressed', String(building && !constructing));
-}
-/** Street: its closer lower band. Interior: the full height, opening on the chosen character, then the most whole people, then furniture. */
-function frameScene() {
-  const chosen = state.actors.find(a => a.id === selected && a.room === state.room), street = !!state.streetWidth;
-  const opening = townActs.opening();
-  if (street) { view?.scene(JSON.stringify(town.location), 1000, streetFrame, opening.spans, opening.must, opening.people); return; }
-  view?.scene(JSON.stringify(town.location), roomWidth(state), 600, pieceSpans(state), chosen && { left: chosen.x - 42, right: chosen.x + 42 }, peopleSpans(state));
-}
-function renderControls() {
-  const focus = state.layout.pieces.find(p => p.id === selectedPiece) ?? state.actors.find(a => a.id === selected)!;
-  root.classList.toggle('selection-on-right', focus.x > 500);
-  controls(state, selected, saved);
-  editor(albumView(), edits, building, selectedPiece); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building);
-  navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh();
-  root.querySelector<HTMLElement>('#build-history')!.hidden = !building && !townActs.canUndo() && !townActs.canRedo();
-  root.querySelector<HTMLButtonElement>('#undo')!.disabled = !townActs.canUndo(); root.querySelector<HTMLButtonElement>('#redo')!.disabled = !townActs.canRedo();
-}
+const { refresh, frameScene, renderControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
+  piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
+  panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); } });
 function dispatch(action: Action, interrupt = true) {
   if (interrupt) { cancelGame(); walker.cancel(); }
   if ('actor' in action) root.classList.add('actor-chosen');
@@ -215,21 +187,10 @@ void loadFonts().then(() => { game = new Phaser.Game({
     renderControls();
     firstTouch(root, { seen: loadFirstTouchSeen(), done: () => saveFirstTouchSeen(), target: () => { const bia = state.actors.find(a => a.id === selected)!; return { x: bia.x, y: bia.y - 90 }; },
       wave: () => state.actors.filter(a => a.room === state.room).forEach(a => scene.poke(a.id, 'hop', '')) });
-    cancelInput = bindInput(current.canvas, () => scene.visibleWorld(), play.select, point => dispatch({ type: 'move', actor: selected, point }), {
-      walk: point => { view?.resume(); const target = outdoorAt(town, point); if (target) square.touch(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch, wardrobe: () => wardrobeOpen, toggleWardrobe, selected: () => selected, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point, true), roll: (item, point, velocity) => scene.throwBall(item, point, velocity),
-    }, { enabled: () => building, gesture: createBuildGesture(() => state, id => { selectedPiece = id; refresh(); }, previewBuild, dropPiece, point => scene.pickPiece(point), () => screenScale(current.canvas)) }, {
-      view: { background: p => { const world = scene.visibleWorld(); return building ? !scene.pickPiece(p) : !sourceAt(world, p, wardrobeOpen) && !actorAt(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
-        // On the street the drag moves the 1000-wide window first; what is left past its ends pans the closer view inside it.
-        const scale = screenScale(current.canvas), wanted = camera - dx / scale;
-        if (state.streetWidth) { camera = Math.max(0, Math.min(state.streetWidth - 1000, wanted)); scene.camera(camera); }
-        view?.pan(state.streetWidth ? (camera - wanted) * scale : dx, dy);
-      } },
-      camera: () => camera, setCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building); outside(town, selected, camera, building); navigationBar(); },
-      building: () => building, wardrobe: () => wardrobeOpen, dispatch,
-      pan: (room, fraction) => scene.pan(room, fraction),
-      transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
-      progress,
-    }, base => neighborhoodGesture(base, { town: () => town, world: () => scene.visibleWorld(), building: () => building, dispatch: townDispatch, plot: neighborhood.plot, drop: square.drop, enter: enterDoor, preview: townActs.preview, progress }));
+    cancelInput = wireInput(current, { root, scene, view: () => view, state: () => state, town: () => town, selected: () => selected, building: () => building, wardrobe: () => wardrobeOpen,
+      camera: () => camera, setCamera: x => { camera = x; }, moveCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building); outside(town, selected, camera, building); navigationBar(); },
+      play, square, walker, townActs, dispatch, townDispatch, toggleWardrobe, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, choosePiece: id => { selectedPiece = id; refresh(); },
+      previewBuild, dropPiece, progress, plot: neighborhood.plot, enter: enterDoor });
   } },
 }); });
 bindKeyboard(root, { building: () => building, state: () => state, piece: () => selectedPiece, actor: () => state.actors.find(a => a.id === selected)!,

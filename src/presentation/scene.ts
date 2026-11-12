@@ -1,4 +1,3 @@
-import { supportedActor } from './furniture-scale';
 import { textStyle } from './text-style';
 import { visibleHit } from './visible-hit';
 import { childGameArt } from './child-game-art';
@@ -17,13 +16,12 @@ import type { Actor, ActorId, Piece, Point, PresentationEvent, World } from '../
 import { roomWidth } from '../domain/geometry';
 import { drawLighting } from './furniture-art';
 import { loadArt } from './svg-assets';
-import { drawActor } from './art';
+import { drawFigures, moveFigure, pokeActor, refuseNear, ringTarget } from './scene-figures';
 import { animateFigure, type FrameContext } from './figure-frame';
 import { faceEvents, faces, pokeFace } from './expression';
-import { drawPieces, drawObjects, pickPiece, pieceDepth, actorDepth } from './piece-art';
-import { actorAt, handPoint, previewPoint } from './targets';
+import { drawPieces, drawObjects, pickPiece, pieceDepth } from './piece-art';
+import { actorAt, previewPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
-import { trackSteps } from './scene-life';
 import { snapGhost } from './scene-ghost';
 import { weightFigures } from './weight-figures';
 import { objectFall } from './weight';
@@ -33,7 +31,6 @@ import { placeSlide, placeTransfer, slidePreview, transferPreview } from './tran
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
 import { animatePieces, blinkPiece } from './use-effects';
-import { pokeFigure, refuseAt } from './feedback';
 import type { ReactionPose } from '../content/personalities';
 import { reducedMotion } from './motion';
 import { cookedEffect, hopDishes } from './kitchen-art';
@@ -115,10 +112,7 @@ export class PlayScene extends Phaser.Scene {
     this.load.once('complete', () => this.paint(this.world, this.selected)); this.load.start(); return false;
   }
   private paintPlay(state: World, selected: ActorId) {
-    this.figures = state.actors.filter(a => a.room === state.room).map(a => {
-      const depth = actorDepth(state, a);
-      return drawActor(this, supportedActor(state, a), a.id === selected, visualContext(state)).setDepth(depth);
-    });
+    this.figures = drawFigures(this, state, selected);
     this.objects = drawObjects(this, state);
     drawLighting(this, state);
     if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700);
@@ -154,22 +148,7 @@ export class PlayScene extends Phaser.Scene {
   }
   /** `carried`: the finger drags the figure (it hangs, never walks); without `id` whoever moved is let go. */
   previewActor(id: ActorId | null, point: Point | null, carried = false) {
-    this.weight.follow(id, point, carried, performance.now());
-    const active = id ?? this.moving; if (!active) return;
-    const actor = this.world.actors.find(a => a.id === active)!;
-    const destination = point ?? supportedActor(this.world, actor);
-    const preview = point ? { ...actor, ...point, seat: null } : actor;
-    const depth = actorDepth(this.world, preview);
-    const figure = this.figures.find(f => f.name === active);
-    if (figure) this.tweens.killTweensOf(figure);
-    trackSteps(figure, carried ? null : point, this.gaze);
-    figure?.setPosition(destination.x, destination.y).setDepth(depth);
-    this.moving = id; this.game.canvas.dataset.walking = id ?? '';
-    this.game.canvas.dataset.walkX = String(destination.x); this.game.canvas.dataset.walkY = String(destination.y);
-    this.world.items.filter(i => i.holder === active).forEach(item => {
-      const p = handPoint(preview, visualContext(this.world));
-      this.objects.find(o => o.name === item.id)?.setPosition(p.x, p.y).setDepth(depth + 2);
-    });
+    this.moving = moveFigure({ scene: this, world: this.world, figures: this.figures, objects: this.objects, gaze: this.gaze, weight: this.weight, moving: this.moving }, id, point, carried);
   }
   /** Whoever moves for a game walks there (fades with reduced motion); call it before committing the moves. */
   stroll(moves: { actor: ActorId; point: Point }[]) { this.ambient.strolls.start(this.figures, moves); }
@@ -190,17 +169,8 @@ export class PlayScene extends Phaser.Scene {
     hoverHint(this.hint, this.visibleWorld(), this.objects, piece && this.pieces.get(piece.id), point, actor => this.highlight(actor));
   }
   face(id: ActorId, point: Point) { const actor = this.world.actors.find(a => a.id === id); if (actor) { this.gaze.set(id, Math.sign(point.x - actor.x)); this.faces.trigger(id, 'curious', performance.now()); } }
-  /** With `face` (who is there), the bubble points at that character's head from above, never over the face. */
-  refuse(point: Point, text: string, face?: ActorId) {
-    if (!this.ready) return;
-    const owner = face && this.figures.find(f => f.name === face), head = owner ? owner.getBounds() : null;
-    refuseAt(this, head ? { x: head.centerX, y: head.top - 6 } : point, text, this.figures.find(f => f.name === this.selected), face);
-  }
-  poke(id: ActorId, pose: ReactionPose, line: string) {
-    this.faces.trigger(id, pokeFace(pose), performance.now(), 900);
-    const figure = this.figures.find(f => f.name === id), actor = this.world.actors.find(a => a.id === id);
-    if (this.ready && figure && actor) pokeFigure(this, figure, pose, line, (actor.kind === 'cat' ? 100 : 196) * contextScale(visualContext(this.world)));
-  }
+  refuse(point: Point, text: string, face?: ActorId) { if (this.ready) refuseNear(this, this.figures, this.selected, point, text, face); }
+  poke(id: ActorId, pose: ReactionPose, line: string) { if (this.ready) pokeActor({ scene: this, world: this.world, figures: this.figures }, this.faces, id, pose, line); else this.faces.trigger(id, pokeFace(pose), performance.now(), 900); }
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }
@@ -219,8 +189,7 @@ export class PlayScene extends Phaser.Scene {
   }
   private highlight(target: Actor | undefined) {
     if (!this.hint) this.hint = this.add.graphics().setDepth(999);
-    this.hint.clear();
-    if (target) this.hint.lineStyle(3, 0x477e86).strokeEllipse(target.x, target.y + 3, 76, 22);
+    ringTarget(this.hint, target);
   }
   private clearPreview() { this.ghost?.destroy(); this.hint?.destroy(); this.ghost = null; this.hint = null; }
   private get frameContext(): FrameContext {
