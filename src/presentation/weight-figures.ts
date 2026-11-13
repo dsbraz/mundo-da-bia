@@ -17,7 +17,7 @@ export function weightFigures() {
     /** Layers this frame's carry or drop on the posed figure; returns 'carried', 'drop' or ''. */
     pose(pose: Container, actor: Actor, now: number, scale: number, reduced: boolean): string {
       if (carried?.id === actor.id) {
-        const frame = carryFrame(now, carried.track.speed, scale, reduced);
+        const frame = carryFrame(now, carried.track.speed, scale, reduced, actor.kind);
         pose.y -= frame.lift; pose.rotation += frame.lean;
         pose.getByName<Container>('knees')?.list.forEach(part => { const leg = part as Phaser.GameObjects.Image; leg.x = frame.legs[Number(leg.getData('side'))]!; });
         return 'carried';

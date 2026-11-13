@@ -14,6 +14,11 @@ export function walkingPath(world: World, start: Point, end: Point): Point[] | n
   for (let y = floorTop(world); y <= 540; y += 20) for (let x = 60; x <= width - 60; x += 20) if (free({ x, y })) nodes.push({ x, y });
   return search(nodes, free);
 }
+/** Where someone let go at `p` stands (W3L-17): there, or out of a solid piece (or the wall) on its nearest free side. */
+export function standingSpot(world: World, p: Point): Point {
+  const blocks = furnitureBlocks(world);
+  return exitFrom(world, p, blocks, q => walkable(world, q) && !blocks.some(b => contains(b, q))) ?? p;
+}
 /** The first step out of a spot nobody should stand on: the wall (old saves) goes straight down to the floor, a piece's footprint to its nearest free side. */
 function exitFrom(world: World, start: Point, blocks: Block[], free: (p: Point) => boolean): Point | null {
   if (start.y < floorTop(world)) return { x: start.x, y: floorTop(world) };

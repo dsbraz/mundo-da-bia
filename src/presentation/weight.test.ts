@@ -44,3 +44,12 @@ it('tracks the horizontal speed of the finger, at rest after a pause', () => {
   expect(moving.speed).toBeGreaterThan(0);
   expect(trackCarry(moving, 500, 110).speed).toBe(0);
 });
+it('peso por tamanho (W3L-17): o gato carregado inclina mais e balança as patas mais depressa que uma pessoa', () => {
+  const lean = (kind: 'human' | 'cat') => carryFrame(0, .5, 1, false, kind).lean;
+  expect(lean('cat')).toBeGreaterThan(lean('human'));
+  expect(Math.abs(carryFrame(0, 10, 1, false, 'cat').lean)).toBeLessThanOrEqual(.3);
+  expect(carryFrame(0, 0, 1, false)).toEqual(carryFrame(0, 0, 1, false, 'human'));
+  const crossing = (kind: 'human' | 'cat') => Array.from({ length: 100 }, (_, t) => Math.sign(carryFrame(t * 10, 0, 1, false, kind).legs[0]!)).filter((s, i, all) => i && s !== all[i - 1]).length;
+  expect(crossing('cat')).toBeGreaterThan(crossing('human'));
+  expect(carryFrame(50, 1, 1, true, 'cat')).toEqual({ lift: 0, lean: 0, legs: [0, 0] });
+});

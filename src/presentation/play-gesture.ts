@@ -7,6 +7,10 @@ import { onFloor } from './floor-band';
 import { throwVelocity } from './ball-motion';
 import { itemKind } from '../domain/item-kind';
 import { hugTarget } from './drop-target';
+import { standingSpot } from './walking-path';
+import { overTable } from '../domain/world';
+import { fixture } from '../domain/layout';
+import { logicalPiecePoint } from './furniture-scale';
 export interface PlayInput {
   hover?: (point: Point | null) => void;
   pickup?: (item: ItemId) => void; screenScale?: () => Point;
@@ -83,21 +87,24 @@ function finish(active: Active, point: Point, state: World, move: (p: Point) => 
 function finishActor(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
   const actor = active.actor; if (!actor) return;
   const done = (action: Action, outcome: string) => { play?.dispatch(action); play?.outcome?.(outcome); };
-  const seat = dropPoints(active, point, state).map(p => seatAt(state, p)).find(Boolean);
+  const mover = state.actors.find(a => a.id === actor);
+  const seat = dropPoints(active, point, state).map(p => seatAt(state, p, mover)).find(Boolean);
   if (seat) { done({ type: 'sit', actor, seat }, 'sat'); return; }
   // Feet over someone else's (W3L-14): a hug.
   const friend = hugTarget(state, actor, destination(active, point, state));
   if (friend) { done({ type: 'hug', actor, other: friend.id }, 'hugged'); return; }
-  if (Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) { move(destination(active, point, state)); play?.outcome?.('moved'); }
+  // Never inside a solid piece that is not a seat (W3L-17): beside it, on its nearest free side.
+  if (Math.hypot(point.x - active.start.x, point.y - active.start.y) > 3) { move(standingSpot(state, destination(active, point, state))); play?.outcome?.('moved'); }
 }
 function deliver(token: DragToken, point: Point, state: World, play: PlayInput, samples: Active['samples']) {
   const actor = actorAt(state, point); const surface = surfaceAt(state, point);
   if (token.kind === 'look') { if (actor) play.dispatch({ type: 'dress', actor: actor.id, look: token.id }); }
   else if (actor) play.dispatch({ type: 'give', actor: actor.id, item: token.id });
-  else if (surface) play.dispatch({ type: 'put', item: token.id, spot: surface });
+  // A table is not a slot (W3L-17): let go above it, the object falls onto its top where it was let go (the domain's `place`).
+  else if (surface && surface !== 'table') play.dispatch({ type: 'put', item: token.id, spot: surface });
   else {
     const floor = { x: point.x, y: point.y + 28 * contextScale(visualContext(state)) };
-    if (!flick(token.id, floor, state, play, samples)) play.dispatch({ type: 'place', item: token.id, point: floor });
+    if (!flick(token.id, floor, state, play, samples)) play.dispatch({ type: 'place', item: token.id, point: tableFrame(state, surface === 'table' ? point : floor) });
   }
 }
 /** A ball let go while the finger still moves (over 0.15 px/ms) rolls away instead of being placed. */
@@ -171,4 +178,9 @@ function release(ended: Active, why: string | undefined, play?: PlayInput) {
   if (!ended.dragged || !ended.actor) return;
   play.previewActor?.(null, null);
   if (why) play.outcome?.(`cancelled:${why}`);
+}
+/** A drop over the drawn table in the table's own (unscaled) frame, so the domain lands it on the top under the finger (W3L-17). */
+function tableFrame(state: World, p: Point): Point {
+  const table = fixture(state, 'table'), logical = table ? logicalPiecePoint(table, p) : p;
+  return overTable(state, logical) ? logical : p;
 }

@@ -64,9 +64,10 @@ it('solta objetos no lugar escolhido, inclusive depois de carregar para outro cÃ
   state = transition(state, { type: 'room', room: 'quarto' }).state;
   expect(transition(state, { type: 'place', item: 'ursinho', point: { x: 400, y: 400 } }).state).toEqual(state);
   state = transition(state, { type: 'summon' }).state;
-  for (const point of [{ x: 60, y: 280 }, { x: 940, y: 540 }]) {
+  // W3L-17: let go in the air (y 280, 279), it falls to the floor band below (410); on the floor it stays where it was dropped.
+  for (const [point, y] of [[{ x: 60, y: 280 }, 410], [{ x: 60, y: 279 }, 410], [{ x: 940, y: 540 }, 540]] as const) {
     const result = transition(state, { type: 'place', item: 'ursinho', point });
-    expect(result.state.items[3]).toEqual({ id: 'ursinho', holder: null, room: 'quarto', spot: 'floor', ...point });
+    expect(result.state.items[3]).toEqual({ id: 'ursinho', holder: null, room: 'quarto', spot: 'floor', x: point.x, y });
     expect(result.events).toEqual([{ type: 'dropped' }]);
     expect(decode(encode(result.state))).toEqual(result.state);
   }
@@ -74,7 +75,7 @@ it('solta objetos no lugar escolhido, inclusive depois de carregar para outro cÃ
 
 it('nÃ£o perde objetos ao soltar fora da casa ou em outro cÃ´modo', () => {
   const state = initialWorld();
-  for (const point of [{ x: 59, y: 280 }, { x: 941, y: 540 }, { x: 60, y: 279 }, { x: 940, y: 541 }, { x: NaN, y: 400 }]) {
+  for (const point of [{ x: 59, y: 280 }, { x: 941, y: 540 }, { x: 940, y: 541 }, { x: NaN, y: 400 }]) {
     expect(transition(state, { type: 'place', item: 'lanche', point })).toEqual({ state, events: [] });
   }
   const room = transition(state, { type: 'room', room: 'quarto' }).state;

@@ -1,10 +1,10 @@
 import { itemKind } from './item-kind';
 import { transferItem } from './transfer';
 import { crossDoor } from './doors';
-import { roomWidth, validPoint } from './geometry';
+import { floorTop, roomWidth, validPoint } from './geometry';
 export { validPoint } from './geometry';
 import { enterRoom, travel } from './room-state';
-import { initialLayout } from './layout';
+import { fixture, initialLayout, toPiece, fromPiece } from './layout';
 import { actorIds, actorKinds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
@@ -107,9 +107,23 @@ function navigate(state: World, action: Extract<Action, { room: RoomId }>): Tran
 }
 
 function placeItem(state: World, action: Extract<Action, { type: 'place' }>): Transition {
-    if (!visibleItem(state, action.item) || !validPoint(action.point, roomWidth(state))) return { state, events: [] };
+    const at = landing(state, action.point);
+    if (!visibleItem(state, action.item) || !validPoint(at, roomWidth(state))) return { state, events: [] };
     return { state: { ...state, items: state.items.map(i => i.id === action.item
-      ? { ...i, ...action.point, room: state.room, holder: null, spot: 'floor' } : i) }, events: [{ type: 'dropped' }] };
+      ? { ...i, x: at.x, y: at.y, room: state.room, holder: null, spot: at.spot } : i) }, events: [{ type: 'dropped' }] };
+}
+/** Light physics (W3L-17, §3.7): an object let go at `point` (its bottom) falls straight down to the first surface under it, a table's top
+ *  in this room, or else to the floor; on the wall it slides down to the baseboard. Nothing stays in the air. */
+function landing(state: World, point: Point): Point & { spot: 'floor' | 'table' } {
+  const table = fixture(state, 'table');
+  if (table && overTable(state, point)) return { ...fromPiece(table, { x: toPiece(table, point).x, y: 475 }), spot: 'table' };
+  return { x: point.x, y: Math.max(point.y, floorTop(state)), spot: 'floor' };
+}
+/** Whether `point` is over this room's table top (x 165 to 395 of its drawing, where `put` sets things) and not below its front edge
+ *  (y 487): an object let go there lands on the table. */
+export function overTable(state: World, point: Point): boolean {
+  const table = fixture(state, 'table'), p = table && toPiece(table, point);
+  return !!p && p.x >= 165 && p.x <= 395 && p.y <= 487;
 }
 
 function cross(state: World, action: Extract<Action, { type: 'cross' }>): Transition {

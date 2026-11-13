@@ -3,11 +3,13 @@
 export const carryLift = 16, dropMs = 280;
 const fallMs = 110, squashMs = dropMs - fallMs, maxSquash = -.08, legPx = 6, leanPerSpeed = .35, maxLean = .2;
 export interface CarryFrame { lift: number; lean: number; legs: number[] }
+/** Weight by size (W3L-17, §3.7): a cat, light and small, tilts more and its paws swing faster. */
+const builds = { human: { lean: leanPerSpeed, max: maxLean, period: 170 }, cat: { lean: .5, max: .3, period: 115 } } as const;
 /** `time` in ms, `speed` the finger's px/ms along x; lift in scene px, legs in the figure's own px. */
-export function carryFrame(time: number, speed: number, scale: number, reduced: boolean): CarryFrame {
+export function carryFrame(time: number, speed: number, scale: number, reduced: boolean, kind: 'human' | 'cat' = 'human'): CarryFrame {
   if (reduced) return { lift: 0, lean: 0, legs: [0, 0] };
-  const swing = Math.sin(time / 170);
-  return { lift: carryLift * scale, lean: Math.max(-maxLean, Math.min(maxLean, speed * leanPerSpeed)), legs: [swing * legPx, -swing * legPx] };
+  const build = builds[kind], swing = Math.sin(time / build.period);
+  return { lift: carryLift * scale, lean: Math.max(-build.max, Math.min(build.max, speed * build.lean)), legs: [swing * legPx, -swing * legPx] };
 }
 export interface DropFrame { lift: number; squash: number; done: boolean }
 /** `elapsed` since release; `squash` < 0 is shorter and wider. Never holds input: it is only drawn. */

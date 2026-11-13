@@ -26,7 +26,7 @@ export function hugTarget(world: World, mover: ActorId, feet: Point): Actor | un
 }
 /** Under the feet of `mover`, dragged to `feet`: the seat a drop sits on, else someone to hug, else the mirror she would stand in front of. */
 export function actorDropTarget(world: World, mover: ActorId, feet: Point): DropTarget | null {
-  const seat = seatAt(world, feet);
+  const seat = seatAt(world, feet, world.actors.find(a => a.id === mover));
   if (seat) {
     const piece = seatPiece(world, seat)!, by = occupant(world, { id: mover }, seat), at = visualPiecePoint(piece, seatPoint(world, seat)!);
     return { kind: 'seat', seat, ...(by ? { by } : {}), box: drawnBox(piece), at, depth: pieceDepth(piece) + .5 };
