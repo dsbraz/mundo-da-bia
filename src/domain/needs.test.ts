@@ -16,9 +16,12 @@ const step = (elapsed: number, rest: Partial<LiveAction> = {}): LiveAction => ({
 const run = (town: Neighborhood, ticks: number, action: LiveAction) => Array.from({ length: ticks }).reduce<Neighborhood>(t => live(t, action), town);
 
 describe('necessidades de uma sessão (§3.1)', () => {
-  it('cada sessão começa de manhã com fome 20, sono 0 e tédio 0, sem alegria; sem `needs` vale o começo', () => {
-    expect(initialNeeds()).toEqual({ fome: 20, sono: 0, tedio: 0, alegria: 0 });
-    expect(needsOf(who(startTown(), 'bia'))).toEqual(initialNeeds());
+  it('cada sessão começa de manhã, descansada e sem alegria; a fome do café vem em degraus por personagem (a Bia, 30); sem `needs` vale o começo', () => {
+    expect(initialNeeds('bia')).toEqual({ fome: 30, sono: 0, tedio: 0, alegria: 0 });
+    expect(initialNeeds()).toEqual(initialNeeds('bia'));
+    expect(startTown().actors.map(a => [a.id, initialNeeds(a.id).fome])).toEqual([['bia', 30], ['luna', 27], ['leo', 32], ['rui', 30], ['mimi', 28],
+      ['nino', 24], ['pipoca', 20], ['daniel', 24], ['fabiana', 21]]);
+    for (const a of startTown().actors) expect(needsOf(a)).toEqual(initialNeeds(a.id));
     expect(who(startTown(), 'bia').needs).toBeUndefined();
   });
   it('faixas: bem até 39, pede de 40 a 69, precisa de 70 a 100', () => {
@@ -34,10 +37,33 @@ describe('necessidades de uma sessão (§3.1)', () => {
     expect(bandOf(who(live(ticks, step(20_000)), 'bia'), 'fome')).toBe('pede');
     expect(needsOf(who(live(ticks, step(20_000)), 'bia')).fome).toBe(40);
   });
+  it('a fome é de refeição (+3/min): depois de um prato no fim de `pede` (69 → 9) ela só volta a pedir em 10 min e a precisar em 20; do zero, 13 min 20 s e 23 min 20 s', () => {
+    const minutesTo = (from: number, target: 'pede' | 'precisa') => {
+      let town = withNeeds(startTown(), 'bia', { fome: from }), at = 0;
+      while (bandOf(who(town, 'bia'), 'fome') !== target) { town = live(town, step(10_000)); at += 10; }
+      return at / 60;
+    };
+    const plate = relieve(needs({ fome: 69 }), 'prato').fome;
+    expect(plate).toBe(9);
+    expect(minutesTo(plate, 'pede')).toBeCloseTo(31 / 3, 1);
+    expect(minutesTo(plate, 'precisa')).toBeCloseTo(61 / 3, 1);
+    expect([minutesTo(0, 'pede'), minutesTo(0, 'precisa')]).toEqual([40 / 3, 70 / 3]);
+  });
+  it('numa sessão de 25 min todos ainda pedem comida, mas os primeiros pedidos se espalham: nunca mais de dois no mesmo minuto', () => {
+    const first: Partial<Record<ActorId, number>> = {};
+    let town = startTown();
+    for (let at = 10; at <= 25 * 60; at += 10) {
+      town = live(town, step(10_000));
+      for (const a of town.actors) if (first[a.id] === undefined && bandOf(a, 'fome') !== 'bem') first[a.id] = at;
+    }
+    const times = startTown().actors.map(a => first[a.id]!);
+    expect(times.every(t => t <= 25 * 60)).toBe(true);
+    for (const t of times) expect(times.filter(o => o >= t && o < t + 60).length).toBeLessThanOrEqual(2);
+  });
   it('um live de 30 dias vale 60 s; tempo inválido, negativo ou zero não muda nada', () => {
     const town = startTown();
     expect(live(town, step(30 * 24 * 3600_000))).toEqual(live(town, step(60_000)));
-    expect(needsOf(who(live(town, step(60_000)), 'bia')).fome).toBe(26);
+    expect(needsOf(who(live(town, step(60_000)), 'bia')).fome).toBe(33);
     for (const elapsed of [NaN, -5000, 0, Infinity]) expect(live(town, step(elapsed))).toBe(town);
   });
   it('o teto é 100: depois disso nada piora', () => {
@@ -71,9 +97,9 @@ describe('necessidades de uma sessão (§3.1)', () => {
   it('Rui (tédio ×1,4, fome ×0,6) fica entediado antes da Bia; Léo tem sono ×1,1; os gatos sono ×1,5 e fome ×0,6', () => {
     const minute = live(startTown(), step(60_000, { phase: 'noite', idle: ['bia', 'rui', 'mimi'] }));
     expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(7);
-    expect(needsOf(who(minute, 'rui')).fome).toBeCloseTo(23.6);
+    expect(needsOf(who(minute, 'rui')).fome).toBeCloseTo(31.8);
     expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(13.2);
-    expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(23.6);
+    expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(29.8);
     expect(needsOf(who(minute, 'mimi')).sono).toBe(18);
     const bored = (id: ActorId) => Array.from({ length: 30 }, (_, n) => run(startTown(), n + 1, step(30_000, { idle: [id] })))
       .findIndex(t => bandOf(who(t, id), 'tedio') === 'pede');
@@ -162,7 +188,7 @@ describe('as necessidades acompanham o mundo', () => {
     const hungry = withNeeds(startTown(), 'bia', { fome: 60 });
     let world = transition(localWorld(hungry), { type: 'pick', actor: 'bia', item: '1:lanche' }).state;
     world = transition(world, { type: 'feed', actor: 'bia' }).state;
-    expect(needsOf(who(live(storeWorld(hungry, world), step(10_000)), 'bia')).fome).toBe(31);
+    expect(needsOf(who(live(storeWorld(hungry, world), step(10_000)), 'bia')).fome).toBe(30.5);
   });
   it('desfazer volta as casas, nunca as necessidades', () => {
     const before = startTown(), now = live(before, step(60_000, { idle: ['bia'] }));

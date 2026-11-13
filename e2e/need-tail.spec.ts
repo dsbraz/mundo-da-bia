@@ -20,8 +20,8 @@ const thought = (page: Page) => page.locator('.missing-bubble.thought');
 for (const size of sizes) test(`ao lado do anel de ações, a cauda da bolha aponta para a cabeça da Bia, a ${size.width}`, async ({ page }) => {
   test.setTimeout(180_000);
   await seed(page, size);
-  // 10 min without eating: hunger is `precisa` and her thought stays up (needs are never saved, so they are played).
-  await playMinutes(page, 10);
+  // 13 min 30 s without eating: hunger is `precisa` (13 min 20 s) and her thought stays up (needs are never saved, so they are played).
+  await playMinutes(page, 13.5);
   // Choosing the Bia opens her ring above her head, where her thought would be: the thought stands beside it.
   const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!;
   await tap(page, bia.x, bia.y - 120);

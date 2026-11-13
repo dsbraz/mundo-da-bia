@@ -5,7 +5,7 @@ import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { World } from '../src/domain/types';
 import { closeTray, readTown, ready, tray } from './helpers';
-import { playMinutes } from './session';
+import { playMinutes, playUntilTrue } from './session';
 
 // Lot 6B: one dish shared by two people seated at the same table: one plate on the table, both eat, both stop being hungry.
 const sizes = [{ width: 1024, height: 768 }, { width: 1280, height: 800 }];
@@ -27,9 +27,9 @@ for (const size of sizes) test(`um prato, dois à mesa: os dois comem e matam a 
   await page.addInitScript(value => { localStorage.setItem('mundo-da-bia:autonomy', 'off'); if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood({ ...town, nextItem: 21, items: [...town.items, dish] }));
   await ready(page); await page.clock.pauseAt(new Date('2026-11-13T10:01:30'));
-  // 10 minutes without eating: both hungry.
-  await playMinutes(page, 10);
-  await expect.poll(async () => [(await faces(page)).bia, (await faces(page)).leo]).toEqual(['hungry', 'hungry']);
+  // Without eating, hunger (+3/min) reaches `precisa` at 12 min 40 s for Léo and 13 min 20 s for the Bia: both hungry, before Léo's sleep (14 min).
+  await playMinutes(page, 12);
+  await playUntilTrue(page, async () => { const now = await faces(page); return now.bia === 'hungry' && now.leo === 'hungry'; }, 1.5);
   await tray(page); await page.locator('#cast [data-actor=bia]').click(); await closeTray(page);
   await page.getByRole('button', { name: 'Comer', exact: true }).click();
   await page.clock.runFor(1200);

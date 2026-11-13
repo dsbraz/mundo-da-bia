@@ -53,9 +53,9 @@ describe('o tédio de quem fica parado (W3L-13)', () => {
     const minute = neighborhoodAction(startTown(), { type: 'live', elapsed: 60_000, phase: 'manha', idle: ['bia', 'rui'] });
     expect([needsOf(who(minute, 'bia')).tedio, needsOf(who(minute, 'rui')).tedio].map(v => Math.round(v * 100) / 100)).toEqual([5, 7]);
     const still = firstSad(true), busy = firstSad(false);
-    expect(busy).toEqual({ bia: 870, luna: 870, leo: 840, rui: 870, mimi: 840, nino: 840, pipoca: 840 });
+    expect(busy).toEqual({ bia: 870, luna: 870, leo: 840 });
     // Standing still brings boredom to `precisa` at 14 min (Rui at 10 min, but he forgets to eat): never a second need before 14 min.
-    expect(still).toEqual({ bia: 840, luna: 840, leo: 840, rui: 840, mimi: 840, nino: 840, pipoca: 840 });
+    expect(still).toEqual({ bia: 840, luna: 870, leo: 840, rui: 870, mimi: 840, nino: 840, pipoca: 840 });
   });
 });
 

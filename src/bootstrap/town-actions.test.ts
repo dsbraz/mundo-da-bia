@@ -45,7 +45,7 @@ it('o tick com tempo de Brincar faz a vida seguir em silêncio, só nas necessid
   expect(deps.feel).not.toHaveBeenCalled();
   actions.tick(31_000, { elapsed: 30_000, phase: 'manha' });
   expect(deps.feel).toHaveBeenCalledTimes(1);
-  expect(current().actors.find(a => a.id === 'bia')!.needs).toEqual({ fome: 23, sono: 1, tedio: 0, alegria: 0 });
+  expect(current().actors.find(a => a.id === 'bia')!.needs).toEqual({ fome: 31.5, sono: 1, tedio: 0, alegria: 0 });
   actions.tick(31_000, { elapsed: 0, phase: 'manha' });
   expect(deps.feel).toHaveBeenCalledTimes(1);
   expect(deps.quiet).not.toHaveBeenCalled(); expect(deps.commit).not.toHaveBeenCalled(); expect(deps.interrupt).not.toHaveBeenCalled();

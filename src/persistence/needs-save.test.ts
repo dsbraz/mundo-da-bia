@@ -14,10 +14,10 @@ it('as necessidades não vão para o save: os bytes são os mesmos com ou sem el
   expect(encodeNeighborhood(town)).toBe(encodeNeighborhood(start()));
   expect(encodeNeighborhood(town)).not.toContain('needs');
 });
-it('recarregar começa com fome 20, sono 0 e tédio 0, e um save com `needs` carrega sem elas', () => {
+it('recarregar começa com a fome do café, sono 0 e tédio 0, e um save com `needs` carrega sem elas', () => {
   const decoded = decodeNeighborhood(encodeNeighborhood(lived()))!;
   expect(decoded).toEqual(decodeNeighborhood(encodeNeighborhood(start())));
-  expect(decoded.actors.map(needsOf)).toEqual(decoded.actors.map(() => initialNeeds()));
+  expect(decoded.actors.map(a => needsOf(a))).toEqual(decoded.actors.map(a => initialNeeds(a.id)));
   const raw = JSON.parse(encodeNeighborhood(start()));
   raw.town.actors = raw.town.actors.map((a: object) => ({ ...a, needs: { fome: 90, sono: 90, tedio: 90, alegria: 0 } }));
   expect(decodeNeighborhood(JSON.stringify(raw))!.actors.every(a => a.needs === undefined)).toBe(true);
