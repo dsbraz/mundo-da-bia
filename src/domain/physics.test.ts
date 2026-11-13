@@ -27,6 +27,17 @@ describe('física leve: soltar é cair na vertical (W3L-17, §3.7)', () => {
     expect(teddy(place(world, left.x - 1, 300).state)).toMatchObject({ spot: 'floor', x: left.x - 1, y: floorTop(world) });
     expect(teddy(place(world, right.x + 1, 300).state)).toMatchObject({ spot: 'floor', y: floorTop(world) });
   });
+  it('a bola não para na mesa: rola do tampo e cai no chão à frente da mesa, no x em que foi solta', () => {
+    const world = initialWorld(), top = fromPiece(table(world), { x: 280, y: 475 }), front = fromPiece(table(world), { x: 280, y: 540 });
+    const ball = { id: '9:bola' as const, kind: 'bola' as const, room: 'sala' as const, x: 800, y: 530, holder: 'bia' as const, spot: 'floor' as const };
+    const withBall = { ...world, items: [...world.items, ball] };
+    const { state, events } = transition(withBall, { type: 'place', item: '9:bola', point: { x: top.x, y: top.y - 120 } });
+    expect(state.items.find(i => i.id === '9:bola')).toMatchObject({ spot: 'floor', x: top.x, y: front.y, holder: null });
+    expect(front.y).toBeGreaterThan(top.y);
+    expect(events).toEqual([{ type: 'dropped' }]);
+    // Away from the table the ball falls like anything else.
+    expect(transition(withBall, { type: 'place', item: '9:bola', point: { x: 800, y: 150 } }).state.items.find(i => i.id === '9:bola')).toMatchObject({ spot: 'floor', y: 410 });
+  });
   it('no meio da parede cai no chão abaixo (escorrega até o rodapé), nunca fica no ar', () => {
     const world = initialWorld();
     expect(teddy(place(world, 800, 150).state)).toMatchObject({ spot: 'floor', x: 800, y: 410 });
