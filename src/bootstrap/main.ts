@@ -166,7 +166,8 @@ const remember = () => townActs.remember(), streetUndo = (forward: boolean) => t
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
 /** Session time in Brincar (Criar pauses life, §3.1). */
 const life = playTime(realClock);
-const selfCare = selfCareWiring({ root, state: () => state, selected: () => selected, location: () => town.location, stroll: moves => scene.stroll(moves), dispatch: action => dispatch(action, false) });
+const selfCare = selfCareWiring({ root, state: () => state, selected: () => selected, location: () => town.location, stroll: moves => scene.stroll(moves), dispatch: action => dispatch(action, false),
+  hop: id => scene.poke(id, 'hop', ''), played: id => townActs.enjoy(id, 'bola') });
 const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); scene.daylight(life.phase()); },
   slept: id => townActs.sleepThrough(id), greet: () => { announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
 let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); scene.daylight(life.phase()); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });

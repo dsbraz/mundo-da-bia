@@ -79,14 +79,14 @@ describe('autonomias da Bia e da Luna (W3L-13)', () => {
   it('"cuida": se alguém no cômodo está triste, a Luna não selecionada vai abraçar', () => {
     expect(selfCare(sadMimi(), 'bia')).toEqual({ type: 'hug', actor: 'luna', other: 'mimi' });
   });
-  it('a Luna não cuida se está selecionada, dormindo, se ninguém está triste ou se a tristeza é noutro cômodo', () => {
-    expect(selfCare(sadMimi(), 'luna')).toBeNull();
+  it('a Luna não cuida se está selecionada, dormindo, se ninguém está triste ou se a tristeza é noutro cômodo (o sono pode levar a outro ato, W3L-19)', () => {
+    expect(selfCare(sadMimi(), 'luna')?.type).not.toBe('hug');
     expect(selfCare(initialWorld(), 'bia')).toBeNull();
     const away = sadMimi(); away.actors = away.actors.map(a => a.id === 'mimi' ? { ...a, room: 'quarto' } : a);
-    expect(selfCare(away, 'bia')).toBeNull();
+    expect(selfCare(away, 'bia')?.type).not.toBe('hug');
     const asleep = sadMimi(); asleep.actors = asleep.actors.map(a => a.id === 'luna' ? { ...a, resting: true } : a);
-    expect(selfCare(asleep, 'bia')).toBeNull();
-    expect(selfCare(withNeeds(initialWorld(), 'luna', { fome: 80, sono: 80 }), 'bia')).toBeNull();
+    expect(selfCare(asleep, 'bia')?.type).not.toBe('hug');
+    expect(selfCare(withNeeds(initialWorld(), 'luna', { fome: 80, sono: 80 }), 'bia')?.type).not.toBe('hug');
   });
   it('a fome da Bia vem antes do cuidado da Luna', () => {
     expect(selfCare(sadMimi(hungry()), 'rui')?.type).toBe('eat');
