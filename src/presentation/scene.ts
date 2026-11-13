@@ -34,6 +34,7 @@ import { ballSize } from './ball-motion';
 import { placeSlide, placeTransfer, slidePreview, transferPreview } from './transfer-preview';
 import type { DragPreview, VisibleWorld } from './targets';
 import { react } from './reactions';
+import { embrace } from './hug-embrace';
 import { animatePieces, blinkPiece } from './use-effects';
 import type { ReactionPose } from '../content/personalities';
 import { reducedMotion } from './motion';
@@ -213,7 +214,7 @@ export class PlayScene extends Phaser.Scene {
   pickPiece(point: Point) { return pickPiece(this, this.world, point); }
   buildMode(enabled: boolean, selected: number | null) { this.building = enabled; this.piece = selected; }
   openWardrobe(open: boolean) { this.wardrobe = open; this.paint(this.world, this.selected); }
-  react(events: PresentationEvent[], said: readonly (string | null)[]) { faceEvents(this.faces, events, this.world, this.selected, performance.now()); if (this.ready) react(this, this.world, events, said, this.selected, id => this.poke(id, 'cheer', ''), (id, pose) => this.poke(id, pose, '')); }
+  react(events: PresentationEvent[], said: readonly (string | null)[]) { faceEvents(this.faces, events, this.world, this.selected, performance.now()); if (this.ready) react(this, this.world, events, said, this.selected, id => this.poke(id, 'cheer', ''), (id, pose) => this.poke(id, pose, ''), (a, b) => embrace(this, this.figures, a, b)); }
   preview(drag: DragPreview | null) {
     if (!this.ready) return;
     this.objects.forEach(o => o.setAlpha(drag?.kind === 'item' && o.name === drag.id ? .25 : 1));
