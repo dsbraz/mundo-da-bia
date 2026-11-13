@@ -38,8 +38,15 @@ export function loadMarketArt(scene: Phaser.Scene, state: World) {
   [0, 1, 2].forEach(n => loadSvg(scene, `shelf-sign-${n}`, sheetPart(source!, [`shelf-sign-${n}`], { width: 170, height: 36 })));
   loadSvg(scene, 'seed-packet', sheetPart(source!, ['seed-packet'], { width: 64, height: 64 }));
 }
-/** Where good `n` of a shelf sits: 3 boards of 3, left to right, top to bottom (beyond 9 the shelf is full to the eye). */
-export const goodSpot = (n: number) => ({ x: 45 + (n % 3) * 40, y: 62 + Math.floor(n / 3) * 58 });
+/** Where the goods of a shelf sit, in order: shared out over its 3 boards (up to 3 each, top boards first, so no board is left bare,
+ *  lot 6B) and centred on each board; beyond 9 the shelf is full to the eye. Two goods go on the top and bottom boards. */
+export function goodSpots(count: number): { x: number; y: number }[] {
+  const shown = Math.min(count, 9), boards = shown === 2 ? [0, 2] : [0, 1, 2];
+  return boards.flatMap((board, n) => {
+    const on = Math.floor(shown / boards.length) + (n < shown % boards.length ? 1 : 0);
+    return Array.from({ length: on }, (_, i) => ({ x: 85 + (i - (on - 1) / 2) * 40, y: 62 + board * 58 }));
+  });
+}
 /** The picture of a good in the scene: an ingredient icon, or for a seed the packet with the crop on it. */
 export function goodImages(scene: Phaser.Scene, good: Good, x: number, y: number, size = 36): Phaser.GameObjects.Image[] {
   if (!good.startsWith('semente-')) return [scene.add.image(x, y, `ing-${good}`).setDisplaySize(size, size)];
@@ -52,6 +59,7 @@ export function drawShelfGoods(scene: Phaser.Scene, state: World, pieces: Map<nu
   state.layout.pieces.filter(p => p.room === state.room && p.kind === 'market-shelf').forEach(piece => {
     const container = pieces.get(piece.id); if (!container) return;
     container.add(scene.add.image(85, 19, `shelf-sign-${shelfDesign(state.layout, piece)}`).setDisplaySize(170, 36));
-    marketGoods(state.layout, piece, revealed).slice(0, 9).forEach((good, n) => { const at = goodSpot(n); container.add(goodImages(scene, good, at.x, at.y)); });
+    const goods = marketGoods(state.layout, piece, revealed);
+    goodSpots(goods.length).forEach((at, n) => container.add(goodImages(scene, goods[n]!, at.x, at.y)));
   });
 }
