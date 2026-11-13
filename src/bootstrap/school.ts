@@ -29,7 +29,7 @@ export function schoolPlay(deps: SchoolDeps) {
       if (!room || action.type !== 'use') return false;
       if (deps.scene.lessons.active()) return true;
       const result = lesson(deps.town(), room);
-      if (result.outcome.kind === 'missing') deps.feedback.missing('seat', { actor: deps.selected(), want: 'desk' });
+      if (result.outcome.kind === 'missing') deps.feedback.missing('seat', { actor: deps.selected(), want: 'school-desk' });
       if (result.outcome.kind !== 'lesson') return true;
       deps.root.classList.remove('actor-chosen');
       deps.scene.lessons.start(action.id, result.outcome.theme, result.outcome.pupils, performance.now());

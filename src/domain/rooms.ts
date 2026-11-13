@@ -7,7 +7,7 @@ import { seatPoint } from './seats';
 import { enterRoom } from './room-state';
 export interface NewRoom { name: string; template: RoomTemplate; size: RoomSize; cell: number }
 const furnishings: Record<RoomTemplate, PieceKind[]> = {
-  classroom: ['bookcase', 'desk', 'desk', 'desk', 'board'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
+  classroom: ['bookcase', 'school-desk', 'school-desk', 'school-desk', 'board'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
   laundry: ['washer', 'sink', 'shelf'], library: ['bookcase', 'armchair', 'reading-lamp'], dining: ['picnic-table', 'kitchen-cart', 'plant'],
   reception: ['counter', 'armchair', 'plant'],
   consultation: ['desk', 'armchair', 'sink'],
@@ -24,9 +24,9 @@ const furnishings: Record<RoomTemplate, PieceKind[]> = {
 };
 /** Fixed columns (piece left edges): the yard's scattered pieces, and the market hall (W3L-21 art pass) with both shelves left of the
  *  door and the fridge and checkout right of it, the whole hall inside one 1024 px screen so it opens with nothing cut off; the classroom
- *  (W3L-26) with three desks in a row under the board. */
+ *  (W3L-26) with three school desks in a row under the board. */
 const columns: Partial<Record<RoomTemplate, readonly number[]>> = { playground: [60, 320, 60], garden: [60, 320, 60], market: [140, 318, 616, 776],
-  classroom: [20, 230, 500, 770, 360] };
+  classroom: [20, 250, 485, 720, 360] };
 export function freeCell(state: World, cell: number): boolean {
   return Number.isInteger(cell) && cell >= 0 && cell < 12 && !Object.values(state.layout.rooms).some(r => r.cell === cell);
 }

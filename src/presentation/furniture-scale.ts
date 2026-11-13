@@ -13,7 +13,7 @@ const scales: Record<PieceKind, readonly [number, number]> = {
   'picnic-table': [.96, .88], piano: [.96, .9], tv: [.94, .9], aquarium: [.94, .9],
   stage: [.94, .9], planter: [.94, .9], plant: [1, 1], picture: [1, 1], rug: [1, 1],
   cushion: [.9, .9], neon: [1, 1], speaker: [.92, .94], mirror: [.94, .96], chair: [1, 1],
-  'market-shelf': [1, 1], checkout: [1, 1], board: [1, 1],
+  'market-shelf': [1, 1], checkout: [1, 1], board: [1, 1], 'school-desk': [1, 1],
 };
 export function visualPiecePoint(piece: Piece, point: Point): Point {
   const box = pieceBounds[piece.kind], [x, y] = scales[piece.kind];

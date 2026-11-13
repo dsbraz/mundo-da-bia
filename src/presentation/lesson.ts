@@ -33,11 +33,14 @@ export function lessonArt(scene: Phaser.Scene) {
       board.add([image, chalk]);
     },
     frame(now: number, figures: Phaser.GameObjects.Container[], reduced: boolean) {
-      if (!current || !image || current.done) return;
+      if (!current || !image) return;
+      const hands = figures.filter(f => current!.pupils.includes(f.name as ActorId));
+      // While the drawing is on the board, a pupil's name and star (drawn above her head) would sit on it: only her halo stays.
+      hands.forEach(f => ['selection-label', 'selection-star'].forEach(name => f.getByName<Phaser.GameObjects.Components.Visible & Phaser.GameObjects.GameObject>(name)?.setVisible(false)));
+      if (current.done) return;
       const progress = lessonProgress(current.start, now, reduced), width = image.frame.width;
       image.setCrop(0, 0, width * progress, image.frame.height);
       chalk?.setPosition(spot.x - spot.width / 2 + spot.width * progress, spot.y + Math.sin(now / 90) * spot.height * .3);
-      const hands = figures.filter(f => current!.pupils.includes(f.name as ActorId));
       hands.forEach((f, n) => f.setData('arms', handUp(n, now - current!.start, reduced) ? 1 : 0));
       if (progress < 1) return;
       current.done = true; chalk?.setVisible(false); mark(`${current.theme}:done`);

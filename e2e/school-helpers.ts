@@ -17,7 +17,7 @@ export function schoolTown(): Neighborhood {
   const spots: Record<string, number> = { bia: 420, leo: 760 };
   return { ...town, location: classroom, actors: town.actors.map(a => a.id in spots ? { ...a, location: classroom, room: 'quarto', seat: null, x: spots[a.id]!, y: 535 } : a) };
 }
-const desks = (town: Neighborhood) => town.buildings[1]!.layout.pieces.filter(p => p.room === 'quarto' && p.kind === 'desk');
+const desks = (town: Neighborhood) => town.buildings[1]!.layout.pieces.filter(p => p.room === 'quarto' && p.kind === 'school-desk');
 export async function openSchool(page: Page, town = schoolTown()) {
   await page.addInitScript(([key, value]) => { if (!localStorage.getItem(key!)) localStorage.setItem(key!, value!); }, [saveKey, encodeNeighborhood(town)]);
   await ready(page);
@@ -25,7 +25,7 @@ export async function openSchool(page: Page, town = schoolTown()) {
 /** Drags `id` by the body onto the seat of desk `n`, and waits until she sits there. */
 export async function seatAt(page: Page, id: string, n: number) {
   const town = await readTown(page), actor = town.actors.find(a => a.id === id)!, desk = desks(town)[n]!;
-  const seat = visualPiecePoint(desk, fromPiece(desk, seatSlots.desk![0]!));
+  const seat = visualPiecePoint(desk, fromPiece(desk, seatSlots['school-desk']![0]!));
   await drag(page, [actor.x, actor.y - 60], [seat.x, seat.y - 60]);
   await expect.poll(async () => (await readTown(page)).actors.find(a => a.id === id)!.seat).toBe(`${desk.id}.0`);
 }

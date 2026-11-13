@@ -14,7 +14,7 @@ function school(): Neighborhood {
   const town = neighborhoodAction(migrateNeighborhood(initialAlbum(initialWorld())), { type: 'construct', plot: 1, model: 'school' });
   return { ...town, actors: town.actors.map(a => ['bia', 'leo'].includes(a.id) ? { ...a, location: classroom, room: 'quarto', seat: null, x: 500, y: 520 } : a) };
 }
-const desks = (town: Neighborhood) => town.buildings[1]!.layout.pieces.filter(p => p.room === 'quarto' && p.kind === 'desk');
+const desks = (town: Neighborhood) => town.buildings[1]!.layout.pieces.filter(p => p.room === 'quarto' && p.kind === 'school-desk');
 const seated = (town: Neighborhood, ...ids: ActorId[]): Neighborhood => ({ ...town,
   actors: town.actors.map(a => { const n = ids.indexOf(a.id); return n < 0 ? a : { ...a, seat: `${desks(town)[n]!.id}.0` as const }; }) });
 const here = { building: 2, room: 'quarto' as const };
@@ -22,13 +22,21 @@ const here = { building: 2, room: 'quarto' as const };
 describe('a escola (W3L-26)', () => {
   it('a sala de aula da escola tem quadro e carteiras: é uma escola', () => {
     const town = school(), layout = town.buildings[1]!.layout;
-    expect(layout.pieces.filter(p => p.room === 'quarto').map(p => p.kind)).toEqual(expect.arrayContaining(['board', 'desk', 'desk', 'desk']));
+    expect(layout.pieces.filter(p => p.room === 'quarto').map(p => p.kind)).toEqual(expect.arrayContaining(['board', 'school-desk', 'school-desk', 'school-desk']));
     expect(isSchool(layout, 'quarto')).toBe(true);
     expect(isSchool(layout, 'sala')).toBe(false);
   });
   it('sem criança sentada numa carteira a aula não começa e mostra a carteira que falta', () => {
     const town = school();
-    expect(lesson(town, here)).toEqual({ town, outcome: { kind: 'missing', need: 'seat', want: 'desk' } });
+    expect(lesson(town, here)).toEqual({ town, outcome: { kind: 'missing', need: 'seat', want: 'school-desk' } });
+  });
+  it('uma sala antiga com Mesa de criação no lugar da carteira continua sendo escola, e quem senta nela é aluno', () => {
+    const town = school(), b = town.buildings[1]!;
+    const old = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.kind === 'school-desk' ? { ...p, kind: 'desk' as const } : p) } } : x) };
+    const desk = old.buildings[1]!.layout.pieces.find(p => p.room === 'quarto' && p.kind === 'desk')!;
+    expect(isSchool(old.buildings[1]!.layout, 'quarto')).toBe(true);
+    const sat = { ...old, actors: old.actors.map(a => a.id === 'bia' ? { ...a, seat: `${desk.id}.0` as const } : a) };
+    expect(lesson(sat, here).outcome).toMatchObject({ kind: 'lesson', pupils: ['bia'] });
   });
   it('fora de uma sala com quadro nada acontece', () => {
     const town = seated(school(), 'bia');

@@ -4,7 +4,7 @@ import { roomTemplates } from '../domain/types';
 import { templates } from '../content/projects';
 import { pieceImage } from './piece-assets';
 const pictures: Record<RoomTemplate, PieceKind[]> = {
-  classroom: ['desk', 'bookcase'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
+  classroom: ['school-desk', 'bookcase'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
   reception: ['counter', 'armchair'],
   consultation: ['desk', 'armchair'],
   ward: ['bed', 'side-table'],

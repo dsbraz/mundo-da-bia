@@ -15,8 +15,8 @@ const classroom = { kind: 'interior' as const, building: 2, room: 'quarto' as co
 /** A school with the Bia at the classroom's first desk. */
 function school(): Neighborhood {
   const town = neighborhoodAction(migrateNeighborhood(initialAlbum(initialWorld())), { type: 'construct', plot: 1, model: 'school' });
-  const desk = town.buildings[1]!.layout.pieces.find(p => p.room === 'quarto' && p.kind === 'desk')!;
-  return { ...town, actors: town.actors.map(a => a.id === 'bia' ? { ...a, ...fromPiece(desk, seatSlots.desk![0]!), location: classroom, room: 'quarto', seat: `${desk.id}.0` as const } : a) };
+  const desk = town.buildings[1]!.layout.pieces.find(p => p.room === 'quarto' && p.kind === 'school-desk')!;
+  return { ...town, actors: town.actors.map(a => a.id === 'bia' ? { ...a, ...fromPiece(desk, seatSlots['school-desk']![0]!), location: classroom, room: 'quarto', seat: `${desk.id}.0` as const } : a) };
 }
 const taught = () => { const town = school(); return lesson(town, { building: 2, room: 'quarto' }).town; };
 const withoutNeeds = (town: Neighborhood): Neighborhood => ({ ...town, actors: town.actors.map(unfelt) });

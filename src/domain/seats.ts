@@ -5,7 +5,7 @@ import type { Actor, Piece, PieceKind, Point, RoomId, SeatRef, World } from './t
 /** The seats each piece offers (§3.3), in the piece's drawing coordinates (`pieceBounds` origin): where the feet of whoever sits there are. */
 export const seatSlots: Partial<Record<PieceKind, readonly Point[]>> = {
   sofa: [{ x: 150, y: 405 }, { x: 245, y: 405 }], bed: [{ x: 790, y: 350 }], armchair: [{ x: 90, y: 145 }],
-  chair: [{ x: 45, y: 108 }], desk: [{ x: 100, y: 132 }], 'cat-bed': [{ x: 170, y: 408 }],
+  chair: [{ x: 45, y: 108 }], desk: [{ x: 100, y: 132 }], 'school-desk': [{ x: 75, y: 110 }], 'cat-bed': [{ x: 170, y: 408 }],
   'picnic-table': [36, 92, 148, 204].map(x => ({ x, y: 140 })),
 };
 /** Sitting on these is resting: the bed (lying down) and the cats' bed. */
