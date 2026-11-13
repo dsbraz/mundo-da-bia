@@ -17,6 +17,7 @@ import { feel, life, lifeActions } from './needs';
 import { keepStock } from './stock';
 import { marketActions, shop, unpaidExit } from './market';
 import { work } from './work';
+import { leaveShow } from './show';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -48,8 +49,8 @@ export function neighborhoodAction(town: Neighborhood, action: NeighborhoodActio
   switch (action.type) {
     case 'outdoor': return interactOutdoor(town, action);
     case 'cook': return cook(town, action).town;
-    case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
-    case 'transport': return leave(town, action);
+    case 'visit': return validLocation(town, action.location) ? leaveShow(town, { ...town, location: action.location }) : town;
+    case 'transport': return leaveShow(town, leave(town, action));
     case 'work': return work(town, action.phase);
     default: return marketOrModule(town, action);
   }

@@ -1,4 +1,4 @@
-import { textStyle } from './text-style';
+import { liveNotes } from './live-notes';
 import { visibleHit } from './visible-hit';
 import { childGameArt } from './child-game-art';
 import type { GamePreview } from './child-game-art';
@@ -135,11 +135,16 @@ export class PlayScene extends Phaser.Scene {
     this.figures = drawFigures(this, state, selected); this.mirrors.paint(state, this.figures);
     this.objects = drawObjects(this, state);
     drawLighting(this, state);
-    this.live = state.show ? this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700) : null;
+    this.live = liveNotes(this, roomWidth(state) - 145, 100, state.show);
   }
-  private live: Phaser.GameObjects.Text | null = null;
-  /** The show ended by itself: the dance, the laugh and the label stop without a repaint (nothing in hand is interrupted). */
-  endShow() { this.world = { ...this.world, show: false }; this.live?.destroy(); this.live = null; }
+  private live: Phaser.GameObjects.Container | null = null;
+  /** The show ended by itself: the dance, the laugh and the label stop without a repaint (nothing in hand is interrupted); a piano that
+   *  played it is drawn off again, which takes a repaint. */
+  endShow(state: World) {
+    const piano = this.world.layout.pieces.some(p => p.kind === 'piano' && p.active && p.room === this.world.room);
+    if (piano) { this.paint(state, this.selected); return; }
+    this.world = state; this.live?.destroy(); this.live = null;
+  }
   pan(room: RoomId | null, fraction: number) {
     if (!this.ready) return;
     if (!room) { if (this.sliding) this.paint(this.world, this.selected); return; }

@@ -64,6 +64,7 @@ import { routineWiring } from './routine';
 import { suggestionIcon } from '../presentation/routine-bubble';
 import { selfCareWiring } from './self-care';
 import { nightSleep } from './night-sleep';
+import { endShow } from '../domain/show';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -195,7 +196,7 @@ let stale = false;
 const { refresh: repaint, frameScene, renderControls, ui: repaintControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
   panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); } });
-const showTime = showMoment((ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); }, () => { state = { ...state, show: false }; persist(); scene.endShow(); });
+const showTime = showMoment((ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); }, () => { state = endShow(state); persist(); scene.endShow(state); });
 function refresh(then?: () => void) { stale = false; showTime(state.show); place.refresh(repaint, then, repaintControls); }
 /** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
 function walksFirst(action: Action, interrupt: boolean): boolean {
