@@ -4,7 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { closeTray, readTown, ready, tray } from './helpers';
-import { playMinutes, playUntilTrue } from './session';
+import { playMinutes } from './session';
 
 const shots = 'reports/wave3-life-2';
 /** The living room as a new save, Luna in the bedroom, and Bia holding a plate of scrambled eggs (not her favourite); clock first. */
@@ -17,6 +17,12 @@ async function seed(page: Page) {
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood({ ...town, nextItem: 21, items: [...town.items, dish] }));
   await ready(page); await page.clock.pauseAt(new Date('2026-11-12T10:00:30'));
+}
+/** Plays `minutes` with the Bia taking a step every tick, so she is never idle: her sadness here comes from hunger and sleep, not from
+ *  standing still (lot 3: boredom reaches `precisa` at 14 min for whoever stands still). */
+async function playWalking(page: Page, minutes: number) {
+  await page.locator('#world').focus();
+  for (let n = 0; n < minutes * 2; n++) { await page.keyboard.press(n % 2 ? 'ArrowLeft' : 'ArrowRight'); await playMinutes(page, .5); }
 }
 const face = async (page: Page, id: string) => Object.fromEntries((await page.locator('canvas').getAttribute('data-faces'))!.split(' ').map(f => f.split(':')))[id];
 const thought = (page: Page) => page.locator('.missing-bubble.thought:not([hidden])');
@@ -53,15 +59,16 @@ for (const reduced of [false, true]) test(`10 min: rosto de fome; com sono alto 
   test.setTimeout(120_000);
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await seed(page);
-  await playMinutes(page, 10);
+  await playWalking(page, 10);
   await expect.poll(() => face(page, 'bia')).toBe('hungry');
   // `precisa`: the bubble stays.
   await expect(thought(page)).toHaveAttribute('data-band', 'precisa');
   const suffix = reduced ? '-reduced' : '';
   await page.screenshot({ path: `${shots}/face-hungry-1024${suffix}.png` });
   // Sleep reaches `precisa` around 14 min of play (dusk and night add +12/min).
-  await playMinutes(page, 3);
-  await playUntilTrue(page, async () => await face(page, 'bia') === 'sad', 2.5);
+  await playWalking(page, 3);
+  for (let n = 0; n < 5 && await face(page, 'bia') !== 'sad'; n++) await playWalking(page, .5);
+  expect(await face(page, 'bia')).toBe('sad');
   await oneDrawnBubble(page);
   await page.screenshot({ path: `${shots}/face-sad-1024${suffix}.png` });
   await page.setViewportSize({ width: 844, height: 390 }); await page.clock.runFor(200);

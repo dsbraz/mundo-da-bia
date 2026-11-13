@@ -48,9 +48,9 @@ describe('necessidades de uma sessão (§3.1)', () => {
     const sleep = (phase: LiveAction['phase']) => needsOf(who(live(startTown(), step(60_000, { phase })), 'luna')).sono;
     expect(['manha', 'tarde', 'amanhecer', 'entardecer', 'noite'].map(p => sleep(p as LiveAction['phase']))).toEqual([2, 2, 2, 12, 12]);
   });
-  it('o tédio cresce +3,5/min só para quem está parado (W3L-13)', () => {
+  it('o tédio cresce +5/min só para quem está parado (W3L-13, ajuste do lote 3)', () => {
     const town = live(startTown(), step(60_000, { idle: ['bia'] }));
-    expect([needsOf(who(town, 'bia')).tedio, needsOf(who(town, 'luna')).tedio]).toEqual([3.5, 0]);
+    expect([needsOf(who(town, 'bia')).tedio, needsOf(who(town, 'luna')).tedio]).toEqual([5, 0]);
     expect(needsOf(who(live(startTown(), step(60_000)), 'bia')).tedio).toBe(0);
   });
   it('quem está fora do lugar mostrado nunca passa de 69, e quem sai do cômodo volta a 69', () => {
@@ -68,20 +68,21 @@ describe('necessidades de uma sessão (§3.1)', () => {
     const moved = { ...town, actors: town.actors.map(a => a.id === 'leo' ? { ...a, location: { ...where, room: 'quarto' as const } } : a) };
     expect(needsOf(who(live(withNeeds(moved, 'leo', { fome: 90 }), step(1)), 'leo')).fome).toBe(69);
   });
-  it('Rui (tédio ×1,4) fica entediado antes da Bia; Léo tem sono ×1,2; os gatos sono ×1,5 e fome ×0,8', () => {
+  it('Rui (tédio ×1,4, fome ×0,6) fica entediado antes da Bia; Léo tem sono ×1,1; os gatos sono ×1,5 e fome ×0,6', () => {
     const minute = live(startTown(), step(60_000, { phase: 'noite', idle: ['bia', 'rui', 'mimi'] }));
-    expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(4.9);
-    expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(14.4);
-    expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(24.8);
+    expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(7);
+    expect(needsOf(who(minute, 'rui')).fome).toBeCloseTo(23.6);
+    expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(13.2);
+    expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(23.6);
     expect(needsOf(who(minute, 'mimi')).sono).toBe(18);
     const bored = (id: ActorId) => Array.from({ length: 30 }, (_, n) => run(startTown(), n + 1, step(30_000, { idle: [id] })))
       .findIndex(t => bandOf(who(t, id), 'tedio') === 'pede');
     expect(bored('rui')).toBeLessThan(bored('bia'));
-    expect([bored('rui'), bored('bia')]).toEqual([16, 22]);
+    expect([bored('rui'), bored('bia')]).toEqual([11, 15]);
   });
   it('as taxas por personalidade moram em tastes.ts', () => {
     expect(Object.fromEntries(Object.entries(tastes).filter(([, t]) => t.pace).map(([id, t]) => [id, t.pace]))).toEqual({
-      leo: { sono: 1.2 }, rui: { tedio: 1.4 }, mimi: { sono: 1.5, fome: 0.8 }, nino: { sono: 1.5, fome: 0.8 }, pipoca: { sono: 1.5, fome: 0.8 } });
+      leo: { sono: 1.1 }, rui: { tedio: 1.4, fome: 0.6 }, mimi: { sono: 1.5, fome: 0.6 }, nino: { sono: 1.5, fome: 0.6 }, pipoca: { sono: 1.5, fome: 0.6 } });
   });
 });
 

@@ -7,11 +7,11 @@ it('cada personagem tem um prato favorito que é receita existente e um presente
   expect(tastes).toEqual({
     bia: { favorite: 'batata-frita', gift: 'toldo', game: 'corda' },
     luna: { favorite: 'pizza', gift: 'estetoscopio', game: 'amarelinha' },
-    leo: { favorite: 'bolo-de-cenoura', gift: 'regador', game: 'regar', pace: { sono: 1.2 } },
-    rui: { favorite: 'pipoca', gift: 'cesta', game: 'bola', pace: { tedio: 1.4 } },
-    mimi: { favorite: 'petisco-de-gato', gift: 'curativo', game: 'bola', pace: { sono: 1.5, fome: 0.8 } },
-    nino: { favorite: 'leite-batidinho', gift: 'lanterna', game: 'bola', pace: { sono: 1.5, fome: 0.8 } },
-    pipoca: { favorite: 'ovo-mexido', gift: 'mel', game: 'bola', pace: { sono: 1.5, fome: 0.8 } },
+    leo: { favorite: 'bolo-de-cenoura', gift: 'regador', game: 'regar', pace: { sono: 1.1 } },
+    rui: { favorite: 'pipoca', gift: 'cesta', game: 'bola', pace: { tedio: 1.4, fome: 0.6 } },
+    mimi: { favorite: 'petisco-de-gato', gift: 'curativo', game: 'bola', pace: { sono: 1.5, fome: 0.6 } },
+    nino: { favorite: 'leite-batidinho', gift: 'lanterna', game: 'bola', pace: { sono: 1.5, fome: 0.6 } },
+    pipoca: { favorite: 'ovo-mexido', gift: 'mel', game: 'bola', pace: { sono: 1.5, fome: 0.6 } },
   });
   for (const id of actorIds) expect(recipeIds).toContain(tastes[id].favorite);
   expect(new Set(actorIds.map(id => tastes[id].gift)).size).toBe(actorIds.length);

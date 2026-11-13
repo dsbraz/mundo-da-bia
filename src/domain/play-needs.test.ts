@@ -49,13 +49,13 @@ function firstSad(idle: boolean) {
   return first;
 }
 describe('o tédio de quem fica parado (W3L-13)', () => {
-  it('cresce 3,5 por minuto (Rui 4,9): parado o dia inteiro, ninguém fica triste mais cedo do que sem tédio', () => {
+  it('cresce 5 por minuto (Rui 7): parado o dia inteiro, ninguém fica triste antes de 14 min (ajuste do lote 3)', () => {
     const minute = neighborhoodAction(startTown(), { type: 'live', elapsed: 60_000, phase: 'manha', idle: ['bia', 'rui'] });
-    expect([needsOf(who(minute, 'bia')).tedio, needsOf(who(minute, 'rui')).tedio].map(v => Math.round(v * 100) / 100)).toEqual([3.5, 4.9]);
+    expect([needsOf(who(minute, 'bia')).tedio, needsOf(who(minute, 'rui')).tedio].map(v => Math.round(v * 100) / 100)).toEqual([5, 7]);
     const still = firstSad(true), busy = firstSad(false);
-    expect(still).toEqual(busy);
-    // Humans not before 13:30 (Léo's early sleep); the cats' 12:30 comes from hunger and sleep (W3L-10's rates), not from boredom.
-    expect(still).toEqual({ bia: 870, luna: 870, leo: 810, rui: 870, mimi: 750, nino: 750, pipoca: 750 });
+    expect(busy).toEqual({ bia: 870, luna: 870, leo: 840, rui: 870, mimi: 840, nino: 840, pipoca: 840 });
+    // Standing still brings boredom to `precisa` at 14 min (Rui at 10 min, but he forgets to eat): never a second need before 14 min.
+    expect(still).toEqual({ bia: 840, luna: 840, leo: 840, rui: 840, mimi: 840, nino: 840, pipoca: 840 });
   });
 });
 

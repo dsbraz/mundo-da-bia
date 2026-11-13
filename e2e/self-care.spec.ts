@@ -44,9 +44,9 @@ for (const autonomy of [true, false]) test(`com fome (pede) e um prato no cômod
 for (const autonomy of [true, false]) test(`com a Mimi triste, a Luna ${autonomy ? 'vai até ela e abraça' : 'não sai do sofá com o interruptor desligado'}`, async ({ page }) => {
   test.setTimeout(120_000);
   await seed(page, { autonomy });
-  // The cats turn sad at 12:30 (hunger and sleep); the Luna cares on that tick.
-  await playMinutes(page, 12);
-  if (autonomy) await playUntilTrue(page, async () => (await actor(page, 'luna')).seat === null, 1.5); else await playMinutes(page, 1);
+  // The cats turn sad at 14:00 (sleep from 12:30, then hunger and boredom: lot 3 tuning); the Luna cares on that tick.
+  await playMinutes(page, 13);
+  if (autonomy) await playUntilTrue(page, async () => (await actor(page, 'luna')).seat === null, 1.5); else await playMinutes(page, 1.5);
   await page.clock.runFor(1500);
   const luna = await actor(page, 'luna'), mimi = await actor(page, 'mimi');
   if (autonomy) {

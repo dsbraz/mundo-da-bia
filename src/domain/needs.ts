@@ -45,12 +45,13 @@ export function enjoy<T extends { actors: readonly Actor[] }>(place: T, action: 
 }
 
 const sleepy: Record<Phase, number> = { manha: 2, tarde: 2, amanhecer: 2, entardecer: 12, noite: 12 };
-/** Per minute: hunger +6; sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +3.5 for the
- *  idle (W3L-13: so that standing still all day makes nobody sad before hunger and sleep would, about 14 min). */
+/** Per minute: hunger +6; sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +5 for the
+ *  idle (lot 3 tuning: `precisa` at 14 min, so the bored face shows in play once hunger was cared for, while standing still all day
+ *  still makes nobody sad before 14 min). */
 function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<Need, number> {
   const pace = tastes[actor.id].pace ?? {}, of = (need: Need, base: number) => base * (pace[need] ?? 1);
   if (actor.resting) return { fome: of('fome', 6), sono: bed ? -25 : -12, tedio: 0 };
-  return { fome: of('fome', 6), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 3.5) : 0 };
+  return { fome: of('fome', 6), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 5) : 0 };
 }
 /** Whether `actor` lies on a bed (W3L-06: the seat names a piece of the building it is in). */
 function inBed(town: Neighborhood, actor: Resident): boolean {

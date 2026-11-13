@@ -33,8 +33,8 @@ it('o dia de 16 min só com a Bia (§3.1): Luna e Léo, sem comer, ficam tristes
   const luna = sadTimes(town, 'luna'), leo = sadTimes(town, 'leo');
   // Luna: hunger in `precisa` at 8:30, sleep at 14:30 (the night's +12/min) — sad from 14:30 to the end, the last 1.5 min.
   expect(luna.sad).toEqual(span(870, 960));
-  // Léo (sleep ×1.2) yawns first: his sleep reaches `precisa` at 13:30, so his sad face starts 2.5 min before the day ends.
-  expect(leo.sad).toEqual(span(810, 960));
+  // Léo (sleep ×1.1) yawns first: his sleep reaches `precisa` at 14:00, so his sad face takes the day's last 2 min.
+  expect(leo.sad).toEqual(span(840, 960));
   expect(bandOf(who(luna.end, 'luna'), 'fome')).toBe('precisa');
   expect(bandOf(who(luna.end, 'luna'), 'tedio')).toBe('bem');
 });
@@ -47,8 +47,33 @@ it('a fome chega a precisa às 8 min 30 s e o sono da Luna às 14 min 30 s', () 
   expect(marks).toEqual({ fome: 510, sono: 870 });
 });
 
-it('quem fica parado sem brincar também se entedia, mas a tristeza não vem antes da fome e do sono: 14 min 30 s (W3L-13)', () => {
-  expect(sadTimes(startTown(), 'luna', ['luna']).sad[0]).toBe(870);
+it('quem fica parado sem brincar também se entedia, mas a tristeza não vem antes de 14 min (W3L-13, ajuste do lote 3)', () => {
+  expect(sadTimes(startTown(), 'luna', ['luna']).sad[0]).toBe(840);
+});
+
+const everyone: readonly ActorId[] = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'];
+it('ninguém fica triste antes de 14 min, parado ou não, sem comer nem dormir: Léo e os gatos também (ajuste do lote 3)', () => {
+  const first = (idle: boolean) => Object.fromEntries(everyone.map(id => [id, sadTimes(startTown(), id, idle ? [id] : []).sad[0]]));
+  expect(first(true)).toEqual({ bia: 840, luna: 840, leo: 840, rui: 840, mimi: 840, nino: 840, pipoca: 840 });
+  expect(first(false)).toEqual({ bia: 870, luna: 870, leo: 840, rui: 870, mimi: 840, nino: 840, pipoca: 840 });
+});
+
+/** The ticks (end of each) at which `id`'s top need in `precisa` is boredom and she is not sad: the bored face (expression.ts). She
+ *  stands still all day and eats a dish (hunger to 0) at the end of the ticks in `meals`. */
+function boredTimes(town: Neighborhood, id: ActorId, meals: readonly number[] = []) {
+  const bored: number[] = [];
+  let current = town;
+  for (let at = 30; at <= 16 * 60; at += 30) {
+    current = neighborhoodAction(current, { type: 'live', elapsed: 30_000, phase: phaseAt((at - 30) * 1000, 'calmo'), idle: [id] });
+    const now = needsOf(who(current, id)), top = (['fome', 'sono', 'tedio'] as const).filter(n => bandOf(who(current, id), n) === 'precisa').sort((a, b) => now[b] - now[a])[0];
+    if (top === 'tedio' && mood(who(current, id)) !== 'triste') bored.push(at);
+    if (meals.includes(at)) current = withActor(current, id, { needs: { ...now, fome: 0 } });
+  }
+  return bored;
+}
+it('o rosto de tédio aparece no jogo normal: o Rui parado, de 10 a 14 min; quem comeu, aos 14 min (ajuste do lote 3)', () => {
+  expect(boredTimes(startTown(), 'rui')).toEqual(span(600, 810));
+  expect(boredTimes(startTown(), 'bia', [300, 600])).toEqual([840]);
 });
 
 it('dormir tira o sono e encerra a tristeza: na cama −25/min, no sofá −12/min; ninguém se entedia dormindo', () => {

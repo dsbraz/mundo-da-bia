@@ -59,10 +59,10 @@ it('W3L-13: o tédio só cresce para quem ficou parado desde o tick anterior (me
   // The first tick has nothing to compare with: nobody counts as still yet.
   expect(boredom('bia')).toBe(0);
   actions.tick(120_000, life);
-  expect([boredom('bia'), boredom('rui')]).toEqual([3.5, 4.9]);
+  expect([boredom('bia'), boredom('rui')]).toEqual([5, 7]);
   const moved = current(); moved.actors = moved.actors.map(a => a.id === 'bia' ? { ...a, x: a.x + 40 } : a.id === 'leo' ? { ...a, resting: true } : a);
   actions.tick(180_000, life);
-  expect([boredom('bia'), boredom('leo'), boredom('luna')]).toEqual([3.5, 3.5, 7]);
+  expect([boredom('bia'), boredom('leo'), boredom('luna')]).toEqual([5, 5, 10]);
 });
 it('W3L-13: quem está numa brincadeira parada ou no balanço não está parado à toa', () => {
   const { deps, current } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
@@ -70,7 +70,7 @@ it('W3L-13: quem está numa brincadeira parada ou no balanço não está parado 
   Object.assign(deps, { busy: () => ['luna'] });
   const fresh = townActions(deps as never);
   fresh.tick(60_000, life); fresh.tick(120_000, life);
-  expect([boredom('luna'), boredom('bia')]).toEqual([0, 3.5]);
+  expect([boredom('luna'), boredom('bia')]).toEqual([0, 5]);
 });
 it('W3L-13: brincar mexe só nas necessidades, em silêncio (sem salvar nem repintar)', () => {
   const { actions, deps, current } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
