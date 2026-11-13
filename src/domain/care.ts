@@ -3,7 +3,7 @@ import type { RecipeId } from './progress';
 import type { NeighborhoodItem } from './neighborhood-types';
 import { tastes } from './tastes';
 import { needsOf, relieve } from './needs';
-import { freeSeat, mealSeat, seatPiece, seatPoint } from './seats';
+import { freeSeat, mealSeat, seatPiece, seatPoint, tableOf } from './seats';
 import { fromPiece, pieceBounds } from './layout';
 import { refuse } from './missing';
 import { roomWidth, validPoint } from './geometry';
@@ -61,12 +61,21 @@ export function eat(state: World, actor: Actor, item: Item): Transition {
   const seated = actor.kind === 'human' && !state.streetWidth, seat = seated ? mealSeat(state, actor) : undefined;
   if (seated && !seat) return noTable(state, actor, item);
   const point = seat ? seatPoint(state, seat) : undefined, place = point ? { seat: seat!, x: point.x, y: point.y } : {};
-  const recipe = recipeOf(item)!, favorite = tastes[actor.id].favorite === recipe;
+  const recipe = recipeOf(item)!, mate = seat ? tablemate(state, actor, seat) : undefined;
+  const fed = (a: Actor) => ({ fed: true, needs: relieve(needsOf(a), tastes[a.id].favorite === recipe ? 'favorito' : 'prato') });
+  const ate = (a: Actor, by?: ActorId) => ({ type: 'ate' as const, actor: a.id, recipe, ...(by ? { by } : {}), ...(tastes[a.id].favorite === recipe ? { favorite: true as const } : {}) });
   return {
     state: { ...state, items: state.items.filter(i => i.id !== item.id), actors: state.actors.map(a => a.id === actor.id
-      ? { ...a, ...wake(a), ...place, fed: true, needs: relieve(needsOf(a), favorite ? 'favorito' : 'prato') } : a) },
-    events: [{ type: 'ate', actor: actor.id, recipe, ...(favorite ? { favorite: true as const } : {}) }],
+      ? { ...a, ...wake(a), ...place, ...fed(a) } : a.id === mate?.id ? { ...a, ...fed(a) } : a) },
+    events: [ate(actor), ...(mate ? [ate(mate, actor.id)] : [])],
   };
+}
+/** Who shares the dish (lot 6B): another person seated awake at the same table as `seat`, the hungriest. */
+function tablemate(state: World, actor: Actor, seat: SeatRef): Actor | undefined {
+  const table = tableOf(state, seat);
+  if (table === undefined) return undefined;
+  return state.actors.filter(a => a.id !== actor.id && a.kind === 'human' && a.room === state.room && !a.resting && a.seat && a.seat !== seat && tableOf(state, a.seat) === table)
+    .sort((a, b) => needsOf(b).fome - needsOf(a).fome)[0];
 }
 /** No seat for the meal: the dish goes to her hand when it is free (it stays where it was otherwise) and she asks for a table. */
 function noTable(state: World, actor: Actor, item: Item): Transition {

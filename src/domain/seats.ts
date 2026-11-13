@@ -1,4 +1,4 @@
-import { fromPiece } from './layout';
+import { fromPiece, pieceBounds } from './layout';
 import { roomWidth, validPoint } from './geometry';
 import type { Actor, Piece, PieceKind, Point, RoomId, SeatRef, World } from './types';
 
@@ -55,4 +55,15 @@ export const pieceSeat = (state: World, piece: Piece, actor: Actor): SeatRef | u
 export function seatOfKind(state: World, kind: PieceKind, actor: Actor): SeatRef | undefined {
   const pieces = state.layout.pieces.filter(p => p.room === state.room && p.kind === kind);
   return pieces.map(p => freeSeat(state, p, actor)).find(Boolean) ?? pieces.flatMap(seatsOf)[0];
+}
+const tables: readonly PieceKind[] = ['table', 'picnic-table'];
+/** The table (piece id) a seat is at, so who sits there shares a dish (lot 6B): a picnic table's own seats, or a chair standing beside a
+ *  table (at most 110 apart, its foot level with the table's, like the chairs a new kitchen or dining room gets). */
+export function tableOf(state: World, seat: SeatRef): number | undefined {
+  const piece = seatPiece(state, seat);
+  if (piece?.kind === 'picnic-table') return piece.id;
+  if (piece?.kind !== 'chair') return undefined;
+  const chair = pieceBounds.chair, gap = (t: Piece) => Math.max(t.x - piece.x - chair.width, piece.x - t.x - pieceBounds[t.kind].width);
+  return state.layout.pieces.find(t => t.room === piece.room && tables.includes(t.kind) && gap(t) <= 110
+    && Math.abs(t.y + pieceBounds[t.kind].height - piece.y - chair.height) <= 60)?.id;
 }

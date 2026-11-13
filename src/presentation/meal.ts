@@ -17,13 +17,13 @@ export function plateAt(t: number, reduced: boolean): Plate {
 /** Where a plate rests on each top, below the piece's box origin (before the drawing's own scale). */
 const tops: Partial<Record<PieceKind, number>> = { table: 56, 'picnic-table': 62, desk: 66 };
 /** Where the plate goes while `actor` eats: on the table she sits at (the picnic table's own top, or the table, desk or picnic table
- *  beside her chair), otherwise on her lap. */
-export function plateSpot(world: World, actor: Actor): Point & { on: 'table' | 'lap' } {
+ *  beside her chair), otherwise on her lap. A dish shared with `mate` (lot 6B) sits on the top between the two. */
+export function plateSpot(world: World, actor: Actor, mate?: Actor): Point & { on: 'table' | 'lap' } {
   const seat = actor.seat ? seatPiece(world, actor.seat, actor.room) : undefined, point = actor.seat ? seatPoint(world, actor.seat, actor.room) : undefined;
   const table = seat && point ? tableBeside(world, seat, point) : undefined;
   if (table && point) {
-    const box = pieceBounds[table.kind], left = table.x + 50, right = table.x + box.width - 50;
-    const top = visualPiecePoint(table, { x: Math.max(left, Math.min(right, point.x)), y: table.y + tops[table.kind]! });
+    const box = pieceBounds[table.kind], left = table.x + 50, right = table.x + box.width - 50, x = mate ? (point.x + mate.x) / 2 : point.x;
+    const top = visualPiecePoint(table, { x: Math.max(left, Math.min(right, x)), y: table.y + tops[table.kind]! });
     return { ...top, on: 'table' };
   }
   const scale = contextScale(visualContext(world));
@@ -43,8 +43,8 @@ function drawPlate(plate: Phaser.GameObjects.Image, empty: Phaser.GameObjects.Gr
 }
 /** The meal on screen: the eaten dish on the table or the lap, three bites, then `done` (the reaction). The dish keeps its art
  *  (`dish-<recipe>`, with the garnish when that one is loaded). Under automation the canvas tells each plate state. */
-export function showMeal(scene: Phaser.Scene, world: World, actor: Actor, recipe: string, done: () => void) {
-  const spot = plateSpot(world, actor), scale = contextScale(visualContext(world));
+export function showMeal(scene: Phaser.Scene, world: World, actor: Actor, recipe: string, done: () => void, mate?: Actor) {
+  const spot = plateSpot(world, actor, mate), scale = contextScale(visualContext(world));
   const key = [`dish-${recipe}-fancy`, `dish-${recipe}`].find(k => scene.textures.exists(k));
   const depth = 1080, size = 62 * scale;
   const plate = scene.add.image(spot.x, spot.y, key ?? '__MISSING').setOrigin(.5, .84).setDisplaySize(size, size).setDepth(depth);
