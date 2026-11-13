@@ -62,6 +62,12 @@ describe('a escola (W3L-26)', () => {
     const standing = { ...town, actors: town.actors.map(a => a.id === 'luna' ? { ...a, location: classroom, room: 'quarto' as const, seat: null } : a) };
     expect(lesson(standing, { ...here, grownUps: ['luna'] }).outcome).toMatchObject({ kind: 'lesson', pupils: ['bia'], teacher: 'luna' });
   });
+  it('a professora da escola (lote 7) é quem dá a aula, nunca aluna; um adulto de pé ali só assiste', () => {
+    const standing = seated(school(), 'bia');
+    const withLuna = { ...standing, actors: standing.actors.map(a => a.id === 'luna' ? { ...a, location: classroom, room: 'quarto' as const, seat: null } : a) };
+    expect(lesson(withLuna, { ...here, grownUps: ['luna'], staffed: true }).outcome).toMatchObject({ kind: 'lesson', pupils: ['bia'], teacher: 'teacher' });
+    expect(lesson(school(), { ...here, staffed: true }).outcome).toEqual({ kind: 'missing', need: 'seat', want: 'school-desk' });
+  });
   it('o tema roda e não se repete até os 12 saírem; depois volta o mais antigo', () => {
     let town = seated(school(), 'bia');
     const seen: DrawingId[] = [];

@@ -24,6 +24,7 @@ import { actorDropTarget, dropLights, personTarget } from './drop-target';
 import { drawPieces, drawObjects, pickPiece, pieceDepth } from './piece-art';
 import { drawPantries } from './fridge-stock';
 import { lessonArt } from './lesson';
+import { staffFigures } from './staff-figure';
 import { actorAt, previewPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
 import { snapGhost } from './scene-ghost';
@@ -63,6 +64,8 @@ export class PlayScene extends Phaser.Scene {
   private gaze = new Map<ActorId, number>();
   /** The school's lesson on the board (W3L-26). */
   readonly lessons = lessonArt(this);
+  /** The professional who works in the room shown (lot 7). */
+  readonly staff = staffFigures(this);
   private faces = faces(); private mirrors = mirrorReflections(this); private drops = dropLights(this); private night = dayNight(this);
   /** The session's day phase (W3L-11): the backdrop's veil, the moon, stars and lit windows cross-fade to it. */
   daylight(phase: Phase) { this.night.set(phase, reducedMotion()); }
@@ -93,7 +96,7 @@ export class PlayScene extends Phaser.Scene {
     this.doorLight?.destroy(); this.doorLight = box && this.ready ? doorGlow(this, box) : null;
   }
   constructor(state: World) { super('play'); this.world = state; }
-  preload() { this.load.text('art-dishes', '/art/dishes.svg'); this.load.text('art-plants', '/art/plants.svg'); this.load.text('art-chair', '/art/chair.svg'); this.load.text('art-market', '/art/market.svg'); this.load.text('art-school', '/art/school.svg'); this.load.text('art-adult', '/art/adult.svg'); loadArt(this, this.world, this.town); [...itemIds, 'bola', 'sacola', 'sacola-paga'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); actorIds.forEach(id => this.load.svg(`face-${id}`, `/icons/${id}.svg`, { width: 112, height: 112 })); }
+  preload() { this.load.text('art-dishes', '/art/dishes.svg'); this.load.text('art-plants', '/art/plants.svg'); this.load.text('art-chair', '/art/chair.svg'); this.load.text('art-market', '/art/market.svg'); this.load.text('art-school', '/art/school.svg'); this.load.text('art-adult', '/art/adult.svg'); this.load.text('art-staff', '/art/staff.svg'); loadArt(this, this.world, this.town); [...itemIds, 'bola', 'sacola', 'sacola-paga'].forEach(id => this.load.svg(id, `/icons/${id}.svg`, { width: 80, height: 80 })); actorIds.forEach(id => this.load.svg(`face-${id}`, `/icons/${id}.svg`, { width: 112, height: 112 })); }
   create() {
     this.cameras.main.setOrigin(0).setZoom(rasterScale); this.ready = true;
     const view = this.game.canvas.dataset;
@@ -112,7 +115,7 @@ export class PlayScene extends Phaser.Scene {
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.drops.reset(); this.doorLight = null; this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
     this.outdoor.paint(state, selected); this.night.paint(state, this.town);
-    this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece); drawPantries(this, state, this.pieces, this.town); this.lessons.paint(state, this.pieces);
+    this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece); drawPantries(this, state, this.pieces, this.town); this.lessons.paint(state, this.pieces); this.staff.paint(this.building ? null : this.town, state);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
     this.game.canvas.dataset.ready = 'true'; this.playCooking();
@@ -245,7 +248,7 @@ export class PlayScene extends Phaser.Scene {
     this.mirrors.frame(time, this.figures, expressions, reduced); this.balls.step(this.world, this.objects, this.kicker(), ctx.now);
     this.ambient.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
-    this.outdoor.frame(time, reduced); this.night.frame(time, reduced); this.lessons.frame(ctx.now, this.figures, reduced);
+    this.outdoor.frame(time, reduced); this.night.frame(time, reduced); this.lessons.frame(ctx.now, this.figures, reduced); this.staff.frame(ctx.now, reduced, this.lessons.active());
     this.mark('uses', animatePieces(this.pieces, time, reduced));
   }
 }

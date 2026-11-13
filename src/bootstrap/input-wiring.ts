@@ -31,6 +31,8 @@ export interface InputWiring {
   progress: (value: number, side?: string) => void; plot: (plot: number) => void; enter: (destination: Location) => boolean;
   /** How the next place change looks (a door crossed by drag, a swipe). */
   place: { next: (step: PlaceStep) => void; screen: (point: Point) => Point };
+  /** A tap on the room's professional (lot 7): true when it was hers. */
+  staff: (point: Point) => boolean;
 }
 /** Binds the canvas: play and build gestures, the camera drag, rooms and doors. Returns the input's cancel. */
 export function wireInput(current: Phaser.Game, deps: InputWiring) {
@@ -41,7 +43,7 @@ export function wireInput(current: Phaser.Game, deps: InputWiring) {
   let lit: ReturnType<typeof doorBox> | null = null;
   const crossing = (action: NeighborhoodAction) => { if (lit && action.type === 'transport') deps.place.next({ kind: 'door', at: deps.place.screen({ x: lit.x + lit.width / 2, y: lit.y + lit.height / 2 }) }); };
   return bindInput(canvas, () => scene.visibleWorld(), play.select, point => deps.dispatch({ type: 'move', actor: deps.selected(), point }), {
-    walk: point => { deps.view()?.resume(); const target = outdoorAt(deps.town(), point); if (target) square.touch(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: play.interact, dispatch: deps.dispatch, wardrobe: deps.wardrobe, toggleWardrobe: deps.toggleWardrobe, selected: deps.selected, poke: deps.poke, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point, true), roll: (item, point, velocity) => scene.throwBall(item, point, velocity), outcome, choose: play.choose, settle: play.settle,
+    walk: point => { deps.view()?.resume(); const target = outdoorAt(deps.town(), point); if (target) square.touch(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: point => deps.staff(point) || play.interact(point), dispatch: deps.dispatch, wardrobe: deps.wardrobe, toggleWardrobe: deps.toggleWardrobe, selected: deps.selected, poke: deps.poke, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point, true), roll: (item, point, velocity) => scene.throwBall(item, point, velocity), outcome, choose: play.choose, settle: play.settle,
   }, { enabled: deps.building, gesture: createBuildGesture(deps.state, deps.choosePiece, deps.previewBuild, deps.dropPiece, point => scene.pickPiece(point), () => screenScale(canvas)) }, {
     view: { background: p => { const world = scene.visibleWorld(); return deps.building() ? !scene.pickPiece(p) : !sourceAt(world, p, deps.wardrobe()) && !grabActor(world, p) && !scene.pickPiece(p); }, pan: (dx, dy) => {
       // On the street the drag moves the 1000-wide window first; what is left past its ends pans the closer view inside it.
