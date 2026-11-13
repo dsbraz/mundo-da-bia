@@ -37,7 +37,6 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 800
   test(`tocar na porta do fim da parede leva a Bia andando ao cômodo ao lado, e só ela (${viewport.width})`, async ({ page }) => {
     await open(page, viewport);
     const before = await readTown(page);
-    await point(page, 999, 300);
     await page.screenshot({ path: `${shots}/walk-rooms-door-${viewport.width}.png` });
     await walkThrough(page, [932, 300], 'quarto');
     const after = await readTown(page);
