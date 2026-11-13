@@ -25,10 +25,10 @@ export function marketReady(scene: Phaser.Scene): boolean {
   if (text) keepMarket(text);
   return !!text;
 }
-/** The shelf signs, the seed packet and every ingredient icon, only for a room that shows them (shelves, an open fridge). */
+/** The shelf signs, the seed packet and every ingredient icon, only for a room that shows them (shelves, an open fridge, a bag). */
 export function loadMarketArt(scene: Phaser.Scene, state: World) {
   const here = state.layout.pieces.some(p => p.room === state.room && (p.kind === 'market-shelf' || (p.kind === 'fridge' && state.home.fridge)));
-  if (!here) return;
+  if (!here && !state.items.some(i => i.kind === 'sacola' && i.room === state.room)) return;
   ingredientIds.forEach(id => { if (!scene.textures.exists(`ing-${id}`)) scene.load.svg(`ing-${id}`, ingredientIcon(id), { width: 64, height: 64 }); });
   if (scene.textures.exists('seed-packet') || !marketReady(scene)) return;
   [0, 1, 2].forEach(n => loadSvg(scene, `shelf-sign-${n}`, sheetPart(source!, [`shelf-sign-${n}`], { width: 170, height: 36 })));

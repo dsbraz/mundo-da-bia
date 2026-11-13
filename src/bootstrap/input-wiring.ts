@@ -24,6 +24,8 @@ export interface InputWiring {
   moveCamera: (x: number) => void;
   play: ReturnType<typeof playActions>; square: ReturnType<typeof plaza>; walker: ReturnType<typeof walking>; townActs: ReturnType<typeof townActions>;
   dispatch: (action: Action) => void; townDispatch: (action: NeighborhoodAction) => void; toggleWardrobe: () => void;
+  /** A step out refused before the door effect starts (an unpaid bag leaving the market): true then. */
+  blocks: (action: NeighborhoodAction) => boolean;
   poke: (id: ActorId) => void; choosePiece: (id: number | null) => void;
   previewBuild: (action: EditAction | null) => void; dropPiece: (action: EditAction) => void;
   progress: (value: number, side?: string) => void; plot: (plot: number) => void; enter: (destination: Location) => boolean;
@@ -52,6 +54,6 @@ export function wireInput(current: Phaser.Game, deps: InputWiring) {
     pan: (room, fraction) => scene.pan(room, fraction), slide: (room, fraction) => deps.place.next({ kind: 'swipe', during: ms => scene.finishSlide(room, fraction, ms) }),
     transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
     progress: deps.progress,
-  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: action => { crossing(action); deps.townDispatch(action); }, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress,
+  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: action => { if (deps.blocks(action)) return; crossing(action); deps.townDispatch(action); }, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress,
     glow: door => { const box = door && doorBox(deps.town(), door); scene.glowDoor(box); if (box) lit = box; else { const was = lit; queueMicrotask(() => { if (lit === was) lit = null; }); } }, outcome }));
 }

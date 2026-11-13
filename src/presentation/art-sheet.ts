@@ -35,7 +35,8 @@ export const dishParts = (recipe: RecipeId, fancy: boolean) => fancy ? [recipe, 
 /** The texture an object is drawn with: its kind, or for a dish its recipe (and the garnish when fancy). */
 export function itemTexture(item: Item): string {
   const dish = dishOf(item);
-  return dish ? `dish-${dish.recipe}${dish.fancy ? '-fancy' : ''}` : itemKind(item);
+  if (dish) return `dish-${dish.recipe}${dish.fancy ? '-fancy' : ''}`;
+  return itemKind(item) === 'sacola' && (item as Partial<NeighborhoodItem>).paid ? 'sacola-paga' : itemKind(item);
 }
 let dishSource: string | null = null;
 const icons = new Map<string, string>();
@@ -49,7 +50,7 @@ export function showItem(image: HTMLImageElement, item: Item) {
 /** The picture of an object in the DOM (tray, panel, badges): a dish shows its own drawing once the sheet is read. */
 export function itemIcon(item: Item): string {
   const dish = dishOf(item);
-  if (!dish || !dishSource) return `/icons/${dish ? 'lanche' : itemKind(item)}.svg`;
+  if (!dish || !dishSource) return `/icons/${dish ? 'lanche' : itemTexture(item)}.svg`;
   const key = itemTexture(item);
   if (!icons.has(key)) icons.set(key, sheetPart(dishSource, dishParts(dish.recipe, dish.fancy), dishBox));
   return icons.get(key)!;

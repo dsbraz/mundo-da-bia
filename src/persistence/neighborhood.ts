@@ -13,6 +13,7 @@ import { knownContent, knownTown, unfelt, unwatered, upgradeToV3 } from './neigh
 import { knownProgress } from './progress-validation';
 import { validLayout } from './layout-validation';
 import { actor, portable, consistentWorld } from './validation';
+import { validBag } from './bag-validation';
 /** The session's needs (§3.1) never reach the save: the bytes are the same with or without them. */
 export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 3, town: { ...town, actors: town.actors.map(unfelt) } }); }
 /** Envelopes v1 and v2 (upgraded to v3) and v3; null when the structure is not valid. */
@@ -58,10 +59,10 @@ function object(value: unknown): boolean {
   return typeof value.id === 'string' && /^[1-9]\d*:[a-z]+$/.test(value.id) && value.id.slice(value.id.indexOf(':') + 1) === value.kind
     && dish(value) && portable({ ...value, x: 500 }) && typeof value.x === 'number' && Number.isFinite(value.x);
 }
-/** Only a dish names a recipe (always a known one) and only a dish may be fancy. */
+/** Only a dish names a recipe (always a known one) and only a dish may be fancy; only a bag has contents and a ribbon (W3L-22). */
 function dish(value: Record<string, unknown>): boolean {
   const isDish = value.kind === 'prato';
-  return (isDish ? member(recipeIds, value.recipe) : value.recipe === undefined) && (value.fancy === undefined || (isDish && value.fancy === true));
+  return (isDish ? member(recipeIds, value.recipe) : value.recipe === undefined) && (value.fancy === undefined || (isDish && value.fancy === true)) && validBag(value);
 }
 function unique(values: unknown[]): boolean { return new Set(values).size === values.length; }
 function validTown(value: unknown): value is LegacyNeighborhood {

@@ -19,6 +19,8 @@ interface PlayActions {
   serve: (action: Action) => void;
   /** The mirror (W3L-08): opens the Looks, and at it she pulls a face (and the view keeps her and the mirror beside the tray). */
   looks: () => void; grimace: (id: ActorId, mirror: number) => void;
+  /** What a pickup becomes instead (W3L-22: the fridge tapped with a bag in hand puts the shopping away), or null. */
+  instead: (item: ItemId) => Action | null;
 }
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
@@ -53,6 +55,8 @@ export function playActions(deps: PlayActions) {
     if (action.type === 'use' && kind === 'mirror') deps.grimace(deps.selected(), action.id);
   }
   function pickup(item: ItemId) {
+    const instead = deps.instead(item);
+    if (instead) { perform(instead); return; }
     pickupItem(item, { state: deps.state, selected: deps.selected, dispatch: deps.dispatch, walk: walker, hint: text => deps.refuse('path', text) });
   }
   function interact(point: Point) {

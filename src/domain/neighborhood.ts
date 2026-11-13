@@ -4,7 +4,7 @@ import { editModule } from './modules';
 import { sameLocation, validLocation } from './location';
 import { itemKind } from './item-kind';
 import type { Album, World, RoomId } from './types';
-import type { GardenAction, LegacyNeighborhood, Location, ModuleAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
+import type { GardenAction, LegacyNeighborhood, Location, MarketAction, ModuleAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { initialProgress, nextItemAfter } from './progress';
 import { activeHouse } from './houses';
 import { initialWorld } from './world';
@@ -15,6 +15,7 @@ import { cook } from './recipes';
 import { garden, gardenActions } from './garden';
 import { feel, life, lifeActions } from './needs';
 import { keepStock } from './stock';
+import { marketActions, shop, unpaidExit } from './market';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -47,10 +48,15 @@ export function neighborhoodAction(town: Neighborhood, action: NeighborhoodActio
     case 'outdoor': return interactOutdoor(town, action);
     case 'cook': return cook(town, action).town;
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
-    case 'transport': return transport(town, action);
-    default: return editModule(town, action as ModuleAction);
+    case 'transport': return leave(town, action);
+    default: return marketOrModule(town, action);
   }
 }
+function marketOrModule(town: Neighborhood, action: NeighborhoodAction): Neighborhood {
+  return marketActions.includes(action.type) ? shop(town, action as MarketAction).town : editModule(town, action as ModuleAction);
+}
+/** Out of the market only after the checkout (W3L-22). */
+const leave = (town: Neighborhood, action: Extract<NeighborhoodAction, { type: 'transport' }>) => unpaidExit(town, action) ? town : transport(town, action);
 const buildingActions: readonly NeighborhoodAction['type'][] = ['construct', 'facade', 'duplicate', 'remove-building', 'move-building'];
 type BuildingAction = Extract<NeighborhoodAction, { type: 'construct' | 'facade' | 'duplicate' | 'remove-building' | 'move-building' }>;
 function editBuilding(town: Neighborhood, action: BuildingAction): Neighborhood {

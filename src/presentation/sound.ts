@@ -1,6 +1,6 @@
 import type { ActorId, PieceKind, PresentationEvent } from '../domain/types';
 
-export type Cue = 'dress' | 'pick' | 'drop' | 'refuse' | 'door' | 'eat' | 'meow' | 'purr' | 'pop' | 'cheer' | 'poke' | 'splash' | 'whirr' | 'rustle' | 'page' | 'clink';
+export type Cue = 'dress' | 'pick' | 'drop' | 'refuse' | 'door' | 'eat' | 'meow' | 'purr' | 'pop' | 'cheer' | 'poke' | 'splash' | 'whirr' | 'rustle' | 'page' | 'clink' | 'beep';
 export interface Note { wave: OscillatorType; from: number; to: number; start: number; length: number }
 const note = (wave: OscillatorType, from: number, to: number, start = 0, length = .14): Note => ({ wave, from, to, start, length });
 // Each cue has its own contour and wave so it is recognizable with eyes closed.
@@ -21,6 +21,7 @@ export const timbres: Record<Cue, Note[]> = {
   rustle: [note('triangle', 1800, 1500, 0, .04), note('triangle', 1700, 1400, .06, .04)],
   page: [note('triangle', 700, 1000, 0, .07), note('triangle', 600, 400, .09, .05)],
   clink: [note('sine', 1568, 1568, 0, .08), note('sine', 2093, 2093, .1, .1)],
+  beep: [note('square', 1245, 1245, 0, .07), note('square', 1245, 1245, .2, .07)],
 };
 const pieceCues: Partial<Record<PieceKind, Cue>> = { sink: 'splash', washer: 'whirr', planter: 'rustle', bookcase: 'page', 'picnic-table': 'clink' };
 /** The sound of a piece switched on (its own for the everyday pieces); a piece switched off or without its own sound pops. */

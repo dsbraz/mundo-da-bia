@@ -11,6 +11,9 @@ export const specialIds = ['chocolate', 'canela', 'mel'] as const;
 export const goalIds = ['panqueca', 'alface', 'padaria', 'favorito', 'forno', 'quarto', 'tres-canteiros', 'prato-na-praca', 'carta',
   'caprichado', 'bolo-de-chocolate', 'cafe-com-gatos'] as const;
 export const plazaPlots = ['praca-1', 'praca-2', 'praca-3', 'praca-4'] as const;
+/** What appears on the market's specials shelf, one at a time (§3.4, W3L-23): the specials and the seeds she does not start with. */
+export const shelfIds = ['chocolate', 'canela', 'mel', 'semente-milho', 'semente-morango', 'semente-abobora'] as const;
+export type ShelfUnlock = typeof shelfIds[number];
 /** Letters L01–L12 and the notes B1–B8. */
 export const letterCount = 20;
 export const inboxLimit = 3;
@@ -25,10 +28,12 @@ export interface Progress {
   recipes: RecipeId[]; fancy: RecipeId[]; seeds: CropId[]; specials: SpecialId[];
   basket: Partial<Record<CropId, number>>; plaza: Partial<Record<PlazaPlot, Plant>>; post: Post;
   revealed: RecipeId[]; favorites: ActorId[]; goals: GoalId[];
+  /** What has appeared on the market's shelves (W3L-23); it only grows. */
+  shelves: ShelfUnlock[];
 }
 export function initialProgress(): Progress {
   return { recipes: [], fancy: [], seeds: ['alface', 'tomate', 'cenoura'], specials: [], basket: {}, plaza: {},
-    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [] };
+    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [] };
 }
 /** The next free item number: one past the largest numeric prefix among the item ids (1 with none). */
 export function nextItemAfter(items: readonly Pick<Item, 'id'>[]): number {

@@ -1,5 +1,6 @@
 import type { Ingredient, Utensil } from '../domain/ingredients';
 import type { RecipeId } from '../domain/progress';
+import type { Good } from '../domain/market';
 
 /** Names for screen readers only: the bench and the book are played by picture, without reading. */
 export const ingredientNames: Record<Ingredient, string> = {
@@ -21,3 +22,8 @@ export const benchText = { region: 'Bancada da cozinha', bowl: 'Tigela', close: 
 export const fullTableLine = 'Mesa cheia! Quem quer comer?';
 export const bookText = { region: 'Livro de receitas', toggle: 'Receitas', open: 'Abrir o livro de receitas', close: 'Fechar o livro', secrets: 'Segredos',
   unknown: 'Receita por descobrir', pages: 'Páginas do livro' };
+/** The market (W3L-22): names only for screen readers; the panel shows pictures, never a price or a number. */
+export const goodNames: Record<Good, string> = { ...ingredientNames, 'semente-alface': 'Sementes de alface', 'semente-tomate': 'Sementes de tomate',
+  'semente-cenoura': 'Sementes de cenoura', 'semente-milho': 'Sementes de milho', 'semente-morango': 'Sementes de morango', 'semente-abobora': 'Sementes de abóbora' };
+export const marketText = { region: 'Prateleira do mercado', close: 'Fechar a prateleira',
+  bag: (goods: string[]) => goods.length ? `Sacola com ${goods.join(', ')}` : 'Sacola vazia' };

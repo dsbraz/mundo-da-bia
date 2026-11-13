@@ -8,6 +8,7 @@ import { member, record } from './values';
 import { knownPlant } from './progress-validation';
 import { knownCast } from './cast';
 import { stocked } from './stock-validation';
+import { knownBags } from './bag-validation';
 
 /** v2 → v3: the same neighborhood, with the starting progress and item numbering after its items. The old flowerbed's `watered`
  *  became the four plots and no longer counts: it stays in the save (earlier v3 builds require it) and is always false (§4.3). */
@@ -26,7 +27,7 @@ export function knownContent(value: unknown): unknown {
   if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return value;
   const unknown = (entry: unknown, field: string, known: readonly string[]) => record(entry) && !member(known, entry[field]);
   return seatedTown(knownCast({ ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
-    items: value.items.filter(i => !unknown(i, 'kind', itemKinds) && !(record(i) && i.kind === 'prato' && !member(recipeIds, i.recipe))) }));
+    items: knownBags(value.items.filter(i => !unknown(i, 'kind', itemKinds) && !(record(i) && i.kind === 'prato' && !member(recipeIds, i.recipe)))) }));
 }
 /** Save v3: rebuilt with only known fields, and what this build does not know drops out alone; structure is left for validation. */
 export function knownTown(value: unknown): unknown {

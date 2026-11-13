@@ -13,7 +13,8 @@ export const roomSizes = ['small', 'medium', 'large'] as const;
 export type RoomTemplate = typeof roomTemplates[number];
 export type RoomSize = typeof roomSizes[number];
 /** Objects outside the legacy single-house save: the ball, dishes and the 6 props. */
-export const portableKinds = ['bola', 'prato', 'estetoscopio', 'curativo', 'regador', 'lanterna', 'colher', 'cesta'] as const;
+export const portableKinds = ['bola', 'prato', 'estetoscopio', 'curativo', 'regador', 'lanterna', 'colher', 'cesta',
+  'sacola'] as const;
 export type ItemKind = typeof itemIds[number] | typeof portableKinds[number];
 export type ItemId = ItemKind | `${number}:${ItemKind}`;
 export interface Point { x: number; y: number }

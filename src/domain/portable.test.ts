@@ -31,7 +31,7 @@ it('consumeItem remove o item e libera a mão de quem o segurava', () => {
 });
 it('prato vai para a geladeira; microfone continua sem ir', () => {
   expect(fridgeKinds).toEqual(['lanche', 'peixe', 'prato']);
-  expect(portableKinds).toEqual(['bola', 'prato', 'estetoscopio', 'curativo', 'regador', 'lanterna', 'colher', 'cesta']);
+  expect(portableKinds).toEqual(['bola', 'prato', 'estetoscopio', 'curativo', 'regador', 'lanterna', 'colher', 'cesta', 'sacola']);
   const withDish = spawnItem(town(), { kind: 'prato', recipe: 'panqueca', location: kitchen, point: { x: 520, y: 530 } });
   const world = localWorld(withDish);
   expect(put(world, '7:prato', 'fridge').state.items.find(i => i.id === '7:prato')!.spot).toBe('fridge');

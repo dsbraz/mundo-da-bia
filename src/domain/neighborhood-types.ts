@@ -2,6 +2,7 @@ import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, Room
 import type { PlazaPlot, Progress, RecipeId } from './progress';
 import type { Ingredient, Stock, Utensil } from './ingredients';
 import type { Phase } from './clock';
+import type { Good } from './goods';
 import type { Game } from './tastes';
 export interface Outdoor { bench: ActorId | null; swing: ActorId | null; watered: boolean; mail: number[]; bells: number[] }
 export type OutdoorAction = { type: 'outdoor'; actor: ActorId; target: 'bench' | 'swing' | 'water' | 'leave' | 'bell' | 'mail'; building?: number };
@@ -13,7 +14,9 @@ export interface Building { id: number; name: string; model: BuildingModel; colo
   stock?: Stock }
 export interface Resident extends Actor { location: Location }
 /** A dish carries its recipe (and `fancy` when made fancy). */
-export interface NeighborhoodItem extends Item { location: Location; recipe?: RecipeId; fancy?: true }
+export interface NeighborhoodItem extends Item { location: Location; recipe?: RecipeId; fancy?: true;
+  /** A shopping bag (W3L-22): up to 6 goods, and whether it went through the checkout. */
+  contents?: Good[]; paid?: boolean }
 export interface Neighborhood { outdoor: Outdoor; buildings: Building[]; actors: Resident[]; items: NeighborhoodItem[]; location: Location; plots: number; nextBuilding: number;
   /** What the child has gained (save v3). */
   progress: Progress;
@@ -40,6 +43,8 @@ export type LiveAction = { type: 'live'; elapsed: number; phase: Phase; idle?: r
 export type EnjoyAction = { type: 'enjoy'; actor: ActorId; game: Game };
 /** The night is slept through in `building` (W3L-15): whoever lies there in a bed or on a sofa wakes rested. */
 export type MorningAction = { type: 'morning'; building: number };
+/** At the market (W3L-22): a good from a shelf into the bag, the checkout, and the bag into the fridge at home. */
+export type MarketAction = { type: 'buy'; actor: ActorId; piece: number; good: Good } | { type: 'checkout' | 'stock-up'; actor: ActorId };
 export type NeighborhoodAction = ModuleAction | OutdoorAction
   | EnjoyAction | MorningAction
 
@@ -51,6 +56,7 @@ export type NeighborhoodAction = ModuleAction | OutdoorAction
   /** At the bench of `piece`: `cook` mixes 1 to 3 ingredients with a utensil (§3.2). */
   | { type: 'cook'; building: number; piece: number; cook: ActorId; ingredients: readonly Ingredient[]; utensil: Utensil }
   | { type: 'transport'; actor?: ActorId; item?: ItemId; location: Location; point: Point }
+  | MarketAction
   /** `plan: 'market'` builds the shop as a market (W3L-21); no new model, a market is what its room holds. */
   | { type: 'construct'; plot: number; model: BuildingModel; plan?: 'market' }
   | { type: 'facade'; building: number; name?: string; color?: Palette }

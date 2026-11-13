@@ -57,6 +57,7 @@ import { landscapeOnly } from '../presentation/landscape-only';
 import '../presentation/place-transition.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
+import { marketPlay } from './market';
 import { selfCareWiring } from './self-care';
 import { nightSleep } from './night-sleep';
 
@@ -113,12 +114,12 @@ const games = childGames(root, { world: () => state, selected: () => selected, p
 cancelGame = games.cancel;
 const place = placeChange({ root, town: () => town, state: () => state, selected: () => selected });
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
-const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (action.type === 'transport') place.next({ kind: 'door', at: place.screen(doorFront(town, action.location)) }); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
+const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (shopping.blocks(action)) return; if (action.type === 'transport') place.next({ kind: 'door', at: place.screen(doorFront(town, action.location)) }); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
 // A kicked or thrown ball came to rest: whoever is selected played ball (W3L-13).
 scene.ballRest = (item, point) => { dispatch({ type: 'place', item, point }, false); townActs.enjoy(selected, 'bola'); };
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback, enjoy: id => townActs.enjoy(id, 'regar') });
 const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
-const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), serve: action => dispatch(action, false), looks: openLooks, grimace: (id, mirror) => { scene.poke(id, mirrorFaces[id], ''); const span = mirrorSpan(state, id, mirror); if (span) view?.reveal(span); } });
+const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), instead: item => shopping.instead(item), serve: action => dispatch(action, false), looks: openLooks, grimace: (id, mirror) => { scene.poke(id, mirrorFaces[id], ''); const span = mirrorSpan(state, id, mirror); if (span) view?.reveal(span); } });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
 const navigationBar = worldNavigation(root, { town: () => town, dispatch: townDispatch, go: location => go(location), construct: newBuilding, structure: () => structure.open(), camera: () => camera, pan: x => { camera = x; refresh(); } });
@@ -160,8 +161,9 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
   feel: next => { town = next; state = feel(state, town); scene.feel(state); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
   pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, busy: () => [games.player()].filter(id => id !== null), structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
-function townDispatch(action: NeighborhoodAction) { townActs.dispatch(action); }
+function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)) townActs.dispatch(action); }
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
+const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
 /** Session time in Brincar (Criar pauses life, §3.1). */
@@ -183,7 +185,7 @@ function dropPiece(action: EditAction) {
 let stale = false;
 const { refresh: repaint, frameScene, renderControls, ui: repaintControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
-  panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); } });
+  panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); } });
 function refresh(then?: () => void) { stale = false; place.refresh(repaint, then, repaintControls); }
 /** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
 function walksFirst(action: Action, interrupt: boolean): boolean {
@@ -192,7 +194,7 @@ function walksFirst(action: Action, interrupt: boolean): boolean {
   cancelGame(); walker.cancel(); return false;
 }
 function dispatch(action: Action, interrupt = true) {
-  if (walksFirst(action, interrupt)) return;
+  if (walksFirst(action, interrupt) || shopping.intercept(action)) return;
   if ('actor' in action) root.classList.add('actor-chosen');
   if ('item' in action) scene.balls.forget(action.item);
   if (['room', 'travel', 'cross', 'transfer'].includes(action.type)) scene.balls.settle();
@@ -226,7 +228,7 @@ void loadFonts().then(() => { game = new Phaser.Game({
       wave: () => state.actors.filter(a => a.room === state.room).forEach(a => scene.poke(a.id, 'hop', '')) });
     cancelInput = wireInput(current, { root, scene, view: () => view, state: () => state, town: () => town, selected: () => selected, building: () => building, wardrobe: () => wardrobeOpen,
       camera: () => camera, setCamera: x => { camera = x; }, moveCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building); outside(town, selected, camera, building); navigationBar(); },
-      play, square, walker, townActs, dispatch, townDispatch, toggleWardrobe, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, choosePiece: id => { selectedPiece = id; refresh(); },
+      play, square, walker, townActs, dispatch, townDispatch, blocks: action => shopping.blocks(action), toggleWardrobe, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, choosePiece: id => { selectedPiece = id; refresh(); },
       previewBuild, dropPiece, progress, plot: neighborhood.plot, enter: enterDoor, place });
   } },
 }); });
