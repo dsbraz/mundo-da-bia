@@ -1,14 +1,14 @@
 import { lying } from './posture';
 import type Phaser from 'phaser';
 import type { VisualContext } from './pose';
-import { actorScale, contextScale, figureHeight, seatDrop } from './pose';
+import { actorScale, contextScale, figureHeight, lyingShift, seatDrop, stature } from './pose';
 import { textStyle } from './text-style';
 import { hex } from './palette';
 import type { Actor } from '../domain/types';
 
 /** Vertical anchors (relative to the feet) for the selected label and star. */
 export function selectionLayout(actor: Actor, context?: VisualContext) {
-  if (lying(actor)) return { x: -80, labelBottom: -70, star: -110 };
+  if (lying(actor)) return { x: -80 * stature(actor) + lyingShift(actor), labelBottom: -70, star: -110 };
   const head = -figureHeight(actor) * actorScale(actor, context);
   const seated = actor.seat ? seatDrop(actor) * actorScale(actor, context) : 0;
   return { x: 0, labelBottom: head + seated - 6, star: head + seated - 44 * contextScale(context) };

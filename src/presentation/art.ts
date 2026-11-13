@@ -1,7 +1,7 @@
 import { lying, sitting } from './posture';
 import type { VisualContext } from './pose';
 import { textStyle } from './text-style';
-import { actorScale, settlePose, contextScale, figureHeight, seatDrop, stature } from './pose';
+import { actorScale, settlePose, contextScale, figureHeight, figureWidth, artHeight, lyingShift, seatDrop, stature } from './pose';
 import Phaser from 'phaser';
 import { applyReaction } from './feedback';
 import { drawSelection } from './selection-art';
@@ -16,8 +16,8 @@ import type { Actor } from '../domain/types';
 
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, context?: VisualContext): Phaser.GameObjects.Container {
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
-  const labelX = lying(actor) ? -80 : 0;
-  const shadow = contactShadow(scene, labelX, 2, lying(actor) ? 140 : 56, 8, 0x716858).setScale(contextScale(context));
+  const shift = lyingShift(actor), labelX = lying(actor) ? -80 * stature(actor) + shift : 0;
+  const shadow = contactShadow(scene, labelX, 2, lying(actor) ? 140 * stature(actor) : 56, 8, 0x716858).setScale(contextScale(context));
   shadow.setData('base', shadow.scaleX);
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
@@ -30,15 +30,18 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   animateActor(container, actor, 500, 0, false);
   coverActor(scene, container, actor);
   if (selected) drawSelection(scene, container, actor, actorLabel(actor), context);
-  if (actor.resting) container.add(scene.add.text(lying(actor) ? -175 : 24, lying(actor) ? -60 : -185, 'z z Z', textStyle('mark')));
+  if (actor.resting) container.add(scene.add.text(lying(actor) ? -175 * stature(actor) + shift : 24, lying(actor) ? -60 : -185, 'z z Z', textStyle('mark')));
   return container;
 }
 /** The face this frame: an expression (from events) and whether the eyes blink. */
 export interface FaceFrame { expression: Expression; blink: boolean; arms?: boolean }
 export function animateActor(figure: Phaser.GameObjects.Container, actor: Actor, time: number, index: number, show: boolean, reduced = false, face?: FaceFrame) {
   const pose = figure.getByName<Phaser.GameObjects.Container>('pose');
-  figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(lying(actor) && actor.resting);
-  pose.x = 0; pose.y = 0;
+  const covered = lying(actor) && actor.resting;
+  figure.getByName<Phaser.GameObjects.Graphics>('blanket')?.setVisible(covered);
+  // Under the blanket the arms are tucked in (a grown-up's longer arms would peek out of it).
+  pose.getByName<Phaser.GameObjects.Image>('hands')?.setVisible(!covered);
+  pose.x = lyingShift(actor); pose.y = 0;
   shiftFace(pose, 0);
   const shown = face ?? { expression: expressionOf({ ...actor, show: false }, null), blink: actor.resting };
   paintFace(pose, actor.kind, shown.expression, shown.blink, shown.arms);
@@ -67,9 +70,10 @@ function danceAngle(time: number, index: number, dancing: boolean) { return danc
 
 export function actorLabel(actor: Actor) { return actor.name ?? actors[actor.id].name; }
 
-function cover(scene: Phaser.Scene, container: Phaser.GameObjects.Container, cat: boolean) {
-  const width = cat ? 62 : 104;
-  const blanket = scene.add.graphics().setName('blanket');
+function cover(scene: Phaser.Scene, container: Phaser.GameObjects.Container, actor: Actor) {
+  // A grown-up's blanket is as much longer as the body under it.
+  const cat = actor.kind === 'cat', width = cat ? 62 : 104;
+  const blanket = scene.add.graphics({ x: lyingShift(actor) }).setScale(stature(actor), 1).setName('blanket');
   blanket.fillStyle(0xa8c9b8).fillRoundedRect(-width, -44, width + 12, 88, 12);
   blanket.lineStyle(1.5, 0x789f8b).strokeRoundedRect(-width, -44, width + 12, 88, 12);
   blanket.lineStyle(5, 0xdce9d1).lineBetween(-width + 8, -36, -width + 8, 36);
@@ -78,23 +82,24 @@ function cover(scene: Phaser.Scene, container: Phaser.GameObjects.Container, cat
 }
 
 function coverActor(scene: Phaser.Scene, container: Phaser.GameObjects.Container, actor: Actor) {
-  if (lying(actor) && actor.resting) cover(scene, container, actor.kind === 'cat');
+  if (lying(actor) && actor.resting) cover(scene, container, actor);
 }
 
 function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor: Actor, part: string) {
   if (actor.kind === 'cat' && part === 'tail') { addCatTail(scene, pose, actor); return; }
   const key = `${actor.id}-${part}`;
-  const height = figureHeight(actor), tall = stature(actor);
-  const image = scene.add.image(0, 0, key).setDisplaySize(140, height).setOrigin(.5, 1).setName(part);
+  const height = figureHeight(actor), width = figureWidth(actor), tall = stature(actor), art = artHeight(actor) / 220;
+  const image = scene.add.image(0, 0, key).setDisplaySize(width, height).setOrigin(.5, 1).setName(part);
   pose.add(image);
   if (actor.kind !== 'human' || (part !== 'legs' && part !== actor.look)) return;
-  // The knees bend 60 units above the feet of a child's drawing (texture rows below 320 of 440), a grown-up's in proportion.
-  const knee = 320 * tall, shin = 120 * tall;
+  // The knees bend 60 units above the feet of a child's drawing (texture rows below 320 of 440), a grown-up's in proportion (its own
+  // sheet's rows for the crop, the drawn height for the bend).
+  const knee = 320 * art, shin = 120 * art;
   image.setCrop(0, 0, 280, knee).setData('hitCrop', { x: 0, y: 0, width: 280, height: knee });
   let knees = pose.getByName<Phaser.GameObjects.Container>('knees');
   if (!knees) { knees = scene.add.container(0, -60 * tall).setName('knees').setData('shin', 60 * tall); pose.add(knees); }
   for (const side of [0, 1]) {
-    const lower = scene.add.image(0, 60 * tall, key).setDisplaySize(140, height).setOrigin(.5, 1).setCrop(side * 140, knee, 140, shin);
+    const lower = scene.add.image(0, 60 * tall, key).setDisplaySize(width, height).setOrigin(.5, 1).setCrop(side * 140, knee, 140, shin);
     lower.setData('hitCrop', { x: side * 140, y: knee, width: 140, height: shin });
     lower.setData('side', side); knees.add(lower);
   }

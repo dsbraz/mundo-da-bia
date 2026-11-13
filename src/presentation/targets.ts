@@ -1,6 +1,6 @@
 import { lying, posed } from './posture';
 import { supportedActor, visualPiecePoint } from './furniture-scale';
-import { handAnchor, posePoint, contextScale, visualContext, stature } from './pose';
+import { handAnchor, posePoint, contextScale, visualContext, stature, lyingShift } from './pose';
 import type { VisualContext } from './pose';
 import { fixture, fromPiece } from '../domain/layout';
 import { availableSpot, spotKind } from '../domain/furniture';
@@ -68,7 +68,8 @@ export function sourceAt(state: VisibleWorld, p: Point, wardrobe: boolean): Drag
 function actorContains(actor: Actor, point: Point, context: VisualContext, slack = 0): boolean {
   const scale = contextScale(context), m = slack / scale;
   const p = { x: actor.x + (point.x - actor.x) / scale, y: actor.y + (point.y - actor.y) / scale };
-  if (lying(actor)) return p.x >= actor.x - 185 - m && p.x <= actor.x + 20 + m && Math.abs(p.y - actor.y) < 45 + m;
+  const x = actor.x + lyingShift(actor);
+  if (lying(actor)) return p.x >= x - 185 * stature(actor) - m && p.x <= x + 20 + m && Math.abs(p.y - actor.y) < 45 + m;
   return Math.abs(actor.x - p.x) < 43 + m && p.y <= actor.y + 20 + m && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175 * stature(actor)) - m;
 }
 

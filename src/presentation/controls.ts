@@ -17,6 +17,7 @@ import { masculine } from './actor-paint';
 import type { Action, Actor, ActorId, Point, World } from '../domain/types';
 import { uiText } from '../content/ui-text';
 import { onFloor } from './floor-band';
+import { ringClearance } from './pose';
 
 function button(label: string, run: () => void, className = ''): HTMLButtonElement {
   const element = document.createElement('button');
@@ -99,7 +100,7 @@ export function positionContext(root: HTMLElement, actor: Actor, state: World) {
   const world = root.querySelector('#world')?.getBoundingClientRect();
   if (!canvas || !world?.width) return;
   const app = root.getBoundingClientRect(), scale = screenScale(canvas), feet = worldToScreen(canvas, actor);
-  const size = { width: context.offsetWidth || ringWidth(context), height: context.offsetHeight || 84 }, tall = (actor.kind === 'cat' ? 170 : 300) * scale;
+  const size = { width: context.offsetWidth || ringWidth(context), height: context.offsetHeight || 84 }, tall = ringClearance(actor) * scale;
   // Half the widest speech bubble (340 px of text and its padding), so the ring beside the head leaves the line in view.
   const place = ringPlace(feet, size, tall, 186 * scale, world, shelfSigns(canvas, state));
   context.style.setProperty('--ring-x', `${Math.round(place.x - app.left)}px`);
