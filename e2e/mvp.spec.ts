@@ -70,12 +70,14 @@ test('the square saves the ball', async ({ page }) => {
 test('module previews cancel cleanly and explicit floor travel carries the held object', async ({ page }) => {
   await ready(page); await page.emulateMedia({ reducedMotion: 'reduce' });
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Microfone', exact: true }).click(); await closeTray(page);
-  const before = await readTown(page);
+  // The microphone starts a show that ends by itself after 12 s and is then saved off: compare saves without it.
+  const calm = (town: Awaited<ReturnType<typeof readTown>>) => ({ ...town, buildings: town.buildings.map(b => ({ ...b, show: false })) });
+  const before = calm(await readTown(page));
   await page.locator('#build-toggle').click(); await page.locator('#construct-mode').click();
   await page.getByRole('button', { name: 'Adicionar cômodo ou andar', exact: true }).click();
   await page.getByRole('button', { name: 'Mais um andar', exact: true }).click();
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
-  expect(await readTown(page)).toEqual(before);
+  expect(calm(await readTown(page))).toEqual(before);
   await page.getByRole('button', { name: 'Mais um andar', exact: true }).click();
   await page.getByRole('button', { name: 'Construir!', exact: true }).click();
   await page.getByRole('button', { name: 'Fechar', exact: true }).click();
@@ -90,5 +92,5 @@ test('module previews cancel cleanly and explicit floor travel carries the held 
   await expect(page.locator('.choice-cards[aria-label=Andar] button[aria-pressed=true]')).toHaveText('1º andar');
   await expect(page.getByRole('button', { name: '← Anterior', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Próximo →', exact: true })).toBeDisabled();
-  await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
+  await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(calm(await readTown(page))).toEqual(calm(town));
 });
