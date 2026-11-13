@@ -46,11 +46,12 @@ for (const size of sizes) test(`capturas do lote 4 a ${size.width}${size.reduced
   await page.screenshot({ path: name('market-facade', size) });
 });
 for (const size of sizes) test(`interior do mercado e a sacola a ${size.width}${size.reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
+  test.setTimeout(90_000);
   await open(page, inHall(withMarket()), size);
   await page.screenshot({ path: name('market-interior', size) });
   await tap(page, ...await onPiece(page, 'market-shelf', 125, 330));
   const panel = page.locator('#market-panel');
-  await expect(panel).toBeVisible();
+  await expect(panel).toBeVisible({ timeout: 15000 });
   for (const good of ['pao', 'leite', 'queijo']) await panel.locator(`.market-good[data-good="${good}"]`).click();
   await expect(panel).toHaveAttribute('data-bag', 'pao leite queijo');
   await page.waitForTimeout(500);

@@ -17,7 +17,7 @@ export { marketKinds } from '../domain/market';
 /** A market piece in `color`, cut from the sheet once read; until then the market's bubble drawing stands in. */
 export function marketPieceImage(kind: PieceKind, color: Palette): string {
   if (!source) { void sheet('market').then(keepMarket); return '/art/market.svg#market'; }
-  return sheetPart(recolor(source, color), [kind], boxes[kind]!);
+  return sheetPart(recolor(source, color), [kind === 'checkout' ? 'piece-checkout' : kind], boxes[kind]!);
 }
 /** In the scene: whether the market sheet is read (its textures wait for it). */
 export function marketReady(scene: Phaser.Scene): boolean {

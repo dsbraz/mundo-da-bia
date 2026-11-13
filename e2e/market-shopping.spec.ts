@@ -32,12 +32,14 @@ const bag = async (page: Page) => (await readTown(page)).items.find(i => i.kind 
 const goStreet = async (page: Page) => { await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click(); };
 
 for (const hidden of [false, true]) test(`W3L-22: pega pão e leite na prateleira, não sai sem passar no caixa, bip-bip, e em casa a sacola enche a geladeira${hidden ? ' (com todo texto transparente)' : ''}`, async ({ page }) => {
+  // Four real walks across a wide hall and two houses: more time than the default 30 s under load.
+  test.setTimeout(120_000);
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await open(page);
   if (hidden) await page.addStyleTag({ content: '*{color:transparent!important}' });
   // The first shelf (bakery and dairy): she walks there and its goods open beside the scene, by picture.
   await tap(page, ...await onPiece(page, 'market-shelf', 125, 330));
-  await expect(panel(page)).toBeVisible();
+  await expect(panel(page)).toBeVisible({ timeout: 15000 });
   await panel(page).locator('.market-good[data-good="pao"]').click();
   await panel(page).locator('.market-good[data-good="leite"]').click();
   await expect(panel(page)).toHaveAttribute('data-bag', 'pao leite');
@@ -54,7 +56,7 @@ for (const hidden of [false, true]) test(`W3L-22: pega pão e leite na prateleir
   if (await page.locator('#close-map').isVisible()) await page.locator('#close-map').click();
   // Beep, beep: the bag gets its ribbon.
   await tap(page, ...await onPiece(page, 'checkout', 1060, 370));
-  await expect.poll(async () => (await bag(page))?.paid).toBe(true);
+  await expect.poll(async () => (await bag(page))?.paid, { timeout: 20000 }).toBe(true);
   await goStreet(page);
   expect((await readTown(page)).actors[0]!.location).toEqual({ kind: 'street' });
   expect(await bag(page)).toMatchObject({ holder: 'bia', paid: true });

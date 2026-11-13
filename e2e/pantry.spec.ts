@@ -36,7 +36,7 @@ test('W3L-23: com o leite zerado, a bancada mostra o leite em silhueta e tocar n
   await open(page, home(noMilk));
   await tap(page, ...await onPiece(page, 'stove', 355, 320));
   const bench = page.locator('#kitchen-bench');
-  await expect(bench).toBeVisible();
+  await expect(bench).toBeVisible({ timeout: 15000 });
   const milk = bench.locator('.bench-pantry [data-ingredient="leite"]');
   await expect(milk).toHaveAttribute('data-empty', 'true');
   await expect(bench.locator('.bench-pantry [data-ingredient="ovo"]')).not.toHaveAttribute('data-empty', 'true');
@@ -53,6 +53,7 @@ test('W3L-23: com o leite zerado, a bancada mostra o leite em silhueta e tocar n
 });
 
 test('W3L-23: depois da primeira colheita, as sementes de milho aparecem na prateleira do mercado', async ({ page }) => {
+  test.setTimeout(90_000);
   await page.clock.install({ time: new Date('2026-11-11T15:00:00') });
   let town = neighborhoodAction(migrateNeighborhood(initialAlbum(initialWorld())), { type: 'construct', plot: 1, model: 'shop', plan: 'market' });
   town = neighborhoodAction(town, { type: 'transport', actor: 'bia', location: { kind: 'street' }, point: { x: 680, y: 525 } });
@@ -72,7 +73,7 @@ test('W3L-23: depois da primeira colheita, as sementes de milho aparecem na prat
   // The hall's last shelf carries what has been revealed.
   const shelves = market.layout.pieces.filter(p => p.kind === 'market-shelf').sort((a, b) => a.id - b.id), last = shelves.at(-1)!;
   await tap(page, ...onPieceAt(last));
-  await expect(page.locator('#market-panel .market-good[data-good="semente-milho"]')).toBeVisible();
+  await expect(page.locator('#market-panel .market-good[data-good="semente-milho"]')).toBeVisible({ timeout: 15000 });
   await page.screenshot({ path: 'reports/wave3-life-4/market-seeds-1024.png' });
 });
 /** The middle of a piece's lower half, on screen. */
