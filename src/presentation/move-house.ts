@@ -1,6 +1,5 @@
 import type { Building, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
-import { floorCount } from '../domain/modules';
-import { facadeSvg, svgUrl } from './architecture-art';
+import { buildingFacadeSvg, svgUrl } from './architecture-art';
 
 function button(label: string, click: () => void) {
   const result = document.createElement('button'); result.textContent = label; result.onclick = click; return result;
@@ -14,7 +13,7 @@ export function moveHouse(root: HTMLElement, town: Neighborhood, house: Building
     for (let plot = 0; plot < town.plots; plot++) {
       const occupant = town.buildings.find(b => b.plot === plot);
       const card = button(`Terreno ${plot + 1} · ${occupant?.name ?? 'vazio'}`, () => preview(plot, occupant));
-      if (occupant) { const image = document.createElement('img'); image.src = svgUrl(facadeSvg(occupant.model, floorCount(occupant.layout))); image.alt = ''; card.prepend(image); }
+      if (occupant) { const image = document.createElement('img'); image.src = svgUrl(buildingFacadeSvg(occupant)); image.alt = ''; card.prepend(image); }
       else { const garden = document.createElement('img'); garden.src = '/icons/ui-plot.svg'; garden.alt = ''; garden.className = 'empty-plot'; garden.setAttribute('aria-hidden', 'true'); card.prepend(garden); }
       card.disabled = plot === house.plot; card.setAttribute('aria-pressed', String(card.disabled)); plots.append(card);
     }
@@ -25,7 +24,7 @@ export function moveHouse(root: HTMLElement, town: Neighborhood, house: Building
     const explanation = document.createElement('p'); explanation.textContent = occupant
       ? `${house.name} vai para o terreno ${plot + 1}. ${occupant.name} vai para o terreno ${house.plot + 1}.`
       : `O terreno ${house.plot + 1} ficará livre. Os cômodos, móveis e personagens continuam na casa.`;
-    const picture = document.createElement('img'); picture.src = svgUrl(facadeSvg(house.model, floorCount(house.layout))); picture.alt = house.name; picture.className = 'moving-house';
+    const picture = document.createElement('img'); picture.src = svgUrl(buildingFacadeSvg(house)); picture.alt = house.name; picture.className = 'moving-house';
     const confirm = button('Confirmar mudança', () => { dispatch({ type: 'move-building', building: house.id, plot }); dialog.close(); });
     dialog.replaceChildren(title, picture, explanation, button('Cancelar mudança', () => { choose(); dialog.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus(); }), confirm); confirm.focus();
   }

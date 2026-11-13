@@ -17,6 +17,7 @@ const pictures: Record<RoomTemplate, PieceKind[]> = {
   laundry: ['washer', 'sink'], library: ['bookcase', 'armchair'], dining: ['picnic-table', 'kitchen-cart'],
   empty: ['rug', 'plant'], bedroom: ['bed', 'lamp'], kitchen: ['fridge', 'counter', 'stove'],
   bathroom: ['bath', 'mirror'], studio: ['stage', 'speaker'], garden: ['plant', 'cat-bed'],
+  market: ['market-shelf', 'checkout'],
 };
 const images = new Map<PieceKind, string>();
 function pictureSource(kind: PieceKind): string {

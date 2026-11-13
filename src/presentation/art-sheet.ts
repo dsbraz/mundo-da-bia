@@ -22,7 +22,7 @@ export function sheetPart(source: string, ids: readonly string[], box: Box, dim 
 }
 const sources = new Map<string, Promise<string>>();
 /** The text of `/art/<name>.svg`, fetched once. */
-export function sheet(name: 'dishes' | 'kitchen' | 'book' | 'chair'): Promise<string> {
+export function sheet(name: 'dishes' | 'kitchen' | 'book' | 'chair' | 'market'): Promise<string> {
   if (!sources.has(name)) sources.set(name, fetch(`/art/${name}.svg`).then(response => response.text()));
   return sources.get(name)!;
 }

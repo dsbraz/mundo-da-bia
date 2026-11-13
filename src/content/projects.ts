@@ -17,5 +17,5 @@ export const templates: Record<RoomTemplate, { name: string }> = {
   playground: { name: 'Quintal de brincadeiras' },
   laundry: { name: 'Lavanderia' }, library: { name: 'Biblioteca' }, dining: { name: 'Sala de jantar' },
   empty: { name: 'Livre' }, bedroom: { name: 'Quarto' }, kitchen: { name: 'Cozinha' },
-  bathroom: { name: 'Banheiro' }, studio: { name: 'Estúdio' }, garden: { name: 'Jardim' },
+  bathroom: { name: 'Banheiro' }, studio: { name: 'Estúdio' }, garden: { name: 'Jardim' }, market: { name: 'Mercado' },
 };

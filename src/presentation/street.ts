@@ -1,6 +1,6 @@
 import { doorway } from './door-geometry';
 import { textStyle } from './text-style';
-import { facadeKey } from './architecture-art';
+import { buildingFacadeKey } from './architecture-art';
 import { facadeLabel } from './facade-parts';
 import { floorCount } from '../domain/modules';
 import { drawOutdoorState } from './outdoor-effects';
@@ -49,7 +49,7 @@ function emptyPlot(scene: Phaser.Scene, plot: number) {
 }
 function facade(scene: Phaser.Scene, b: Building) {
   const x = plotStart(b.plot);
-  const image = scene.add.image(x, 0, facadeKey(b.model, floorCount(b.layout))).setOrigin(0).setDisplaySize(440, 480);
+  const image = scene.add.image(x, 0, buildingFacadeKey(b)).setOrigin(0).setDisplaySize(440, 480);
   if (b.color !== 'original') image.setTint(Number.parseInt(palettes[b.color].light.slice(1), 16));
   const label = facadeLabel(b.model, floorCount(b.layout));
   scene.add.text(x + label.x, label.y, b.name, textStyle('sign', { maxLines: 2, align: 'center', wordWrap: { width: label.width }, padding: { x: 5, y: 3 } })).setOrigin(.5);

@@ -11,3 +11,5 @@ export const buildingChoices: Record<BuildingModel, { name: string; description:
   stadium: { name: 'Estádio', description: 'campo, aquecimento e lanchonete', preview: 'Estádio com três ambientes', group: 'sports' },
   'sports-club': { name: 'Clube esportivo', description: 'recepção, ginásio e brincadeiras', preview: 'Clube esportivo com três ambientes', group: 'sports' },
 };
+/** The shop's Mercado plan (W3L-21): its own card, right after the shop. */
+export const marketChoice = { name: 'Mercado', description: 'prateleiras, geladeira e caixa', preview: 'Mercado com prateleiras e caixa', group: 'services' as const };

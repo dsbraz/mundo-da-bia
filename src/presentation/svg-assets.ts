@@ -1,6 +1,5 @@
-import { facadeKey, facadeSvg, roomArchitecture, svgUrl } from './architecture-art';
+import { buildingFacadeKey, buildingFacadeSvg, roomArchitecture, svgUrl } from './architecture-art';
 import type { Neighborhood } from '../domain/neighborhood-types';
-import { floorCount } from '../domain/modules';
 import { roomTemplates } from '../domain/types';
 import { loadSvg } from './rendering';
 import { outfitLayer } from './outfit';
@@ -36,7 +35,7 @@ function loadActor(scene: Phaser.Scene, id: ActorId, index: number, current: Loo
   });
 }
 export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | null) {
-  town?.buildings.forEach(b => { const floors = floorCount(b.layout); loadSvg(scene, facadeKey(b.model, floors), svgUrl(facadeSvg(b.model, floors))); });
+  town?.buildings.forEach(b => loadSvg(scene, buildingFacadeKey(b), svgUrl(buildingFacadeSvg(b))));
   roomTemplates.filter(template => !scene.textures.exists(`architecture-${template}`)).forEach(template => loadSvg(scene, `architecture-${template}`, svgUrl(roomArchitecture(template))));
   loadPieces(scene, state);
   loadDishes(scene, town?.items ?? state.items);

@@ -1,10 +1,9 @@
 import { positionTargets } from './viewport';
 import { houseHandles } from './house-handles';
 import { buildingChooser } from './building-chooser';
-import { floorCount } from '../domain/modules';
 import { buildingActions } from './building-actions';
 import { houseActions } from './house-actions';
-import { facadeSvg, svgUrl } from './architecture-art';
+import { buildingFacadeSvg, svgUrl } from './architecture-art';
 import { uiText } from '../content/ui-text';
 import type { Location, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { doors } from './neighborhood-doors';
@@ -26,7 +25,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     if (index < 0 || index >= town.plots) return;
     plotDialog.replaceChildren();
     if (existing) buildingActions(plotDialog, root, town, existing, dispatch, close, extend, undo);
-    else buildingChooser(plotDialog, model => dispatch({ type: 'construct', plot: index, model }));
+    else buildingChooser(plotDialog, (model, plan) => dispatch({ type: 'construct', plot: index, model, ...(plan ? { plan } : {}) }));
     plotDialog.showModal();
   }
   function refresh(building: boolean) {
@@ -37,7 +36,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     list.replaceChildren(...town.buildings.map(b => {
       const card = document.createElement('article'); card.className = 'room-card';
       const visit = button(b.name, () => { close(); go({ kind: 'interior', building: b.id, room: b.entry }); }); visit.setAttribute('aria-label', uiText.go(b.name));
-      const image = document.createElement('img'); image.src = svgUrl(facadeSvg(b.model, floorCount(b.layout))); image.alt = ''; visit.prepend(image); card.append(visit);
+      const image = document.createElement('img'); image.src = svgUrl(buildingFacadeSvg(b)); image.alt = ''; visit.prepend(image); card.append(visit);
       const manage = button(uiText.map.manage, () => plot(b.plot)); manage.setAttribute('aria-label', `Ações de ${b.name}: ampliar, mover e excluir`); manage.className = 'building-manage home-manage'; card.append(manage);
       if (building && where.kind === 'street') card.append(button('✎ Fachada', () => plot(b.plot)));
       return card;

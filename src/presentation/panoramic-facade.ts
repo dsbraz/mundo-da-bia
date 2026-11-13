@@ -5,7 +5,7 @@ const colors: Record<BuildingModel, [string, string]> = {
   hospital: ['#f0f2e9', '#81afa8'], police: ['#d2d8dd', '#6c7f96'], office: ['#c5d9d2', '#526d6b'],
   'fire-station': ['#c48770', '#8e4c43'], school: ['#e8ce93', '#a06f57'], stadium: ['#b9c4b5', '#799c9b'], 'sports-club': ['#dfd6b6', '#6b9b91'],
 };
-export function panoramicFacade(model: BuildingModel, floors: number) {
+export function panoramicFacade(model: BuildingModel, floors: number, market = false) {
   const [wall, trim] = colors[model], top = 295 - (floors - 1) * 112;
   const inset = model === 'office' ? 70 : model === 'hospital' ? 30 : 48;
   let body = rect(inset, top, 440 - inset * 2, 447 - top, wall);
@@ -16,7 +16,7 @@ export function panoramicFacade(model: BuildingModel, floors: number) {
     if (level && model === 'apartment') body += balcony(y + 64, inset, trim);
   }
   body += roof(model, top, trim, inset);
-  body += identity(model, top, trim);
+  body += market ? marketFront(top) : identity(model, top, trim);
   body += rect(137, model === 'house' ? top - 16 : 278, 166, 30, '#f6edda');
   return body + `<path d="M${inset + 3} ${top + 3}h${434 - inset * 2}" stroke="#fff8e6" stroke-width="3" opacity=".65"/>`;
 }
@@ -57,4 +57,14 @@ function garage() {
   let result = rect(57, 330, 105, 108, '#cda38a') + rect(278, 330, 105, 108, '#cda38a');
   for (let y = 342; y < 438; y += 14) result += `<path d="M59 ${y}h101m118 0h101" stroke="#96574b" stroke-width="2"/>`;
   return result + '<path d="M207 254q-10-17 5-29l7-12 8 17 11-7q10 20-4 32-14 10-27-1Z" fill="#e9b763" stroke="#9e6348"/>';
+}
+/** A market (W3L-21): a deep green-and-cream awning over the shop window and a sign with a full basket, read without words. */
+function marketFront(top: number) {
+  let result = '';
+  for (let n = 0; n < 9; n++) result += `<path d="M${48 + n * 38} 300h38v26q-19 12-38 0Z" fill="${n % 2 ? '#fff1d8' : '#5f9b7a'}" stroke="#56705f" stroke-width="2"/>`;
+  result += '<path d="M44 296h352v8H44Z" fill="#4c7d63" stroke="#56705f" stroke-width="2"/>';
+  const sign = `<rect x="170" y="${top - 52}" width="100" height="40" rx="10" fill="#fff9dd" stroke="#56705f" stroke-width="2.5"/>`;
+  const basket = `<path d="M196 ${top - 30}h48l-6 14h-36Z" fill="#d9a05b" stroke="#7a5a44" stroke-width="2"/><path d="M204 ${top - 30}q16-16 32 0" fill="none" stroke="#7a5a44" stroke-width="2"/>`;
+  const fruit = `<circle cx="212" cy="${top - 33}" r="6" fill="#e8735a" stroke="#7a5a44" stroke-width="1.5"/><circle cx="226" cy="${top - 35}" r="6" fill="#f2b630" stroke="#7a5a44" stroke-width="1.5"/><path d="M234 ${top - 40}l10 4-10 4Z" fill="#ef8f3a" stroke="#7a5a44" stroke-width="1.5"/>`;
+  return result + sign + fruit + basket;
 }

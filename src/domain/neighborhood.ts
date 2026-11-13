@@ -55,7 +55,7 @@ const buildingActions: readonly NeighborhoodAction['type'][] = ['construct', 'fa
 type BuildingAction = Extract<NeighborhoodAction, { type: 'construct' | 'facade' | 'duplicate' | 'remove-building' | 'move-building' }>;
 function editBuilding(town: Neighborhood, action: BuildingAction): Neighborhood {
   switch (action.type) {
-    case 'construct': return construct(town, action.plot, action.model);
+    case 'construct': return construct(town, action.plot, action.model, action.plan);
     case 'facade': return customize(town, action);
     case 'duplicate': return duplicateBuilding(town, action.building);
     case 'remove-building': return removeBuilding(town, action.building);

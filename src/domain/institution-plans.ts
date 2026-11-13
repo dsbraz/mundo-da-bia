@@ -12,8 +12,14 @@ const plans: Partial<Record<BuildingModel, { name: string; template: RoomTemplat
   police: [{ name: 'Recepção', template: 'reception', cell: 0 }, { name: 'Central de atendimento', template: 'dispatch', cell: 1 }, { name: 'Achados e perdidos', template: 'investigation', cell: 2 }],
   office: [{ name: 'Recepção', template: 'reception', cell: 0 }, { name: 'Escritório', template: 'office', cell: 1 }, { name: 'Sala de reunião', template: 'meeting', cell: 4 }, { name: 'Copa', template: 'breakroom', cell: 5 }],
 };
+/** The shop's Mercado plan (W3L-21): a market hall with 2 shelves, a fridge and the checkout, and a storeroom. */
+const market = [{ name: 'Mercado', template: 'market' as const, cell: 0 }, { name: 'Depósito', template: 'empty' as const, cell: 1 }];
+export function marketWorld(): World { return planWorld(market); }
 export function institutionWorld(model: BuildingModel): World | undefined {
-  const plan = plans[model]; if (!plan) return;
+  const plan = plans[model];
+  return plan && planWorld(plan);
+}
+function planWorld(plan: { name: string; template: RoomTemplate; cell: number }[]): World {
   let world = initialWorld();
   const rooms = { ...world.layout.rooms };
   for (const [index, id] of (['sala', 'quarto'] as const).entries()) rooms[id] = { ...rooms[id], ...plan[index]!, size: 'medium', wall: 'original', floor: 'original' };

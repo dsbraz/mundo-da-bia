@@ -7,7 +7,8 @@ export type ActorId = typeof actorIds[number];
 export const actorKinds: Record<ActorId, 'human' | 'cat'> = { bia: 'human', luna: 'human', leo: 'human', rui: 'human', mimi: 'cat', nino: 'cat', pipoca: 'cat' };
 export type LookId = typeof lookIds[number];
 export type RoomId = typeof roomIds[number] | `room-${number}`;
-export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden', 'laundry', 'library', 'dining', 'reception', 'consultation', 'ward', 'dispatch', 'investigation', 'office', 'meeting', 'breakroom', 'playground', 'classroom', 'sportsfield', 'gym'] as const;
+export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden', 'laundry', 'library', 'dining', 'reception', 'consultation', 'ward', 'dispatch', 'investigation', 'office', 'meeting', 'breakroom', 'playground', 'classroom', 'sportsfield', 'gym',
+  'market'] as const;
 export const roomSizes = ['small', 'medium', 'large'] as const;
 export type RoomTemplate = typeof roomTemplates[number];
 export type RoomSize = typeof roomSizes[number];
@@ -80,7 +81,8 @@ export interface PresentationEvent {
 }
 export interface Transition { state: World; events: PresentationEvent[] }
 
-export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table', 'sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart', 'chair'] as const;
+export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table', 'sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart', 'chair',
+  'market-shelf', 'checkout'] as const;
 export const paletteIds = ['original', 'mint', 'lilac', 'rose', 'sky', 'gold'] as const;
 export type PieceKind = typeof pieceKinds[number];
 export type Palette = typeof paletteIds[number];

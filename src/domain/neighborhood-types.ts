@@ -51,7 +51,8 @@ export type NeighborhoodAction = ModuleAction | OutdoorAction
   /** At the bench of `piece`: `cook` mixes 1 to 3 ingredients with a utensil (§3.2). */
   | { type: 'cook'; building: number; piece: number; cook: ActorId; ingredients: readonly Ingredient[]; utensil: Utensil }
   | { type: 'transport'; actor?: ActorId; item?: ItemId; location: Location; point: Point }
-  | { type: 'construct'; plot: number; model: BuildingModel }
+  /** `plan: 'market'` builds the shop as a market (W3L-21); no new model, a market is what its room holds. */
+  | { type: 'construct'; plot: number; model: BuildingModel; plan?: 'market' }
   | { type: 'facade'; building: number; name?: string; color?: Palette }
   | { type: 'duplicate'; building: number }
   | { type: 'remove-building'; building: number }

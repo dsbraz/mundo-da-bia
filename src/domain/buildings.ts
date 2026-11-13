@@ -1,5 +1,5 @@
 import type { Building, BuildingModel, Neighborhood, NeighborhoodAction } from './neighborhood-types';
-import { institutionWorld } from './institution-plans';
+import { institutionWorld, marketWorld } from './institution-plans';
 import { initialWorld } from './world';
 import { addRoom } from './rooms';
 import { editWorld } from './design';
@@ -8,8 +8,15 @@ function append(town: Neighborhood, building: Building): Neighborhood {
   const buildings = [...town.buildings, building];
   return { ...town, buildings, nextBuilding: building.id + 1, plots: buildings.length === town.plots ? town.plots + 2 : town.plots };
 }
-export function construct(town: Neighborhood, plot: number, model: BuildingModel): Neighborhood {
+export function construct(town: Neighborhood, plot: number, model: BuildingModel, plan?: 'market'): Neighborhood {
   if (!Number.isInteger(plot) || plot < 0 || plot >= town.plots || town.buildings.some(b => b.plot === plot)) return town;
+  const market = plan === 'market' && model === 'shop';
+  const name = market ? 'Mercado' : { house: 'Casa', apartment: 'Prédio', shop: 'Loja', hospital: 'Hospital', police: 'Delegacia', office: 'Escritório', 'fire-station': 'Bombeiros', school: 'Escola', stadium: 'Estádio', 'sports-club': 'Clube esportivo' }[model];
+  const world = market ? marketWorld() : startWorld(model);
+  return append(town, { id: town.nextBuilding, name: `${name} ${town.nextBuilding}`, model, color: 'original', plot, entry: 'sala', layout: world.layout, show: false });
+}
+/** A new building of `model`: the house as it starts, an institution's plan, or two bare rooms. */
+function startWorld(model: BuildingModel) {
   let world = initialWorld();
   if (model !== 'house') {
     world = editWorld(world, { type: 'clear' });
@@ -17,9 +24,7 @@ export function construct(town: Neighborhood, plot: number, model: BuildingModel
     world = { ...world, layout: { ...world.layout, rooms } };
   }
   if (model === 'apartment') world = addRoom(world, { name: 'Sala de brincar', size: 'medium', template: 'empty', cell: 4 });
-  world = institutionWorld(model) ?? world;
-  const name = { house: 'Casa', apartment: 'Prédio', shop: 'Loja', hospital: 'Hospital', police: 'Delegacia', office: 'Escritório', 'fire-station': 'Bombeiros', school: 'Escola', stadium: 'Estádio', 'sports-club': 'Clube esportivo' }[model];
-  return append(town, { id: town.nextBuilding, name: `${name} ${town.nextBuilding}`, model, color: 'original', plot, entry: 'sala', layout: world.layout, show: false });
+  return institutionWorld(model) ?? world;
 }
 export function duplicateBuilding(town: Neighborhood, id: number): Neighborhood {
   const source = town.buildings.find(b => b.id === id); if (!source) return town;

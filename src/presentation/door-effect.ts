@@ -1,6 +1,5 @@
 import { palettes } from '../content/furnishings';
-import { facadeKey } from './architecture-art';
-import { floorCount } from '../domain/modules';
+import { buildingFacadeKey } from './architecture-art';
 import { rasterScale } from './rendering';
 import { doorway as geometry } from './door-geometry';
 import type Phaser from 'phaser';
@@ -34,7 +33,7 @@ function swing(scene: Phaser.Scene, rect: Rect, outside: Building | undefined, h
   const leaf = scene.add.container(x, y).setDepth(153);
   if (outside) {
     const d = geometry.facade;
-    const image = scene.add.image(-d.x, -d.y, facadeKey(outside.model, floorCount(outside.layout))).setOrigin(0).setDisplaySize(440, 480).setCrop(d.x * rasterScale, d.y * rasterScale, d.width * rasterScale, d.height * rasterScale);
+    const image = scene.add.image(-d.x, -d.y, buildingFacadeKey(outside)).setOrigin(0).setDisplaySize(440, 480).setCrop(d.x * rasterScale, d.y * rasterScale, d.width * rasterScale, d.height * rasterScale);
     if (outside.color !== 'original') image.setTint(Number.parseInt(palettes[outside.color].light.slice(1), 16));
     leaf.add(image);
   } else {

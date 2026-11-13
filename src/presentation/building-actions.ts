@@ -1,6 +1,5 @@
 import type { Building, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
-import { floorCount } from '../domain/modules';
-import { facadeSvg, svgUrl } from './architecture-art';
+import { buildingFacadeSvg, svgUrl } from './architecture-art';
 import { moveHouse } from './move-house';
 import { removeHouse } from './remove-house';
 import { paletteIds } from '../domain/types';
@@ -10,7 +9,7 @@ function button(label: string, click: () => void) {
 }
 export function buildingActions(dialog: HTMLDialogElement, root: HTMLElement, town: Neighborhood, house: Building, dispatch: (a: NeighborhoodAction) => void, closeMap: () => void, extend: (id: number) => void, undo: () => void) {
   const title = document.createElement('h2'); title.textContent = house.name;
-  const image = document.createElement('img'); image.src = svgUrl(facadeSvg(house.model, floorCount(house.layout))); image.alt = ''; image.className = 'building-portrait';
+  const image = document.createElement('img'); image.src = svgUrl(buildingFacadeSvg(house)); image.alt = ''; image.className = 'building-portrait';
   const actions = document.createElement('div'); actions.className = 'building-actions';
   actions.append(
     button(`Entrar em ${house.name}`, () => { dialog.close(); closeMap(); dispatch({ type: 'visit', location: { kind: 'interior', building: house.id, room: house.entry } }); }),

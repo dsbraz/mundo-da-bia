@@ -20,6 +20,7 @@ const furnishings: Record<RoomTemplate, PieceKind[]> = {
   playground: ['picnic-table', 'planter', 'plant'],
   empty: [], bedroom: ['bed', 'wardrobe', 'lamp'], kitchen: ['fridge', 'counter', 'stove', 'table'],
   bathroom: ['bath', 'mirror', 'plant'], studio: ['stage', 'speaker', 'desk', 'neon'], garden: ['plant', 'plant', 'cat-bed'],
+  market: ['market-shelf', 'market-shelf', 'fridge', 'checkout'],
 };
 export function freeCell(state: World, cell: number): boolean {
   return Number.isInteger(cell) && cell >= 0 && cell < 12 && !Object.values(state.layout.rooms).some(r => r.cell === cell);
