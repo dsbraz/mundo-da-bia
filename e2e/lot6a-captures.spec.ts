@@ -8,7 +8,7 @@ import type { RoomId } from '../src/domain/types';
 import { passages } from '../src/domain/passages';
 import { ready } from './helpers';
 
-// Lot 6A captures for the review: the living room with 1 and 2 floors and two institutions, at 1024×768 and 1280×800.
+// Lot 6A captures for the review: the living room with 1 and 2 floors, the room upstairs and two institutions, at 1024×768 and 1280×800.
 const saveKey = 'mundo-da-bia:neighborhood:v3', sizes = [{ width: 1024, height: 768 }, { width: 1280, height: 800 }];
 async function open(page: Page, town: Neighborhood, size: typeof sizes[number]) {
   await page.setViewportSize(size);
@@ -18,12 +18,13 @@ async function open(page: Page, town: Neighborhood, size: typeof sizes[number]) 
 }
 const home = () => migrateNeighborhood(initialAlbum(initialWorld()));
 const upstairs = () => neighborhoodAction(home(), { type: 'add-floor', building: 1 });
-/** The Bia alone in `room` of the institution built on plot 1; the others stay home. */
-function institution(model: BuildingModel, room: RoomId): Neighborhood {
-  const town = neighborhoodAction(home(), { type: 'construct', plot: 1, model }), location = { kind: 'interior' as const, building: 2, room };
+/** The Bia alone in `room` of `building`; the others stay where they are. */
+function alone(town: Neighborhood, building: number, room: RoomId): Neighborhood {
+  const location = { kind: 'interior' as const, building, room };
   return { ...town, location, actors: town.actors.map(a => a.id === 'bia' ? { ...a, location, room, x: 600, y: 530, seat: null } : a) };
 }
-const views: [string, () => Neighborhood][] = [['sala-1-andar', home], ['sala-2-andares', upstairs],
+const institution = (model: BuildingModel, room: RoomId) => alone(neighborhoodAction(home(), { type: 'construct', plot: 1, model }), 2, room);
+const views: [string, () => Neighborhood][] = [['sala-1-andar', home], ['sala-2-andares', upstairs], ['andar-de-cima', () => alone(upstairs(), 1, 'room-3')],
   ['hospital-recepcao', () => institution('hospital', 'sala')], ['delegacia-central', () => institution('police', 'quarto')]];
 for (const size of sizes) for (const [view, town] of views) test(`lote 6A: ${view} a ${size.width}`, async ({ page }) => {
   await open(page, town(), size);
