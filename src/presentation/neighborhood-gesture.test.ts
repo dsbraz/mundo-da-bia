@@ -97,12 +97,12 @@ it('um equipamento visível diante da porta recebe o clique em Brincar', () => {
   expect(base.start).toHaveBeenCalledExactlyOnceWith(1, point);
   expect(base.end).toHaveBeenCalledExactlyOnceWith(1, point); expect(dispatch).not.toHaveBeenCalled();
 });
-it('a porta do fim da parede, desenhada diante do palco, recebe o toque; o que está na frente dela, não', () => {
+it('a porta do fim da parede, desenhada diante do que fica atrás dela, recebe o toque; o que está na frente dela, não', () => {
   const { gesture, world, base, dispatch } = setup(), enter = vi.fn(() => false);
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
   const door = neighborhoodGesture(base, { town: () => town, world: () => world, building: () => false, dispatch, preview: vi.fn(), progress: vi.fn(), plot: vi.fn(), enter });
   Object.assign(world, { occludingDepth: () => 400 });
-  const point = { x: 932, y: 300 }; door.start(1, point); door.end(1, point);
+  const point = { x: 1132, y: 300 }; door.start(1, point); door.end(1, point);
   expect(base.start).not.toHaveBeenCalled(); expect(enter).toHaveBeenCalledExactlyOnceWith({ kind: 'interior', building: 1, room: 'quarto' });
   Object.assign(world, { occludingDepth: () => 410 });
   gesture.start(2, point); gesture.end(2, point);

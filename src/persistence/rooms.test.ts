@@ -12,7 +12,7 @@ function oldWorld() {
 it('migra casas v3 e coleção v1 mantendo decoração, roupas e luz', () => {
   const old = oldWorld(); old.home.lamp = false; old.actors[0]!.look = 'neon';
   const next = decode(JSON.stringify({ version: 3, state: old }));
-  expect(next.layout.rooms.sala).toMatchObject({ name: 'Sala & palco', wall: 'rose', floor: 'mint', size: 'small' });
+  expect(next.layout.rooms.sala).toMatchObject({ name: 'Sala & palco', wall: 'rose', floor: 'mint', size: 'medium' });
   expect(next.home.lamp).toBe(false); expect(next.actors[0]!.look).toBe('neon');
   const album = decodeAlbum(JSON.stringify({ version: 1, album: { active: 2, houses: [{ id: 1, name: 'Primeira', state: old }, { id: 2, name: 'Banda', state: old }] } }));
   expect(album?.active).toBe(2); expect(album?.houses[1]?.state).toEqual(next);

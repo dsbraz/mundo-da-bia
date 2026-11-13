@@ -64,7 +64,7 @@ it.each([
 
 it.each([
   ['id', 'unknown'], ['room', 'outside'], ['look', 'unknown'], ['kind', 'other'],
-  ['fed', 1], ['resting', null], ['x', '400'], ['y', null], ['x', 941], ['y', 279],
+  ['fed', 1], ['resting', null], ['x', '400'], ['y', null], ['x', 1141], ['y', 279],
 ])('rejeita personagem inválido: %s', (key, value) => {
   const state = initialWorld();
   const actors = state.actors.map((actor, index) => index === 0 ? { ...actor, [key]: value } : actor);

@@ -20,7 +20,7 @@ it('cancelar um personagem restaura sua posição e ignora eventos tardios', () 
   expect(move).not.toHaveBeenCalled();
 });
 it.each([
-  ['esquerda', { x: -200, y: 400 }, { x: 60, y: 490 }], ['direita', { x: 1400, y: 400 }, { x: 940, y: 490 }],
+  ['esquerda', { x: -200, y: 400 }, { x: 60, y: 490 }], ['direita', { x: 1400, y: 400 }, { x: 1140, y: 490 }],
   ['alto', { x: 500, y: 100 }, { x: 500, y: 410 }], ['pé da cena', { x: 500, y: 590 }, { x: 500, y: 540 }],
 ])('os pés encostam na borda %s em vez de congelar, seguindo o dedo no outro eixo', (_, finger, feet) => {
   expect(destination({ offset: { x: 0, y: 90 } }, finger, initialWorld())).toEqual(feet);

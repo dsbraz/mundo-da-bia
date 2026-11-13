@@ -1,7 +1,7 @@
 import type { BuildingModel } from './neighborhood-types';
-import type { RoomTemplate, World } from './types';
+import type { RoomId, RoomTemplate, World } from './types';
 import { initialWorld } from './world';
-import { addRoom, furnishRoom } from './rooms';
+import { furnishRoom, placeRoom } from './rooms';
 
 const plans: Partial<Record<BuildingModel, { name: string; template: RoomTemplate; cell: number }[]>> = {
   'fire-station': [{ name: 'Central dos bombeiros', template: 'dispatch', cell: 0 }, { name: 'Descanso da equipe', template: 'bedroom', cell: 1 }, { name: 'Copa', template: 'breakroom', cell: 4 }],
@@ -24,7 +24,8 @@ function planWorld(plan: { name: string; template: RoomTemplate; cell: number }[
   const rooms = { ...world.layout.rooms };
   for (const [index, id] of (['sala', 'quarto'] as const).entries()) rooms[id] = { ...rooms[id], ...plan[index]!, size: 'medium', wall: 'original', floor: 'original' };
   world = { ...world, actors: [], items: [], layout: { ...world.layout, rooms, pieces: [], nextId: 1 } };
-  for (const id of ['sala', 'quarto'] as const) world = furnishRoom({ ...world, room: id }, rooms[id].template);
-  for (const room of plan.slice(2)) world = addRoom(world, { ...room, size: 'medium' });
+  for (const room of plan.slice(2)) world = placeRoom(world, { ...room, size: 'medium' });
+  // Furnished once every room stands, so no piece goes where a later room opens a doorway or the stairs.
+  for (const id of Object.keys(world.layout.rooms) as RoomId[]) world = furnishRoom({ ...world, room: id }, world.layout.rooms[id]!.template);
   return { ...world, room: 'sala', home: rooms.sala.home };
 }

@@ -86,7 +86,7 @@ it('solta objetos no lugar escolhido, inclusive depois de carregar para outro c�
 
 it('não perde objetos ao soltar fora da casa ou em outro cômodo', () => {
   const state = initialWorld();
-  for (const point of [{ x: 59, y: 280 }, { x: 941, y: 540 }, { x: 940, y: 541 }, { x: NaN, y: 400 }]) {
+  for (const point of [{ x: 59, y: 280 }, { x: 1141, y: 540 }, { x: 1140, y: 541 }, { x: NaN, y: 400 }]) {
     expect(transition(state, { type: 'place', item: 'lanche', point })).toEqual({ state, events: [] });
   }
   const room = transition(state, { type: 'room', room: 'quarto' }).state;

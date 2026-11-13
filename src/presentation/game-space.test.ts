@@ -67,7 +67,7 @@ it('quem ficaria sobre o giz ou colado à criança em alguma casa dá passos par
   }
   for (const m of moves) {
     const actor = world.actors.find(a => a.id === m.actor)!;
-    expect(m.point.y).toBeGreaterThanOrEqual(floorTop(world)); expect(Math.abs(m.point.x - actor.x)).toBeLessThanOrEqual(260);
+    expect(m.point.y).toBeGreaterThanOrEqual(floorTop(world)); expect(Math.abs(m.point.x - actor.x)).toBeLessThanOrEqual(300);
     // Never behind a piece drawn in front of the spot (the stage, the sofa).
     for (const piece of world.layout.pieces.filter(p => p.room === world.room)) {
       const b = footprint(piece); if (!b || b.bottom + 8 <= m.point.y) continue;

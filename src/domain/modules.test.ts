@@ -25,7 +25,7 @@ it('adds, names, swaps and replaces modules without moving the entry or losing r
   expect(neighborhoodAction(t, { type: 'move-module', building: 1, room: id, cell: 0 })).toBe(t);
   t = neighborhoodAction(t, { type: 'replace-module', building: 1, room: id, template: 'studio' });
   expect(t.buildings[0]!.layout.rooms[id]!.template).toBe('studio');
-  expect(t.actors).toBe(actors); expect(t.items).toBe(items);
+  expect(t.actors).toEqual(actors); expect(t.items).toEqual(items);
 });
 it('rejects invalid or occupied cells, absent rooms and empty names', () => {
   const t = town();

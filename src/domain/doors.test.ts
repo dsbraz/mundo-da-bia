@@ -10,7 +10,7 @@ it('atravessa, volta e preserva identidade, roupa e objeto carregado', () => {
   expect(next.items.find(i => i.id === 'ursinho')?.holder).toBe('bia');
   expect(next.actors).toHaveLength(9); expect(decode(encode(next))).toEqual(next);
   const back = crossDoor(next, 'bia', 'left');
-  expect(back.actors[0]).toMatchObject({ room: 'sala', x: 890 });
+  expect(back.actors[0]).toMatchObject({ room: 'sala', x: 1090 });
   expect(back.actors.slice(1)).toEqual(state.actors.slice(1));
 });
 it('segue a ordem da planta sem dar a volta nas extremidades', () => {
