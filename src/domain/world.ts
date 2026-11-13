@@ -66,7 +66,7 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
     case 'move': return moveActor(state, actor, action.point);
     case 'sit': return sit(state, actor, action.seat);
     case 'dress': return dress(state, actor, action.look);
-    case 'rest': return rest(state, actor);
+    case 'rest': return rest(state, actor, action.own);
     case 'pick': return pick(state, actor, action.item);
     case 'drop': return release(state, actor, false);
     case 'feed': return release(state, actor, true);

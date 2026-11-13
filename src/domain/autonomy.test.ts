@@ -19,6 +19,18 @@ describe('autonomia leve dos não selecionados (W3L-19, §3.6)', () => {
     expect(selfCare(feel(initialWorld(), 'rui', { sono: 80 }), 'bia')).toEqual({ type: 'rest', actor: 'rui', seat: '2.0' });
     expect(selfCare(feel(bedroom(), 'bia', { sono: 80 }), 'nino')).toEqual({ type: 'rest', actor: 'bia', seat: '8.0' });
   });
+  it('o gato sozinho nunca toma sofá nem cama: caminha livre, senão o tapete; sem os dois, nada (os assentos ficam para as pessoas)', () => {
+    const living = feel(initialWorld(), 'mimi', { sono: 80 });
+    const awake = { ...living, actors: living.actors.map(a => a.id === 'mimi' ? { ...a, seat: null, x: 930, y: 530 } : a) };
+    expect(selfCare(awake, 'bia')).toEqual({ type: 'rest', actor: 'mimi', seat: null });
+    const rest = transition(awake, { type: 'rest', actor: 'mimi', own: true }).state.actors.find(a => a.id === 'mimi')!;
+    expect(rest).toMatchObject({ seat: null, resting: true });
+    const noRug = { ...awake, layout: { ...awake.layout, pieces: awake.layout.pieces.filter(p => p.kind !== 'rug') } };
+    expect(selfCare(noRug, 'bia')).toBeNull();
+    expect(transition(noRug, { type: 'rest', actor: 'mimi', own: true }).state.actors.find(a => a.id === 'mimi')!.resting).toBe(false);
+    // The child's own Descansar still lets a cat nap on the sofa.
+    expect(transition(noRug, { type: 'rest', actor: 'mimi' }).state.actors.find(a => a.id === 'mimi')!.seat).toMatch(/^2\./);
+  });
   it('só em `precisa`, só acordado, e sem lugar para dormir não faz nada', () => {
     expect(selfCare(feel(bedroom(), 'nino', { sono: 69 }), 'bia')).toBeNull();
     const asleep = transition(feel(bedroom(), 'nino', { sono: 90 }), { type: 'rest', actor: 'nino' }).state;

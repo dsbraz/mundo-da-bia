@@ -18,7 +18,7 @@ interface Deps {
   hop?: (actor: ActorId) => void; played?: (actor: ActorId) => void;
 }
 const actionOf = (care: SelfCare): Action | null => care.type === 'eat' ? { type: 'give', actor: 'bia', item: care.item }
-  : care.type === 'hug' ? { type: 'hug', actor: 'luna', other: care.other } : care.type === 'rest' ? { type: 'rest', actor: care.actor } : null;
+  : care.type === 'hug' ? { type: 'hug', actor: 'luna', other: care.other } : care.type === 'rest' ? { type: 'rest', actor: care.actor, own: true } : null;
 /** A ball game on her own lasts 5 s (§3.6). */
 const gameMs = 5000;
 /** W3L-13 and W3L-19: the characters' own acts after the clock's `live`: never while a finger is down (a drag), at most one per place every
@@ -42,7 +42,7 @@ export function selfCareWiring(deps: Deps) {
   /** Where the act is done: the floor before the meal seat, the bed or sofa seat, beside the ball; null when it applies where she is. */
   function target(world: World, care: SelfCare, action: Action | null): Point | null {
     if (care.type === 'play') { const ball = world.items.find(i => i.id === care.item)!; return { x: ball.x + (ball.x > 500 ? -60 : 60), y: Math.max(ball.y, 470) }; }
-    if (care.type === 'rest') return approach(world, care.actor, { type: 'sit', actor: care.actor, seat: care.seat });
+    if (care.type === 'rest') return care.seat ? approach(world, care.actor, { type: 'sit', actor: care.actor, seat: care.seat }) : null;
     return mealApproach(world, action!)?.point ?? null;
   }
   function play(actor: ActorId) {

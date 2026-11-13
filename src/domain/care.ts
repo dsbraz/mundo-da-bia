@@ -19,17 +19,18 @@ export function toggleRest(actor: Pick<Actor, 'resting'>): Partial<Actor> { retu
 
 /** Where one sleeps (W3L-15, §3.2): a person in a bed, else on a sofa; a cat in its bed, on a sofa or a bed (or on a rug, below). */
 const sleepKinds: Record<Actor['kind'], readonly PieceKind[]> = { human: ['bed', 'sofa'], cat: ['cat-bed', 'sofa', 'bed'] };
-/** The seat `actor` would sleep on here: the one she sits on if it is a place to sleep, else the first free one by `sleepKinds`. */
-export function restSeat(state: World, actor: Actor): SeatRef | undefined {
-  const kinds = sleepKinds[actor.kind], own = actor.seat ? seatPiece(state, actor.seat) : undefined;
+/** The seat `actor` would sleep on here: the one she sits on if it is a place to sleep, else the first free one by `sleepKinds`. On her
+ *  own (`alone`) a cat only takes its cat bed: sofa and bed seats stay for the people. */
+export function restSeat(state: World, actor: Actor, alone = false): SeatRef | undefined {
+  const kinds = alone && actor.kind === 'cat' ? ['cat-bed'] : sleepKinds[actor.kind], own = actor.seat ? seatPiece(state, actor.seat) : undefined;
   if (own && kinds.includes(own.kind)) return actor.seat!;
   return kinds.flatMap(kind => state.layout.pieces.filter(p => p.room === state.room && p.kind === kind)).map(p => freeSeat(state, p, actor)).find(Boolean);
 }
 /** Resting (the button, the autonomy): whoever rests wakes; otherwise she lies on a bed or naps on a sofa seat, and a cat curls up on a
  *  rug if there is nothing else. Never on the bare floor: with no place to sleep nothing changes and the bubble asks for a bed. */
-export function rest(state: World, actor: Actor): Transition {
+export function rest(state: World, actor: Actor, alone = false): Transition {
   if (actor.resting) return asleep(state, actor, wake(actor));
-  const seat = restSeat(state, actor), point = seat && seatPoint(state, seat);
+  const seat = restSeat(state, actor, alone), point = seat && seatPoint(state, seat);
   if (point) return asleep(state, actor, { seat, x: point.x, y: point.y, resting: true });
   const rug = actor.kind === 'cat' ? state.layout.pieces.find(p => p.room === state.room && p.kind === 'rug') : undefined;
   if (!rug) return refuse(state, 'bed', actor.id, undefined, actor.kind === 'cat' ? 'cat-bed' : 'bed');

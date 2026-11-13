@@ -54,7 +54,9 @@ export type Action =
   /** `actor` hugs `other` (W3L-14): dropped on someone, or the Luna caring on her own. */
   | { type: 'hug'; actor: ActorId; other: ActorId }
   | { type: 'place'; item: ItemId; point: Point }
-  | { type: 'drop' | 'feed' | 'rest'; actor: ActorId }
+  | { type: 'drop' | 'feed'; actor: ActorId }
+  /** `own`: lying down on her own (W3L-19); a cat then leaves sofa and bed seats to the people. */
+  | { type: 'rest'; actor: ActorId; own?: boolean }
   | { type: 'room'; room: RoomId }
   | { type: 'summon' }
   | { type: 'show' };

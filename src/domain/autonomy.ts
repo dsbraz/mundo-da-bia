@@ -6,10 +6,10 @@ import { mealSeat } from './seats';
 
 /** What a character does on her own (W3L-13, §3.1): the Bia "faz sozinha" (hungry, she eats a dish of the room, seated) and the Luna
  *  "cuida" (she hugs whoever is sad in the room); anyone (W3L-19, §3.6) sleepy in `precisa` lies down where she may sleep here (a cat in
- *  its bed) and anyone bored in `precisa` plays with a ball on the room's floor. Never the selected one nor anyone in another room; the
+ *  its bed, else on the rug: sofa and bed seats stay for the people) and anyone bored in `precisa` plays with a ball on the room's floor. Never the selected one nor anyone in another room; the
  *  app adds the drag and the 60 s rhythm per place. */
 export type SelfCare = { type: 'eat'; actor: 'bia'; item: ItemId } | { type: 'hug'; actor: 'luna'; other: ActorId }
-  | { type: 'rest'; actor: ActorId; seat: SeatRef } | { type: 'play'; actor: ActorId; item: ItemId };
+  | { type: 'rest'; actor: ActorId; seat: SeatRef | null } | { type: 'play'; actor: ActorId; item: ItemId };
 /** `id` is here, awake and not the one the child is playing with. */
 function free(world: World, id: ActorId, selected: ActorId) {
   const actor = world.actors.find(a => a.id === id);
@@ -30,8 +30,14 @@ function lunaCares(world: World, selected: ActorId): SelfCare | null {
 function needy(world: World, selected: ActorId, need: Need): Actor[] {
   return world.actors.filter(a => free(world, a.id, selected) && bandOf(a, need) === 'precisa').sort((a, b) => needsOf(b)[need] - needsOf(a)[need]);
 }
+/** Where `actor` lies down on her own: a seat, null for a cat on the rug (no cat bed free), undefined when nowhere. */
+function bedOf(world: World, actor: Actor): SeatRef | null | undefined {
+  const seat = restSeat(world, actor, true);
+  if (seat || actor.kind !== 'cat') return seat;
+  return world.layout.pieces.some(p => p.room === world.room && p.kind === 'rug') ? null : undefined;
+}
 function sleeps(world: World, selected: ActorId): SelfCare | null {
-  const act = needy(world, selected, 'sono').map(a => ({ actor: a.id, seat: restSeat(world, a) })).find(a => a.seat);
+  const act = needy(world, selected, 'sono').map(a => ({ actor: a.id, seat: bedOf(world, a) })).find(a => a.seat !== undefined);
   return act ? { type: 'rest', actor: act.actor, seat: act.seat! } : null;
 }
 function plays(world: World, selected: ActorId): SelfCare | null {
