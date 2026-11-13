@@ -4,6 +4,8 @@ import { addRoom, renameRoom, moveRoom } from './rooms';
 import { editWorld, history, recordEdit, undo } from './design';
 import { decode, encode } from '../persistence/save';
 import { pieceBounds } from './layout';
+import { institutionWorld } from './institution-plans';
+import { passages } from './passages';
 it('cria um estúdio amplo, nomeia, posiciona e recupera após salvar', () => {
   const original = initialWorld();
   const state = addRoom(original, { name: '  Estúdio Aurora  ', template: 'studio', size: 'large', cell: 4 });
@@ -99,4 +101,12 @@ it('o jardim e o pátio espalham as peças em colunas fixas, a terceira mais ao 
   const pieces = studio.layout.pieces.filter(p => p.room === studio.room);
   expect(pieces.map(p => p.x)).toEqual([140, 460, 680, 1000]);
   expect(pieces.every(p => p.y + pieceBounds[p.kind].height >= 440)).toBe(true);
+});
+it('a sala de aula da escola tem as três carteiras numa fileira sob a lousa, entre as portas dos dois lados', () => {
+  const school = institutionWorld('school')!;
+  const pieces = school.layout.pieces.filter(p => p.room === 'quarto'), desks = pieces.filter(p => p.kind === 'school-desk');
+  expect(new Set(desks.map(p => p.y)).size).toBe(1);
+  const zones = passages(school.layout, 'quarto').map(p => p.zone);
+  expect(zones).toHaveLength(2);
+  for (const p of pieces) expect(zones.every(z => p.x + pieceBounds[p.kind].width <= z.x || p.x >= z.x + z.width), p.kind).toBe(true);
 });

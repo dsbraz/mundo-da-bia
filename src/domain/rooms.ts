@@ -25,9 +25,9 @@ const furnishings: Record<RoomTemplate, PieceKind[]> = {
 };
 /** Fixed columns (piece left edges): the yard's scattered pieces, and the market hall (W3L-21 art pass) with both shelves left of the
  *  door and the fridge and checkout right of it, the whole hall inside one 1024 px screen so it opens with nothing cut off; the classroom
- *  (W3L-26) with three school desks in a row under the board. */
+ *  (W3L-26) with three school desks in a row under the board, all right of the bookcase that the left doorway pushes in. */
 const columns: Partial<Record<RoomTemplate, readonly number[]>> = { playground: [60, 320, 60], garden: [60, 320, 60], market: [140, 318, 616, 776],
-  classroom: [20, 250, 485, 720, 360] };
+  classroom: [20, 310, 545, 780, 420] };
 export function freeCell(state: World, cell: number): boolean {
   return Number.isInteger(cell) && cell >= 0 && cell < 12 && !Object.values(state.layout.rooms).some(r => r.cell === cell);
 }

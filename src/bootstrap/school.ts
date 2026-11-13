@@ -1,3 +1,4 @@
+import { adultIds } from '../domain/family';
 import { lesson } from '../domain/school';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import type { Action, ActorId } from '../domain/types';
@@ -13,14 +14,15 @@ interface SchoolDeps {
   scene: Pick<PlayScene, 'lessons' | 'poke'>;
   feedback: Pick<ReturnType<typeof sceneFeedback>, 'missing' | 'sound'>;
 }
-/** The school in play (W3L-26): the board tapped starts the lesson where the children sit; nobody at a desk shows the desk missing. */
+/** The school in play (W3L-26): the board tapped starts the lesson where the children sit (Daniel and Fabiana never count as pupils);
+ *  nobody at a desk shows the desk missing. */
 export function schoolPlay(deps: SchoolDeps) {
   deps.scene.lessons.finished = pupils => { pupils.forEach(id => deps.scene.poke(id, 'cheer', '')); deps.feedback.sound.cue('cheer'); };
   const boardAt = (id: number) => {
     const where = deps.town().location;
     if (where.kind !== 'interior') return null;
     const piece = deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.id === id && p.room === where.room);
-    return piece?.kind === 'board' ? { building: where.building, room: where.room } : null;
+    return piece?.kind === 'board' ? { building: where.building, room: where.room, grownUps: adultIds } : null;
   };
   return {
     /** A tap on a board: the lesson begins (a second tap while it is drawn changes nothing). */
