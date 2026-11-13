@@ -3,23 +3,36 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { bringHere, point, read, ready, visitNeighbor } from './helpers';
+import { bringHere, drag, point, read, ready, visitNeighbor } from './helpers';
 
 async function seedShow(page: Page) {
   const world = initialWorld(); world.show = true;
-  world.actors = world.actors.map((a, i) => ({ ...a, x: 160 + i * 110, y: 530, seat: null }));
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await ready(page);
 }
 const faces = async (page: Page) => Object.fromEntries((await page.locator('canvas').getAttribute('data-faces'))!.split(' ').map(f => f.split(':')));
+const everyone = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'];
 
-for (const reduced of [false, true]) test(`no show a turma ri${reduced ? ', também com movimento reduzido (rosto sem dança)' : ''}`, async ({ page }) => {
+for (const reduced of [false, true]) test(`no show a turma ri e o show acaba sozinho${reduced ? ', também com movimento reduzido (rosto sem dança)' : ''}`, async ({ page }) => {
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.setViewportSize({ width: 1280, height: 800 }); await seedShow(page);
-  await expect.poll(async () => (await faces(page)).bia).toBe('laugh');
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
+  await page.setViewportSize({ width: 1280, height: 800 }); await ready(page); await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
+  const performer = (await read(page)).actors[0]!; await drag(page, [600, 402], [performer.x, performer.y - 140]);
+  await page.clock.runFor(100); expect((await read(page)).show).toBe(true);
   const shown = await faces(page);
-  for (const id of ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca']) expect(shown[id], id).toBe('laugh');
+  for (const id of everyone) expect(shown[id], id).toBe('laugh');
   await page.screenshot({ path: `reports/faces-show-laugh${reduced ? '-reduced' : ''}.png` });
+  // The show is a moment (about 12 s), not a state: the dance and the laugh stop by themselves.
+  await page.clock.fastForward(12_000); await page.clock.runFor(100);
+  expect((await read(page)).show).toBe(false);
+  expect(Object.values(await faces(page))).not.toContain('laugh');
+});
+
+test('um show salvo não volta ao abrir o jogo: ninguém dança nem ri', async ({ page }) => {
+  await seedShow(page);
+  await expect.poll(async () => Object.keys(await faces(page))).toEqual(expect.arrayContaining(everyone));
+  expect(Object.values(await faces(page))).not.toContain('laugh');
+  expect((await read(page)).show).toBe(false);
 });
 
 test('entrar num cômodo mostra surpresa por cerca de 1,2 s', async ({ page }) => {

@@ -22,6 +22,13 @@ export function give(state: World, actor: Actor, id: ItemId): Transition {
   return deliver(state, actor, item, food);
 }
 
+/** A person holds a microphone. */
+const singing = (state: World) => state.items.some(i => itemKind(i) === 'microfone' && state.actors.some(a => a.id === i.holder && a.kind === 'human'));
+/** Letting go of the microphone (dropped, put down or handed to a cat) ends the show. */
+export function micDown(before: World, result: Transition): Transition {
+  return result.state.show && singing(before) && !singing(result.state) ? { ...result, state: { ...result.state, show: false } } : result;
+}
+
 function deliver(state: World, actor: Actor, item: Item, food: boolean): Transition {
   const show = itemKind(item) === 'microfone' && actor.kind === 'human';
   return {

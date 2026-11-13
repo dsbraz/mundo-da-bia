@@ -3,6 +3,7 @@ import { initialWorld } from '../domain/world';
 import { initialAlbum } from '../domain/houses';
 import { migrateNeighborhood } from '../domain/neighborhood';
 import { loadNeighborhood, saveNeighborhood } from './storage';
+import { encode } from './save';
 it('migrates the old envelope once, preserves recovery and shifts outdoor positions', () => {
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
   town.buildings[0]!.layout.rooms.sala.cell = 7; town.buildings[0]!.layout.rooms.quarto.cell = 2;
@@ -19,6 +20,14 @@ it('migrates the old envelope once, preserves recovery and shifts outdoor positi
   expect(map.has('mundo-da-bia:neighborhood:v2')).toBe(false);
   expect(JSON.parse(map.get('mundo-da-bia:neighborhood:v3')!).version).toBe(3);
   expect(loadNeighborhood(port)).toEqual(next);
+});
+it('um show salvo não volta ao abrir o jogo: ninguém fica dançando (save atual e casa antiga)', () => {
+  const world = { ...initialWorld(), show: true }, town = migrateNeighborhood(initialAlbum(world));
+  const port = (map: Map<string, string>) => ({ getItem: (key: string) => map.get(key) ?? null, setItem: (key: string, value: string) => { map.set(key, value); } });
+  const current = port(new Map());
+  expect(town.buildings[0]!.show).toBe(true); expect(saveNeighborhood(town, current)).toBe(true);
+  expect(loadNeighborhood(current).buildings.map(b => b.show)).toEqual([false]);
+  expect(loadNeighborhood(port(new Map([['mundo-da-bia:v1', encode(world)]]))).buildings.map(b => b.show)).toEqual([false]);
 });
 it('rejects a v2 entrance off the ground floor and legacy positions beyond the old street', async () => {
   const { decodeNeighborhood, encodeNeighborhood } = await import('./neighborhood');

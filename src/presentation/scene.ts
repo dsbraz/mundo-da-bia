@@ -132,8 +132,11 @@ export class PlayScene extends Phaser.Scene {
     this.figures = drawFigures(this, state, selected); this.mirrors.paint(state, this.figures);
     this.objects = drawObjects(this, state);
     drawLighting(this, state);
-    if (state.show) this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700);
+    this.live = state.show ? this.add.text(roomWidth(state) - 145, 100, '♪ Ao vivo', textStyle('live')).setOrigin(.5).setDepth(700) : null;
   }
+  private live: Phaser.GameObjects.Text | null = null;
+  /** The show ended by itself: the dance, the laugh and the label stop without a repaint (nothing in hand is interrupted). */
+  endShow() { this.world = { ...this.world, show: false }; this.live?.destroy(); this.live = null; }
   pan(room: RoomId | null, fraction: number) {
     if (!this.ready) return;
     if (!room) { if (this.sliding) this.paint(this.world, this.selected); return; }

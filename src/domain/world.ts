@@ -8,7 +8,7 @@ import { fixture, initialLayout, toPiece, fromPiece } from './layout';
 import { actorIds, actorKinds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
-import { give, visibleItem } from './objects';
+import { give, micDown, visibleItem } from './objects';
 import { eat, hug, rest, snack, wake } from './care';
 import { usePiece } from './use';
 import { refuse } from './missing';
@@ -77,7 +77,7 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
 }
 
 export function transition(state: World, action: Action): Transition {
-  return action.type === 'name' ? nameActor(state, action.actor, action.name) : playTransition(state, action);
+  return action.type === 'name' ? nameActor(state, action.actor, action.name) : micDown(state, playTransition(state, action));
 }
 function playTransition(state: World, action: Exclude<Action, { type: 'name' }>): Transition {
   if (action.type === 'cross') return cross(state, action);

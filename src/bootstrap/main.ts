@@ -8,6 +8,7 @@ import { wireInput } from './input-wiring';
 import { sceneRefresh } from './refresh';
 import { townActions } from './town-actions';
 import { playTime, realClock, startTicks } from './clock';
+import { showMoment } from './show-moment';
 import { feel } from '../domain/needs';
 import { sceneFeedback } from './scene-feedback';
 import { modeLine, refusal, welcomeLine, nameOf } from '../content/feedback-text';
@@ -186,7 +187,8 @@ let stale = false;
 const { refresh: repaint, frameScene, renderControls, ui: repaintControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
   panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); } });
-function refresh(then?: () => void) { stale = false; place.refresh(repaint, then, repaintControls); }
+const showTime = showMoment((ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); }, () => { state = { ...state, show: false }; persist(); scene.endShow(); });
+function refresh(then?: () => void) { stale = false; showTime(state.show); place.refresh(repaint, then, repaintControls); }
 /** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
 function walksFirst(action: Action, interrupt: boolean): boolean {
   if (!interrupt) return false;

@@ -43,7 +43,12 @@ const neighborhoodKey = 'mundo-da-bia:neighborhood:v3';
 const recoveryKey = `${neighborhoodKey}:recovery`;
 /** Earlier envelopes, read in this order and never written again: they stay as the rollback copy for an older build. */
 const olderKeys = ['mundo-da-bia:neighborhood:v2', 'mundo-da-bia:neighborhood:v1'];
+/** A show is a moment: one saved while it played does not come back when the game opens. */
 export function loadNeighborhood(storage?: StoragePort): import('../domain/neighborhood-types').Neighborhood {
+  const town = loadSaved(storage);
+  return { ...town, buildings: town.buildings.map(b => ({ ...b, show: false })) };
+}
+function loadSaved(storage?: StoragePort): import('../domain/neighborhood-types').Neighborhood {
   try {
     const port = storage ?? globalThis.localStorage;
     const saved = decodeNeighborhood(port.getItem(neighborhoodKey));

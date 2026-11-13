@@ -34,6 +34,17 @@ it('transfere objetos entre mãos sem duplicar; gatos podem segurar sem iniciar 
   expect(mic.state.show).toBe(false);
 });
 
+it('soltar o microfone encerra o show: largar, pôr no chão ou dar ao gato; passar a outra pessoa não', () => {
+  const singing = transition(initialWorld(), { type: 'give', actor: 'bia', item: 'microfone' }).state;
+  expect(transition(singing, { type: 'drop', actor: 'bia' }).state.show).toBe(false);
+  expect(transition(singing, { type: 'place', item: 'microfone', point: { x: 640, y: 530 } }).state.show).toBe(false);
+  expect(transition(singing, { type: 'give', actor: 'mimi', item: 'microfone' }).state.show).toBe(false);
+  expect(transition(singing, { type: 'give', actor: 'luna', item: 'microfone' }).state.show).toBe(true);
+  expect(transition(singing, { type: 'move', actor: 'bia', point: { x: 600, y: 530 } }).state.show).toBe(true);
+  const stage = transition(transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state, { type: 'show' }).state;
+  expect(transition(stage, { type: 'drop', actor: 'bia' }).state.show).toBe(true);
+});
+
 it('acorda ao comer, preserva show e não deixa comida na mão', () => {
   let state = transition(initialWorld(), { type: 'rest', actor: 'bia' }).state;
   state = transition(state, { type: 'show' }).state;
