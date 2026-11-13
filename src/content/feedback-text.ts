@@ -45,7 +45,8 @@ const thoughtLines: Record<'fome' | 'sono' | 'tedio', string> = { fome: '{nome} 
 export const thoughtLine = (need: 'fome' | 'sono' | 'tedio', name: string) => say(thoughtLines[need], name);
 /** The routine's dashed bubble (W3L-27), for screen readers only: a suggestion and where a touch takes the Map. */
 const routineLines: Record<Suggestion, string> = { mochila: 'Hora da escola, {nome}? Toque para ver no mapa.', pasta: 'Hora do trabalho, {nome}? Toque para ver no mapa.',
-  bola: 'Vamos brincar, {nome}? Toque para ver no mapa.', prato: 'Hora de comer, {nome}? Toque para ver no mapa.', travesseiro: 'Hora de dormir, {nome}? Toque para ver no mapa.' };
+  bola: 'Vamos brincar, {nome}? Toque para ver no mapa.', prato: 'Hora de comer, {nome}? Toque para ver no mapa.', travesseiro: 'Hora de dormir, {nome}? Toque para ver no mapa.',
+  mercado: 'A comida acabou, {nome}! Toque para ver o mercado no mapa.' };
 export const routineLine = (wish: Suggestion, name: string) => say(routineLines[wish], name);
 
 const outdoorLines: Record<Exclude<OutdoorAction['target'], 'leave'>, string> = {

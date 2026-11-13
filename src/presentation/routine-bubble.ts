@@ -5,7 +5,7 @@ import { worldToScreen } from './viewport';
 
 /** The drawing of each suggestion of the day (W3L-27): the backpack, the briefcase, the ball, the plate and the pillow. */
 const icons: Record<Suggestion, string> = { mochila: '/art/school.svg#mochila', pasta: '/art/school.svg#pasta', bola: '/icons/bola.svg',
-  prato: '/art/needs.svg#food', travesseiro: '/art/needs.svg#pillow' };
+  prato: '/art/needs.svg#food', travesseiro: '/art/needs.svg#pillow', mercado: '/art/market.svg#market' };
 export const suggestionIcon = (wish: Suggestion) => icons[wish];
 export interface Wish { actor: ActorId; suggestion: Suggestion; label: string }
 interface Deps<W extends Wish> {

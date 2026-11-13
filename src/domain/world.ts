@@ -14,6 +14,7 @@ import { eat, hug, rest, snack, wake } from './care';
 import { usePiece } from './use';
 import { refuse } from './missing';
 import { bedtime } from './bedtime';
+import { eatOne, runOut } from './larder';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -43,6 +44,7 @@ function pick(state: World, actor: Actor, itemId: import('./types').ItemId): Tra
   const item = visibleItem(state, itemId);
   if (state.items.some(i => i.holder === actor.id)) return refuse(state, 'hands', actor.id);
   if (!item || item.holder || item.room !== state.room) return refuse(state, 'place', actor.id);
+  if (runOut(state, item)) return refuse(state, 'market', actor.id);
   return {
     state: { ...state, items: state.items.map(i => i.id === itemId ? { ...i, holder: actor.id, spot: 'floor' } : i) },
     events: [{ type: 'picked', actor: actor.id }],
@@ -57,7 +59,8 @@ function release(state: World, actor: Actor, feeding: boolean): Transition {
   if (feeding && itemKind(item) !== food) return refuse(state, 'food', actor.id);
   const result = feeding ? changeActor(state, actor, { ...snack(actor), resting: false }, 'fed')
     : { state, events: [{ type: 'dropped' as const, actor: actor.id }] };
-  return { ...result, state: { ...result.state, items: state.items.map(i => i.id === item.id
+  const eaten = feeding ? eatOne(result.state, item) : result.state;
+  return { ...result, state: { ...eaten, items: state.items.map(i => i.id === item.id
     ? { ...i, ...foodHome(state, i, actor, feeding) } : i) } };
 }
 

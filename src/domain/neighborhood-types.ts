@@ -11,7 +11,9 @@ export const buildingModels = ['house', 'apartment', 'shop', 'hospital', 'police
 export type BuildingModel = typeof buildingModels[number];
 export interface Building { id: number; name: string; model: BuildingModel; color: Palette; plot: number; entry: RoomId; layout: Layout; show: boolean;
   /** The pantry (W3L-20): absent until the house first cooks, which reads as full. */
-  stock?: Stock }
+  stock?: Stock;
+  /** Snacks left in the fridge (lot 6F, 0 to 4): absent until the first one is eaten, which reads as 4. */
+  snacks?: number }
 export interface Resident extends Actor { location: Location;
   /** A grown-up's shift (W3L-25): the look it came to work in, and `off` once on the way home; never saved. */
   work?: { look: LookId; off?: true } }

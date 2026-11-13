@@ -13,12 +13,12 @@ export function takeStock(stock: Stock | undefined, bowl: readonly Ingredient[])
   for (const id of bowl.filter(isBasic)) { const left = (next[id] ?? 0) - 1; if (left > 0) next[id] = left; else delete next[id]; }
   return next;
 }
-/** Undo in Create brings old houses back but never refills a pantry: each house keeps the stock it has now. */
+/** Undo in Create brings old houses back but never refills a pantry or a fridge: each house keeps the stock and snacks it has now. */
 export function keepStock(next: Neighborhood, current: Neighborhood): Neighborhood['buildings'] {
   return next.buildings.map(b => {
     const now = current.buildings.find(c => c.id === b.id);
     if (!now) return b;
-    const rest = { ...b }; delete rest.stock;
-    return now.stock ? { ...rest, stock: now.stock } : rest;
+    const rest = { ...b }; delete rest.stock; delete rest.snacks;
+    return { ...rest, ...(now.stock ? { stock: now.stock } : {}), ...(now.snacks === undefined ? {} : { snacks: now.snacks }) };
   });
 }

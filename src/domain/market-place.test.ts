@@ -69,10 +69,10 @@ describe('o mercado (W3L-21)', () => {
     const progress = ['chocolate', 'semente-milho'] as const;
     const two = layoutWith(piece(1, 'market-shelf'), piece(2, 'market-shelf'));
     expect(marketGoods(two, two.pieces[0]!)).toEqual(['pao', 'leite', 'queijo', 'ovo', 'farinha', 'acucar']);
-    expect(marketGoods(two, two.pieces[1]!)).toEqual(['batata', 'oleo', 'peixe']);
-    expect(marketGoods(two, two.pieces[1]!, progress)).toEqual(['batata', 'oleo', 'peixe', 'chocolate', 'semente-milho']);
+    expect(marketGoods(two, two.pieces[1]!)).toEqual(['batata', 'oleo', 'peixe', 'lanche']);
+    expect(marketGoods(two, two.pieces[1]!, progress)).toEqual(['batata', 'oleo', 'peixe', 'lanche', 'chocolate', 'semente-milho']);
     const three = layoutWith(piece(1, 'market-shelf'), piece(2, 'market-shelf'), piece(3, 'market-shelf'));
-    expect(marketGoods(three, three.pieces[1]!, progress)).toEqual(['batata', 'oleo', 'peixe']);
+    expect(marketGoods(three, three.pieces[1]!, progress)).toEqual(['batata', 'oleo', 'peixe', 'lanche']);
     expect(marketGoods(three, three.pieces[2]!, progress)).toEqual(['chocolate', 'semente-milho']);
     const one = layoutWith(piece(1, 'market-shelf'));
     expect(marketGoods(one, one.pieces[0]!, progress)).toEqual(['pao', 'leite', 'queijo', 'ovo', 'farinha', 'acucar', 'chocolate', 'semente-milho']);
