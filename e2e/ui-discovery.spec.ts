@@ -77,7 +77,8 @@ test('ações da construção atual aparecem em Organizar sem rolar até o bairr
 test('a turma nasce espalhada a 1024 px e o cartão mostra a roupa atual', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 }); await ready(page);
   await page.screenshot({ path: 'reports/initial-1024.png' });
-  const actors = (await readTown(page)).actors;
+  // Only who is in the room shown (the grown-ups start in the bedroom, W3L-24).
+  const actors = (await readTown(page)).actors.filter(a => a.location.kind === 'interior' && a.location.room === 'sala');
   const boxes = await page.locator('canvas').evaluate((canvas, list) => {
     const box = canvas.getBoundingClientRect(), scale = box.width / Number(canvas.dataset.viewWidth);
     return list.map(a => {
