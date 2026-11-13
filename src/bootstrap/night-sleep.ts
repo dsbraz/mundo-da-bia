@@ -20,19 +20,20 @@ interface Deps {
 export function nightSleep(deps: Deps) {
   const fade = nightFade(deps.root);
   let sleeping = false;
-  function inBed(world: World, id: ActorId) {
+  function inBed(world: World, id: ActorId, anywhere: boolean) {
     const actor = world.actors.find(a => a.id === id);
-    return !!actor && actor.kind === 'human' && actor.resting && actor.room === world.room && !!actor.seat && seatPiece(world, actor.seat)?.kind === 'bed';
+    return !!actor && actor.kind === 'human' && actor.resting && (anywhere || actor.room === world.room) && !!actor.seat && seatPiece(world, actor.seat, actor.room)?.kind === 'bed';
   }
   function mark(value: string) {
     if (!navigator.webdriver) return;
     deps.root.dataset.nightSleep = value;
     deps.root.dataset.sleep = deps.town().actors.map(a => `${a.id}:${Math.round(needsOf(a).sono)}`).join(' ');
   }
-  return (events: readonly PresentationEvent[]) => {
+  /** `anywhere`: "Todos para a cama" (lot 6B) also put the selected one in a bed of another room of the house: the night passes too. */
+  return (events: readonly PresentationEvent[], anywhere = false) => {
     const id = deps.selected(), where = deps.town().location;
     if (sleeping || where.kind !== 'interior' || !['entardecer', 'noite'].includes(deps.phase())) return;
-    if (!events.some(e => e.type === 'rested' && e.actor === id) || !inBed(deps.state(), id)) return;
+    if (!events.some(e => e.type === 'rested' && e.actor === id) || !inBed(deps.state(), id, anywhere)) return;
     sleeping = true; mark('fading');
     const half = reducedMotion() ? 120 : 1500;
     fade.close(half);

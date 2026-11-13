@@ -2,6 +2,8 @@ import { expect, it } from 'vitest';
 import { initialWorld, transition } from './world';
 import { seatPiece, seatPoint } from './seats';
 import type { ActorId, Piece, World } from './types';
+import { initialAlbum } from './houses';
+import { localWorld, migrateNeighborhood, neighborhoodAction, storeWorld } from './neighborhood';
 
 // Lot 6B: "Todos para a cama": everyone of the house goes to a free bed or sofa (a cat to its bed), whoever finds none asks for a bed.
 const who = (world: World, id: ActorId) => world.actors.find(a => a.id === id)!;
@@ -43,4 +45,17 @@ it('quem já dorme fica; com mais lugares, ninguém sobra: uma cama antes de um 
   expect([kindOf(result.state, 'daniel'), kindOf(result.state, 'fabiana')]).toEqual(['sofa', 'sofa']);
   expect(who(result.state, 'daniel').room).toBe('quarto');
   expect(result.events.filter(e => e.type === 'missing')).toEqual([]);
+});
+it('na casa de verdade: quem está na rua ou noutro prédio não é chamado para a cama desta casa; na rua não há hora de dormir', () => {
+  const town = migrateNeighborhood(initialAlbum(initialWorld()));
+  const out = neighborhoodAction(town, { type: 'transport', actor: 'bia', location: { kind: 'street' }, point: { x: 300, y: 520 } });
+  const home = { ...out, location: { kind: 'interior' as const, building: 1, room: 'sala' as const } };
+  const result = transition(localWorld(home), { type: 'bedtime' });
+  const back = storeWorld(home, result.state);
+  expect(back.actors.find(a => a.id === 'bia')).toEqual(out.actors.find(a => a.id === 'bia'));
+  expect(result.events.some(e => e.actor === 'bia')).toBe(false);
+  // The bed of the bedroom goes to the next one, Luna keeps her sofa seat.
+  expect(back.actors.find(a => a.id === 'luna')).toMatchObject({ resting: true });
+  const street = localWorld({ ...out, location: { kind: 'street' } });
+  expect(transition(street, { type: 'bedtime' })).toEqual({ state: street, events: [] });
 });

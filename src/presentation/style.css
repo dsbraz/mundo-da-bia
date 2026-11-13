@@ -13,7 +13,10 @@ button.illustrated{display:inline-flex;align-items:center;justify-content:center
 .street #room-map, .street #room-options, .street #add-room, .street #quick-rooms, .street #build-catalog { display: none; }
 .street #room-name::after { content: ' · arraste com dois dedos'; }
 #cast { align-items: stretch; }
-#cast .bedtime-card > button { flex: 1; background: #e8e1f6; border-color: #b9a7dd; }
+.bedtime-card { margin-bottom: 8px; }
+.bedtime-card > button { width: 100%; min-height: 72px; background: #e8e1f6; border-color: #b9a7dd; }
+.bedtime-card img { width: 56px; height: 56px; pointer-events: none; }
+.mode-tray:has(#cast[hidden]) .bedtime-card { display: none; }
 .character-card { display: flex; flex-direction: column; gap: 6px; min-width: 96px; }
 .character-card > button { min-height: 44px; }
 #cast .character-card > button:last-child { min-height: 44px; }

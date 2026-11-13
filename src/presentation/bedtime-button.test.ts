@@ -3,7 +3,9 @@ import { initialWorld, transition } from '../domain/world';
 import { bedtimeMoves, bedtimeShown } from './bedtime-button';
 
 it('"Todos para a cama" só aparece ao entardecer e à noite (lote 6B)', () => {
-  expect((['manha', 'tarde', 'entardecer', 'noite', 'amanhecer'] as const).filter(bedtimeShown)).toEqual(['entardecer', 'noite']);
+  expect((['manha', 'tarde', 'entardecer', 'noite', 'amanhecer'] as const).filter(phase => bedtimeShown(phase))).toEqual(['entardecer', 'noite']);
+  // On the street there is no bed to go to.
+  expect(bedtimeShown('noite', false)).toBe(false);
 });
 it('à vista, quem fica no cômodo e muda de lugar anda até o sofá ou a caminha; quem vai para outro cômodo ou fica parado não anda aqui', () => {
   const before = initialWorld(), after = transition(before, { type: 'bedtime' }).state;

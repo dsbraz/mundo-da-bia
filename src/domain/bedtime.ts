@@ -23,7 +23,9 @@ function spotFor(state: World, actor: Actor): { seat: SeatRef; room: RoomId } | 
  *  the house (`spotFor`) takes her there, lying down; a cat with no cat bed curls up on a rug of its room. Whoever finds no place stays
  *  where she is and asks for a bed (the missing bubble, one event each). */
 export function bedtime(state: World): Transition {
-  const awake = state.actors.filter(a => !a.resting).sort((a, b) => Number(a.kind === 'cat') - Number(b.kind === 'cat'));
+  // Only a house has bedtime, and only for who is in it (someone on the street or in another building is in no room of this one).
+  if (state.streetWidth) return { state, events: [] };
+  const awake = state.actors.filter(a => !a.resting && Object.hasOwn(state.layout.rooms, a.room)).sort((a, b) => Number(a.kind === 'cat') - Number(b.kind === 'cat'));
   const result = awake.reduce<Transition>(({ state: next, events }, { id }) => {
     const actor = next.actors.find(a => a.id === id)!, spot = spotFor(next, actor);
     const point = spot && seatPoint(next, spot.seat, spot.room);
