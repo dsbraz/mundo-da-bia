@@ -28,12 +28,19 @@ export const startingRecipes: readonly RecipeId[] = recipeIds.slice(0, 6);
 export const secretRecipes: readonly RecipeId[] = recipeIds.slice(-3);
 /** Where the bench opens (the bakery's display case joins in W3-21). */
 export const benchKinds: readonly PieceKind[] = ['stove', 'counter', 'kitchen-cart'];
+type BenchKind = 'stove' | 'counter' | 'kitchen-cart';
+/** What each bench piece cooks with (W3L-16); a utensil it lacks is drawn as a silhouette and asks for the piece that has it. */
+export const benchUtensils: Readonly<Record<BenchKind, readonly Utensil[]>> = { stove: ['panela', 'forno'], counter: ['tabua', 'liquidificador'], 'kitchen-cart': ['tabua'] };
+/** The piece to look for when `utensil` is not at hand: the stove for the pan and the oven, the counter otherwise. */
+export const utensilPiece = (utensil: Utensil): 'stove' | 'counter' => benchUtensils.stove.includes(utensil) ? 'stove' : 'counter';
 /** Loose dishes a house holds; past it the bench does not cook. */
 export const tableLimit = 6;
 export interface CookInput { building: number; piece: number; cook: ActorId; ingredients: readonly Ingredient[]; utensil: Utensil }
 export type Outcome =
   | { kind: 'dish'; recipe: RecipeId; item: ItemId; fancy: boolean; discovered: boolean }
   | { kind: 'utensil'; utensil: Utensil }
+  /** The utensil is not at this piece (W3L-16): nothing changes and the bubble shows the piece that has it. */
+  | { kind: 'missing'; want: 'stove' | 'counter' }
   | { kind: 'ghost'; ingredient: Ingredient }
   | { kind: 'steam' } | { kind: 'full' } | { kind: 'none' };
 type Cooked = { town: Neighborhood; outcome: Outcome };
@@ -99,6 +106,7 @@ function handed(town: Neighborhood, cook: ActorId, item: ItemId): Neighborhood {
 export function cook(town: Neighborhood, input: CookInput): Cooked {
   const piece = bench(town, input);
   if (!piece || !validBowl(town.progress, input.ingredients, input.utensil)) return { town, outcome: { kind: 'none' } };
+  if (!benchUtensils[piece.kind as BenchKind].includes(input.utensil)) return { town, outcome: { kind: 'missing', want: utensilPiece(input.utensil) } };
   const recipe = recipes.find(r => r.utensil === input.utensil && sameSet(r, input.ingredients));
   return recipe ? serveDish(town, input, piece, recipe) : { town, outcome: hint(town.progress, input.ingredients, input.utensil) };
 }

@@ -85,7 +85,7 @@ test('as dicas não gastam nada: o utensílio certo balança, o fantasma mostra 
   await expect(bench(page).locator('[data-slot="2"]')).toHaveAttribute('data-ghost', 'queijo');
   await bench(page).locator('[data-slot="1"]').click(); await bench(page).locator('[data-slot="0"]').click();
   await ingredient(page, 'tomate').click(); await ingredient(page, 'peixe').click();
-  await utensil(page, 'liquidificador').click();
+  await utensil(page, 'panela').click();
   await expect(bench(page)).toHaveAttribute('data-steam', 'true');
   expect(await readTown(page)).toEqual(before);
   await expect(ingredient(page, 'tomate').locator('.pile img')).toHaveCount(1);
@@ -100,4 +100,18 @@ test('mesa cheia: com 6 pratos na casa a bancada não cozinha e os pratos pulam'
   await expect(page.locator('canvas')).toHaveAttribute('data-dish-hop', /\d/);
   expect(await dishes(page)).toHaveLength(6);
   await expect(page.locator('#announcement')).toHaveText('Mesa cheia! Quem quer comer?');
+});
+
+test('W3L-16: a bancada aberta pelo carrinho mostra a panela em silhueta; tocar nela mostra a bolha do fogão e nada cozinha', async ({ page }) => {
+  await kitchen(page, town => ({ ...town, buildings: town.buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.id === 1 ? { ...p, kind: 'kitchen-cart' as const } : p) } })) }));
+  await tap(page, ...await onPiece(page, 'kitchen-cart', 370, 325));
+  await expect(bench(page)).toBeVisible();
+  await expect(utensil(page, 'panela')).toHaveAttribute('data-absent', 'true');
+  await expect(utensil(page, 'tabua')).toHaveAttribute('data-absent', 'false');
+  const before = await readTown(page);
+  await ingredient(page, 'ovo').click();
+  await utensil(page, 'panela').click();
+  await expect(page.locator('.missing-bubble:not(.thought)')).toHaveAttribute('data-need', 'stove');
+  await expect(page.locator('.missing-bubble:not(.thought) img.need')).toHaveAttribute('src', '/art/market.svg#stove');
+  expect(await readTown(page)).toEqual(before);
 });

@@ -36,6 +36,7 @@ export const refusal = (kind: Refusal, name: string) => say(refusals[kind], name
 /** What a missing bubble means, for screen readers only (W3L-02): the bubble itself is a drawing. */
 const needLines: Record<Need, string> = {
   seat: 'Falta um lugar para sentar.', place: 'Aqui não tem lugar.', hands: 'As mãos estão cheias.', food: 'Essa comida não serve.', path: 'Por aqui não passa.', table: 'Falta uma mesa com cadeira.', bed: 'Falta uma cama para dormir.',
+  stove: 'Isso se faz no fogão.', counter: 'Isso se faz na bancada.', market: 'Acabou. Tem no mercado!', checkout: 'Antes, passa no caixa.',
 };
 export const needLine = (need: Need, by?: string) => by ? say('{nome} já está aí!', by) : needLines[need];
 /** What a thought bubble means (W3L-12), for screen readers only. */

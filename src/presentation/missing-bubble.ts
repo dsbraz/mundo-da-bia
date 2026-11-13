@@ -5,8 +5,10 @@ export interface Missing { need: Need; by?: ActorId; door?: boolean; label: stri
   /** With a door: a touch on the bubble takes her to the room where the piece is (W3L-15). */
   go?: () => void }
 type Frame = Pick<DOMRect, 'left' | 'top' | 'right' | 'bottom'>;
+/** Lot 4's drawings live in their own sheet. */
+const lotFour: readonly Need[] = ['stove', 'counter', 'market', 'checkout'];
 export function missingParts(missing: Missing): string[] {
-  return [`/art/needs.svg#${missing.need}`, ...(missing.by ? [`/icons/${missing.by}.svg`] : []), ...(missing.door ? ['/art/needs.svg#door'] : [])];
+  return [`/art/${lotFour.includes(missing.need) ? 'market' : 'needs'}.svg#${missing.need}`, ...(missing.by ? [`/icons/${missing.by}.svg`] : []), ...(missing.door ? ['/art/needs.svg#door'] : [])];
 }
 /** Where the missing piece is: in this room, in another room of the house (the bubble adds a door) or nowhere (its Create card glows). */
 export function missingWay(state: Pick<World, 'room' | 'layout'>, want: PieceKind | undefined): 'here' | 'door' | 'create' {

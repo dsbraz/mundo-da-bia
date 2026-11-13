@@ -4,13 +4,18 @@ import { needLine } from '../content/feedback-text';
 import type { Need } from '../domain/types';
 
 const needs: Need[] = ['seat', 'place', 'hands', 'food', 'path'];
+const lines: Need[] = [...needs, 'stove', 'counter', 'market', 'checkout'];
 it('toda recusa desenha o que falta; quem ocupa aparece pelo rosto e a porta quando a peça está em outro cômodo', () => {
   for (const need of needs) expect(missingParts({ need, label: needLine(need) })[0]).toBe(`/art/needs.svg#${need}`);
   expect(missingParts({ need: 'seat', by: 'rui', label: '' })).toEqual(['/art/needs.svg#seat', '/icons/rui.svg']);
   expect(missingParts({ need: 'seat', door: true, label: '' })).toEqual(['/art/needs.svg#seat', '/art/needs.svg#door']);
 });
+it('as faltas do lote 4 (fogão, bancada, mercado e caixa) vêm da folha do mercado, com a mesma porta', () => {
+  for (const need of ['stove', 'counter', 'market', 'checkout'] as Need[]) expect(missingParts({ need, label: needLine(need) })[0]).toBe(`/art/market.svg#${need}`);
+  expect(missingParts({ need: 'stove', door: true, label: '' })).toEqual(['/art/market.svg#stove', '/art/needs.svg#door']);
+});
 it('a frase vai só para o leitor de tela: curta, sem números, e diz quem está no lugar', () => {
-  for (const need of needs) { const line = needLine(need); expect(line.split(/\s+/).length).toBeLessThanOrEqual(6); expect(line).not.toMatch(/\d/); }
+  for (const need of lines) { const line = needLine(need); expect(line.split(/\s+/).length).toBeLessThanOrEqual(6); expect(line).not.toMatch(/\d/); }
   expect(needLine('seat', 'Rui')).toContain('Rui');
 });
 it('a bolha fica inteira dentro da cena, acima do ponto', () => {

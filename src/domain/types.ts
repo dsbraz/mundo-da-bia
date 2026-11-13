@@ -63,7 +63,9 @@ export type Action =
 /** Ephemeral: never saved. `cooked`, `ate`, `harvested`, `served`, `letter` and `hint` belong to the wave 3 systems (lines in W3-02). */
 /** What a refusal shows is missing (W3L-02): a free seat, a place to put it, a free hand, the right food, a way there, a table with a
  *  chair (W3L-07), a bed to sleep in (W3L-15). */
-export type Need = 'seat' | 'place' | 'hands' | 'food' | 'path' | 'table' | 'bed';
+export type Need = 'seat' | 'place' | 'hands' | 'food' | 'path' | 'table' | 'bed'
+  /** Lot 4: the piece with the utensil (W3L-16), a market to buy from, the checkout before leaving (W3L-22). */
+  | 'stove' | 'counter' | 'market' | 'checkout';
 export interface PresentationEvent {
   type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'
     | 'cooked' | 'ate' | 'sniffed' | 'harvested' | 'served' | 'letter' | 'hint' | 'missing' | 'hugged';

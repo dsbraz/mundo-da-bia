@@ -1,4 +1,4 @@
-import { cook, pantry } from '../domain/recipes';
+import { benchUtensils, cook, pantry, utensilPiece } from '../domain/recipes';
 import type { Outcome } from '../domain/recipes';
 import type { Ingredient, Utensil } from '../domain/ingredients';
 import type { Neighborhood } from '../domain/neighborhood-types';
@@ -22,7 +22,7 @@ export function kitchen(deps: KitchenDeps) {
   const book = recipeBook(deps.root, () => deps.town().progress);
   /** One thing over the scene at a time: the open tray folds away when the book opens. */
   const read = () => { const tray = deps.root.querySelector<HTMLButtonElement>('#tray-toggle'); if (tray?.getAttribute('aria-expanded') === 'true') tray.click(); void book.open(); };
-  const bench = kitchenBench(deps.root, { cook: run, close, book: read });
+  const bench = kitchenBench(deps.root, { cook: run, close, book: read, lack: utensil => lack(utensilPiece(utensil)) });
   deps.root.querySelector('#book-toggle')!.addEventListener('click', () => { if (book.isOpen()) book.close(); else read(); });
   deps.root.querySelector('#tray-toggle')?.addEventListener('click', () => book.close());
   const current = (): Piece | undefined => {
@@ -33,7 +33,7 @@ export function kitchen(deps: KitchenDeps) {
   function open(id: number) {
     piece = id; const at = current(); if (!at) { piece = null; return; }
     deps.root.classList.add('at-bench');
-    bench.open(stock(), { x: at.x + pieceBounds[at.kind].width / 2, y: at.y + pieceBounds[at.kind].height / 2 });
+    bench.open(stock(), { x: at.x + pieceBounds[at.kind].width / 2, y: at.y + pieceBounds[at.kind].height / 2 }, benchUtensils[at.kind as keyof typeof benchUtensils]);
   }
   function close() { piece = null; deps.root.classList.remove('at-bench'); bench.close(); }
   function run(ingredients: Ingredient[], utensil: Utensil) {
@@ -49,7 +49,10 @@ export function kitchen(deps: KitchenDeps) {
     if (outcome.kind === 'utensil' || outcome.kind === 'ghost') deps.feedback.events([{ type: 'hint', actor }]);
     if (outcome.kind === 'steam') { deps.scene.poke(actor, 'goof', ''); deps.feedback.sound.cue('poke'); }
     if (outcome.kind === 'full') { deps.scene.cooked(at, null); deps.feedback.refuse('place', fullTableLine); }
+    if (outcome.kind === 'missing') lack(outcome.want);
   }
+  /** The bubble with the piece that has it: a door when it is in another room, its Create card when the house has none. */
+  function lack(want: 'stove' | 'counter') { deps.feedback.events([{ type: 'missing', actor: deps.selected(), need: want, want }]); }
   /** After every refresh: the bench closes in Create, away from its piece's room, or when the cook is somewhere else. */
   function refresh() {
     if (deps.building()) book.close(); else book.refresh();

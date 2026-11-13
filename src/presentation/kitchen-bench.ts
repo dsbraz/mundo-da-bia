@@ -8,7 +8,8 @@ import { worldToScreen } from './viewport';
 
 /** One pantry entry: a crop carries how many units the basket holds (1 to 6), drawn as a pile of icons, never as a number. */
 export interface PantryEntry { id: Ingredient; pile?: number | undefined }
-export interface BenchActions { cook: (bowl: Ingredient[], utensil: Utensil) => void; close: () => void; book: () => void }
+/** `lack`: a silhouette utensil was tapped (this piece does not have it, W3L-16). */
+export interface BenchActions { cook: (bowl: Ingredient[], utensil: Utensil) => void; close: () => void; book: () => void; lack: (utensil: Utensil) => void }
 /** The cooking animation; nothing waits for it (the bowl is free again at once). */
 export const cookMs = 1200;
 export const ingredientIcon = (id: Ingredient) => id === 'peixe' ? '/icons/peixe.svg' : `/icons/ing-${id}.svg`;
@@ -53,7 +54,9 @@ export function kitchenBench(root: HTMLElement, actions: BenchActions) {
     bowl = bowl.filter(id => entries.some(e => e.id === id)); renderBowl();
   }
   slots.forEach((slot, i) => slot.addEventListener('click', () => { if (bowl[i]) { bowl = bowl.filter((_, n) => n !== i); ghost = null; renderBowl(); } }));
-  tools.forEach((tool, i) => tool.addEventListener('click', () => { if (bowl.length) actions.cook([...bowl], utensils[i]!); else flash(bowlArea, 'nudge', wobbleMs); }));
+  tools.forEach((tool, i) => tool.addEventListener('click', () => {
+    if (tool.dataset.absent === 'true') actions.lack(utensils[i]!); else if (bowl.length) actions.cook([...bowl], utensils[i]!); else flash(bowlArea, 'nudge', wobbleMs);
+  }));
   close.addEventListener('click', () => actions.close()); book.addEventListener('click', () => actions.book());
   function flash(target: HTMLElement, name: string, ms: number) { target.classList.remove(name); void target.offsetWidth; target.classList.add(name); later(ms, () => target.classList.remove(name)); }
   function show(outcome: Outcome) {
@@ -65,7 +68,8 @@ export function kitchenBench(root: HTMLElement, actions: BenchActions) {
   }
   return {
     /** Opens beside the scene, on the side away from `anchor` (the bench piece, in world coordinates) so the dish stays in view. */
-    open(entries: PantryEntry[], anchor: Point) {
+    open(entries: PantryEntry[], anchor: Point, here: readonly Utensil[] = utensils) {
+      tools.forEach((tool, i) => { tool.dataset.absent = String(!here.includes(utensils[i]!)); });
       if (!bowlArt.src) void sheet('kitchen').then(source => { bowlArt.src = sheetPart(source, ['bowl'], bowlBox); steam.src = sheetPart(source, ['steam'], steamBox); });
       if (!cover.src) void sheet('book').then(source => { cover.src = sheetPart(source, ['cover'], coverBox); });
       const canvas = root.querySelector('canvas'), world = root.querySelector('#world')!.getBoundingClientRect();
