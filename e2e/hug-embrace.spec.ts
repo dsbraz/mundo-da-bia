@@ -49,8 +49,9 @@ for (const size of sizes) for (const reduced of [false, true]) test(`soltar a Bi
 test('abraços com um adulto e com um gato', async ({ page }) => {
   test.setTimeout(120_000);
   const world: World = initialWorld();
-  world.actors = world.actors.map(a => a.id === 'fabiana' ? { ...a, room: 'sala', x: 760, y: 530 } : a.id === 'rui' ? { ...a, x: 900 } : a);
+  world.actors = world.actors.map(a => a.id === 'fabiana' ? { ...a, room: 'sala', x: 760, y: 530 } : a.id === 'rui' ? { ...a, x: 910 } : a.id === 'mimi' ? { ...a, x: 840 } : a.id === 'nino' ? { ...a, x: 330 } : a);
   await start(page, sizes[0]!, world);
+  expect((await readTown(page)).actors.find(a => a.id === 'fabiana')!.room).toBe('sala');
   await hug(page, 'bia', [760, 530], 'fabiana');
   await page.screenshot({ path: 'reports/review/lot6b-hug-adult-1024.png' });
   await page.clock.runFor(1500);
