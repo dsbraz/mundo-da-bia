@@ -18,7 +18,8 @@ export function buildingChooser(dialog: HTMLDialogElement, build: (model: Buildi
     const grid = document.createElement('div'); grid.className = 'building-models';
     for (const { model, market } of choices) {
       const info = market ? marketChoice : buildingChoices[model], card = button('', () => preview(model, market)); card.className = 'building-choice'; card.dataset.group = info.group;
-      if (market) card.dataset.plan = 'market';
+      // An empty pantry asked for a market (W3L-23): its card glows.
+      if (market) { card.dataset.plan = 'market'; card.classList.toggle('wanted', !!dialog.closest('[data-want-market="true"]')); }
       card.setAttribute('aria-label', `${info.name} · ${info.description}`);
       const name = document.createElement('strong'); name.textContent = info.name;
       const description = document.createElement('small'); description.textContent = info.description;

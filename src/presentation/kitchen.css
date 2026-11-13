@@ -51,6 +51,7 @@
 .bag-close{padding:8px;min-width:48px;min-height:48px}.bag-close.illustrated::before{width:26px;height:26px;flex-basis:26px}
 @media(max-width:700px){#seed-bag{position:fixed;left:50%!important;top:96px!important;transform:translateX(-50%);width:calc(100vw - 24px);flex-wrap:wrap;justify-content:center}#seed-bag .bag-art{width:40px;height:40px}.bag-seeds{flex-wrap:wrap;justify-content:center}.bag-seed{width:54px;height:54px}}
 /* W3L-16: a utensil this piece does not have is a silhouette; a tap shows the bubble of the piece that has it. */
+.bench-ingredient[data-empty=true]{border-style:dashed;border-color:var(--silhouette-line);background:transparent}.bench-ingredient[data-empty=true] img{filter:grayscale(1) brightness(1.5) contrast(.45);opacity:.6}
 .bench-utensil[data-absent=true]{border-style:dashed;border-color:var(--silhouette-line);background:transparent}.bench-utensil[data-absent=true] img{filter:grayscale(1) brightness(1.5) contrast(.45);opacity:.6}
 /* W3L-22: the market shelf beside the scene. The bag shows up to 6 goods by picture (never a number); a tapped good hops in. */
 #market-panel{position:absolute;z-index:12;top:88px;right:12px;width:min(336px,calc(100vw - 24px));max-height:calc(100% - 168px);display:flex;flex-direction:column;gap:10px;padding:10px 12px 12px;background:var(--paper);border:1.5px solid var(--outline);border-radius:18px;box-shadow:0 6px 18px #343c531f;overflow:auto;overscroll-behavior:contain}

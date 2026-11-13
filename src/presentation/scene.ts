@@ -22,7 +22,7 @@ import { faceEvents, faces, pokeFace, type Expression } from './expression';
 import { mirrorReflections } from './mirror-reflection';
 import { actorDropTarget, dropLights, personTarget } from './drop-target';
 import { drawPieces, drawObjects, pickPiece, pieceDepth } from './piece-art';
-import { drawShelfGoods } from './market-art';
+import { drawPantries } from './fridge-stock';
 import { actorAt, previewPoint } from './targets';
 import { hoverHint, shownWorld } from './scene-view';
 import { snapGhost } from './scene-ghost';
@@ -109,7 +109,7 @@ export class PlayScene extends Phaser.Scene {
     this.sliding = null; this.transferRoom = null;
     this.children.removeAll(true); this.drops.reset(); this.doorLight = null; this.ghost = null; this.hint = null; this.objects = []; this.moving = null; this.game.canvas.dataset.walking = '';
     this.outdoor.paint(state, selected); this.night.paint(state, this.town);
-    this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece); drawShelfGoods(this, state, this.pieces, []);
+    this.pieces = drawPieces(this, state, this.wardrobe && !this.building, this.piece); drawPantries(this, state, this.pieces, this.town);
     this.figures = [];
     if (!this.building) this.paintPlay(state, selected);
     this.game.canvas.dataset.ready = 'true'; this.playCooking();

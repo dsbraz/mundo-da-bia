@@ -1,5 +1,5 @@
 import type { GardenAction, Neighborhood } from './neighborhood-types';
-import { basketLimit, plazaPlots } from './progress';
+import { basketLimit, plazaPlots, revealShelves } from './progress';
 import type { PlazaPlot, Progress } from './progress';
 import type { CropId, Plant, Point } from './types';
 
@@ -52,7 +52,7 @@ export function harvest(town: Neighborhood, plot: PlazaPlot): { town: Neighborho
   const have = town.progress.basket[ready.crop] ?? 0, amount = Math.min(harvestAmount, basketLimit - have);
   if (amount <= 0) return { town, amount: 0 };
   const plaza = { ...town.progress.plaza }; delete plaza[plot];
-  return { town: { ...town, progress: { ...town.progress, plaza, basket: { ...town.progress.basket, [ready.crop]: have + amount } } }, amount };
+  return { town: { ...town, progress: revealShelves({ ...town.progress, plaza, basket: { ...town.progress.basket, [ready.crop]: have + amount } }, true) }, amount };
 }
 /** The plot nearest to `point` among the thirsty ones, or among all four when none is thirsty. */
 export function nearestPlot(progress: Progress, point: Point): PlazaPlot {

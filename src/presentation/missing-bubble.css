@@ -5,7 +5,7 @@
 .missing-bubble .face{width:58px;height:58px;border-radius:50%;background:#fffdf7;border:3px solid var(--outline)}
 .missing-bubble .door{width:60px;height:60px}
 @keyframes missing-pop{from{transform:translate(-50%,calc(-100% - 16px)) scale(.6);opacity:0}to{transform:translate(-50%,calc(-100% - 16px)) scale(1);opacity:1}}
-#build-toggle.wanted,.catalog-piece.wanted{box-shadow:0 0 0 4px #f2b630,0 0 18px 6px #f2b630aa;animation:wanted-glow 1.4s ease-in-out infinite alternate}
+#build-toggle.wanted,.catalog-piece.wanted,.building-choice.wanted{box-shadow:0 0 0 4px #f2b630,0 0 18px 6px #f2b630aa;animation:wanted-glow 1.4s ease-in-out infinite alternate}
 @keyframes wanted-glow{from{box-shadow:0 0 0 3px #f2b630,0 0 8px 2px #f2b63088}to{box-shadow:0 0 0 5px #f2b630,0 0 22px 8px #f2b630bb}}
 /* W3L-12: the same bubble as a thought cloud (two little circles toward the head), one per room; `precisa` pulses slowly. Under the header,
    the trays and the character menu (z 3+), which it never covers. */

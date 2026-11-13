@@ -35,6 +35,17 @@ export function initialProgress(): Progress {
   return { recipes: [], fancy: [], seeds: ['alface', 'tomate', 'cenoura'], specials: [], basket: {}, plaza: {},
     post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [] };
 }
+/** When each appears (§3.4): the first harvest brings corn seeds; discovered recipes bring the specials, and after a harvest more seeds. */
+const reveals: readonly [ShelfUnlock, (recipes: number, harvested: boolean) => boolean][] = [
+  ['semente-milho', (_, harvested) => harvested], ['chocolate', n => n >= 1], ['canela', n => n >= 3], ['mel', n => n >= 5],
+  ['semente-morango', (n, harvested) => harvested && n >= 2], ['semente-abobora', (n, harvested) => harvested && n >= 4],
+];
+/** What is new on the market's shelves after a harvest (`harvest`) or a recipe: it only grows, in the order it appeared. */
+export function revealShelves(progress: Progress, harvest: boolean): Progress {
+  const harvested = harvest || progress.shelves.includes('semente-milho');
+  const fresh = reveals.filter(([id, when]) => !progress.shelves.includes(id) && when(progress.recipes.length, harvested)).map(([id]) => id);
+  return fresh.length ? { ...progress, shelves: [...progress.shelves, ...fresh] } : progress;
+}
 /** The next free item number: one past the largest numeric prefix among the item ids (1 with none). */
 export function nextItemAfter(items: readonly Pick<Item, 'id'>[]): number {
   return Math.max(0, ...items.map(i => Number.parseInt(String(i.id), 10)).filter(Number.isSafeInteger)) + 1;

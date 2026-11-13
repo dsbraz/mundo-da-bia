@@ -17,7 +17,8 @@ export const dishNames: Record<RecipeId, string> = {
   brigadeiro: 'Brigadeiro', 'bolo-de-chocolate': 'Bolo de chocolate', 'torrada-de-canela': 'Torrada de canela', 'morango-com-mel': 'Morango com mel',
   'batata-frita': 'Batata frita', pastel: 'Pastel', 'petisco-de-gato': 'Petisco de gato', 'chocolate-quente': 'Chocolate quente', 'bolo-de-mel': 'Bolo de mel',
 };
-export const benchText = { region: 'Bancada da cozinha', bowl: 'Tigela', close: 'Fechar a bancada', book: 'Livro de receitas', empty: 'Lugar vazio na tigela', remove: (name: string) => `Tirar ${name} da tigela` };
+export const benchText = { region: 'Bancada da cozinha', bowl: 'Tigela', close: 'Fechar a bancada', book: 'Livro de receitas', empty: 'Lugar vazio na tigela', remove: (name: string) => `Tirar ${name} da tigela`,
+  outOf: (name: string) => `Acabou: ${name} vem do mercado` };
 /** Said when a house already has 6 loose dishes (§3.2): nothing is lost. */
 export const fullTableLine = 'Mesa cheia! Quem quer comer?';
 export const bookText = { region: 'Livro de receitas', toggle: 'Receitas', open: 'Abrir o livro de receitas', close: 'Fechar o livro', secrets: 'Segredos',

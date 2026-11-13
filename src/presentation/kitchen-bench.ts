@@ -6,10 +6,13 @@ import { benchText, ingredientNames, utensilNames } from '../content/kitchen';
 import { bowlBox, sheet, sheetPart, steamBox } from './art-sheet';
 import { worldToScreen } from './viewport';
 
-/** One pantry entry: a crop carries how many units the basket holds (1 to 6), drawn as a pile of icons, never as a number. */
-export interface PantryEntry { id: Ingredient; pile?: number | undefined }
-/** `lack`: a silhouette utensil was tapped (this piece does not have it, W3L-16). */
-export interface BenchActions { cook: (bowl: Ingredient[], utensil: Utensil) => void; close: () => void; book: () => void; lack: (utensil: Utensil) => void }
+/** One pantry entry: a crop carries how many units the basket holds (1 to 6), drawn as a pile of icons, never as a number;
+ *  `empty`: a basic the house ran out of, drawn as a silhouette (W3L-23). */
+export interface PantryEntry { id: Ingredient; pile?: number | undefined; empty?: boolean }
+/** `lack`: a silhouette utensil was tapped (this piece does not have it, W3L-16); `restock`: a silhouette ingredient (it comes from the market, W3L-23). */
+export interface BenchActions {
+  cook: (bowl: Ingredient[], utensil: Utensil) => void; close: () => void; book: () => void; lack: (utensil: Utensil) => void; restock: (id: Ingredient) => void;
+}
 /** The cooking animation; nothing waits for it (the bowl is free again at once). */
 export const cookMs = 1200;
 export const ingredientIcon = (id: Ingredient) => id === 'peixe' ? '/icons/peixe.svg' : `/icons/ing-${id}.svg`;
@@ -50,8 +53,8 @@ export function kitchenBench(root: HTMLElement, actions: BenchActions) {
   }
   function add(id: Ingredient) { if (bowl.length < places && !bowl.includes(id)) { bowl = [...bowl, id]; ghost = null; renderBowl(); } }
   function stock(entries: PantryEntry[]) {
-    shelf.replaceChildren(...entries.map(entry => pantryButton(entry, add, () => bowlArea.getBoundingClientRect())));
-    bowl = bowl.filter(id => entries.some(e => e.id === id)); renderBowl();
+    shelf.replaceChildren(...entries.map(entry => entry.empty ? emptyButton(entry.id, actions.restock) : pantryButton(entry, add, () => bowlArea.getBoundingClientRect())));
+    bowl = bowl.filter(id => entries.some(e => e.id === id && !e.empty)); renderBowl();
   }
   slots.forEach((slot, i) => slot.addEventListener('click', () => { if (bowl[i]) { bowl = bowl.filter((_, n) => n !== i); ghost = null; renderBowl(); } }));
   tools.forEach((tool, i) => tool.addEventListener('click', () => {
@@ -80,6 +83,12 @@ export function kitchenBench(root: HTMLElement, actions: BenchActions) {
     close() { panel.hidden = true; timers.forEach(clearTimeout); timers = []; panel.dataset.cooking = ''; panel.dataset.steam = ''; panel.dataset.wobble = ''; steam.hidden = true; },
     refresh: stock, show, isOpen: () => !panel.hidden,
   };
+}
+/** A basic the house ran out of: its silhouette, and a tap shows where it comes from. */
+function emptyButton(id: Ingredient, restock: (id: Ingredient) => void) {
+  const button = element('button', 'bench-ingredient', benchText.outOf(ingredientNames[id])); button.dataset.ingredient = id; button.dataset.empty = 'true';
+  button.append(picture(ingredientIcon(id))); button.addEventListener('click', () => restock(id));
+  return button;
 }
 /** A pantry button: a tap puts the ingredient in the bowl, and so does dragging it there. */
 function pantryButton(entry: PantryEntry, add: (id: Ingredient) => void, bowl: () => DOMRect) {

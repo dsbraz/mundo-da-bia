@@ -1,7 +1,9 @@
 import { benchUtensils, cook, pantry, utensilPiece } from '../domain/recipes';
 import type { Outcome } from '../domain/recipes';
-import type { Basic, Ingredient, Utensil } from '../domain/ingredients';
+import { basics } from '../domain/ingredients';
+import type { Ingredient, Utensil } from '../domain/ingredients';
 import { stockOf } from '../domain/stock';
+import { hasMarket } from '../domain/market';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { pieceBounds } from '../domain/layout';
 import type { ActorId, CropId, Piece } from '../domain/types';
@@ -15,7 +17,7 @@ interface KitchenDeps {
   root: HTMLElement; town: () => Neighborhood; selected: () => ActorId; building: () => boolean;
   /** Commits a neighborhood changed by the bench (saved and drawn), outside the undo history. */
   apply: (town: Neighborhood) => void;
-  scene: Pick<PlayScene, 'cooked' | 'poke'>; feedback: Pick<ReturnType<typeof sceneFeedback>, 'events' | 'refuse' | 'sound'>;
+  scene: Pick<PlayScene, 'cooked' | 'poke'>; feedback: Pick<ReturnType<typeof sceneFeedback>, 'events' | 'refuse' | 'sound' | 'missing'>;
 }
 /** The bench of the current room's stove, counter or cart: the selected character cooks there (§3.2). */
 export function kitchen(deps: KitchenDeps) {
@@ -23,19 +25,27 @@ export function kitchen(deps: KitchenDeps) {
   const book = recipeBook(deps.root, () => deps.town().progress);
   /** One thing over the scene at a time: the open tray folds away when the book opens. */
   const read = () => { const tray = deps.root.querySelector<HTMLButtonElement>('#tray-toggle'); if (tray?.getAttribute('aria-expanded') === 'true') tray.click(); void book.open(); };
-  const bench = kitchenBench(deps.root, { cook: run, close, book: read, lack: utensil => lack(utensilPiece(utensil)) });
+  const bench = kitchenBench(deps.root, { cook: run, close, book: read, lack: utensil => lack(utensilPiece(utensil)), restock });
   deps.root.querySelector('#book-toggle')!.addEventListener('click', () => { if (book.isOpen()) book.close(); else read(); });
   deps.root.querySelector('#tray-toggle')?.addEventListener('click', () => book.close());
   const current = (): Piece | undefined => {
     const where = deps.town().location;
     return where.kind === 'interior' ? deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.id === piece && p.room === where.room) : undefined;
   };
-  /** The house's pantry (W3L-20) and the basket, each drawn as a pile of up to 4 or 6 icons. */
+  /** The house's pantry (W3L-20, a basic it ran out of as a silhouette) and the basket, each drawn as a pile of up to 4 or 6 icons. */
   const stock = () => {
     const town = deps.town(), where = town.location, house = where.kind === 'interior' ? town.buildings.find(b => b.id === where.building) : undefined;
     const shelf = house ? stockOf(house) : {};
-    return pantry(town.progress, shelf).map(id => ({ id, pile: town.progress.basket[id as CropId] ?? shelf[id as Basic] }));
+    return [...basics.map(id => ({ id, pile: shelf[id], empty: !shelf[id] })), ...pantry(town.progress, {}).map(id => ({ id, pile: town.progress.basket[id as CropId] }))];
   };
+  /** Once the town has a market, the Mercado card stops glowing. */
+  const forgetMarket = () => { if (hasMarket(deps.town())) delete deps.root.dataset.wantMarket; };
+  /** A silhouette ingredient: the market bubble; with no market in town yet, the Create button and the Mercado card glow. */
+  function restock() {
+    deps.feedback.missing('market', { actor: deps.selected() });
+    if (hasMarket(deps.town())) return;
+    deps.root.dataset.wantMarket = 'true'; deps.root.querySelector('#build-toggle')?.classList.add('wanted');
+  }
   function open(id: number) {
     piece = id; const at = current(); if (!at) { piece = null; return; }
     deps.root.classList.add('at-bench');
@@ -62,6 +72,7 @@ export function kitchen(deps: KitchenDeps) {
   /** After every refresh: the bench closes in Create, away from its piece's room, or when the cook is somewhere else. */
   function refresh() {
     if (deps.building()) book.close(); else book.refresh();
+    forgetMarket();
     if (piece === null) return;
     const where = deps.town().location, cook = deps.town().actors.find(a => a.id === deps.selected());
     const here = cook?.location.kind === 'interior' && where.kind === 'interior' && cook.location.building === where.building && cook.location.room === where.room;

@@ -1,5 +1,5 @@
 import type { Neighborhood, NeighborhoodItem } from './neighborhood-types';
-import { recipeIds, specialIds } from './progress';
+import { recipeIds, revealShelves, specialIds } from './progress';
 import type { Progress, RecipeId } from './progress';
 import { cropIds } from './types';
 import type { ActorId, ItemId, Piece, PieceKind, Point } from './types';
@@ -92,8 +92,8 @@ function serveDish(town: Neighborhood, input: CookInput, piece: Piece, recipe: R
   const fancy = town.actors.find(a => a.id === input.cook)!.look === 'chef', discovered = !known(town.progress, recipe.id);
   const location = { kind: 'interior' as const, building: input.building, room: piece.room };
   const spawned = spawnItem(town, { kind: 'prato', recipe: recipe.id, ...(fancy ? { fancy: true as const } : {}), location, point: dishPoint(town, input.building, piece, dishes.length) });
-  const progress = { ...town.progress, basket: useCrops(town.progress, input.ingredients),
-    recipes: add(town.progress.recipes, recipe.id, discovered), fancy: add(town.progress.fancy, recipe.id, fancy) };
+  const progress = revealShelves({ ...town.progress, basket: useCrops(town.progress, input.ingredients),
+    recipes: add(town.progress.recipes, recipe.id, discovered), fancy: add(town.progress.fancy, recipe.id, fancy) }, false);
   const item = (spawned.items.at(-1) as NeighborhoodItem).id;
   const buildings = spawned.buildings.map(b => b.id === input.building ? { ...b, stock: takeStock(b.stock, input.ingredients) } : b);
   return { town: { ...handed(spawned, input.cook, item), buildings, progress }, outcome: { kind: 'dish', recipe: recipe.id, item, fancy, discovered } };
