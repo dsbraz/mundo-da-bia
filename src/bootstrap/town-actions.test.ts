@@ -79,3 +79,12 @@ it('W3L-13: brincar mexe só nas necessidades, em silêncio (sem salvar nem repi
   expect(current().actors.find(a => a.id === 'rui')!.needs?.alegria).toBe(60_000);
   expect(deps.commit).not.toHaveBeenCalled(); expect(deps.refresh).not.toHaveBeenCalled();
 });
+
+it('a manhã depois da noite dormida (W3L-15) acorda quem dormiu: o bairro é aplicado inteiro (mundo e cena), não só as necessidades', () => {
+  const base = migrateNeighborhood(initialAlbum(initialWorld()));
+  const town = { ...base, actors: base.actors.map(a => a.id === 'bia' ? { ...a, seat: '2.0' as const, resting: true, needs: { fome: 20, sono: 90, tedio: 0, alegria: 0 } } : a) };
+  const { actions, deps, current } = setup(town);
+  actions.sleepThrough(1);
+  expect(current().actors[0]).toMatchObject({ resting: false, needs: { sono: 0 } });
+  expect(deps.commit).toHaveBeenCalledTimes(1); expect(deps.refresh).toHaveBeenCalledTimes(1); expect(deps.feel).not.toHaveBeenCalled();
+});

@@ -11,7 +11,7 @@ import { lookImage } from './look-image';
 import { actors, looks } from '../content/catalog';
 import { cards } from '../content/personalities';
 import { actorIds, lookIds } from '../domain/types';
-import type { Action, Actor, ActorId, World } from '../domain/types';
+import type { Action, Actor, ActorId, Point, World } from '../domain/types';
 import { uiText } from '../content/ui-text';
 import { onFloor } from './floor-band';
 
@@ -95,10 +95,22 @@ export function positionContext(root: HTMLElement, actor: Actor, state: World) {
   const world = root.querySelector('#world')?.getBoundingClientRect();
   if (!canvas || !world?.width) return;
   const app = root.getBoundingClientRect(), scale = screenScale(canvas), feet = worldToScreen(canvas, actor);
-  const width = context.offsetWidth || ringWidth(context), height = context.offsetHeight || 84, tall = (actor.kind === 'cat' ? 170 : 300) * scale;
-  const x = feet.x - width / 2, y = feet.y - tall - height;
-  context.style.setProperty('--ring-x', `${Math.round(Math.max(world.left + 8, Math.min(world.right - width - 8, x)) - app.left)}px`);
-  context.style.setProperty('--ring-y', `${Math.round(Math.max(world.top + 8, Math.min(world.bottom - height - 8, y)) - app.top)}px`);
+  const size = { width: context.offsetWidth || ringWidth(context), height: context.offsetHeight || 84 }, tall = (actor.kind === 'cat' ? 170 : 300) * scale;
+  // Half the widest speech bubble (340 px of text and its padding), so the ring beside the head leaves the line in view.
+  const place = ringPlace(feet, size, tall, 186 * scale, world);
+  context.style.setProperty('--ring-x', `${Math.round(place.x - app.left)}px`);
+  context.style.setProperty('--ring-y', `${Math.round(place.y - app.top)}px`);
+}
+type Frame = { left: number; top: number; right: number; bottom: number };
+/** Where the ring's top-left corner goes (screen pixels): above the head and the speech line (`tall` above the feet), centred, inside the
+ *  scene; when there is no room above (a high seat, such as a bed, on a short screen) beside the head instead, `half` away from its middle
+ *  (right, else left), so the line said there is never under the ring (W3L-15). */
+export function ringPlace(feet: Point, size: { width: number; height: number }, tall: number, half: number, world: Frame): Point {
+  const fit = (x: number) => Math.max(world.left + 8, Math.min(world.right - size.width - 8, x));
+  const y = feet.y - tall - size.height;
+  if (y >= world.top + 8) return { x: fit(feet.x - size.width / 2), y: Math.min(world.bottom - size.height - 8, y) };
+  const right = feet.x + half;
+  return { x: fit(right + size.width <= world.right - 8 ? right : feet.x - half - size.width), y: world.top + 8 };
 }
 
 /** The ring's width while it is hidden (a tray open): its big buttons, "mais", the gaps and the padding (drawer-ring.css). */

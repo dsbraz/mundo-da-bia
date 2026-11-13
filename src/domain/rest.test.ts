@@ -87,6 +87,11 @@ describe('dormir até de manhã (W3L-15)', () => {
     const sono = (id: ActorId) => needsOf(morning.actors.find(a => a.id === id)!).sono;
     expect([sono('bia'), sono('luna'), sono('leo'), sono('rui'), sono('mimi')]).toEqual([0, 0, 90, 90, 90]);
     expect(needsOf(morning.actors[0]!)).toEqual({ fome: 50, sono: 0, tedio: 10, alegria: 0 });
+    // Who slept wakes up, ready to eat again: out of bed onto the floor in front of it, or sitting up on the sofa; the others stay.
+    const who = (id: ActorId) => morning.actors.find(a => a.id === id)!;
+    expect(who('bia')).toMatchObject({ resting: false, fed: false, seat: null, x: night.actors[0]!.x, y: 530 });
+    expect(who('luna')).toMatchObject({ resting: false, seat: '2.1' });
+    expect([who('mimi').resting, who('leo').resting, who('rui').resting]).toEqual([true, true, true]);
   });
   it('ninguém deitado: nada muda', () => {
     const start = town();

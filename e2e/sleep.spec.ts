@@ -48,6 +48,9 @@ for (const reduced of [false, true]) test(`à noite, deitar a Bia leva à manhã
   expect(waited).toBeLessThanOrEqual(3000);
   expect(await night(page)).toMatch(/^manha:/);
   await page.clock.runFor(1500);
+  // Who slept wakes up (out of bed, on the floor in front of it) and says good morning: that line replaces her "rested" one.
+  expect(await actor(page, 'bia')).toMatchObject({ seat: null, resting: false, y: 530 });
+  await expect(page.locator('canvas')).toHaveAttribute('data-reaction', 'bia:Bom dia! Já é de manhã.');
   const after = await sleep(page);
   expect([after.bia, after.luna]).toEqual(['0', '0']);
   expect(Number(after.rui)).toBeGreaterThan(40);

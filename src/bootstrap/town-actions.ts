@@ -86,9 +86,9 @@ export function townActions(deps: TownDeps) {
   function enjoy(actor: ActorId, game: Game) {
     const next = neighborhoodAction(deps.town(), { type: 'enjoy', actor, game }); if (next !== deps.town()) deps.feel(next);
   }
-  /** The night slept through in `building` (W3L-15): only the needs change, quietly. */
+  /** The night slept through in `building` (W3L-15): whoever slept has sleep 0 and wakes up, applied in full (world and scene) under the veil. */
   function sleepThrough(building: number) {
-    const next = neighborhoodAction(deps.town(), { type: 'morning', building }); if (next !== deps.town()) deps.feel(next);
+    apply(neighborhoodAction(deps.town(), { type: 'morning', building }));
   }
   return { dispatch, undo, remember, preview, tick, apply, enjoy, sleepThrough, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }
