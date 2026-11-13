@@ -35,7 +35,7 @@ test('mapa reúne navegação e transporte sem um segundo menu Explorar', async 
   await expect(page.locator('#navigation-toggle')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Ir para Rua', exact: true })).toBeVisible();
   await expect(page.locator('#room-dialog').getByRole('button', { name: /Excluir|Mover|Levar|Trazer/ })).toHaveCount(0);
-  await expect(page.locator('#room-map .room-cast img')).toHaveCount(7);
+  await expect(page.locator('#room-map .room-cast img')).toHaveCount(9);
 });
 
 test('no modo Brincar, tocar num cômodo do Mapa leva quem está selecionado; em Criar só muda a vista', async ({ page }) => {

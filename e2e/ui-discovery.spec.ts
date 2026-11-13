@@ -120,7 +120,7 @@ for (const viewport of [{ width: 844, height: 390 }, { width: 1024, height: 768 
 
 test('a Turma inteira cabe sem rolagem a 1024 px, com a frase de cada um e o lápis só no cartão escolhido', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 }); await ready(page); await tray(page, 'Turma');
-  await expect(page.locator('#cast .character')).toHaveCount(7);
+  await expect(page.locator('#cast .character')).toHaveCount(9);
   await expect(page.locator('#cast .motto')).toHaveText(actorIds.map(id => cards[id].motto));
   for (const motto of await page.locator('#cast .motto').all()) await expect(motto).toBeInViewport({ ratio: 1 });
   await expect(page.locator('#cast .rename:visible')).toHaveCount(1);

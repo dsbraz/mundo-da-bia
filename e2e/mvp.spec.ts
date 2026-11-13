@@ -87,7 +87,7 @@ test('module previews cancel cleanly and explicit floor travel carries the held 
   const town = await readTown(page), bia = town.actors[0]!;
   expect(bia.location).toEqual(town.location);
   expect(town.items.find(i => i.kind === 'microfone')).toMatchObject({ holder: 'bia', location: town.location });
-  expect(town.actors).toHaveLength(7); expect(town.items).toHaveLength(5);
+  expect(town.actors).toHaveLength(9); expect(town.items).toHaveLength(5);
   await explore(page);
   await expect(page.locator('.choice-cards[aria-label=Andar] button[aria-pressed=true]')).toHaveText('1º andar');
   await expect(page.getByRole('button', { name: '← Anterior', exact: true })).toBeDisabled();

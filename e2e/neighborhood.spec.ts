@@ -31,7 +31,7 @@ test('nomeia, veste, sai, constrói, entra, decora, desfaz e recarrega', async (
   const count = (await read(page)).layout.pieces.length;
   await page.locator('#undo').click(); expect((await read(page)).layout.pieces).toHaveLength(count - 1);
   await page.locator('#redo').click();
-  const town = await readTown(page); expect(town.actors).toHaveLength(7); expect(town.items).toHaveLength(5);
+  const town = await readTown(page); expect(town.actors).toHaveLength(9); expect(town.items).toHaveLength(5);
   expect(town.items.find(i => i.holder === 'bia')!.location).toEqual(town.location);
   await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await readTown(page)).toEqual(town);
   expect(errors).toEqual([]);
