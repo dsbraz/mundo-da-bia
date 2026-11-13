@@ -37,6 +37,8 @@ export const pieceBounds: Record<PieceKind, Point & { width: number; height: num
 };
 /** One of each per room: the pieces the home's switches and spots belong to (seats may repeat, W3L-06). */
 export const fixtures: readonly PieceKind[] = ['wardrobe', 'fridge', 'lamp', 'table', 'stage'];
+/** Where a new game puts the pieces that would stand in a doorway: the cat bed and the dresser right of the bedroom's door back. */
+const opening: Partial<Record<PieceKind, number>> = { 'cat-bed': 136, dresser: 340 };
 export function initialLayout(): Layout {
   const kinds: PieceKind[] = ['rug', 'sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed'];
   return {
@@ -46,7 +48,7 @@ export function initialLayout(): Layout {
       quarto: { name: 'Quarto dos sonhos', template: 'bedroom', size: 'small', cell: 1, home: { lamp: true, fridge: true, drawer: false }, wall: 'lilac', floor: 'original' },
     },
     pieces: kinds.map((kind, index) => ({ id: index + 1, kind, room: index < 7 ? 'sala' : 'quarto',
-      x: pieceBounds[kind].x, y: pieceBounds[kind].y, color: 'original', flipped: false })),
+      x: opening[kind] ?? pieceBounds[kind].x, y: pieceBounds[kind].y, color: 'original', flipped: false })),
   };
 }
 export function fixture(state: World, kind: PieceKind, room: RoomId = state.room) { return state.layout.pieces.find(p => p.kind === kind && p.room === room); }

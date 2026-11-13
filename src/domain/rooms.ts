@@ -1,6 +1,7 @@
 import type { PieceKind, Room, RoomId, RoomSize, RoomTemplate, World } from './types';
 import { editWorld } from './design';
-import { freePlacement } from './placement';
+import { footprint, freePlacement } from './placement';
+import { passages } from './passages';
 import { pieceBounds } from './layout';
 import { roomWidth, validPoint } from './geometry';
 import { seatPoint } from './seats';
@@ -41,16 +42,23 @@ export function addRoom(state: World, options: NewRoom): World {
 }
 export function furnishRoom(state: World, template: RoomTemplate): World {
   let next = state;
+  // Along the back wall, between the doorways and stairs at its ends (kept free of furniture).
+  const wall = passages(state.layout, state.room).map(p => p.zone).filter(z => z.y + z.height <= 420);
+  const from = Math.max(40, ...wall.filter(z => z.x < 200).map(z => z.x + z.width + 8));
+  const to = Math.min(roomWidth(state) - 40, ...wall.filter(z => z.x >= 200).map(z => z.x - 8));
   furnishings[template].forEach((kind, index) => {
     const box = pieceBounds[kind];
     const playground = template === 'playground' || template === 'garden';
-    const x = columns[template]?.[index] ?? 40 + index * (roomWidth(state) - 80 - box.width) / Math.max(1, furnishings[template].length - 1);
+    const column = columns[template]?.[index];
+    const x = column !== undefined ? Math.max(column, from) : from + index * (to - from - box.width) / Math.max(1, furnishings[template].length - 1);
     const point = freePlacement(next, { id: next.layout.nextId, kind, room: next.room, color: 'original', flipped: false, x, y: (kind === 'board' ? 90 + box.height : playground && index === 2 ? 390 : 450) - box.height });
     if (point) next = editWorld(next, { type: 'add', kind, point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } });
   });
   const table = { kitchen: 'table', dining: 'picnic-table' }[template as string] as PieceKind | undefined;
   return table ? chairsBeside(next, table) : next;
 }
+/** Where the front strip of floor, kept free for walking, begins. */
+const frontBand = 500;
 /** Two chairs at the table (W3L-06): either side when there is room, else both on the free side, else the nearest free floor. */
 function chairsBeside(state: World, kind: PieceKind): World {
   const table = state.layout.pieces.find(p => p.room === state.room && p.kind === kind);
@@ -59,7 +67,7 @@ function chairsBeside(state: World, kind: PieceKind): World {
   return [table.x - box.width - 4, right, table.x - 2 * box.width - 8, right + box.width + 4].reduce((next, x) => {
     if (next.layout.pieces.filter(p => p.room === next.room && p.kind === 'chair').length >= 2) return next;
     const point = freePlacement(next, { id: next.layout.nextId, kind: 'chair', room: next.room, color: 'original', flipped: false, x, y });
-    const added = point ? editWorld(next, { type: 'add', kind: 'chair', point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } }) : next;
+    const added = point && footprint(point)!.bottom <= frontBand ? editWorld(next, { type: 'add', kind: 'chair', point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } }) : next;
     const seat = seatPoint(added, `${added.layout.nextId - 1}.0`);
     return seat && validPoint(seat, roomWidth(added)) ? added : next;
   }, state);

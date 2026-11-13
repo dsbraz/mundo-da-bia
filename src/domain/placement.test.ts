@@ -11,6 +11,7 @@ it('permite recolorir uma peça de save antigo mesmo quando sobreposta', () => {
   expect(editWorld(world, { type: 'color', id: sofa.id, color: 'mint' }).layout.pieces.find(p => p.id === sofa.id)?.color).toBe('mint');
 });
 
+import { addRoom } from './rooms';
 import { canPlace, floorBase, footprint, freePlacement, onFloorPiece, overlap } from './placement';
 import type { Piece } from './types';
 const plant = (patch: Partial<Piece> = {}): Piece => ({ id: 100, kind: 'plant', room: 'sala', x: 700, y: 350, color: 'original', flipped: false, ...patch });
@@ -62,4 +63,23 @@ it('móveis de chão ficam com o pé no chão: mover a cama para a parede a enco
   const added = editWorld(cleared, { type: 'add', kind: 'plant', point: { x: 200, y: 120 } });
   const pot = added.layout.pieces.at(-1)!; expect(pot.kind).toBe('plant'); expect(pot.y + 105).toBeGreaterThanOrEqual(floorBase);
   expect(onFloorPiece({ ...bed, y: 300 })).toEqual({ ...bed, y: 300 });
+});
+it('nada se põe nas passagens: portas do fim da parede, escada e vão da escada; o que já estava lá só pode sair', () => {
+  const world = editWorld(initialWorld(), { type: 'clear' });
+  // The living room's doorway to the bedroom spans x 880-984 (frame 871-993), up to the sill at 410.
+  expect(canPlace(world, plant({ x: 900, y: 300 }))).toBe(false);
+  expect(canPlace(world, plant({ kind: 'picture', x: 900, y: 200 }))).toBe(false);
+  expect(canPlace(world, plant({ x: 780, y: 300 }))).toBe(true);
+  expect(canPlace(world, plant({ x: 900, y: 430 }))).toBe(true);
+  expect(canPlace(world, plant({ kind: 'rug', x: 0, y: 440 }))).toBe(true);
+  expect(canPlace(world, plant({ x: 60, y: 300 }))).toBe(true);
+  const upstairs = addRoom(world, { name: 'Sótão', template: 'empty', size: 'small', cell: 4 });
+  const below = { ...upstairs, room: 'sala' as const }, above = { ...upstairs, room: 'room-3' as const };
+  expect(canPlace(below, plant({ x: 60, y: 300 }))).toBe(false);
+  expect(canPlace(above, plant({ room: 'room-3', x: 100, y: 450 }))).toBe(false);
+  expect(canPlace(above, plant({ room: 'room-3', x: 300, y: 450 }))).toBe(true);
+  // A piece of an older save already standing there may move out, or less in, never further in.
+  below.layout.pieces.push(plant({ x: 60, y: 300 }));
+  expect(canPlace(below, plant({ x: 120, y: 300 }))).toBe(true);
+  expect(canPlace(below, plant({ x: 20, y: 300 }))).toBe(false);
 });

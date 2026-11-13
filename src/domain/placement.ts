@@ -1,6 +1,7 @@
 import { doorway } from './doorway';
 import { roomWidth } from './geometry';
 import { pieceBounds, validPlacement } from './layout';
+import { passages } from './passages';
 import type { Piece, World } from './types';
 export interface Footprint { left: number; right: number; top: number; bottom: number }
 const flat = ['rug', 'picture', 'neon', 'mirror', 'cushion', 'board'];
@@ -20,9 +21,20 @@ export function footprint(piece: Piece): Footprint | null {
   return { left: piece.x + 8, right: piece.x + box.width - 8, top: piece.y + box.height - depth, bottom: piece.y + box.height - 8 };
 }
 export function overlap(a: Footprint, b: Footprint) { return Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)); }
+/** How much of the piece's picture stands in the room's doorways, stairs and stairwell (the rug lies flat under one's feet). */
+function inPassages(world: World, piece: Piece) {
+  if (piece.kind === 'rug') return 0;
+  const box = pieceBounds[piece.kind], area = { left: piece.x, right: piece.x + box.width, top: piece.y, bottom: piece.y + box.height };
+  return passages(world.layout, piece.room).reduce((sum, { zone: z }) => sum + overlap(area, { left: z.x, right: z.x + z.width, top: z.y, bottom: z.y + z.height }), 0);
+}
+/** Nothing new goes into a passage; a piece an older save left there may move out of it, or less into it. */
+function keepsPassagesFree(world: World, piece: Piece) {
+  const now = inPassages(world, piece), before = world.layout.pieces.find(p => p.id === piece.id);
+  return now === 0 || (!!before && now < inPassages(world, before));
+}
 export function canPlace(world: World, piece: Piece) {
   if (!validPlacement(piece, roomWidth(world))) return false;
-  if (onFloorPiece(piece) !== piece) return false;
+  if (onFloorPiece(piece) !== piece || !keepsPassagesFree(world, piece)) return false;
   const area = footprint(piece); if (!area) return true;
   const others = world.layout.pieces.filter(p => p.room === piece.room && p.id !== piece.id).map(footprint).filter((p): p is Footprint => !!p);
   const room = world.layout.rooms[piece.room]!;

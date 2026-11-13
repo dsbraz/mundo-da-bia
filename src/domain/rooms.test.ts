@@ -90,12 +90,13 @@ it('o jardim e o pátio espalham as peças em colunas fixas, a terceira mais ao 
   for (const template of ['garden', 'playground'] as const) {
     const state = addRoom(initialWorld(), { name: template, template, size: 'medium', cell: 2 });
     const pieces = state.layout.pieces.filter(p => p.room === state.room);
-    expect(pieces.map(p => p.x)).toEqual([60, 320, 60]);
+    // Cell 2 opens onto the bedroom through a doorway at the left end (frame up to x 129): the columns start past it.
+    expect(pieces.map(p => p.x)).toEqual([140, 320, 140]);
     const [bottom, , third] = pieces.map(p => p.y + pieceBounds[p.kind].height);
     expect(third!).toBeLessThan(bottom! - 30);
   }
   const studio = addRoom(initialWorld(), { name: 'Estúdio', template: 'studio', size: 'medium', cell: 2 });
   const pieces = studio.layout.pieces.filter(p => p.room === studio.room);
-  expect(pieces.map(p => p.x)).toEqual([40, 400, 660, 1000]);
+  expect(pieces.map(p => p.x)).toEqual([140, 460, 680, 1000]);
   expect(pieces.every(p => p.y + pieceBounds[p.kind].height >= 440)).toBe(true);
 });

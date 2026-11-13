@@ -1,27 +1,8 @@
 import type Phaser from 'phaser';
-import { roomLinks } from '../domain/doors';
-import { roomWidths } from '../domain/geometry';
-import type { Layout, Point, RoomId } from '../domain/types';
+import { passages, type Rect } from '../domain/passages';
+import type { Layout, RoomId } from '../domain/types';
 import { roomColors } from './room';
-export type PassageKind = 'passage' | 'up' | 'down';
-export interface Rect { x: number; y: number; width: number; height: number }
-/** A way on foot to another room of the building: a doorway at that end of the back wall, the stairs up (left end of a floor's first
- *  room, which never has a room to its left) or the stairwell down (a hole in the floor at the front left).
- *  `front`: where one stands to go through; `sill`: where one vanishes and comes out. */
-export interface Passage { kind: PassageKind; room: RoomId; box: Rect; front: Point; sill: Point }
-/** A doorway the size of the "Rua" door (104 × 228, sill on the baseboard), 16 units from the end of the wall. */
-const door = (x: number) => ({ box: { x, y: 182, width: 104, height: 228 }, front: { x: x + 52, y: 432 }, sill: { x: x + 52, y: 412 } });
-const stairs = { box: { x: 16, y: 150, width: 170, height: 260 }, front: { x: 101, y: 445 }, sill: { x: 101, y: 412 } };
-const well = { box: { x: 40, y: 516, width: 210, height: 84 }, front: { x: 145, y: 505 }, sill: { x: 145, y: 560 } };
-export function passages(layout: Layout, room: RoomId): Passage[] {
-  const links = roomLinks(layout, room), width = roomWidths[layout.rooms[room]?.size ?? 'small'];
-  return [
-    links.left && { kind: 'passage' as const, room: links.left, ...door(16) },
-    links.right && { kind: 'passage' as const, room: links.right, ...door(width - 120) },
-    links.up && { kind: 'up' as const, room: links.up, ...stairs },
-    links.down && { kind: 'down' as const, room: links.down, ...well },
-  ].filter((p): p is Passage => !!p);
-}
+export { passages, type Passage, type PassageKind, type Rect } from '../domain/passages';
 /** In front of the furniture against the back wall (the way through must always show), behind everyone on the floor (depth = feet y). */
 export const passageDepth = 405;
 /** The stairs stand out from the wall: in front of a lamp or sofa at that end too (their feet reach y 440), still behind whoever stands
@@ -67,10 +48,17 @@ function stairsUp(g: Shape, d: Rect) {
   const bottom = d.y + d.height, right = d.x + d.width, outline: Points = [{ x: right, y: bottom }];
   for (let i = 0; i < steps; i++) outline.push({ x: right - i * run, y: bottom - (i + 1) * rise }, { x: right - (i + 1) * run, y: bottom - (i + 1) * rise });
   outline.push({ x: d.x + 18, y: bottom });
+  // Attached, not cut out: a soft shadow on the wall behind the flight and on the floor at its foot.
+  g.fillStyle(0x4a3c32, .16).fillPoints(outline.map(p => ({ x: p.x + 10, y: p.y + 4 })), true);
+  g.fillStyle(0x4a3c32, .22).fillEllipse(d.x + d.width / 2 + 8, bottom + 6, d.width + 34, 20);
   fill(g, 0xd2a77f, outline, 0x8c6f55);
   for (let i = 1; i <= steps; i++) g.lineStyle(3, 0xf0d6b4).lineBetween(right - i * run + 2, bottom - i * rise + 2, right - (i - 1) * run - 2, bottom - i * rise + 2);
-  g.lineStyle(5, 0x8c6f55).lineBetween(right, bottom - 70, right - steps * run, bottom - steps * rise - 70);
-  [0, 3, 6].forEach(i => g.lineStyle(3, 0x8c6f55).lineBetween(right - i * run - 4, bottom - i * rise, right - i * run - 4, bottom - i * rise - 70));
+  // The handrail rises from a newel post at the foot and ends on a wall plate beside the hatch.
+  const top = { x: hatch.x + hatch.width + 10, y: bottom - 70 - (right - hatch.x - hatch.width - 10) * rise / run };
+  g.lineStyle(5, 0x8c6f55).lineBetween(right, bottom - 70, top.x, top.y);
+  [1.5, 3].forEach(i => g.lineStyle(3, 0x8c6f55).lineBetween(right - i * run - 4, bottom - Math.ceil(i) * rise, right - i * run - 4, bottom - i * rise - 70));
+  g.fillStyle(0x8c6f55).fillRect(right - 7, bottom - 76, 9, 76).fillCircle(right - 2.5, bottom - 78, 6);
+  g.fillStyle(0xf5e8d3).fillCircle(top.x, top.y, 7).lineStyle(2, 0xb9a68c).strokeCircle(top.x, top.y, 7);
   g.fillStyle(0xd7c3ab).fillRect(d.x + 6, bottom - 2, d.width, 9);
 }
 /** A hole in the floor at the front left, with steps going down into it between two banisters. */

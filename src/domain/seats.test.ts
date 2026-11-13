@@ -54,8 +54,8 @@ it('um segundo sofá e uma segunda cama cabem no mesmo cômodo', () => {
 });
 it('deitar na segunda cama de um quarto com duas camas deita ali', () => {
   let state = addRoom(initialWorld(), { name: 'Hóspedes', template: 'empty', size: 'medium', cell: 2 });
-  state = editWorld(state, { type: 'add', kind: 'bed', point: { x: 300, y: 300 } });
-  state = editWorld(state, { type: 'add', kind: 'bed', point: { x: 800, y: 300 } });
+  state = editWorld(state, { type: 'add', kind: 'bed', point: { x: 400, y: 300 } });
+  state = editWorld(state, { type: 'add', kind: 'bed', point: { x: 900, y: 300 } });
   const beds = state.layout.pieces.filter(p => p.kind === 'bed' && p.room === state.room);
   expect(beds).toHaveLength(2);
   state = transition(state, { type: 'travel', actor: 'bia', room: state.room }).state;
