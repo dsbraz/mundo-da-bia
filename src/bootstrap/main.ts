@@ -60,6 +60,8 @@ import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { marketPlay } from './market';
 import { schoolPlay } from './school';
+import { routineWiring } from './routine';
+import { suggestionIcon } from '../presentation/routine-bubble';
 import { selfCareWiring } from './self-care';
 import { nightSleep } from './night-sleep';
 
@@ -175,6 +177,8 @@ const selfCare = selfCareWiring({ root, state: () => state, selected: () => sele
   hop: id => scene.poke(id, 'hop', ''), played: id => townActs.enjoy(id, 'bola') });
 const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); scene.daylight(life.phase()); },
   slept: id => townActs.sleepThrough(id), greet: () => { scene.poke(selected, 'cheer', uiText.goodMorning); announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
+routineWiring({ root, town: () => town, selected: () => selected, playing: () => !building, phase: () => life.phase(), played: () => life.played(), head: id => scene.head(id),
+  openMap: (place, wish) => { root.querySelector<HTMLButtonElement>('#map-toggle')!.click(); neighborhood.mark(place, suggestionIcon(wish)); } });
 let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); scene.daylight(life.phase()); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };

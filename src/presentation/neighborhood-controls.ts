@@ -7,6 +7,7 @@ import { buildingFacadeSvg, svgUrl } from './architecture-art';
 import { uiText } from '../content/ui-text';
 import type { Location, Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { doors } from './neighborhood-doors';
+import type { Destination } from '../domain/routine';
 function button(text: string, action: () => void) {
   const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.onclick = action; return b;
 }
@@ -18,6 +19,18 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
   const accessible = document.createElement('div'); accessible.className = 'scene-controls'; root.append(accessible);
   const plotDialog = document.createElement('dialog'); plotDialog.id = 'plot-dialog'; root.append(plotDialog);
   const handles = houseHandles(root, get, dispatch, plot, pan);
+  /** The place a routine suggestion marks on the Map (W3L-27), until the Map closes. */
+  let marked: Destination | null = null, icon = '';
+  root.querySelector('#room-dialog')!.addEventListener('close', () => mark(null));
+  function mark(place: Destination | null, drawing = icon) {
+    marked = place; icon = place ? drawing : '';
+    root.querySelectorAll('.marked').forEach(node => node.classList.remove('marked'));
+    root.querySelectorAll('.wish-badge').forEach(node => node.remove());
+    const target = place?.kind === 'street' ? root.querySelector('#go-street') : place ? list.querySelector(`[data-building="${place.building}"]`) : null;
+    if (!target) return;
+    const badge = document.createElement('img'); badge.className = 'wish-badge'; badge.src = icon; badge.alt = '';
+    target.classList.add('marked'); target.append(badge); target.scrollIntoView({ block: 'nearest' });
+  }
   const currentActions = button(uiText.map.manage, () => { const town = get(), where = town.location; if (where.kind === 'interior') plot(town.buildings.find(b => b.id === where.building)!.plot); });
   currentActions.id = 'current-building-actions'; currentActions.className = 'home-manage'; root.querySelector('#home-name')!.after(currentActions);
   function plot(index: number) {
@@ -34,7 +47,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     if (where.kind === 'interior') currentActions.setAttribute('aria-label', uiText.map.manageLabel(town.buildings.find(b => b.id === where.building)!.name));
     root.classList.toggle('street', where.kind === 'street');
     list.replaceChildren(...town.buildings.map(b => {
-      const card = document.createElement('article'); card.className = 'room-card';
+      const card = document.createElement('article'); card.className = 'room-card'; card.dataset.building = String(b.id);
       const visit = button(b.name, () => { close(); go({ kind: 'interior', building: b.id, room: b.entry }); }); visit.setAttribute('aria-label', uiText.go(b.name));
       const image = document.createElement('img'); image.src = svgUrl(buildingFacadeSvg(b)); image.alt = ''; visit.prepend(image); card.append(visit);
       const manage = button(uiText.map.manage, () => plot(b.plot)); manage.setAttribute('aria-label', `Ações de ${b.name}: ampliar, mover e excluir`); manage.className = 'building-manage home-manage'; card.append(manage);
@@ -47,7 +60,7 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
       const b = button(`Visitar ${d.name}`, () => dispatch({ type: 'visit', location: d.location })); b.className = 'scene-target'; b.dataset.worldX = String(d.point.x); b.dataset.worldY = String(d.point.y);
       return b;
     }));
-    positionTargets(root);
+    positionTargets(root); mark(marked);
     if (where.kind === 'street' && building) for (let i = 0; i < town.plots; i++) list.append(button(`✦ Terreno ${i + 1}`, () => plot(i)));
   }
   function choosePlot() {
@@ -56,5 +69,5 @@ export function neighborhoodControls(root: HTMLElement, get: () => Neighborhood,
     if (free !== undefined) { plot(free); return; }
     plotDialog.replaceChildren(button('Todos os terrenos estão ocupados. Voltar', () => plotDialog.close())); plotDialog.showModal();
   }
-  return { refresh, plot, choosePlot };
+  return { refresh, plot, choosePlot, mark };
 }

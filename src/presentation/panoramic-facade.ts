@@ -5,8 +5,16 @@ const colors: Record<BuildingModel, [string, string]> = {
   hospital: ['#f0f2e9', '#81afa8'], police: ['#d2d8dd', '#6c7f96'], office: ['#c5d9d2', '#526d6b'],
   'fire-station': ['#c48770', '#8e4c43'], school: ['#e8ce93', '#a06f57'], stadium: ['#b9c4b5', '#799c9b'], 'sports-club': ['#dfd6b6', '#6b9b91'],
 };
+const roofTop = (floors: number) => 295 - (floors - 1) * 112;
+/** Where the school's bell hangs (W3L-27), beside the clock on the roof: in the morning it glows on the street (`day-night.ts`). */
+export const schoolBellPoint = (floors: number) => ({ x: 300, y: roofTop(floors) - 30 });
+function schoolBell(top: number) {
+  return `<path d="M284 ${top - 12}v-30q16-16 32 0v30" fill="none" stroke="#89745a" stroke-width="3"/>`
+    + `<path d="M300 ${top - 42}q-10 0-11 12l-1 7q-1 3-4 4h32q-3-1-4-4l-1-7q-1-12-11-12Z" fill="#f2b630" stroke="#8a6d3c" stroke-width="2"/>`
+    + `<path d="M294 ${top - 28}q1-7 5-9" fill="none" stroke="#fff1c8" stroke-width="2"/><circle cx="300" cy="${top - 16}" r="3" fill="#d9a05b" stroke="#8a6d3c" stroke-width="1.5"/>`;
+}
 export function panoramicFacade(model: BuildingModel, floors: number, market = false) {
-  const [wall, trim] = colors[model], top = 295 - (floors - 1) * 112;
+  const [wall, trim] = colors[model], top = roofTop(floors);
   const inset = model === 'office' ? 70 : model === 'hospital' ? 30 : 48;
   let body = rect(inset, top, 440 - inset * 2, 447 - top, wall);
   for (let level = 0; level < floors; level++) {
@@ -40,7 +48,7 @@ function identity(model: BuildingModel, top: number, trim: string) {
     hospital: rect(172, top - 48, 96, 34, '#f3f3e6') + `<path d="M212 ${top - 42}h16v8h8v12h-8v8h-16v-8h-8v-12h8Z" fill="${trim}"/>`,
     police: `<path d="M205 ${top - 60}h30v17q0 13-15 20-15-7-15-20Z" fill="#d6bc82" stroke="#8c7e61"/>`,
     office: (top < 262 ? rect(183, top + 8, 74, 262 - top, 'url(#glass)', 1) : '') + rect(311, top - 26, 38, 13, '#899d94', 1),
-    school: `<path d="M220 ${top - 12}v-45m0 0h33l-9 11 9 11h-33" fill="#e2b76e" stroke="#89745a" stroke-width="2"/><circle cx="220" cy="${top - 33}" r="23" fill="#fff5d8" stroke="#93846a" stroke-width="2"/><path d="M220 ${top - 48}v15l12 7" fill="none" stroke="#6f796b" stroke-width="2"/>`,
+    school: `<path d="M220 ${top - 12}v-45m0 0h33l-9 11 9 11h-33" fill="#e2b76e" stroke="#89745a" stroke-width="2"/><circle cx="220" cy="${top - 33}" r="23" fill="#fff5d8" stroke="#93846a" stroke-width="2"/><path d="M220 ${top - 48}v15l12 7" fill="none" stroke="#6f796b" stroke-width="2"/>` + schoolBell(top),
     stadium: rect(173, top - 60, 94, 32, '#526d68') + `<text x="220" y="${top - 37}" text-anchor="middle" font-size="19" fill="#f6e4a4">0 : 0</text>`,
     'sports-club': `<circle cx="220" cy="${top - 48}" r="20" fill="#d4b17b" stroke="#7a886f" stroke-width="2"/><path d="M200 ${top - 48}h40m-20-20v40" stroke="#7a886f"/>`,
   };

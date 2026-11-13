@@ -18,7 +18,7 @@ export function worldNavigation(root: HTMLElement, actions: Actions) {
   const summary = document.createElement('summary'); summary.textContent = 'Atalhos de navegação';
   shortcuts.append(summary, floors, previous, name, next, adjacent);
   const street = button(uiText.go(uiText.street), () => { root.querySelector<HTMLDialogElement>('#room-dialog')!.close(); actions.go({ kind: 'street' }); });
-  street.classList.add('illustrated'); street.style.setProperty('--button-icon', "url('/icons/ui-go.svg')");
+  street.id = 'go-street'; street.classList.add('illustrated'); street.style.setProperty('--button-icon', "url('/icons/ui-go.svg')");
   bar.append(street, shortcuts);
   let rooms: [RoomId, string][] = [];
   function step(direction: number) {

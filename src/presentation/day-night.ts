@@ -6,6 +6,7 @@ import { roomWidth } from '../domain/geometry';
 import { floorCount } from '../domain/modules';
 import { plotStart, streetWidth } from '../domain/neighborhood-geometry';
 import { facadeSvg, roomArchitecture } from './architecture-art';
+import { schoolBellPoint } from './panoramic-facade';
 
 /** How a phase of the session's day looks (W3L-11): a tinted veil over the backdrop only (furniture and faces keep their colors), the
  *  moon and stars at night, and lit windows from dusk on. A lamp on keeps a room brighter. Never saved: the session starts in the morning. */
@@ -56,6 +57,15 @@ function litPane(g: Graphics, x: number, y: number, w: number, h: number) {
   g.fillStyle(warm, .22).fillRoundedRect(x - 7, y - 7, w + 14, h + 14, 8).fillStyle(warm, .95).fillRect(x, y, w, h);
   g.lineStyle(2.5, 0xc7934a, .7).lineBetween(x + w / 2, y, x + w / 2, y + h).lineBetween(x, y + h / 2, x + w, y + h / 2);
 }
+/** In the morning the bell of every school on the street glows (W3L-27): a warm halo and a few short rays around it. */
+export function schoolBells(town: Neighborhood | null, phase: Phase): { x: number; y: number }[] {
+  return phase === 'manha' && town ? town.buildings.filter(b => b.model === 'school').map(b => { const at = schoolBellPoint(floorCount(b.layout)); return { x: plotStart(b.plot) + at.x, y: at.y }; }) : [];
+}
+function bellGlow(g: Graphics, at: { x: number; y: number }) {
+  g.fillStyle(warm, .3).fillCircle(at.x, at.y, 30).fillStyle(warm, .45).fillCircle(at.x, at.y, 20);
+  g.lineStyle(3, 0xf2b630, .9);
+  for (const angle of [-2.6, -2.2, -.95, -.55]) g.lineBetween(at.x + Math.cos(angle) * 26, at.y + Math.sin(angle) * 26, at.x + Math.cos(angle) * 36, at.y + Math.sin(angle) * 36);
+}
 /** A crescent: the full disc bitten by the veiled sky's color (#e9f3ef under the night veil), and a faint halo. */
 function moon(g: Graphics, x: number) {
   g.fillStyle(0xfff4cf, .18).fillCircle(x, 228, 40).fillStyle(0xfff4cf).fillCircle(x, 228, 26).fillStyle(0x7f89ac).fillCircle(x + 12, 220, 22);
@@ -73,6 +83,9 @@ export function dayNight(scene: Phaser.Scene) {
     const light = lightOf(phase, state.streetWidth ? false : state.home.lamp), width = state.streetWidth ? streetWidth(town?.plots ?? 4) : roomWidth(state);
     const veil = scene.add.graphics().fillStyle(light.color, light.veil).fillRect(-10000, -10000, width + 20000, 20600);
     const panes = scene.add.graphics(); windows(panes, state, town, light);
+    const bells = state.streetWidth ? schoolBells(town, phase) : [];
+    bells.forEach(at => bellGlow(panes, at));
+    if (navigator.webdriver) scene.game.canvas.dataset.bell = bells.length ? 'on' : '';
     const children: Phaser.GameObjects.GameObject[] = [veil];
     stars = null; sky = [];
     if (light.stars && state.streetWidth) {

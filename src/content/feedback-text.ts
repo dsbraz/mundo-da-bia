@@ -1,3 +1,4 @@
+import type { Suggestion } from '../domain/routine';
 import type { ActorId, Need, PresentationEvent } from '../domain/types';
 import type { OutdoorAction } from '../domain/neighborhood-types';
 import { actors } from './catalog';
@@ -42,6 +43,10 @@ export const needLine = (need: Need, by?: string) => by ? say('{nome} já está 
 /** What a thought bubble means (W3L-12), for screen readers only. */
 const thoughtLines: Record<'fome' | 'sono' | 'tedio', string> = { fome: '{nome} está com fome.', sono: '{nome} está com sono.', tedio: '{nome} quer brincar.' };
 export const thoughtLine = (need: 'fome' | 'sono' | 'tedio', name: string) => say(thoughtLines[need], name);
+/** The routine's dashed bubble (W3L-27), for screen readers only: a suggestion and where a touch takes the Map. */
+const routineLines: Record<Suggestion, string> = { mochila: 'Hora da escola, {nome}? Toque para ver no mapa.', pasta: 'Hora do trabalho, {nome}? Toque para ver no mapa.',
+  bola: 'Vamos brincar, {nome}? Toque para ver no mapa.', prato: 'Hora de comer, {nome}? Toque para ver no mapa.', travesseiro: 'Hora de dormir, {nome}? Toque para ver no mapa.' };
+export const routineLine = (wish: Suggestion, name: string) => say(routineLines[wish], name);
 
 const outdoorLines: Record<Exclude<OutdoorAction['target'], 'leave'>, string> = {
   bench: '{nome} descansa no banco.', swing: 'Vai e vem, {nome}!', water: '{nome} molhou o jardim!',

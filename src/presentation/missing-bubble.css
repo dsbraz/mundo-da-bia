@@ -9,13 +9,19 @@
 @keyframes wanted-glow{from{box-shadow:0 0 0 3px #f2b630,0 0 8px 2px #f2b63088}to{box-shadow:0 0 0 5px #f2b630,0 0 22px 8px #f2b630bb}}
 /* W3L-12: the same bubble as a thought cloud (two little circles toward the head), one per room; `precisa` pulses slowly. Under the header,
    the trays and the character menu (z 3+), which it never covers. */
-.missing-bubble.thought{z-index:2;transform:translate(-50%,calc(-100% - 40px));padding:8px 12px;border-radius:40px;animation:none}
+.missing-bubble:is(.thought,.wish){z-index:2;transform:translate(-50%,calc(-100% - 40px));padding:8px 12px;border-radius:40px;animation:none}
 .missing-bubble.thought[hidden]{display:none}
-.missing-bubble.thought::after{left:46%;bottom:-24px;width:16px;height:16px;border-width:3px;border-radius:50%;transform:none}
-.missing-bubble.thought::before{content:"";position:absolute;left:40%;bottom:-38px;width:9px;height:9px;background:var(--bubble-bg);border:3px solid var(--outline);border-radius:50%}
-.missing-bubble.thought img{width:56px;height:56px}
+.missing-bubble:is(.thought,.wish)::after{left:46%;bottom:-24px;width:16px;height:16px;border-width:3px;border-radius:50%;transform:none}
+.missing-bubble:is(.thought,.wish)::before{content:"";position:absolute;left:40%;bottom:-38px;width:9px;height:9px;background:var(--bubble-bg);border:3px solid var(--outline);border-radius:50%}
+.missing-bubble:is(.thought,.wish) img{width:56px;height:56px}
 .missing-bubble.thought.urgent{animation:thought-pulse 1.6s ease-in-out infinite alternate}
 @keyframes thought-pulse{from{transform:translate(-50%,calc(-100% - 40px)) scale(1)}to{transform:translate(-50%,calc(-100% - 40px)) scale(1.08)}}
 @media (prefers-reduced-motion:reduce){.missing-bubble.thought.urgent{animation:none}}
 button[data-actor]{position:relative}
 #app #cast img.portrait-need,.portrait-need{position:absolute;top:4px;right:4px;width:32px;height:32px;padding:3px;background:var(--bubble-bg);border:2px solid var(--outline);border-radius:50%;object-fit:fill;max-width:none;pointer-events:none}
+/* W3L-27: the routine's suggestion is the same thought cloud drawn dashed; a touch on it opens the Map with the place marked. */
+.missing-bubble.wish{border-style:dashed;pointer-events:auto;cursor:pointer}
+.missing-bubble.wish::after,.missing-bubble.wish::before{border-style:dashed}
+#neighborhood-list .room-card.marked,#go-street.marked{position:relative;box-shadow:0 0 0 4px #f2b630,0 0 18px 6px #f2b630aa;animation:wanted-glow 1.4s ease-in-out infinite alternate}
+#neighborhood-list .room-card.marked .wish-badge,#go-street.marked .wish-badge{position:absolute;top:6px;right:6px;width:60px;height:60px;margin:0;padding:0;object-fit:fill;box-sizing:border-box;border-radius:50%;background:var(--bubble-bg);border:3px dashed var(--outline);pointer-events:none}
+@media (prefers-reduced-motion:reduce){#neighborhood-list .room-card.marked,#go-street.marked{animation:none}}
