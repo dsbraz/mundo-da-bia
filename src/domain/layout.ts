@@ -34,6 +34,7 @@ export const pieceBounds: Record<PieceKind, Point & { width: number; height: num
   chair: { x: 0, y: 0, width: 90, height: 130 },
   'market-shelf': { x: 0, y: 0, width: 170, height: 220 }, checkout: { x: 0, y: 0, width: 200, height: 140 },
   board: { x: 0, y: 0, width: 400, height: 240 }, 'school-desk': { x: 0, y: 0, width: 150, height: 120 },
+  toilet: { x: 0, y: 0, width: 110, height: 140 },
 };
 /** One of each per room: the pieces the home's switches and spots belong to (seats may repeat, W3L-06). */
 export const fixtures: readonly PieceKind[] = ['wardrobe', 'fridge', 'lamp', 'table', 'stage'];

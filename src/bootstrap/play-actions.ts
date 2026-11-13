@@ -22,6 +22,8 @@ interface PlayActions {
   /** What a pickup becomes instead (W3L-22: the fridge tapped with a bag in hand puts the shopping away), or null. */
   instead: (item: ItemId) => Action | null;
 }
+/** The board (W3L-26) answers where she is: a pupil at her desk starts the lesson without standing up; so does the toilet's flush. */
+const inPlace = (state: World, action: Action) => action.type === 'use' && ['board', 'toilet'].includes(state.layout.pieces.find(p => p.id === action.id)?.kind ?? '');
 export function playActions(deps: PlayActions) {
   const { walker } = deps;
   function select(id: ActorId) { deps.cancelGame(); walker.cancel(); deps.root.classList.add('actor-chosen'); deps.choose(id); }
@@ -42,8 +44,7 @@ export function playActions(deps: PlayActions) {
   /** Where an action is done (a piece to walk to first), or null when it applies where she is. Resting walks to the bed or sofa seat she
    *  will sleep on (W3L-15); with none here the rest is refused at once (the bubble asks for a bed). */
   function walkTarget(action: Action): Action | null {
-    // The board (W3L-26) answers where she is: a pupil at her desk starts the lesson without standing up.
-    if (action.type === 'use' && deps.state().layout.pieces.find(p => p.id === action.id)?.kind === 'board') return null;
+    if (inPlace(deps.state(), action)) return null;
     if (['use', 'sit', 'interact'].includes(action.type)) return action;
     const actor = action.type === 'rest' ? deps.state().actors.find(a => a.id === action.actor) : undefined;
     const seat = actor && !actor.resting && actor.kind === 'human' ? restSeat(deps.state(), actor) : undefined;

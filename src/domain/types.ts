@@ -87,7 +87,7 @@ export interface PresentationEvent {
 export interface Transition { state: World; events: PresentationEvent[] }
 
 export const pieceKinds = ['sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed', 'rug', 'plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror', 'counter', 'stove', 'bath', 'desk', 'shelf', 'piano', 'tv', 'aquarium', 'armchair', 'reading-lamp', 'side-table', 'sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart', 'chair',
-  'market-shelf', 'checkout', 'board', 'school-desk'] as const;
+  'market-shelf', 'checkout', 'board', 'school-desk', 'toilet'] as const;
 export const paletteIds = ['original', 'mint', 'lilac', 'rose', 'sky', 'gold'] as const;
 export type PieceKind = typeof pieceKinds[number];
 export type Palette = typeof paletteIds[number];

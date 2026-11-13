@@ -19,6 +19,7 @@ export const furnishings: Record<PieceKind, { name: string; category: 'moveis' |
   chair: { name: 'Cadeira', category: 'moveis' },
   'market-shelf': { name: 'Prateleira de mercado', category: 'moveis' }, checkout: { name: 'Caixa do mercado', category: 'moveis' },
   board: { name: 'Quadro da escola', category: 'decoracao' }, 'school-desk': { name: 'Carteira escolar', category: 'moveis' },
+  toilet: { name: 'Vaso sanitário', category: 'moveis' },
 };
 export const palettes: Record<Palette, { name: string; base: string; light: string; dark: string }> = {
   original: { name: 'Original', base: '#efb491', light: '#ffdec7', dark: '#bf835e' },

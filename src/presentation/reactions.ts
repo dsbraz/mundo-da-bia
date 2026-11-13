@@ -5,6 +5,7 @@ import { selectionLayout } from './selection-art';
 import { showHeart } from './care-heart';
 import type { Actor, ActorId, Point, PresentationEvent, World } from '../domain/types';
 import { showBook } from './use-effects';
+import { showFlush } from './flush';
 import { handPoint } from './targets';
 import { mealDuration, showMeal } from './meal';
 import type { ReactionPose } from '../content/personalities';
@@ -14,7 +15,7 @@ export function react(scene: Phaser.Scene, state: World, events: PresentationEve
   pose?: (id: ActorId, pose: ReactionPose) => void, embrace?: (a: Actor, b: Actor) => void) {
   hugs(scene, state, events, pose, embrace);
   for (const [index, event] of events.entries()) {
-    if (event.piece !== undefined) { readBook(scene, state, event.piece, selected); continue; }
+    if (event.piece !== undefined) { readBook(scene, state, event.piece, selected); flushed(scene, state, event, pose); continue; }
     const actor = state.actors.find(a => a.id === event.actor);
     if (!actor || actor.room !== state.room) continue;
     const line = said[index] ?? null;
@@ -53,6 +54,13 @@ function hugs(scene: Phaser.Scene, state: World, events: PresentationEvent[], po
 function readBook(scene: Phaser.Scene, state: World, id: number, selected?: ActorId) {
   const reader = state.actors.find(a => a.id === selected && a.room === state.room);
   if (reader && state.layout.pieces.some(p => p.id === id && p.kind === 'bookcase' && p.active)) showBook(scene, handPoint(reader, visualContext(state)));
+}
+/** The toilet's flush: the water swirls in the bowl and whoever sat there hops up happy. */
+function flushed(scene: Phaser.Scene, state: World, event: PresentationEvent, pose?: (id: ActorId, pose: ReactionPose) => void) {
+  const toilet = state.layout.pieces.find(p => p.id === event.piece && p.kind === 'toilet' && p.room === state.room);
+  if (!toilet) return;
+  showFlush(scene, toilet);
+  if (event.actor) pose?.(event.actor, 'hop');
 }
 /** After eating: a heart, and for the favourite dish the dance too. */
 function meal(scene: Phaser.Scene, event: PresentationEvent, actor: Actor, head: Point, dance?: (id: ActorId) => void) {

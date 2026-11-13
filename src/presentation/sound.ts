@@ -23,7 +23,7 @@ export const timbres: Record<Cue, Note[]> = {
   clink: [note('sine', 1568, 1568, 0, .08), note('sine', 2093, 2093, .1, .1)],
   beep: [note('square', 1245, 1245, 0, .07), note('square', 1245, 1245, .2, .07)],
 };
-const pieceCues: Partial<Record<PieceKind, Cue>> = { sink: 'splash', washer: 'whirr', planter: 'rustle', bookcase: 'page', 'picnic-table': 'clink' };
+const pieceCues: Partial<Record<PieceKind, Cue>> = { toilet: 'splash', sink: 'splash', washer: 'whirr', planter: 'rustle', bookcase: 'page', 'picnic-table': 'clink' };
 /** The sound of a piece switched on (its own for the everyday pieces); a piece switched off or without its own sound pops. */
 export function pieceCue(kind: PieceKind | undefined): Cue { return (kind && pieceCues[kind]) ?? 'pop'; }
 const volume = .05;

@@ -28,7 +28,7 @@ function source(kind: PieceKind) {
   if (['sink', 'washer', 'planter', 'picnic-table', 'bookcase', 'kitchen-cart'].includes(kind)) return everyday;
   if (['armchair', 'reading-lamp', 'side-table'].includes(kind)) return reading;
   if (['piano', 'tv', 'aquarium'].includes(kind)) return playroom;
-  if (['counter', 'stove', 'bath', 'desk', 'shelf'].includes(kind)) return workshop;
+  if (['counter', 'stove', 'bath', 'toilet', 'desk', 'shelf'].includes(kind)) return workshop;
   if (['bed', 'dresser', 'cat-bed'].includes(kind)) return quarto;
   return ['plant', 'picture', 'cushion', 'neon', 'speaker', 'mirror'].includes(kind) ? decor : sala;
 }

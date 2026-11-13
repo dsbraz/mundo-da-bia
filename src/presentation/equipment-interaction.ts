@@ -1,5 +1,6 @@
 import { pieceBounds, fixture } from '../domain/layout';
-import { seatPiece, seatPoint } from '../domain/seats';
+import { seatPiece, seatPoint, seatRef } from '../domain/seats';
+import { onToilet } from '../domain/toilet';
 import { usableKinds } from '../domain/use';
 import type { Action, ActorId, PieceKind, Point, World } from '../domain/types';
 import { isSchool } from '../domain/school';
@@ -10,10 +11,16 @@ import { furnitureAt, seatAt, stageHit, usableAt, wardrobeHit } from './furnitur
 const sitsThere = (world: World, kind: PieceKind) => !usableKinds.includes(kind) || (kind === 'desk' && isSchool(world.layout, world.room));
 export function equipmentAction(world: World, actor: ActorId, point: Point): Action | 'wardrobe' | null {
   if (wardrobeHit(world, point)) return 'wardrobe';
+  // The toilet: a touch anywhere on it flushes when someone sits there, otherwise sits on it.
+  const toilet = toiletAt(world, point); if (toilet) return onToilet(world, toilet) ? { type: 'use', id: toilet.id } : { type: 'sit', actor, seat: seatRef(toilet.id, 0) };
   const seat = seatAt(world, point); if (seat && sitsThere(world, seatPiece(world, seat)!.kind)) return { type: 'sit', actor, seat };
   const target = furnitureAt(world, point); if (target) return { type: 'interact', target };
   if (stageHit(world, point)) return { type: 'show' };
   const piece = usableAt(world, point); return piece ? { type: 'use', id: piece.id } : null;
+}
+function toiletAt(world: World, point: Point) {
+  const { width, height } = pieceBounds.toilet;
+  return [...world.layout.pieces].reverse().find(p => p.room === world.room && p.kind === 'toilet' && point.x >= p.x && point.x <= p.x + width && point.y >= p.y && point.y <= p.y + height);
 }
 export function approach(world: World, actor: ActorId, action: Action): Point | null {
   const resident = world.actors.find(a => a.id === actor)!;

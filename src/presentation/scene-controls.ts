@@ -3,6 +3,7 @@ import { furnishings } from '../content/furnishings';
 import { pieceBounds } from '../domain/layout';
 import { pieceSeat, seatsOf } from '../domain/seats';
 import { usableKinds } from '../domain/use';
+import { onToilet } from '../domain/toilet';
 import { positionTargets } from './viewport';
 import type { Action, ActorId, Piece, World } from '../domain/types';
 export function sceneControls(root: HTMLElement, select: (id: number) => void, dispatch: (action: Action) => void, dress: () => void) {
@@ -27,7 +28,7 @@ function usePiece(piece: Piece, actor: ActorId, world: World, dispatch: (action:
   if (piece.kind === 'stage') { dispatch({ type: 'show' }); return; }
   if (piece.kind === 'lamp' || piece.kind === 'fridge') { dispatch({ type: 'interact', target: piece.kind }); return; }
   if (piece.kind === 'table') { const item = world.items.find(i => i.holder === actor); if (item) dispatch({ type: 'put', item: item.id, spot: 'table' }); return; }
-  const seat = seatFor(world, piece, actor);
+  const seat = onToilet(world, piece) ? undefined : seatFor(world, piece, actor);
   if (seat) { dispatch({ type: 'sit', actor, seat }); return; }
   dispatch({ type: 'use', id: piece.id });
 }
