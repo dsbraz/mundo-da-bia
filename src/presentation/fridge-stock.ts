@@ -7,22 +7,36 @@ import type { World } from '../domain/types';
 import { pieceBounds } from '../domain/layout';
 import { drawShelfGoods } from './market-art';
 
-const icon = 18, step = 5;
-/** Where each basic sits inside the open fridge (piece coordinates): 5 on the top shelf, 4 on the middle one around the snack and the fish. */
+/** Icon size in piece units: about 27 screen px at 1024 (W3L-23 art pass). */
+export const fridgeIcon = 24;
+const top = 102, middle = 154, door = { x: 127, y: 120 };
+/** Where each basic stands inside the open fridge (piece coordinates): a row of 4 on each shelf, the oil on the door. */
 const places: Record<Basic, { x: number; y: number }> = {
-  pao: { x: 24, y: 104 }, leite: { x: 43, y: 104 }, queijo: { x: 62, y: 104 }, ovo: { x: 81, y: 104 }, farinha: { x: 100, y: 104 },
-  acucar: { x: 22, y: 156 }, oleo: { x: 38, y: 156 }, batata: { x: 84, y: 156 }, peixe: { x: 100, y: 156 },
+  pao: { x: 24, y: top }, leite: { x: 48, y: top }, queijo: { x: 76, y: top }, ovo: { x: 100, y: top },
+  farinha: { x: 24, y: middle }, acucar: { x: 48, y: middle }, batata: { x: 76, y: middle }, peixe: { x: 100, y: middle },
+  oleo: door,
 };
-/** The open fridge's pantry (W3L-23): one icon per unit, piled upward in its place, up to 4. Empty draws nothing. Never a number. */
-export function fridgeSpots(stock: Stock): { id: Basic; x: number; y: number }[] {
-  return basics.flatMap(id => Array.from({ length: Math.min(stockLimit, stock[id] ?? 0) }, (_, n) => ({ id, x: places[id].x, y: places[id].y - n * step })));
+export type FridgeSpot = { id: Basic; x: number; y: number; back: boolean };
+/** The open fridge's pantry (W3L-23): one icon per unit, up to 4; the extra units stand just behind the front one, a little up and to
+ *  the right, so a shelf reads as a row and never as a tower. Empty draws nothing. Never a number. */
+export function fridgeSpots(stock: Stock): FridgeSpot[] {
+  return basics.flatMap(id => {
+    const count = Math.min(stockLimit, stock[id] ?? 0), place = places[id];
+    return Array.from({ length: count }, (_, n) => {
+      const depth = count - 1 - n;
+      return { id, x: place.x + depth * 3, y: place.y - depth * 3, back: depth > 0 };
+    });
+  });
 }
 /** The room's open fridges draw the house's pantry. */
 function drawFridgeStock(scene: Phaser.Scene, state: World, pieces: Map<number, Phaser.GameObjects.Container>, stock: Stock) {
   if (!state.home.fridge || !scene.textures.exists('ing-pao')) return;
   state.layout.pieces.filter(p => p.room === state.room && p.kind === 'fridge').forEach(piece => {
     const container = pieces.get(piece.id), width = pieceBounds.fridge.width;
-    fridgeSpots(stock).forEach(spot => container?.add(scene.add.image(piece.flipped ? width - spot.x : spot.x, spot.y, `ing-${spot.id}`).setDisplaySize(icon, icon)));
+    fridgeSpots(stock).forEach(spot => {
+      const image = scene.add.image(piece.flipped ? width - spot.x : spot.x, spot.y, `ing-${spot.id}`).setDisplaySize(fridgeIcon, fridgeIcon);
+      container?.add(spot.back ? image.setTint(0xe2d6c4) : image);
+    });
   });
 }
 /** What the room shows of the market (§3.4): the shelves' goods, and in an open fridge the house's pantry. */
