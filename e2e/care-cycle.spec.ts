@@ -31,7 +31,8 @@ for (const reduced of [false, true]) test(`comer mostra um coração que some; d
   await expect(page.locator('#actor-status img[alt="Bia está de barriga cheia"]')).toHaveCount(1);
   await expect(page.locator('#app')).not.toContainText('Já comeu');
   await page.getByRole('button', { name: 'Descansar', exact: true }).click();
-  expect((await read(page)).actors[0]).toMatchObject({ resting: true, fed: true });
+  // W3L-15: she walks to the free sofa seat first and lies down when she gets there.
+  await expect.poll(async () => (await read(page)).actors[0], { timeout: 15_000 }).toMatchObject({ resting: true, fed: true });
   await page.getByRole('button', { name: 'Acordar', exact: true }).click();
   expect((await read(page)).actors[0]).toMatchObject({ resting: false, fed: false });
   await expect(page.locator('#actor-status img[alt="Bia está de barriga cheia"]')).toHaveCount(0);

@@ -14,7 +14,8 @@ async function seed(page: Page) {
   const town = migrateNeighborhood(initialAlbum(world)), bia = town.actors.find(a => a.id === 'bia')!;
   const dish = { id: '20:prato' as const, kind: 'prato' as const, recipe: 'ovo-mexido', room: 'sala' as const, location: bia.location, x: bia.x, y: bia.y, holder: 'bia' as const, spot: 'floor' as const };
   await page.clock.install({ time: new Date('2026-11-12T10:00:00') });
-  await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
+  // Autonomy off (W3L-19): otherwise the sleepy cats lie down on both sofa seats around 13 min and the Bia has nowhere to sit and eat.
+  await page.addInitScript(value => { localStorage.setItem('mundo-da-bia:autonomy', 'off'); if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood({ ...town, nextItem: 21, items: [...town.items, dish] }));
   await ready(page); await page.clock.pauseAt(new Date('2026-11-12T10:00:30'));
 }

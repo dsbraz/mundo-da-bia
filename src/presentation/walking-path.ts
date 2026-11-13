@@ -14,8 +14,11 @@ export function walkingPath(world: World, start: Point, end: Point): Point[] | n
   for (let y = floorTop(world); y <= 540; y += 20) for (let x = 60; x <= width - 60; x += 20) if (free({ x, y })) nodes.push({ x, y });
   return search(nodes, free);
 }
-/** Where someone let go at `p` stands (W3L-17): there, or out of a solid piece (or the wall) on its nearest free side. */
+/** Where someone let go at `p` stands (W3L-17): there, or out of a solid piece (or the wall) on its nearest free side. Only a drop on the
+ *  piece itself (its footprint, not the walking margin around it) moves her: in front of the coffee table she stays where she was let go. */
 export function standingSpot(world: World, p: Point): Point {
+  const onPiece = world.layout.pieces.some(piece => { const area = piece.room === world.room && footprint(piece); return !!area && contains(area, p); });
+  if (p.y >= floorTop(world) && !onPiece) return p;
   const blocks = furnitureBlocks(world);
   return exitFrom(world, p, blocks, q => walkable(world, q) && !blocks.some(b => contains(b, q))) ?? p;
 }

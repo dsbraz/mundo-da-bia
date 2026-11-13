@@ -32,6 +32,9 @@ it('ninguém fica em pé dentro de móvel sólido: solto sobre a mesa, fica no l
   const middle = { x: (area.left + area.right) / 2, y: (area.top + area.bottom) / 2 }, spot = standingSpot(world, middle);
   expect(spot.x < area.left - 26 || spot.x > area.right + 26 || spot.y < area.top - 15 || spot.y > area.bottom + 26).toBe(true);
   expect(standingSpot(world, { x: 800, y: 500 })).toEqual({ x: 800, y: 500 });
+  // Just in front of the table (inside the walking margin, outside its footprint) she stays where she was let go.
+  expect(standingSpot(world, { x: area.right - 20, y: area.bottom + 8 })).toEqual({ x: area.right - 20, y: area.bottom + 8 });
+  expect(standingSpot(world, { x: area.right + 10, y: area.top + 10 })).toEqual({ x: area.right + 10, y: area.top + 10 });
 });
 
 it('soltar a Bia sobre a mesa a deixa ao lado, e 50 px ao lado da cadeira livre a senta', () => {
