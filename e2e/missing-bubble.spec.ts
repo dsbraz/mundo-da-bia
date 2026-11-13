@@ -43,6 +43,8 @@ for (const [width, height] of [[1024, 768], [1280, 800]] as const) test(`soltar 
   await touchDrag(page, a!, b!);
   const bubble = page.locator('.missing-bubble');
   await expect(bubble).toBeVisible();
+  // The bubble lasts 2.4 s: measure it first, before the slower checks below.
+  const scene = (await page.locator('#world').boundingBox())!, box = (await bubble.boundingBox())!;
   await expect(bubble.locator('img.need')).toHaveAttribute('src', '/art/needs.svg#seat');
   await expect(bubble.locator('img.face')).toHaveAttribute('src', '/icons/rui.svg');
   expect(await bubble.innerText()).toBe('');
@@ -53,7 +55,6 @@ for (const [width, height] of [[1024, 768], [1280, 800]] as const) test(`soltar 
   // Beside the sofa, on the floor: just past one of its sides.
   expect(after.y).toBe(480);
   expect(Math.min(Math.abs(after.x - sofa.x), Math.abs(after.x - (sofa.x + 270)))).toBeLessThanOrEqual(60);
-  const scene = (await page.locator('#world').boundingBox())!, box = (await bubble.boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(scene.x); expect(box.x + box.width).toBeLessThanOrEqual(scene.x + scene.width);
   expect(box.y).toBeGreaterThanOrEqual(scene.y);
   await page.screenshot({ path: `reports/wave3-life-1a/missing-seat-${width}.png` });

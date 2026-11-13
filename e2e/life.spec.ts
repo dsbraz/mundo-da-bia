@@ -91,8 +91,9 @@ async function silhouette(page: Page, id: 'mimi' | 'nino', x: number, y: number)
 for (const reduced of [false, true]) test(`gato descansando fica enrolado: deitado, bem mais baixo que sentado${reduced ? ' (movimento reduzido: pose parada)' : ''}`, async ({ page }) => {
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   const world = initialWorld();
-  const spots: Record<string, number> = { bia: 100, luna: 170, leo: 880, rui: 930, mimi: 480, nino: 680, pipoca: 800 };
-  world.actors = world.actors.map(a => ({ ...a, x: spots[a.id]!, y: a.kind === 'cat' ? 540 : 530, seat: null, resting: a.id === 'mimi' }));
+  // The grown-ups (W3L-24) keep their places in the bedroom.
+  const spots: Partial<Record<string, number>> = { bia: 100, luna: 170, leo: 880, rui: 930, mimi: 480, nino: 680, pipoca: 800 };
+  world.actors = world.actors.map(a => ({ ...a, x: spots[a.id] ?? a.x, y: a.kind === 'cat' ? 540 : 530, seat: null, resting: a.id === 'mimi' }));
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await still(page);
   // Any key dismisses the ghost hand of the first opening, so nothing covers the cats.
