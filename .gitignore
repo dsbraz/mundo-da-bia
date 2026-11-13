@@ -5,3 +5,6 @@ reports/
 playwright-report/
 test-results/
 .stryker-tmp/
+
+# Claude Code agent worktrees
+.claude/worktrees/
