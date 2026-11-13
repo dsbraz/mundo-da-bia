@@ -44,7 +44,9 @@ test('30 s parado mostram pelo menos 3 micro comportamentos, um gato vai à peç
   expect(micro.length, [...seen].join(' ')).toBeGreaterThanOrEqual(3);
   for (const name of ['breath', 'glance', 'tail', 'wander']) expect(seen, name).toContain(name);
   expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBe(before);
-  const saved = await readTown(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
+  const saved = await readTown(page); await page.reload();
+  // The paused clock would also hold the reloaded scene's boot (its loader waits on frames): let only frames pass until it is ready.
+  await expect.poll(async () => { await page.clock.runFor(100); return page.locator('canvas').getAttribute('data-ready'); }).toBe('true');
   expect(await readTown(page)).toEqual(saved);
 });
 

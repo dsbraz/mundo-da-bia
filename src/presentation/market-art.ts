@@ -14,9 +14,10 @@ let source: string | null = null;
 export function keepMarket(text: string) { source = text; }
 const boxes: Partial<Record<PieceKind, { width: number; height: number }>> = { 'market-shelf': { width: 170, height: 220 }, checkout: { width: 200, height: 140 } };
 export { marketKinds } from '../domain/market';
-/** A market piece in `color`, cut from the sheet once read; until then the market's bubble drawing stands in. */
+/** A market piece in `color`, cut from the sheet once read; until then its own bubble drawing stands in (the market's basket for a
+ *  shelf, the register for the checkout), so two pieces never share one picture in a catalog drawn before the sheet arrives. */
 export function marketPieceImage(kind: PieceKind, color: Palette): string {
-  if (!source) { void sheet('market').then(keepMarket); return '/art/market.svg#market'; }
+  if (!source) { void sheet('market').then(keepMarket); return `/art/market.svg#${kind === 'checkout' ? 'checkout' : 'market'}`; }
   return sheetPart(recolor(source, color), [kind === 'checkout' ? 'piece-checkout' : kind], boxes[kind]!);
 }
 /** In the scene: whether the market sheet is read (its textures wait for it). */
@@ -27,10 +28,13 @@ export function marketReady(scene: Phaser.Scene): boolean {
 }
 /** The shelf signs, the seed packet and every ingredient icon, only for a room that shows them (shelves, an open fridge, a bag). */
 export function loadMarketArt(scene: Phaser.Scene, state: World) {
-  const here = state.layout.pieces.some(p => p.room === state.room && (p.kind === 'market-shelf' || (p.kind === 'fridge' && state.home.fridge)));
-  if (!here && !state.items.some(i => i.kind === 'sacola' && i.room === state.room)) return;
+  const inRoom = (kind: string) => state.layout.pieces.some(p => p.room === state.room && p.kind === kind);
+  const shelves = inRoom('market-shelf');
+  if (!shelves && !(inRoom('fridge') && state.home.fridge) && !state.items.some(i => i.kind === 'sacola' && i.room === state.room)) return;
   ingredientIds.forEach(id => { if (!scene.textures.exists(`ing-${id}`)) scene.load.svg(`ing-${id}`, ingredientIcon(id), { width: 64, height: 64 }); });
-  if (scene.textures.exists('seed-packet') || !marketReady(scene)) return;
+  // Signs and the seed packet are cut from the market sheet, so only a room with shelves waits for them: an open fridge at home
+  // shows basics only and must not hold the scene back for them.
+  if (!shelves || scene.textures.exists('seed-packet') || !marketReady(scene)) return;
   [0, 1, 2].forEach(n => loadSvg(scene, `shelf-sign-${n}`, sheetPart(source!, [`shelf-sign-${n}`], { width: 170, height: 36 })));
   loadSvg(scene, 'seed-packet', sheetPart(source!, ['seed-packet'], { width: 64, height: 64 }));
 }
