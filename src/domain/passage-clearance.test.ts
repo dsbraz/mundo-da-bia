@@ -1,7 +1,9 @@
 import { expect, it } from 'vitest';
 import { initialAlbum } from './houses';
 import { initialWorld } from './world';
-import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
+import { localWorld, migrateNeighborhood, neighborhoodAction } from './neighborhood';
+import { walkingPath } from '../presentation/walking-path';
+import { doorFront } from '../presentation/neighborhood-doors';
 import { buildingModels, type Building, type Neighborhood } from './neighborhood-types';
 import { inPassages } from './placement';
 import { addRoom } from './rooms';
@@ -41,8 +43,11 @@ const piece = (t: Neighborhood, kind: PieceKind) => t.buildings[0]!.layout.piece
 const luna = (actors: readonly Actor[]) => actors.find(a => a.id === 'luna')!;
 it('a escada de um andar novo leva o sofá para o lado e o abajur para junto do palco; quem está sentado vai junto e o save segue válido', () => {
   const before = town(), after = neighborhoodAction(before, { type: 'add-floor', building: 1 });
-  expect(piece(after, 'sofa')).toMatchObject({ x: 200, y: 300 }); expect(piece(after, 'lamp')).toMatchObject({ x: 920, y: 160 });
-  expect(luna(after.actors)).toMatchObject({ seat: luna(before.actors).seat, x: luna(before.actors).x + 140, y: luna(before.actors).y + 30 });
+  expect(piece(after, 'sofa')).toMatchObject({ x: 620, y: 360 }); expect(piece(after, 'lamp')).toMatchObject({ x: 920, y: 160 });
+  expect(luna(after.actors)).toMatchObject({ seat: luna(before.actors).seat, x: luna(before.actors).x + 560, y: luna(before.actors).y + 90 });
+  // The sofa does not close, with the coffee table, the floor in front of the stairs: Bia still walks there.
+  const stairs = doorFront(after, { kind: 'interior', building: 1, room: 'room-3' });
+  expect(walkingPath(localWorld(after), { x: 520, y: 500 }, stairs)).not.toBeNull();
   expect(decodeNeighborhood(encodeNeighborhood(after))).toEqual(after);
   // The same in the open house (Criar → new room upstairs).
   const world = addRoom(initialWorld(), { name: 'Sótão', template: 'empty', size: 'medium', cell: 4 });

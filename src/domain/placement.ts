@@ -44,10 +44,10 @@ export function canPlace(world: World, piece: Piece) {
   return others.every(other => overlap(area, other) === 0 || (!!old && overlap(area, other) < overlap(old, other)));
 }
 const rows = Array.from({ length: 23 }, (_, i) => 80 + i * 20);
-/** The nearest spot where `piece` can stand, on a 20-unit grid over `ys` (by default the whole floor and wall). */
-export function freePlacement(world: World, piece: Piece, ys: readonly number[] = rows) {
+/** The nearest spot where `piece` can stand (and that `fits`, when given), on a 20-unit grid over `ys` (by default the whole floor and wall). */
+export function freePlacement(world: World, piece: Piece, ys: readonly number[] = rows, fits: (piece: Piece) => boolean = () => true) {
   const candidates: Piece[] = [];
   for (const y of ys) for (let x = 0; x < roomWidth(world); x += 20) candidates.push({ ...piece, x, y });
   candidates.sort((a, b) => Math.hypot(a.x - piece.x, a.y - piece.y) - Math.hypot(b.x - piece.x, b.y - piece.y));
-  return candidates.find(candidate => canPlace(world, candidate));
+  return candidates.find(candidate => canPlace(world, candidate) && fits(candidate));
 }
