@@ -87,6 +87,7 @@ header button[hidden] { display:none!important; }
 #room-dialog #home-name { display:inline-block; margin:12px 12px 8px 0; }
 #current-building-actions { font-size:13px; }
 #room-dialog #home-hint { margin:8px 0; }
-/* W3L-13: the adults' switch of the characters' own acts. */
-#room-dialog .home-settings label.autonomy-switch { display:flex; align-items:center; gap:10px; margin-top:16px; }
-#room-dialog .home-settings label.autonomy-switch input { width:28px; height:28px; min-height:0; min-width:0; margin:0; display:inline-block; flex:none; }
+/* W3L-13: the adults' switch of the characters' own acts, last in Organizar so the house actions stay in view. */
+#room-dialog .adult-settings { margin:16px 0; }
+#room-dialog label.autonomy-switch { display:flex; align-items:center; gap:10px; }
+#room-dialog label.autonomy-switch input { width:28px; height:28px; min-height:0; min-width:0; margin:0; display:inline-block; flex:none; }
