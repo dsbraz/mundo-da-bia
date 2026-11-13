@@ -11,9 +11,18 @@ function append(town: Neighborhood, building: Building): Neighborhood {
 export function construct(town: Neighborhood, plot: number, model: BuildingModel, plan?: 'market'): Neighborhood {
   if (!Number.isInteger(plot) || plot < 0 || plot >= town.plots || town.buildings.some(b => b.plot === plot)) return town;
   const market = plan === 'market' && model === 'shop';
-  const name = market ? 'Mercado' : { house: 'Casa', apartment: 'Prédio', shop: 'Loja', hospital: 'Hospital', police: 'Delegacia', office: 'Escritório', 'fire-station': 'Bombeiros', school: 'Escola', stadium: 'Estádio', 'sports-club': 'Clube esportivo' }[model];
+  const name = { house: 'Casa', apartment: 'Prédio', shop: 'Loja', hospital: 'Hospital', police: 'Delegacia', office: 'Escritório', 'fire-station': 'Bombeiros', school: 'Escola', stadium: 'Estádio', 'sports-club': 'Clube esportivo' }[model];
   const world = market ? marketWorld() : startWorld(model);
-  return append(town, { id: town.nextBuilding, name: `${name} ${town.nextBuilding}`, model, color: 'original', plot, entry: 'sala', layout: world.layout, show: false });
+  return append(town, { id: town.nextBuilding, name: market ? marketName(town) : `${name} ${town.nextBuilding}`, model, color: 'original', plot, entry: 'sala', layout: world.layout, show: false });
+}
+/** A market's name has no digit on the facade (no numbers for the child): the first is just Mercado, the others a place's name. */
+const marketNames = ['Mercado', 'Mercado da Praça', 'Mercado do Sol', 'Mercado da Esquina', 'Mercado das Flores', 'Mercado do Bosque', 'Mercado da Lua',
+  'Mercadinho', 'Mercado do Rio', 'Mercado das Frutas'];
+function marketName(town: Neighborhood): string {
+  const taken = (name: string) => town.buildings.some(b => b.name === name);
+  let name = marketNames.find(candidate => !taken(candidate)) ?? 'Mercado Novo';
+  while (taken(name)) name += ' Novo';
+  return name;
 }
 /** A new building of `model`: the house as it starts, an institution's plan, or two bare rooms. */
 function startWorld(model: BuildingModel) {

@@ -15,7 +15,7 @@ const layoutWith = (...pieces: Piece[]): Layout => ({ ...initialWorld().layout, 
 describe('o mercado (W3L-21)', () => {
   it('o plano Mercado da loja cria um salão com 2 prateleiras, geladeira e caixa, e um depósito', () => {
     const shop = market().buildings.at(-1)!;
-    expect(shop).toMatchObject({ model: 'shop', name: 'Mercado 2', plot: 1 });
+    expect(shop).toMatchObject({ model: 'shop', name: 'Mercado', plot: 1 });
     const kinds = shop.layout.pieces.filter(p => p.room === 'sala').map(p => p.kind);
     expect(kinds.filter(k => k === 'market-shelf')).toHaveLength(2);
     expect(kinds).toEqual(expect.arrayContaining(['fridge', 'checkout']));
@@ -23,6 +23,14 @@ describe('o mercado (W3L-21)', () => {
     expect(shop.layout.rooms.quarto).toMatchObject({ name: 'Depósito' });
     expect(isMarket(shop.layout, 'sala')).toBe(true);
     expect(isMarket(shop.layout, 'quarto')).toBe(false);
+  });
+  it('nome de mercado nunca tem número na fachada: o primeiro é Mercado, os outros ganham um nome de lugar', () => {
+    let town = market();
+    for (const plot of [2, 3, 4, 5, 6, 7, 8, 9]) town = neighborhoodAction(town, { type: 'construct', plot, model: 'shop', plan: 'market' });
+    const names = town.buildings.filter(b => b.model === 'shop').map(b => b.name);
+    expect(names[0]).toBe('Mercado');
+    expect(names.every(name => name.startsWith('Mercad') && !/\d/.test(name))).toBe(true);
+    expect(new Set(names).size).toBe(names.length);
   });
   it('a loja sem plano continua como era, e o plano só vale para a loja', () => {
     const plain = neighborhoodAction(start(), { type: 'construct', plot: 1, model: 'shop' }).buildings.at(-1)!;
