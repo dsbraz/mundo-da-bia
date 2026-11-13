@@ -1,3 +1,4 @@
+import { loadSchoolArt } from './school-art';
 import { buildingFacadeKey, buildingFacadeSvg, roomArchitecture, svgUrl } from './architecture-art';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { roomTemplates } from '../domain/types';
@@ -37,7 +38,7 @@ function loadActor(scene: Phaser.Scene, id: ActorId, index: number, current: Loo
 export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | null) {
   town?.buildings.forEach(b => loadSvg(scene, buildingFacadeKey(b), svgUrl(buildingFacadeSvg(b))));
   roomTemplates.filter(template => !scene.textures.exists(`architecture-${template}`)).forEach(template => loadSvg(scene, `architecture-${template}`, svgUrl(roomArchitecture(template))));
-  loadPieces(scene, state);
+  loadPieces(scene, state); loadSchoolArt(scene, state, town?.progress.drawings ?? []);
   loadDishes(scene, town?.items ?? state.items);
   if (state.streetWidth) loadGarden(scene);
   actorIds.forEach((id, index) => loadActor(scene, id, index, state.actors.find(a => a.id === id)!.look));

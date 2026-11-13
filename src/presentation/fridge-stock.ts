@@ -6,6 +6,7 @@ import { stockOf } from '../domain/stock';
 import type { World } from '../domain/types';
 import { pieceBounds } from '../domain/layout';
 import { drawShelfGoods } from './market-art';
+import { drawFridgeDrawings } from './school-art';
 
 /** Icon size in piece units: about 27 screen px at 1024 (W3L-23 art pass). */
 export const fridgeIcon = 24;
@@ -39,9 +40,11 @@ function drawFridgeStock(scene: Phaser.Scene, state: World, pieces: Map<number, 
     });
   });
 }
-/** What the room shows of the market (§3.4): the shelves' goods, and in an open fridge the house's pantry. */
+/** What the room shows of the market (§3.4): the shelves' goods, and in an open fridge the house's pantry; and the school's drawings
+ *  on the fridge door (W3L-26). */
 export function drawPantries(scene: Phaser.Scene, state: World, pieces: Map<number, Phaser.GameObjects.Container>, town: Neighborhood | null) {
   const where = town?.location, house = where?.kind === 'interior' ? town!.buildings.find(b => b.id === where.building) : undefined;
   drawShelfGoods(scene, state, pieces, town?.progress.shelves ?? []);
   drawFridgeStock(scene, state, pieces, house ? stockOf(house) : {});
+  drawFridgeDrawings(scene, state, pieces, town?.progress.drawings ?? []);
 }

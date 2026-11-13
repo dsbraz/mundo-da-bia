@@ -7,7 +7,7 @@ import { seatPoint } from './seats';
 import { enterRoom } from './room-state';
 export interface NewRoom { name: string; template: RoomTemplate; size: RoomSize; cell: number }
 const furnishings: Record<RoomTemplate, PieceKind[]> = {
-  classroom: ['desk', 'bookcase', 'picture'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
+  classroom: ['bookcase', 'desk', 'desk', 'desk', 'board'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
   laundry: ['washer', 'sink', 'shelf'], library: ['bookcase', 'armchair', 'reading-lamp'], dining: ['picnic-table', 'kitchen-cart', 'plant'],
   reception: ['counter', 'armchair', 'plant'],
   consultation: ['desk', 'armchair', 'sink'],
@@ -23,8 +23,10 @@ const furnishings: Record<RoomTemplate, PieceKind[]> = {
   market: ['market-shelf', 'market-shelf', 'fridge', 'checkout'],
 };
 /** Fixed columns (piece left edges): the yard's scattered pieces, and the market hall (W3L-21 art pass) with both shelves left of the
- *  door and the fridge and checkout right of it, the whole hall inside one 1024 px screen so it opens with nothing cut off. */
-const columns: Partial<Record<RoomTemplate, readonly number[]>> = { playground: [60, 320, 60], garden: [60, 320, 60], market: [140, 318, 616, 776] };
+ *  door and the fridge and checkout right of it, the whole hall inside one 1024 px screen so it opens with nothing cut off; the classroom
+ *  (W3L-26) with three desks in a row under the board. */
+const columns: Partial<Record<RoomTemplate, readonly number[]>> = { playground: [60, 320, 60], garden: [60, 320, 60], market: [140, 318, 616, 776],
+  classroom: [20, 230, 500, 770, 360] };
 export function freeCell(state: World, cell: number): boolean {
   return Number.isInteger(cell) && cell >= 0 && cell < 12 && !Object.values(state.layout.rooms).some(r => r.cell === cell);
 }
@@ -43,7 +45,7 @@ export function furnishRoom(state: World, template: RoomTemplate): World {
     const box = pieceBounds[kind];
     const playground = template === 'playground' || template === 'garden';
     const x = columns[template]?.[index] ?? 40 + index * (roomWidth(state) - 80 - box.width) / Math.max(1, furnishings[template].length - 1);
-    const point = freePlacement(next, { id: next.layout.nextId, kind, room: next.room, color: 'original', flipped: false, x, y: (playground && index === 2 ? 390 : 450) - box.height });
+    const point = freePlacement(next, { id: next.layout.nextId, kind, room: next.room, color: 'original', flipped: false, x, y: (kind === 'board' ? 90 + box.height : playground && index === 2 ? 390 : 450) - box.height });
     if (point) next = editWorld(next, { type: 'add', kind, point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } });
   });
   const table = { kitchen: 'table', dining: 'picnic-table' }[template as string] as PieceKind | undefined;

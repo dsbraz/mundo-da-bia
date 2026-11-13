@@ -1,13 +1,16 @@
 import { pieceBounds, fixture } from '../domain/layout';
 import { seatPiece, seatPoint } from '../domain/seats';
 import { usableKinds } from '../domain/use';
-import type { Action, ActorId, Point, World } from '../domain/types';
+import type { Action, ActorId, PieceKind, Point, World } from '../domain/types';
+import { isSchool } from '../domain/school';
 import { walkingPath } from './walking-path';
 import { onFloor } from './floor-band';
 import { furnitureAt, seatAt, stageHit, usableAt, wardrobeHit } from './furniture-targets';
+/** A tap on a seat sits there, except on a piece that switches on; a school's desk (W3L-26) is a seat to sit at. */
+const sitsThere = (world: World, kind: PieceKind) => !usableKinds.includes(kind) || (kind === 'desk' && isSchool(world.layout, world.room));
 export function equipmentAction(world: World, actor: ActorId, point: Point): Action | 'wardrobe' | null {
   if (wardrobeHit(world, point)) return 'wardrobe';
-  const seat = seatAt(world, point); if (seat && !usableKinds.includes(seatPiece(world, seat)!.kind)) return { type: 'sit', actor, seat };
+  const seat = seatAt(world, point); if (seat && sitsThere(world, seatPiece(world, seat)!.kind)) return { type: 'sit', actor, seat };
   const target = furnitureAt(world, point); if (target) return { type: 'interact', target };
   if (stageHit(world, point)) return { type: 'show' };
   const piece = usableAt(world, point); return piece ? { type: 'use', id: piece.id } : null;

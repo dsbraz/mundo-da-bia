@@ -32,7 +32,7 @@ it('o fixture rico da v2 migra para um v3 igual ao bairro v2 fora de progress e 
 });
 it('o progresso inicial tem todos os campos de 4.2', () => {
   expect(initialProgress()).toEqual({ recipes: [], fancy: [], seeds: ['alface', 'tomate', 'cenoura'], specials: [], basket: {}, plaza: {},
-    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [] });
+    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [], drawings: [] });
 });
 it('carregar o v2 grava o v3 e deixa a chave v2 byte a byte igual, também depois de salvar de novo', () => {
   const port = storage([[v2, rich]]);
@@ -53,7 +53,7 @@ it('o v3 faz round-trip com progresso cheio e planta na horta em caixa', () => {
   const town: Neighborhood = { ...base, buildings: base.buildings.map((b, n) => n ? b : { ...b, layout: { ...b.layout, nextId: 100, pieces: [...b.layout.pieces, planter] } }),
     progress: { recipes: ['pizza', 'curau'], fancy: ['panqueca'], seeds: ['alface', 'milho'], specials: ['mel'], basket: { alface: 2, tomate: 6 },
       plaza: { 'praca-2': { crop: 'alface', stage: 4, since: 5, watered: false } }, post: { day: 20400, next: 3, inbox: [1, 2] },
-      revealed: ['sopa-de-legumes'], favorites: ['luna'], goals: ['panqueca'], shelves: ['canela'] } };
+      revealed: ['sopa-de-legumes'], favorites: ['luna'], goals: ['panqueca'], shelves: ['canela'], drawings: ['gato'] } };
   expect(decodeNeighborhood(encodeNeighborhood(town))).toEqual(town);
 });
 it('v3 com conteúdo desconhecido carrega sem ele e com template e modelo padrão', () => {

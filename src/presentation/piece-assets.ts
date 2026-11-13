@@ -6,6 +6,7 @@ import { pieceBounds } from '../domain/layout';
 import { recolor, svgFragment } from './svg-source';
 import { chairImage, chairReady } from './chair-art';
 import { loadMarketArt, marketKinds, marketPieceImage, marketReady } from './market-art';
+import { boardImage, schoolReady } from './school-art';
 import sala from './assets/sala.svg?raw';
 import quarto from './assets/quarto.svg?raw';
 import workshop from './assets/workshop.svg?raw';
@@ -34,16 +35,17 @@ function source(kind: PieceKind) {
 export function pieceImage(kind: PieceKind, color: Palette = 'original', preview = false): string {
   if (kind === 'chair') return chairImage(color);
   if (marketKinds.includes(kind)) return marketPieceImage(kind, color);
+  if (kind === 'board') return boardImage(color);
   const parts = [...(layers[kind] ?? [kind])];
   if (preview) parts.push(...(extras[kind] ?? []).filter(id => id.endsWith('closed') || id === 'lamp-on'));
   return svgFragment(recolor(source(kind), color), parts, pieceBounds[kind], furnitureTransform(kind));
 }
 export function loadPieces(scene: Phaser.Scene, state: World) {
   const unique = new Map(state.layout.pieces.map(piece => [`${piece.kind}-${piece.color}`, piece]));
-  const chair = chairReady(scene), market = marketReady(scene);
+  const chair = chairReady(scene), market = marketReady(scene), school = schoolReady(scene);
   loadMarketArt(scene, state);
   unique.forEach(({ kind, color }) => {
-    if (scene.textures.exists(`piece-${kind}-${color}`) || (kind === 'chair' && !chair) || (marketKinds.includes(kind) && !market)) return;
+    if (scene.textures.exists(`piece-${kind}-${color}`) || (kind === 'chair' && !chair) || (marketKinds.includes(kind) && !market) || (kind === 'board' && !school)) return;
     loadSvg(scene, `piece-${kind}-${color}`, pieceImage(kind, color));
     (extras[kind] ?? []).forEach(part => loadSvg(scene, `piece-${part}-${color}`, svgFragment(recolor(source(kind), color), [part], pieceBounds[kind], furnitureTransform(kind))));
   });

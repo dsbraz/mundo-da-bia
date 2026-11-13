@@ -3,10 +3,10 @@ import { roomWidth } from './geometry';
 import { pieceBounds, validPlacement } from './layout';
 import type { Piece, World } from './types';
 export interface Footprint { left: number; right: number; top: number; bottom: number }
-const flat = ['rug', 'picture', 'neon', 'mirror', 'cushion'];
+const flat = ['rug', 'picture', 'neon', 'mirror', 'cushion', 'board'];
 /** Where the painted floor meets the baseboard: anything that stands on the floor has its base at or below it. */
 export const floorBase = 390;
-const onWall = ['picture', 'neon', 'mirror', 'cushion'];
+const onWall = ['picture', 'neon', 'mirror', 'cushion', 'board'];
 const standsOnFloor = (piece: Piece) => !onWall.includes(piece.kind);
 /** A floor piece dropped on the wall slides down until its base touches the baseboard; wall pieces stay where they are. */
 export function onFloorPiece(piece: Piece): Piece {

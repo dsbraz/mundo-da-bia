@@ -59,6 +59,7 @@ import '../presentation/place-transition.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { marketPlay } from './market';
+import { schoolPlay } from './school';
 import { selfCareWiring } from './self-care';
 import { nightSleep } from './night-sleep';
 
@@ -165,6 +166,7 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
 function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)) townActs.dispatch(action); }
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback });
+const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
 /** Session time in Brincar (Criar pauses life, §3.1). */
@@ -195,8 +197,10 @@ function walksFirst(action: Action, interrupt: boolean): boolean {
   if (play.sitToEat(action)) return true;
   cancelGame(); walker.cancel(); return false;
 }
+/** The market and the school take some taps over (a shelf, the checkout, the fridge with a bag, a board). */
+const takenOver = (action: Action) => shopping.intercept(action) || schooling.intercept(action);
 function dispatch(action: Action, interrupt = true) {
-  if (walksFirst(action, interrupt) || shopping.intercept(action)) return;
+  if (walksFirst(action, interrupt) || takenOver(action)) return;
   if ('actor' in action) root.classList.add('actor-chosen');
   if ('item' in action) scene.balls.forget(action.item);
   if (['room', 'travel', 'cross', 'transfer'].includes(action.type)) scene.balls.settle();

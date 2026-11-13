@@ -16,7 +16,7 @@ export function orderedPieces(state: World) {
 }
 export function pieceDepth(piece: Piece) {
   if (piece.kind === 'rug') return 1;
-  if (['picture', 'neon'].includes(piece.kind)) return 2;
+  if (['picture', 'neon', 'board'].includes(piece.kind)) return 2;
   return piece.y + pieceBounds[piece.kind].height - 20;
 }
 export function drawPieces(scene: Phaser.Scene, state: World, wardrobe: boolean, selected: number | null) {
@@ -37,7 +37,7 @@ export function drawPiece(scene: Phaser.Scene, piece: Piece, state: World, wardr
   const container = scene.add.container(piece.x, piece.y).setDepth(pieceDepth(piece));
   const parts = partsFor(piece, state, wardrobe);
   const box = pieceBounds[piece.kind];
-  if (!['rug', 'picture', 'neon', 'cushion'].includes(piece.kind)) container.add(contactShadow(scene, box.width / 2, box.height - 3, box.width * .76, 8, 0x625642));
+  if (!['rug', 'picture', 'neon', 'cushion', 'board'].includes(piece.kind)) container.add(contactShadow(scene, box.width / 2, box.height - 3, box.width * .76, 8, 0x625642));
   parts.forEach(part => container.add(scene.add.image(box.width / 2, box.height / 2, `piece-${part}-${piece.color}`).setFlipX(piece.flipped).setDisplaySize(box.width, box.height)));
   // A piece that is on shows its drawn effect, never text (W3L-09). The bench pieces show steam only while cooking (kitchen-art) and the
   // mirror answers with the reflection (W3L-08): for them an old saved `active` draws nothing.

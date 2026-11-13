@@ -43,7 +43,7 @@ export function wardrobeHit(state: World, p: Point) { return hit(state, 'wardrob
 export function usableAt(state: World, point: Point) {
   return [...state.layout.pieces].reverse().find(piece => {
     const box = pieceBounds[piece.kind];
-    return piece.room === state.room && (usableKinds.includes(piece.kind) || benchKinds.includes(piece.kind) || marketKinds.includes(piece.kind))
+    return piece.room === state.room && (usableKinds.includes(piece.kind) || benchKinds.includes(piece.kind) || marketKinds.includes(piece.kind) || piece.kind === 'board')
       && point.x >= piece.x && point.x <= piece.x + box.width && point.y >= piece.y && point.y <= piece.y + box.height;
   });
 }

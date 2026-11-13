@@ -32,8 +32,14 @@ export function institutionInterior(template: RoomTemplate): string | undefined 
 }
 function classroom() {
   return rect(0, 58, 1000, 327, '#e9e1cd') + rect(0, 286, 1000, 99, '#bec9ac') + panes(80, 90, 200, 210)
-    + rect(365, 100, 510, 190, '#9a8869') + rect(377, 112, 486, 166, '#577b70')
-    + '<path d="M415 151h90m-90 42h180m-180 42h125m140-70 40-35 55 60h-95Z" fill="none" stroke="#e7e9ce" stroke-width="3"/><circle cx="807" cy="225" r="24" fill="none" stroke="#e7e9ce" stroke-width="3"/>';
+    + bunting();
+}
+/** Paper flags across the classroom wall (W3L-26): the board itself is a piece, hung under them. */
+function bunting() {
+  const colors = ['#e8735a', '#f2b630', '#79a78a', '#8db7d1', '#df7987'];
+  let flags = '<path d="M310 63q340 8 680 0" fill="none" stroke="#9a8869" stroke-width="2"/>';
+  for (let i = 0; i < 14; i++) { const x = 322 + i * 48, y = 63 + 4 * Math.sin(Math.PI * (x - 310) / 680); flags += `<path d="M${x} ${y}h26l-13 19Z" fill="${colors[i % 5]}" stroke="#75837f" stroke-width="1.5" stroke-linejoin="round"/>`; }
+  return flags;
 }
 function sportsInterior(outside: boolean) {
   const wall = outside ? '<rect width="1000" height="390" fill="url(#glass)"/><path d="M0 290q200-120 400-10t600-40v140H0Z" fill="#a2bb90"/>' : rect(0, 58, 1000, 327, '#e3dcc7') + panes(100, 90, 280, 130) + panes(620, 90, 280, 130);

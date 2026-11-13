@@ -14,6 +14,9 @@ export const plazaPlots = ['praca-1', 'praca-2', 'praca-3', 'praca-4'] as const;
 /** What appears on the market's specials shelf, one at a time (§3.4, W3L-23): the specials and the seeds she does not start with. */
 export const shelfIds = ['chocolate', 'canela', 'mel', 'semente-milho', 'semente-morango', 'semente-abobora'] as const;
 export type ShelfUnlock = typeof shelfIds[number];
+/** The 12 themes of the school's drawing of the day (W3L-26), in the order they come out; these strings are save format. */
+export const drawingIds = ['sol', 'gato', 'casa', 'flor', 'foguete', 'arvore', 'peixe', 'borboleta', 'arco-iris', 'barco', 'lua', 'passaro'] as const;
+export type DrawingId = typeof drawingIds[number];
 /** Letters L01–L12 and the notes B1–B8. */
 export const letterCount = 20;
 export const inboxLimit = 3;
@@ -30,10 +33,12 @@ export interface Progress {
   revealed: RecipeId[]; favorites: ActorId[]; goals: GoalId[];
   /** What has appeared on the market's shelves (W3L-23); it only grows. */
   shelves: ShelfUnlock[];
+  /** The school's drawings of the day (W3L-26), oldest first and each once: the newest 4 hang on the fridge door. */
+  drawings: DrawingId[];
 }
 export function initialProgress(): Progress {
   return { recipes: [], fancy: [], seeds: ['alface', 'tomate', 'cenoura'], specials: [], basket: {}, plaza: {},
-    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [] };
+    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [], drawings: [] };
 }
 /** When each appears (§3.4): the first harvest brings corn seeds; discovered recipes bring the specials, and after a harvest more seeds. */
 const reveals: readonly [ShelfUnlock, (recipes: number, harvested: boolean) => boolean][] = [
