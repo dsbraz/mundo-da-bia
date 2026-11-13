@@ -11,7 +11,7 @@ for (const size of sizes) for (const model of places) test(`lote 7: ${model} a $
   await openPro(page, proTown(model));
   await expect(page.locator('canvas')).toHaveAttribute('data-staff', /:/);
   await page.screenshot({ path: `reports/review/lot7-${model}-${size.width}.png` });
-  if (model === 'school') { await seatAt(page, 'bia', 0); await seatAt(page, 'leo', 1); }
+  if (model === 'school') { await seatAt(page, 'bia', 0); await seatAt(page, 'leo', 2); }
   await tapStaff(page);
   await page.clock.runFor(model === 'school' ? 6000 : 900);
   await page.screenshot({ path: `reports/review/lot7-${model}-act-${size.width}.png` });

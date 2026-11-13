@@ -29,6 +29,13 @@ function drawStaff(scene: Phaser.Scene, staff: Staff, side: number) {
   const pose = scene.add.container(0, 0, [part('body'), part('arm'), part('act')]).setName('pose').setScale(side, 1);
   return scene.add.container(staff.x, staff.y, [contactShadow(scene, 0, 2, 64, 9, 0x716858), pose]).setDepth(staff.y).setName('staff');
 }
+/** Moves her (and her effects) to `at` only when she is not already there: in front of the child she visits. */
+function place(figure: Phaser.GameObjects.Container, effects: Phaser.GameObjects.Graphics, at: Point, visiting: boolean) {
+  if (!visiting && figure.x === at.x && figure.y === at.y) return;
+  figure.setPosition(at.x, at.y).setDepth(at.y + (visiting ? 2 : 0)); effects.setDepth(at.y + 3);
+}
+/** Whether a display object is still in the scene (a repaint or a room preview destroys them). */
+const shown = (object: Phaser.GameObjects.GameObject | null): object is Phaser.GameObjects.GameObject => !!object?.scene;
 /** A slow breath, none with reduced motion. */
 const breath = (now: number, reduced: boolean) => reduced ? 1 : 1 + .012 * Math.sin(now / 650);
 /** The working arm instead of the resting one, the way she faces and her breath. */
@@ -60,18 +67,18 @@ export function staffFigures(scene: Phaser.Scene) {
     /** Whether `point` (scene units) touches the drawn professional. */
     hit(point: Point): boolean {
       const k = staffScale();
-      return !!staff && !!figure && Math.abs(point.x - figure.x) <= 52 * k && point.y <= staff.y + 8 && point.y >= staff.y - 250 * k;
+      return !!staff && shown(figure) && Math.abs(point.x - figure.x) <= 52 * k && point.y <= staff.y + 8 && point.y >= staff.y - 250 * k;
     },
     /** The trade begins (`target`: whom the doctor goes to); a second tap while it plays changes nothing. */
     act(now: number, target: Point | null = null) { if (!staff || busy(now, false)) return false; doing = { start: now, target }; return true; },
     frame(now: number, reduced: boolean, teaching: boolean) {
-      if (!staff || !figure || !effects) return;
+      if (!staff || !shown(figure) || !shown(effects)) return;
       const working = busy(now, teaching), t = elapsed(doing, now), target = doing?.target ?? null;
       mark('staffAct', working ? staff.profession : '');
       const turned = target ? facing(staff.x, target.x) : side;
       posture(figure, working, turned, breath(now, reduced));
       const at = goes(staff, target, turned, visit(t, reduced));
-      figure.setPosition(at.x, at.y).setDepth(at.y + (target ? 2 : 0)); effects.setDepth(at.y + 3);
+      place(figure, effects, at, !!target);
       effects.clear();
       if (working) drawTrade(effects, staff.profession, { ...at, side: turned, k: staffScale() }, t, reduced, target);
     },

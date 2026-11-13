@@ -3,6 +3,7 @@ import { roomWidths } from './geometry';
 import { pieceBounds } from './layout';
 import { passages } from './passages';
 import { footprint, overlap, type Footprint } from './placement';
+import { seatSlots } from './seats';
 import type { BuildingModel, Location, Neighborhood } from './neighborhood-types';
 import type { Layout, PieceKind, Point, RoomId, RoomTemplate } from './types';
 
@@ -21,6 +22,8 @@ export const professionOf = (model: BuildingModel): Profession | undefined => wo
 export const staffBody = { half: 64, height: 300 };
 /** Pieces nobody may stand in front of: the board one learns at, the counter and the checkout one is served at. */
 const keyKinds: readonly PieceKind[] = ['board', 'counter', 'checkout'];
+/** Nor in front of a seat: whoever sits there (a pupil at her desk) stays in sight. */
+const hidden = (kind: PieceKind) => keyKinds.includes(kind) || !!seatSlots[kind];
 const box = (r: { x: number; y: number; width: number; height: number }): Footprint => ({ left: r.x, right: r.x + r.width, top: r.y, bottom: r.y + r.height });
 /** The professional of the room shown at `where`, standing at its spot, or null (a home, the street, another room). */
 export function staffAt(town: Neighborhood, where: Location): Staff | null {
@@ -30,13 +33,13 @@ export function staffAt(town: Neighborhood, where: Location): Staff | null {
   if (!work || room?.template !== work.template) return null;
   return { profession: work.profession, building: where.building, room: where.room, ...spot(building.layout, where.room) };
 }
-/** Where to stand: beside the room's key piece (else the middle), never in a passage, the street door, a key piece or another piece's
- *  footprint; a full room takes the least crowded place. */
+/** Where to stand: beside the room's key piece (else the middle), never in a passage, the street door, in front of a key piece or a seat,
+ *  nor in another piece's footprint; a full room takes the least crowded place. */
 function spot(layout: Layout, room: RoomId): Point {
   const width = roomWidths[layout.rooms[room]!.size], pieces = layout.pieces.filter(p => p.room === room);
   const key = pieces.find(p => keyKinds.includes(p.kind)), wanted = key ? key.x + pieceBounds[key.kind].width + staffBody.half + 10 : width / 2;
   const blocked = [...passages(layout, room).map(p => box(p.zone)), ...(layout.rooms[room]!.cell === 0 ? [box(doorway.interior)] : []),
-    ...pieces.filter(p => keyKinds.includes(p.kind)).map(p => box({ ...pieceBounds[p.kind], x: p.x, y: p.y }))];
+    ...pieces.filter(p => hidden(p.kind)).map(p => box({ ...pieceBounds[p.kind], x: p.x, y: p.y }))];
   const feet = pieces.map(footprint).filter((f): f is Footprint => !!f);
   const cost = (p: Point) => {
     const body = { left: p.x - staffBody.half, right: p.x + staffBody.half, top: p.y - staffBody.height, bottom: p.y };

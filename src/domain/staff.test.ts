@@ -30,7 +30,7 @@ describe('os profissionais de cada instituição (lote 7)', () => {
     expect(staff).toMatchObject({ profession, building: 2, room });
     expect(passages(layout, room).every(p => overlap(box(staff), rect(p.zone)) === 0)).toBe(true);
     if (layout.rooms[room]!.cell === 0) expect(overlap(box(staff), rect(doorway.interior))).toBe(0);
-    const keys = layout.pieces.filter(p => p.room === room && ['board', 'counter', 'checkout'].includes(p.kind));
+    const keys = layout.pieces.filter(p => p.room === room && ['board', 'counter', 'checkout', 'school-desk', 'armchair', 'desk', 'chair', 'sofa'].includes(p.kind));
     expect(keys.every(p => overlap(box(staff), rect({ ...pieceBounds[p.kind], x: p.x, y: p.y })) === 0)).toBe(true);
     // Her feet are never inside a piece.
     const feet = { left: staff.x - 30, right: staff.x + 30, top: staff.y - 20, bottom: staff.y + 5 };
@@ -49,8 +49,8 @@ describe('os profissionais de cada instituição (lote 7)', () => {
     const town = built('school'), room = roomOf(town, 'classroom'), b = town.buildings[1]!;
     const board = b.layout.pieces.find(p => p.room === room && p.kind === 'board')!;
     const teacher = staffAt(town, at(town, room))!;
-    expect(Math.min(Math.abs(teacher.x - board.x), Math.abs(teacher.x - board.x - 400))).toBeLessThan(staffBody.half + 60);
-    const moved = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p === board ? { ...p, x: 160 } : p) } } : x) };
+    expect(Math.min(Math.abs(teacher.x - board.x), Math.abs(teacher.x - board.x - 400))).toBeLessThan(200);
+    const moved = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, pieces: b.layout.pieces.filter(p => p.kind !== 'school-desk').map(p => p === board ? { ...p, x: 160 } : p) } } : x) };
     const after = staffAt(moved, at(moved, room))!;
     expect(after.x).not.toBe(teacher.x);
     expect(overlap(box(after), rect({ ...pieceBounds.board, x: 160, y: board.y }))).toBe(0);
