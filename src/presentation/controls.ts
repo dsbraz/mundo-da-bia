@@ -4,6 +4,7 @@ import { objectControls } from './object-controls';
 import { actorNames } from './actor-names';
 import { portrait } from './portrait';
 import { roomWidth } from '../domain/geometry';
+import { pieceBounds } from '../domain/layout';
 import { actorAt } from './targets';
 import { screenScale, worldToScreen } from './viewport';
 import { trayDrag } from './tray-drag';
@@ -97,7 +98,7 @@ export function positionContext(root: HTMLElement, actor: Actor, state: World) {
   const app = root.getBoundingClientRect(), scale = screenScale(canvas), feet = worldToScreen(canvas, actor);
   const size = { width: context.offsetWidth || ringWidth(context), height: context.offsetHeight || 84 }, tall = (actor.kind === 'cat' ? 170 : 300) * scale;
   // Half the widest speech bubble (340 px of text and its padding), so the ring beside the head leaves the line in view.
-  const place = ringPlace(feet, size, tall, 186 * scale, world);
+  const place = ringPlace(feet, size, tall, 186 * scale, world, shelfSigns(canvas, state));
   context.style.setProperty('--ring-x', `${Math.round(place.x - app.left)}px`);
   context.style.setProperty('--ring-y', `${Math.round(place.y - app.top)}px`);
 }
@@ -105,12 +106,25 @@ type Frame = { left: number; top: number; right: number; bottom: number };
 /** Where the ring's top-left corner goes (screen pixels): above the head and the speech line (`tall` above the feet), centred, inside the
  *  scene; when there is no room above (a high seat, such as a bed, on a short screen) beside the head instead, `half` away from its middle
  *  (right, else left), so the line said there is never under the ring (W3L-15). */
-export function ringPlace(feet: Point, size: { width: number; height: number }, tall: number, half: number, world: Frame): Point {
+export function ringPlace(feet: Point, size: { width: number; height: number }, tall: number, half: number, world: Frame, clear: Frame[] = []): Point {
   const fit = (x: number) => Math.max(world.left + 8, Math.min(world.right - size.width - 8, x));
   const y = feet.y - tall - size.height;
-  if (y >= world.top + 8) return { x: fit(feet.x - size.width / 2), y: Math.min(world.bottom - size.height - 8, y) };
+  if (y >= world.top + 8) {
+    const above = { x: fit(feet.x - size.width / 2), y: Math.min(world.bottom - size.height - 8, y) };
+    // A market shelf's sign stays readable: the ring goes up to the top of the scene instead (W3L-21 art pass).
+    return clear.some(sign => covers(above, size, sign)) ? { x: above.x, y: world.top + 8 } : above;
+  }
   const right = feet.x + half;
   return { x: fit(right + size.width <= world.right - 8 ? right : feet.x - half - size.width), y: world.top + 8 };
+}
+const covers = (at: Point, size: { width: number; height: number }, box: Frame) =>
+  at.x < box.right && at.x + size.width > box.left && at.y < box.bottom && at.y + size.height > box.top;
+/** The market shelves' signs in the room, in screen pixels (the top 36 units of each shelf). */
+function shelfSigns(canvas: HTMLCanvasElement, state: World): Frame[] {
+  return state.layout.pieces.filter(p => p.room === state.room && p.kind === 'market-shelf').map(p => {
+    const a = worldToScreen(canvas, p), b = worldToScreen(canvas, { x: p.x + pieceBounds[p.kind].width, y: p.y + 36 });
+    return { left: a.x, top: a.y, right: b.x, bottom: b.y };
+  });
 }
 
 /** The ring's width while it is hidden (a tray open): its big buttons, "mais", the gaps and the padding (drawer-ring.css). */

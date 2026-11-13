@@ -49,7 +49,7 @@ for (const size of sizes) test(`interior do mercado e a sacola a ${size.width}${
   test.setTimeout(90_000);
   await open(page, inHall(withMarket()), size);
   await page.screenshot({ path: name('market-interior', size) });
-  await tap(page, ...await onPiece(page, 'market-shelf', 125, 330));
+  await tap(page, ...await onPiece(page, 'market-shelf', 225, 330));
   const panel = page.locator('#market-panel');
   await expect(panel).toBeVisible({ timeout: 15000 });
   for (const good of ['pao', 'leite', 'queijo']) await panel.locator(`.market-good[data-good="${good}"]`).click();
@@ -57,7 +57,7 @@ for (const size of sizes) test(`interior do mercado e a sacola a ${size.width}${
   await page.waitForTimeout(500);
   await page.screenshot({ path: name('market-bag', size) });
   await page.locator('#market-panel .bench-close').click();
-  await tap(page, ...await onPiece(page, 'checkout', 1060, 370));
+  await tap(page, ...await onPiece(page, 'checkout', 876, 370));
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('mundo-da-bia:neighborhood:v3')!).town.items.some((i: { kind: string; paid?: boolean }) => i.kind === 'sacola' && i.paid)), { timeout: 20000 }).toBe(true);
   await page.waitForTimeout(300);
   await page.screenshot({ path: name('market-paid', size) });

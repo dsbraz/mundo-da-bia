@@ -6,6 +6,8 @@ import { initialWorld } from './world';
 import { editWorld } from './design';
 import type { Layout, Piece, PieceKind, RoomId } from './types';
 import type { Neighborhood } from './neighborhood-types';
+import { pieceBounds } from './layout';
+import { doorway } from './doorway';
 
 const start = (): Neighborhood => migrateNeighborhood(initialAlbum(initialWorld()));
 const market = () => neighborhoodAction(start(), { type: 'construct', plot: 1, model: 'shop', plan: 'market' });
@@ -23,6 +25,14 @@ describe('o mercado (W3L-21)', () => {
     expect(shop.layout.rooms.quarto).toMatchObject({ name: 'Depósito' });
     expect(isMarket(shop.layout, 'sala')).toBe(true);
     expect(isMarket(shop.layout, 'quarto')).toBe(false);
+  });
+  it('o salão abre inteiro numa tela de 1024: prateleiras, geladeira e caixa cabem em 898 unidades, sem tapar a porta', () => {
+    const shop = market().buildings.at(-1)!, hall = shop.layout.pieces.filter(p => p.room === 'sala');
+    const left = Math.min(...hall.map(p => p.x)), right = Math.max(...hall.map(p => p.x + pieceBounds[p.kind].width));
+    expect(right - left).toBeLessThanOrEqual(898);
+    hall.forEach(p => expect(p.x + pieceBounds[p.kind].width <= doorway.interior.x || p.x >= doorway.interior.x + doorway.interior.width).toBe(true));
+    const shelves = hall.filter(p => p.kind === 'market-shelf').map(p => p.x);
+    expect(shelves.every(x => x < doorway.interior.x)).toBe(true);
   });
   it('nome de mercado nunca tem número na fachada: o primeiro é Mercado, os outros ganham um nome de lugar', () => {
     let town = market();

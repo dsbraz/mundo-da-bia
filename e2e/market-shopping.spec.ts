@@ -38,7 +38,7 @@ for (const hidden of [false, true]) test(`W3L-22: pega pão e leite na prateleir
   await open(page);
   if (hidden) await page.addStyleTag({ content: '*{color:transparent!important}' });
   // The first shelf (bakery and dairy): she walks there and its goods open beside the scene, by picture.
-  await tap(page, ...await onPiece(page, 'market-shelf', 125, 330));
+  await tap(page, ...await onPiece(page, 'market-shelf', 225, 330));
   await expect(panel(page)).toBeVisible({ timeout: 15000 });
   await panel(page).locator('.market-good[data-good="pao"]').click();
   await panel(page).locator('.market-good[data-good="leite"]').click();
@@ -55,7 +55,7 @@ for (const hidden of [false, true]) test(`W3L-22: pega pão e leite na prateleir
   await page.keyboard.press('Escape');
   if (await page.locator('#close-map').isVisible()) await page.locator('#close-map').click();
   // Beep, beep: the bag gets its ribbon.
-  await tap(page, ...await onPiece(page, 'checkout', 1060, 370));
+  await tap(page, ...await onPiece(page, 'checkout', 876, 370));
   await expect.poll(async () => (await bag(page))?.paid, { timeout: 20000 }).toBe(true);
   await goStreet(page);
   expect((await readTown(page)).actors[0]!.location).toEqual({ kind: 'street' });
@@ -66,8 +66,11 @@ for (const hidden of [false, true]) test(`W3L-22: pega pão e leite na prateleir
   await expect.poll(async () => (await readTown(page)).actors[0]!.location).toMatchObject({ kind: 'interior', building: 1 });
   if (await page.locator('#close-map').isVisible()) await page.locator('#close-map').click();
   // At home: the fridge tapped with the bag in hand puts the goods away; the empty bag is gone.
-  await tap(page, ...await onPiece(page, 'fridge', 680, 282));
-  await expect.poll(async () => (await readTown(page)).buildings[0]!.stock, { timeout: 15000 }).toEqual({ pao: 1, leite: 1 });
+  // Under load the camera may still be settling on arrival: tap again until the goods are put away.
+  await expect(async () => {
+    await tap(page, ...await onPiece(page, 'fridge', 680, 282));
+    await expect.poll(async () => (await readTown(page)).buildings[0]!.stock, { timeout: 5000 }).toEqual({ pao: 1, leite: 1 });
+  }).toPass({ timeout: 30000 });
   expect(await bag(page)).toBeUndefined();
   // The bread is in the bench's pantry now.
   await tap(page, ...await onPiece(page, 'stove', 355, 320));

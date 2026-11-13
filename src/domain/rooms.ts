@@ -22,6 +22,9 @@ const furnishings: Record<RoomTemplate, PieceKind[]> = {
   bathroom: ['bath', 'mirror', 'plant'], studio: ['stage', 'speaker', 'desk', 'neon'], garden: ['plant', 'plant', 'cat-bed'],
   market: ['market-shelf', 'market-shelf', 'fridge', 'checkout'],
 };
+/** Fixed columns (piece left edges): the yard's scattered pieces, and the market hall (W3L-21 art pass) with both shelves left of the
+ *  door and the fridge and checkout right of it, the whole hall inside one 1024 px screen so it opens with nothing cut off. */
+const columns: Partial<Record<RoomTemplate, readonly number[]>> = { playground: [60, 320, 60], garden: [60, 320, 60], market: [140, 318, 616, 776] };
 export function freeCell(state: World, cell: number): boolean {
   return Number.isInteger(cell) && cell >= 0 && cell < 12 && !Object.values(state.layout.rooms).some(r => r.cell === cell);
 }
@@ -39,7 +42,7 @@ export function furnishRoom(state: World, template: RoomTemplate): World {
   furnishings[template].forEach((kind, index) => {
     const box = pieceBounds[kind];
     const playground = template === 'playground' || template === 'garden';
-    const x = playground ? [60, 320, 60][index]! : 40 + index * (roomWidth(state) - 80 - box.width) / Math.max(1, furnishings[template].length - 1);
+    const x = columns[template]?.[index] ?? 40 + index * (roomWidth(state) - 80 - box.width) / Math.max(1, furnishings[template].length - 1);
     const point = freePlacement(next, { id: next.layout.nextId, kind, room: next.room, color: 'original', flipped: false, x, y: (playground && index === 2 ? 390 : 450) - box.height });
     if (point) next = editWorld(next, { type: 'add', kind, point: { x: point.x + box.width / 2, y: point.y + box.height / 2 } });
   });
