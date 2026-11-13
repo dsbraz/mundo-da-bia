@@ -99,7 +99,7 @@ test('a turma nasce espalhada a 1024 px e o cartão mostra a roupa atual', async
     const [left, right] = [await point(page, a.x - half, a.y), await point(page, a.x + half, a.y)];
     expect(left.x, a.id).toBeGreaterThanOrEqual(scene.x); expect(right.x, a.id).toBeLessThanOrEqual(scene.x + scene.width);
   }
-  await tray(page, 'Turma'); const card = page.locator('#cast button', { hasText: 'Bia' }).locator('img');
+  await tray(page, 'Turma'); const card = page.locator('#cast').getByRole('button', { name: 'Bia', exact: true }).locator('img');
   const before = await card.getAttribute('src');
   await page.locator('#play-tray').getByRole('button', { name: 'Looks', exact: true }).click(); await page.getByRole('button', { name: 'Festa' }).click();
   await page.locator('#play-tray').getByRole('button', { name: 'Turma', exact: true }).click();
