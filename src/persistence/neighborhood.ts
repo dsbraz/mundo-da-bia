@@ -4,7 +4,7 @@ import { plotWidth, streetWidth } from '../domain/neighborhood-geometry';
 import { localWorld } from '../domain/neighborhood';
 import type { Building, LegacyNeighborhood, Location, Neighborhood } from '../domain/neighborhood-types';
 import { buildingModels } from '../domain/neighborhood-types';
-import { actorIds, paletteIds } from '../domain/types';
+import { paletteIds } from '../domain/types';
 import { itemKinds } from '../domain/item-kind';
 import { sameLocation, validLocation } from '../domain/location';
 import { nextItemAfter, recipeIds } from '../domain/progress';
@@ -93,7 +93,7 @@ function validPosition(town: LegacyNeighborhood, entity: { x: number; room: stri
 }
 
 function validEntities(value: Record<string, unknown>) {
-  return Array.isArray(value.actors) && value.actors.length === actorIds.length && value.actors.every(resident)
+  return Array.isArray(value.actors) && value.actors.every(resident)
     && Array.isArray(value.items) && value.items.every(object);
 }
 function townHeader(value: Record<string, unknown>) {

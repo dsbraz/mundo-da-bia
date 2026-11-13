@@ -3,6 +3,8 @@ export const lookIds = ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama', 'n
 export const roomIds = ['sala', 'quarto'] as const;
 export const itemIds = ['lanche', 'peixe', 'microfone', 'ursinho'] as const;
 export type ActorId = typeof actorIds[number];
+/** Who is a person and who a cat (W3L-18): by id, never by the position in a list, so a save with more or fewer characters reads right. */
+export const actorKinds: Record<ActorId, 'human' | 'cat'> = { bia: 'human', luna: 'human', leo: 'human', rui: 'human', mimi: 'cat', nino: 'cat', pipoca: 'cat' };
 export type LookId = typeof lookIds[number];
 export type RoomId = typeof roomIds[number] | `room-${number}`;
 export const roomTemplates = ['empty', 'bedroom', 'kitchen', 'bathroom', 'studio', 'garden', 'laundry', 'library', 'dining', 'reception', 'consultation', 'ward', 'dispatch', 'investigation', 'office', 'meeting', 'breakroom', 'playground', 'classroom', 'sportsfield', 'gym'] as const;

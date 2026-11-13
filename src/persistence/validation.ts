@@ -2,7 +2,7 @@ import { initialLayout, fixture } from '../domain/layout';
 import { validLayout } from './layout-validation';
 import { member, record, roomId, validHome } from './values';
 import type { RecordValue } from './values';
-import { actorIds, itemIds, lookIds, spots } from '../domain/types';
+import { actorIds, actorKinds, itemIds, lookIds, spots } from '../domain/types';
 import type { Actor, Item, World } from '../domain/types';
 import { spotKind } from '../domain/furniture';
 import { parseSeat, seatPoint } from '../domain/seats';
@@ -15,8 +15,7 @@ function position(value: RecordValue): boolean {
 }
 export function actor(value: unknown): value is Actor {
   if (!record(value) || !member(actorIds, value.id)) return false;
-  const kind = actorIds.indexOf(value.id) < 4 ? 'human' : 'cat';
-  return value.kind === kind && roomId(value.room) && member(lookIds, value.look)
+  return value.kind === actorKinds[value.id] && roomId(value.room) && member(lookIds, value.look)
     && actorIdentity(value)
     && typeof value.fed === 'boolean' && typeof value.resting === 'boolean' && position(value);
 }

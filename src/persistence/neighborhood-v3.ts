@@ -6,6 +6,7 @@ import { seatedTown } from './seats';
 import { itemKinds } from '../domain/item-kind';
 import { member, record } from './values';
 import { knownPlant } from './progress-validation';
+import { knownCast } from './cast';
 
 /** v2 → v3: the same neighborhood, with the starting progress and item numbering after its items. The old flowerbed's `watered`
  *  became the four plots and no longer counts: it stays in the save (earlier v3 builds require it) and is always false (§4.3). */
@@ -19,12 +20,12 @@ export function unfelt<T>(actor: T): T {
 }
 export const unwatered = <T extends LegacyNeighborhood>(town: T): T => ({ ...town, outdoor: { ...town.outdoor, watered: false } });
 /** Unknown looks become the default one; objects of unknown kinds and dishes of unknown recipes drop out (whoever held them is left empty-handed);
- *  seats are read (W3L-06: old ids converted, unknown ones null). */
+ *  seats are read (W3L-06: old ids converted, unknown ones null); the cast is this build's (W3L-18, `cast.ts`). */
 export function knownContent(value: unknown): unknown {
   if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return value;
   const unknown = (entry: unknown, field: string, known: readonly string[]) => record(entry) && !member(known, entry[field]);
-  return seatedTown({ ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
-    items: value.items.filter(i => !unknown(i, 'kind', itemKinds) && !(record(i) && i.kind === 'prato' && !member(recipeIds, i.recipe))) });
+  return seatedTown(knownCast({ ...value, actors: value.actors.map(a => unknown(a, 'look', lookIds) ? { ...a, look: 'sol' } : a),
+    items: value.items.filter(i => !unknown(i, 'kind', itemKinds) && !(record(i) && i.kind === 'prato' && !member(recipeIds, i.recipe))) }));
 }
 /** Save v3: rebuilt with only known fields, and what this build does not know drops out alone; structure is left for validation. */
 export function knownTown(value: unknown): unknown {

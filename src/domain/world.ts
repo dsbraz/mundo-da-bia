@@ -5,7 +5,7 @@ import { roomWidth, validPoint } from './geometry';
 export { validPoint } from './geometry';
 import { enterRoom, travel } from './room-state';
 import { initialLayout } from './layout';
-import { actorIds, itemIds } from './types';
+import { actorIds, actorKinds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
@@ -23,7 +23,7 @@ export function initialWorld(): World {
   return {
     room: 'sala', show: false, layout: initialLayout(), home: { lamp: true, fridge: true, drawer: false },
     actors: actorIds.map((id, index) => ({
-      id, kind: index < 4 ? 'human' : 'cat', room: 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol'] as const)[index]!,
+      id, kind: actorKinds[id], room: 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol'] as const)[index]!,
       ...start[index]!, fed: false, resting: false,
     })),
     items: itemIds.map((id, index) => ({ id, room: 'sala', holder: null, spot: index < 2 ? 'fridge' : 'floor',
