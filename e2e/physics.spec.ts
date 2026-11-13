@@ -41,14 +41,14 @@ for (const reduced of [false, true]) test(`soltar o ursinho acima da mesa o deix
   await page.clock.runFor(reduced ? 60 : 150);
   if (!reduced) await page.screenshot({ path: `${shots}/physics-teddy-falling-1024.png` });
   await page.clock.runFor(600);
-  const teddy = (await read(page)).items.find(i => i.id === 'ursinho')!;
+  const teddy = (await read(page)).items.find(i => i.kind === 'ursinho')!;
   expect(teddy).toMatchObject({ spot: 'table', holder: null });
   expect(Math.abs(teddy.x - above[0])).toBeLessThanOrEqual(12);
   await page.screenshot({ path: `${shots}/physics-teddy-on-table-1024${reduced ? '-reduced' : ''}.png` });
   // Let go high on the wall, away from the table: it falls to the floor below, never stays in the air.
   await carry(page, [teddy.x, teddy.y - 28], [880, 250]);
   await page.clock.runFor(800);
-  expect((await read(page)).items.find(i => i.id === 'ursinho')).toMatchObject({ spot: 'floor', y: 410 });
+  expect((await read(page)).items.find(i => i.kind === 'ursinho')).toMatchObject({ spot: 'floor', y: 410 });
 });
 
 test('soltar a Bia 50 px ao lado de uma cadeira livre a senta (o ímã de assento)', async ({ page }) => {

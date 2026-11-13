@@ -4,7 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { World } from '../src/domain/types';
-import { readTown, ready } from './helpers';
+import { closeTray, readTown, ready, tray } from './helpers';
 import { playMinutes } from './session';
 
 const shots = 'reports/wave3-life-3';
@@ -17,6 +17,13 @@ async function seed(page: Page, world: World) {
 }
 const actor = async (page: Page, id: string) => (await readTown(page)).actors.find(a => a.id === id)!;
 const sleep = async (page: Page) => Object.fromEntries((await page.locator('#app').getAttribute('data-sleep') ?? '').split(' ').filter(Boolean).map(f => f.split(':')));
+/** Selects the Bia in the cast and presses `name` in her action ring (behind "Mais ações" when the ring is short). */
+async function press(page: Page, name: string) {
+  await tray(page); await page.locator('#cast [data-actor=bia]').click(); await closeTray(page);
+  const button = page.getByRole('button', { name, exact: true });
+  if (!await button.isVisible()) await page.getByRole('button', { name: 'Mais ações', exact: true }).click();
+  await button.click();
+}
 const night = (page: Page) => page.locator('canvas').getAttribute('data-night');
 
 for (const reduced of [false, true]) test(`à noite, deitar a Bia leva à manhã em até 3 s de cena e zera o sono de quem está deitado${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
@@ -30,7 +37,7 @@ for (const reduced of [false, true]) test(`à noite, deitar a Bia leva à manhã
   await playMinutes(page, 12);
   await page.clock.runFor(1500);
   expect(await night(page)).toMatch(/^noite:/);
-  await page.getByRole('button', { name: 'Deitar', exact: true }).click();
+  await press(page, 'Deitar');
   // The walk to the pillow, then the fade: from the moment she lies down, the morning comes within 3 s of scene time.
   for (let t = 0; t < 15_000 && !(await actor(page, 'bia')).resting; t += 100) await page.clock.runFor(100);
   expect(await actor(page, 'bia')).toMatchObject({ seat: '8.0', resting: true });
@@ -57,7 +64,7 @@ test('numa cozinha, Descansar mostra a bolha da cama com a porta, e tocar nela l
   world.layout = { ...world.layout, rooms: { ...world.layout.rooms, sala: { ...world.layout.rooms.sala, template: 'kitchen' } }, pieces: world.layout.pieces.filter(p => p.kind !== 'sofa') };
   world.actors = world.actors.map(a => ({ ...a, seat: null, y: 530 }));
   await seed(page, world);
-  await page.getByRole('button', { name: 'Descansar', exact: true }).click();
+  await press(page, 'Descansar');
   const bubble = page.locator('.missing-bubble:not(.thought)');
   await expect(bubble).toHaveAttribute('data-need', 'bed');
   await expect(bubble).toHaveAttribute('data-door', 'true');
