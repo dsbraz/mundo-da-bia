@@ -6,7 +6,7 @@ import { initialWorld } from './world';
 import { passages } from './passages';
 import { doorway } from './doorway';
 import { pieceBounds } from './layout';
-import { overlap } from './placement';
+import { footprint, overlap } from './placement';
 import { actorIds } from './types';
 import type { BuildingModel, Location, Neighborhood } from './neighborhood-types';
 import type { RoomId } from './types';
@@ -32,6 +32,9 @@ describe('os profissionais de cada instituição (lote 7)', () => {
     if (layout.rooms[room]!.cell === 0) expect(overlap(box(staff), rect(doorway.interior))).toBe(0);
     const keys = layout.pieces.filter(p => p.room === room && ['board', 'counter', 'checkout'].includes(p.kind));
     expect(keys.every(p => overlap(box(staff), rect({ ...pieceBounds[p.kind], x: p.x, y: p.y })) === 0)).toBe(true);
+    // Her feet are never inside a piece.
+    const feet = { left: staff.x - 30, right: staff.x + 30, top: staff.y - 20, bottom: staff.y + 5 };
+    expect(layout.pieces.filter(p => p.room === room).every(p => overlap(feet, footprint(p) ?? feet) === 0 || !footprint(p))).toBe(true);
     // In a 1024-wide view the whole figure is on screen.
     expect(staff.x - staffBody.half).toBeGreaterThanOrEqual(40);
   });
@@ -58,6 +61,26 @@ describe('os profissionais de cada instituição (lote 7)', () => {
     expect(staffAt(replaced, at(replaced, room))).toBeNull();
     const gone = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, rooms: {} as typeof b.layout.rooms } } : x) };
     expect(staffAt(gone, at(gone, room))).toBeNull();
+  });
+  it('sem peça-chave fica no meio do cômodo; só a primeira sala tem a porta da rua para evitar', () => {
+    const town = built('hospital'), room = roomOf(town, 'consultation'), b = town.buildings[1]!;
+    const empty = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, pieces: b.layout.pieces.filter(p => p.room !== room) } } : x) };
+    expect(staffAt(empty, at(empty, room))).toMatchObject({ x: 600, y: 465 });
+    const entry = built('stadium'), field = roomOf(entry, 'sportsfield'), e = entry.buildings[1]!;
+    const bare = { ...entry, buildings: entry.buildings.map(x => x === e ? { ...e, layout: { ...e.layout, pieces: [] } } : x) };
+    const coach = staffAt(bare, at(bare, field))!;
+    expect(overlap(box(coach), rect(doorway.interior))).toBe(0);
+    expect(Math.abs(coach.x - 600)).toBeLessThan(200);
+  });
+  it('um móvel no lugar dela a empurra para o lado, sem pisar nele; nem na frente do caixa', () => {
+    const town = built('hospital'), room = roomOf(town, 'consultation'), b = town.buildings[1]!;
+    const extra = [{ id: 901, kind: 'armchair' as const, room, x: 510, y: 330, color: 'original' as const, flipped: false },
+      { id: 902, kind: 'checkout' as const, room, x: 700, y: 300, color: 'original' as const, flipped: false }];
+    const busy = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, pieces: [...b.layout.pieces.filter(p => p.room !== room), ...extra] } } : x) };
+    const doctor = staffAt(busy, at(busy, room))!;
+    const feet = { left: doctor.x - 30, right: doctor.x + 30, top: doctor.y - 20, bottom: doctor.y + 5 };
+    expect(overlap(feet, footprint(extra[0]!)!)).toBe(0);
+    expect(overlap(box(doctor), rect({ ...pieceBounds.checkout, x: 700, y: 300 }))).toBe(0);
   });
   it('um cômodo lotado ainda tem lugar para o profissional, o menos ruim', () => {
     const town = built('police'), room = roomOf(town, 'reception'), b = town.buildings[1]!;
