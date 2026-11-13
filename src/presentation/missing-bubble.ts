@@ -1,7 +1,9 @@
 import type { ActorId, Need, PieceKind, Point, World } from '../domain/types';
 /** What a refusal shows: the drawing of what is missing, the face of who already has it, the door when the piece is in another room.
  *  `label` only reaches screen readers: the bubble never shows text. */
-export interface Missing { need: Need; by?: ActorId; door?: boolean; label: string }
+export interface Missing { need: Need; by?: ActorId; door?: boolean; label: string;
+  /** With a door: a touch on the bubble takes her to the room where the piece is (W3L-15). */
+  go?: () => void }
 type Frame = Pick<DOMRect, 'left' | 'top' | 'right' | 'bottom'>;
 export function missingParts(missing: Missing): string[] {
   return [`/art/needs.svg#${missing.need}`, ...(missing.by ? [`/icons/${missing.by}.svg`] : []), ...(missing.door ? ['/art/needs.svg#door'] : [])];
@@ -31,7 +33,15 @@ export function missingBubble(host: HTMLElement, scene: () => Frame) {
     const place = bubblePlace(at, scene());
     bubble.style.left = `${place.x}px`; bubble.style.top = `${place.y}px`;
     if (navigator.webdriver) Object.assign(bubble.dataset, { need: missing.need, by: missing.by ?? '', door: String(!!missing.door) });
+    if (missing.go) tappable(bubble, missing.go);
     host.append(bubble); shown = bubble;
-    timer = window.setTimeout(() => { bubble.remove(); if (shown === bubble) shown = null; }, 2400);
+    timer = window.setTimeout(() => { bubble.remove(); if (shown === bubble) shown = null; }, missing.go ? 4000 : 2400);
   };
+}
+/** The bubble becomes a button: a touch goes where the door points (and the bubble is gone). */
+function tappable(bubble: HTMLElement, go: () => void) {
+  bubble.classList.add('tappable'); bubble.setAttribute('role', 'button'); bubble.tabIndex = 0; bubble.style.pointerEvents = 'auto'; bubble.style.cursor = 'pointer';
+  const press = (event: Event) => { event.preventDefault(); event.stopPropagation(); bubble.remove(); go(); };
+  bubble.addEventListener('click', press);
+  bubble.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') press(event); });
 }

@@ -1,4 +1,4 @@
-import type { ActorId, Need, PieceKind, Point, PresentationEvent, World } from '../domain/types';
+import type { ActorId, Need, PieceKind, Point, PresentationEvent, RoomId, World } from '../domain/types';
 import { lineRotation, nameOf, needLine, say, thoughtLine } from '../content/feedback-text';
 import { cards, personalities, pickReaction } from '../content/personalities';
 import { createSound } from '../presentation/sound';
@@ -7,7 +7,9 @@ import { needBubbles } from '../presentation/need-bubble';
 import { worldToScreen } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import { loadSoundOn, saveSoundOn } from '../persistence/storage';
-interface Deps { root: HTMLElement; scene: PlayScene; state: () => World; selected: () => ActorId; playing: () => boolean }
+interface Deps { root: HTMLElement; scene: PlayScene; state: () => World; selected: () => ActorId; playing: () => boolean;
+  /** The selected one goes to `room` of this house (a touch on a bubble's door, W3L-15). */
+  goRoom?: (room: RoomId) => void }
 /** What a refusal adds: who sits there, the piece that is not in this room, where to point, the screen-reader line. */
 interface Lack { actor?: ActorId | undefined; by?: ActorId | undefined; want?: PieceKind | undefined; point?: Point | undefined; text?: string | undefined }
 /** Feedback near the finger (bubble, motion, sound); `#announcement` only mirrors it for screen readers. */
@@ -27,8 +29,14 @@ export function sceneFeedback(deps: Deps) {
     const who = lack.actor ?? deps.selected(), head = deps.scene.shrug(who), canvas = deps.root.querySelector('canvas');
     const anchor = pointAt(lack.by) || lack.point || head || above(actor(who));
     const label = lack.text ?? needLine(need, lack.by && nameOf(actor(lack.by)!));
-    bubble({ need, ...(lack.by ? { by: lack.by } : {}), door: elsewhere(deps.root, deps.state(), lack.want), label }, canvas ? worldToScreen(canvas, anchor) : anchor);
+    bubble({ need, ...(lack.by ? { by: lack.by } : {}), ...doorOf(lack.want, who), label }, canvas ? worldToScreen(canvas, anchor) : anchor);
     announce(label); sound.cue('refuse');
+  }
+  /** The door in the bubble when `want` is in another room, and for the selected one a touch there goes to a room with it (W3L-15). */
+  function doorOf(want: PieceKind | undefined, who: ActorId): { door: boolean; go?: () => void } {
+    const state = deps.state(), door = elsewhere(deps.root, state, want);
+    const room = door && who === deps.selected() ? state.layout.pieces.find(p => p.kind === want && p.room !== state.room)?.room : undefined;
+    return room && deps.goRoom ? { door, go: () => deps.goRoom!(room) } : { door };
   }
   return {
     announce, sound, missing,

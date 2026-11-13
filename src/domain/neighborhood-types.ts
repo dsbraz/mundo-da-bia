@@ -36,8 +36,10 @@ export type GardenAction =
 export type LiveAction = { type: 'live'; elapsed: number; phase: Phase; idle?: readonly ActorId[] };
 /** `actor` plays `game` (W3L-13): a game relieves boredom (never saved, like every need). */
 export type EnjoyAction = { type: 'enjoy'; actor: ActorId; game: Game };
+/** The night is slept through in `building` (W3L-15): whoever lies there in a bed or on a sofa wakes rested. */
+export type MorningAction = { type: 'morning'; building: number };
 export type NeighborhoodAction = ModuleAction | OutdoorAction
-  | EnjoyAction
+  | EnjoyAction | MorningAction
 
   | { type: 'visit'; location: Location }
   /** The time has come (ms, from the app's clock): what grows or arrives with time moves on. */

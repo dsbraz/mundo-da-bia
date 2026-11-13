@@ -3,6 +3,8 @@ const floorLabel = (floor: number) => floor ? `${floor}º andar` : 'Térreo';
 export const uiText = {
   go: (place: string) => `Ir para ${place}`,
   street: 'Rua',
+  /** After a night slept through (W3L-15), for screen readers. */
+  goodMorning: 'Bom dia! Já é de manhã.',
   header: { play: 'Brincar', create: 'Criar', decorate: 'Decorar', enlarge: 'Ampliar' },
   tray: { cast: 'Turma', furniture: 'Móveis e cores', street: 'Construir', rooms: 'Casas e cômodos' },
   map: {

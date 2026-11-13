@@ -86,5 +86,9 @@ export function townActions(deps: TownDeps) {
   function enjoy(actor: ActorId, game: Game) {
     const next = neighborhoodAction(deps.town(), { type: 'enjoy', actor, game }); if (next !== deps.town()) deps.feel(next);
   }
-  return { dispatch, undo, remember, preview, tick, apply, enjoy, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
+  /** The night slept through in `building` (W3L-15): only the needs change, quietly. */
+  function sleepThrough(building: number) {
+    const next = neighborhoodAction(deps.town(), { type: 'morning', building }); if (next !== deps.town()) deps.feel(next);
+  }
+  return { dispatch, undo, remember, preview, tick, apply, enjoy, sleepThrough, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

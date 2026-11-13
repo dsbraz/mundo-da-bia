@@ -58,6 +58,7 @@ import '../presentation/place-transition.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { selfCareWiring } from './self-care';
+import { nightSleep } from './night-sleep';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -75,7 +76,7 @@ let cancelInput = () => {};
 let cancelGame = () => {};
 let view: ReturnType<typeof viewport> | undefined;
 const shell = createShell(root, () => cancelInput(), { open: loadDrawerOpen(), remember: open => { saveDrawerOpen(open); } });
-const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected, playing: () => !building }), announce = feedback.announce, progress = edgeProgress(root);
+const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected, playing: () => !building, goRoom: room => { const where = town.location; if (where.kind === 'interior') go({ ...where, room }); } }), announce = feedback.announce, progress = edgeProgress(root);
 function toggleWardrobe() { cancelGame(); wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
 function openLooks() { closeWardrobe(); shell.looks(); }
@@ -166,6 +167,8 @@ const remember = () => townActs.remember(), streetUndo = (forward: boolean) => t
 /** Session time in Brincar (Criar pauses life, §3.1). */
 const life = playTime(realClock);
 const selfCare = selfCareWiring({ root, state: () => state, selected: () => selected, location: () => town.location, stroll: moves => scene.stroll(moves), dispatch: action => dispatch(action, false) });
+const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); scene.daylight(life.phase()); },
+  slept: id => townActs.sleepThrough(id), greet: () => { announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
 let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); scene.daylight(life.phase()); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
@@ -200,7 +203,7 @@ function dispatch(action: Action, interrupt = true) {
   // A refusal (a `missing` event alone) changes nothing, so nothing is saved.
   if (state !== before) persist();
   refresh();
-  settle(); feedback.events(result.events);
+  settle(); feedback.events(result.events); nights(result.events);
 }
 /** Turning the piano or the TV on is playing (W3L-13). */
 function playedWith(action: Action, before: typeof state, after: typeof state) {

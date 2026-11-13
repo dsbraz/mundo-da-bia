@@ -15,3 +15,8 @@ export function phaseAt(sessionMs: number, event: TownEvent): Phase {
   return ends.find(([end]) => t < end)![1];
 }
 export function eventOfDay(day: number): TownEvent { return events[((day % 10) + 10) % 10]!; }
+/** How long from `sessionMs` until the next morning begins (W3L-15: a night slept through); the day is longer on a night of stars. */
+export function untilMorning(sessionMs: number, event: TownEvent): number {
+  const day = (event === 'estrelas' ? 19 : 16) * minute;
+  return day - sessionMs % day;
+}

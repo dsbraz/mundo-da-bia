@@ -53,3 +53,11 @@ it('uma aba escondida não acumula vida a cada tick: uma hora fora conta 60 s na
   clock.hide(false);
   expect(life.take(clock.wait(1000))).toEqual({ elapsed: 60_000, phase: 'manha' });
 });
+it('dormir a noite (W3L-15) leva à manhã seguinte: a fase volta a manha e o dia segue dali', () => {
+  const clock = manualClock(), life = playTime(clock.port);
+  for (let n = 0; n < 24; n++) life.take(clock.wait(30_000));
+  life.morning();
+  // 2026-11-12 is a night of stars: the day lasts 19 min.
+  expect([life.phase(), life.played()]).toEqual(['manha', 19 * 60_000]);
+  expect(life.take(clock.wait(30_000))).toEqual({ elapsed: 30_000, phase: 'manha' });
+});

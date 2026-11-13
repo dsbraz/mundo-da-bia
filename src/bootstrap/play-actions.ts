@@ -5,6 +5,7 @@ import type { walking } from '../presentation/walking';
 import { refusal } from '../content/feedback-text';
 import { benchKinds } from '../domain/recipes';
 import { mealApproach } from '../presentation/meal-walk';
+import { restSeat } from '../domain/care';
 const blockedMessage = refusal('blocked', '');
 interface PlayActions {
   root: HTMLElement; state: () => World; selected: () => ActorId; choose: (id: ActorId) => void;
@@ -26,18 +27,27 @@ export function playActions(deps: PlayActions) {
   function perform(action: Action) {
     deps.cancelGame();
     if (action.type === 'pick') { pickup(action.item); return; }
-    if (!['use', 'sit', 'interact'].includes(action.type)) { deps.dispatch(action); return; }
+    const target = walkTarget(action);
+    if (!target) { deps.dispatch(action); return; }
     walker.cancel();
-    const point = approach(deps.state(), deps.selected(), action);
+    const point = approach(deps.state(), deps.selected(), target);
     if (!point) { deps.refuse('path', blockedMessage); return; }
-    const kind = action.type === 'use' ? deps.state().layout.pieces.find(p => p.id === action.id)?.kind : undefined;
+    const kind = target.type === 'use' ? deps.state().layout.pieces.find(p => p.id === target.id)?.kind : undefined;
     // The mirror (W3L-08): the Looks open at once while she walks there.
     if (kind === 'mirror') deps.looks();
-    walker.start(point, () => arrived(action, kind));
+    walker.start(point, () => arrived(action, kind, target));
+  }
+  /** Where an action is done (a piece to walk to first), or null when it applies where she is. Resting walks to the bed or sofa seat she
+   *  will sleep on (W3L-15); with none here the rest is refused at once (the bubble asks for a bed). */
+  function walkTarget(action: Action): Action | null {
+    if (['use', 'sit', 'interact'].includes(action.type)) return action;
+    const actor = action.type === 'rest' ? deps.state().actors.find(a => a.id === action.actor) : undefined;
+    const seat = actor && !actor.resting && actor.kind === 'human' ? restSeat(deps.state(), actor) : undefined;
+    return seat ? { type: 'sit', actor: actor!.id, seat } : null;
   }
   /** At the piece: the bench opens, otherwise the action applies (at the mirror she pulls her face too); no way there is refused. */
-  function arrived(action: Action, kind: PieceKind | undefined) {
-    if (!approach(deps.state(), deps.selected(), action)) { deps.refuse('path', blockedMessage); return; }
+  function arrived(action: Action, kind: PieceKind | undefined, target: Action) {
+    if (!approach(deps.state(), deps.selected(), target)) { deps.refuse('path', blockedMessage); return; }
     if (action.type === 'use' && kind && benchKinds.includes(kind)) { deps.bench(action.id); return; }
     deps.dispatch(action);
     if (action.type === 'use' && kind === 'mirror') deps.grimace(deps.selected(), action.id);

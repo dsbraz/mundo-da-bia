@@ -9,7 +9,7 @@ import { actorIds, actorKinds, itemIds } from './types';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, visibleItem } from './objects';
-import { eat, hug, snack, toggleRest, wake } from './care';
+import { eat, hug, rest, snack, wake } from './care';
 import { usePiece } from './use';
 import { refuse } from './missing';
 
@@ -66,7 +66,7 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
     case 'move': return moveActor(state, actor, action.point);
     case 'sit': return sit(state, actor, action.seat);
     case 'dress': return dress(state, actor, action.look);
-    case 'rest': return changeActor(state, actor, toggleRest(actor), 'rested');
+    case 'rest': return rest(state, actor);
     case 'pick': return pick(state, actor, action.item);
     case 'drop': return release(state, actor, false);
     case 'feed': return release(state, actor, true);

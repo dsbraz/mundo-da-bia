@@ -13,7 +13,7 @@ import { construct, duplicateBuilding, customize, moveBuilding } from './buildin
 import { transport } from './neighborhood-transfer';
 import { cook } from './recipes';
 import { garden, gardenActions } from './garden';
-import { enjoy, feel, live } from './needs';
+import { feel, life, lifeActions } from './needs';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -41,13 +41,12 @@ function albumTown(album: Album): LegacyNeighborhood {
 export function neighborhoodAction(town: Neighborhood, action: NeighborhoodAction): Neighborhood {
   if (buildingActions.includes(action.type)) return editBuilding(town, action as BuildingAction);
   if (gardenActions.includes(action.type)) return garden(town, action as GardenAction | { type: 'tick'; now: number });
+  if (lifeActions.includes(action.type)) return life(town, action as Parameters<typeof life>[1]);
   switch (action.type) {
     case 'outdoor': return interactOutdoor(town, action);
     case 'cook': return cook(town, action).town;
     case 'visit': return validLocation(town, action.location) ? { ...town, location: action.location } : town;
     case 'transport': return transport(town, action);
-    case 'live': return live(town, action);
-    case 'enjoy': return enjoy(town, action);
     default: return editModule(town, action as ModuleAction);
   }
 }

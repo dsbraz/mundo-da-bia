@@ -1,9 +1,10 @@
-import type { Actor, ActorId, Item, Transition, World } from './types';
+import type { Actor, ActorId, Item, PieceKind, SeatRef, Transition, World } from './types';
 import type { RecipeId } from './progress';
 import type { NeighborhoodItem } from './neighborhood-types';
 import { tastes } from './tastes';
 import { needsOf, relieve } from './needs';
-import { mealSeat, seatPoint } from './seats';
+import { freeSeat, mealSeat, seatPiece, seatPoint } from './seats';
+import { fromPiece, pieceBounds } from './layout';
 import { refuse } from './missing';
 import { roomWidth, validPoint } from './geometry';
 /** The saved `fed` flag's soft cycle: whoever wakes from a rest is ready to eat again. Hunger, sleep, boredom and the sad face are the
@@ -15,6 +16,32 @@ export function wake(actor: Pick<Actor, 'resting'>): Pick<Actor, 'resting'> & Pa
 export function snack(actor: Pick<Actor, 'needs'>): Pick<Actor, 'fed' | 'needs'> { return { fed: true, needs: relieve(needsOf(actor), 'lanche') }; }
 /** The rest button: falls asleep keeping the meal, or wakes ready to eat again. */
 export function toggleRest(actor: Pick<Actor, 'resting'>): Partial<Actor> { return actor.resting ? wake(actor) : { resting: true }; }
+
+/** Where one sleeps (W3L-15, §3.2): a person in a bed, else on a sofa; a cat in its bed, on a sofa or a bed (or on a rug, below). */
+const sleepKinds: Record<Actor['kind'], readonly PieceKind[]> = { human: ['bed', 'sofa'], cat: ['cat-bed', 'sofa', 'bed'] };
+/** The seat `actor` would sleep on here: the one she sits on if it is a place to sleep, else the first free one by `sleepKinds`. */
+export function restSeat(state: World, actor: Actor): SeatRef | undefined {
+  const kinds = sleepKinds[actor.kind], own = actor.seat ? seatPiece(state, actor.seat) : undefined;
+  if (own && kinds.includes(own.kind)) return actor.seat!;
+  return kinds.flatMap(kind => state.layout.pieces.filter(p => p.room === state.room && p.kind === kind)).map(p => freeSeat(state, p, actor)).find(Boolean);
+}
+/** Resting (the button, the autonomy): whoever rests wakes; otherwise she lies on a bed or naps on a sofa seat, and a cat curls up on a
+ *  rug if there is nothing else. Never on the bare floor: with no place to sleep nothing changes and the bubble asks for a bed. */
+export function rest(state: World, actor: Actor): Transition {
+  if (actor.resting) return asleep(state, actor, wake(actor));
+  const seat = restSeat(state, actor), point = seat && seatPoint(state, seat);
+  if (point) return asleep(state, actor, { seat, x: point.x, y: point.y, resting: true });
+  const rug = actor.kind === 'cat' ? state.layout.pieces.find(p => p.room === state.room && p.kind === 'rug') : undefined;
+  if (!rug) return refuse(state, 'bed', actor.id, undefined, actor.kind === 'cat' ? 'cat-bed' : 'bed');
+  return asleep(state, actor, { seat: null, resting: true, ...onRug(rug, actor) });
+}
+const asleep = (state: World, actor: Actor, patch: Partial<Actor>): Transition =>
+  ({ state: { ...state, actors: state.actors.map(a => a.id === actor.id ? { ...a, ...patch } : a) }, events: [{ type: 'rested', actor: actor.id }] });
+/** Where she lies on `rug`: where she stands if that is on it, else its middle. */
+function onRug(rug: import('./types').Piece, actor: Actor) {
+  const box = pieceBounds.rug, on = actor.x >= rug.x && actor.x <= rug.x + box.width && actor.y >= rug.y && actor.y <= rug.y + box.height;
+  return on ? {} : fromPiece(rug, { x: box.x + box.width / 2, y: box.y + Math.floor(box.height / 2) });
+}
 
 /** The dishes a cat eats besides fish (§3.2): petisco de gato (S1), leite batidinho (R05) and ovo mexido (R02). */
 export const catDishes: readonly RecipeId[] = ['petisco-de-gato', 'leite-batidinho', 'ovo-mexido'];

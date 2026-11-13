@@ -1,4 +1,3 @@
-import { seatOfKind } from '../domain/seats';
 import { panelButtons, statusBadges } from './panel';
 import { panelControls, renderBadges } from './panel-controls';
 import { objectControls } from './object-controls';
@@ -57,7 +56,7 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
   root.querySelector('#looks')!.append(...wardrobe);
   const refreshObjects = objectControls(root, dispatch, getState, () => selected, building);
   const panel = panelControls(root.querySelector('#actions')!, {
-    wear: () => panelActions.looks(), play: () => panelActions.games(), rest: () => rest(getState(), selected, dispatch),
+    wear: () => panelActions.looks(), play: () => panelActions.games(), rest: () => dispatch({ type: 'rest', actor: selected }),
     drop: () => dispatch({ type: 'drop', actor: selected }), eat: () => dispatch({ type: 'feed', actor: selected }),
   });
   root.querySelector('#gather')!.addEventListener('click', () => dispatch({ type: 'summon' }));
@@ -106,10 +105,4 @@ export function positionContext(root: HTMLElement, actor: Actor, state: World) {
 function ringWidth(context: HTMLElement) {
   const shown = context.querySelectorAll('.panel-button').length - (context.classList.contains('more') ? 0 : 1);
   return shown * 70 + 56 + 20;
-}
-function rest(state: World, actor: ActorId, dispatch: (action: Action) => void) {
-  const value = state.actors.find(a => a.id === actor)!;
-  const bed = seatOfKind(state, 'bed', value);
-  if (!value.resting && bed) dispatch({ type: 'sit', actor, seat: bed });
-  else dispatch({ type: 'rest', actor });
 }

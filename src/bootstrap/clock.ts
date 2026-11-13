@@ -1,4 +1,4 @@
-import { dayIndex, eventOfDay, phaseAt, type Phase } from '../domain/clock';
+import { dayIndex, eventOfDay, phaseAt, untilMorning, type Phase } from '../domain/clock';
 /** The real clock, as a port the app can replace: the domain only ever gets the time through actions. */
 export interface ClockPort { hidden?(): boolean; now(): number; today(): { y: number; m: number; d: number }; every(ms: number, fn: () => void): () => void; onVisible(fn: () => void): () => void }
 export const realClock: ClockPort = {
@@ -36,5 +36,7 @@ export function playTime(clock: ClockPort) {
     phase: (): Phase => phaseAt(session, event),
     /** The play time taken so far (W3L-13: the rhythm of the characters' own acts). */
     played: () => session,
+    /** The night slept through (W3L-15): the day jumps to the next morning (what was played meanwhile still counts for the needs). */
+    morning() { session += untilMorning(session, event); },
   };
 }

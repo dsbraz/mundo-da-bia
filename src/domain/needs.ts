@@ -1,5 +1,5 @@
 import type { Actor, ActorId, Needs } from './types';
-import type { EnjoyAction, LiveAction, Neighborhood, Resident } from './neighborhood-types';
+import type { EnjoyAction, LiveAction, MorningAction, Neighborhood, NeighborhoodAction, Resident } from './neighborhood-types';
 import type { Phase } from './clock';
 import { sameLocation } from './location';
 import { tastes, type Game } from './tastes';
@@ -53,13 +53,14 @@ function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<
   if (actor.resting) return { fome: of('fome', 6), sono: bed ? -25 : -12, tedio: 0 };
   return { fome: of('fome', 6), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 5) : 0 };
 }
-/** Whether `actor` lies on a bed (W3L-06: the seat names a piece of the building it is in). */
-function inBed(town: Neighborhood, actor: Resident): boolean {
+/** The piece `actor` sits on (W3L-06: the seat names a piece of the building it is in), if any. */
+function seatKind(town: Neighborhood, actor: Resident) {
   const where = actor.location, ref = actor.seat ? parseSeat(actor.seat) : null;
-  if (!ref || where.kind !== 'interior') return false;
+  if (!ref || where.kind !== 'interior') return undefined;
   const building = town.buildings.find(b => b.id === where.building);
-  return building?.layout.pieces.find(p => p.id === ref.piece && p.room === actor.room)?.kind === 'bed';
+  return building?.layout.pieces.find(p => p.id === ref.piece && p.room === actor.room)?.kind;
 }
+const inBed = (town: Neighborhood, actor: Resident) => seatKind(town, actor) === 'bed';
 function grow(actor: Actor, elapsed: number, phase: Phase, idle: boolean, shown: boolean, bed: boolean): Needs {
   const current = needsOf(actor), rate = rates(actor, phase, idle, bed), top = shown ? ceiling : unseen;
   const next = { ...current, alegria: Math.max(0, current.alegria - elapsed) };
@@ -81,4 +82,15 @@ export function feel<W extends { actors: readonly Actor[] }>(world: W, from: { a
     const source = from.actors.find(f => f.id === a.id);
     return source?.needs ? { ...a, needs: source.needs } : a;
   }) };
+}
+/** Morning after the night slept through (W3L-15): every person in a bed or on a sofa of `building` slept too, so her sleep goes to 0. */
+export function morning(town: Neighborhood, action: MorningAction): Neighborhood {
+  const slept = (a: Resident) => a.kind === 'human' && a.location.kind === 'interior' && a.location.building === action.building && ['bed', 'sofa'].includes(seatKind(town, a) ?? '') && needsOf(a).sono > 0;
+  return { ...town, actors: town.actors.map(a => slept(a) ? { ...a, needs: { ...needsOf(a), sono: 0 } } : a) };
+}
+/** The session's needs move: time goes by, a game is played, a night is slept through. */
+export const lifeActions: readonly NeighborhoodAction['type'][] = ['live', 'enjoy', 'morning'];
+export function life(town: Neighborhood, action: LiveAction | EnjoyAction | MorningAction): Neighborhood {
+  if (action.type === 'live') return live(town, action);
+  return action.type === 'enjoy' ? enjoy(town, action) : morning(town, action);
 }

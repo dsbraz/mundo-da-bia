@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { dayIndex, eventOfDay, phaseAt } from './clock';
+import { dayIndex, eventOfDay, phaseAt, untilMorning } from './clock';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
 import { initialAlbum } from './houses';
 import { initialWorld } from './world';
@@ -44,4 +44,11 @@ it('eventOfDay cobre os 10 restos', () => {
 it('tick sem nada que dependa do tempo devolve o mesmo bairro', () => {
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
   expect(neighborhoodAction(town, { type: 'tick', now: 1_000 })).toBe(town);
+});
+it('até a manhã seguinte (W3L-15): o resto do dia de 16 min, ou de 19 min numa noite de estrelas', () => {
+  expect(untilMorning(12 * 60_000, 'calmo')).toBe(4 * 60_000);
+  expect(untilMorning(12 * 60_000, 'estrelas')).toBe(7 * 60_000);
+  expect(untilMorning(17 * 60_000, 'calmo')).toBe(15 * 60_000);
+  expect(untilMorning(0, 'calmo')).toBe(16 * 60_000);
+  expect(phaseAt(12 * 60_000 + untilMorning(12 * 60_000, 'estrelas'), 'estrelas')).toBe('manha');
 });
