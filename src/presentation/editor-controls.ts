@@ -8,6 +8,8 @@ import { fixtures } from '../domain/layout';
 import { activeHouse } from '../domain/houses';
 import { furnishings, palettes } from '../content/furnishings';
 import { pieceImage } from './piece-assets';
+import { keepSchool, schoolKinds } from './school-art';
+import { sheet } from './art-sheet';
 
 export interface EditorActions {
   toggle: () => void; edit: (action: EditAction) => void; undo: () => void; redo: () => void;
@@ -66,6 +68,8 @@ function createCatalog(root: HTMLElement, { edit, blink }: EditorActions, width:
   pieceKinds.forEach(kind => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'catalog-piece';
     const img = document.createElement('img'); img.src = pieceImage(kind, 'original', true); img.alt = '';
+    // The board and the school desk are cut from the school sheet: the stand-in is replaced once it is read.
+    if (schoolKinds.includes(kind)) void sheet('school').then(text => { keepSchool(text); img.src = pieceImage(kind, 'original', true); });
     const label = document.createElement('span'); label.textContent = furnishings[kind].name;
     button.append(img, label); button.setAttribute('aria-label', `Adicionar ${furnishings[kind].name}`);
     button.dataset.category = furnishings[kind].category; button.dataset.kind = kind;
