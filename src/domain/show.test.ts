@@ -47,3 +47,11 @@ it('levar alguém para a rua durante o show também encerra o show da casa; muda
   expect(inside.buildings[0]!.show).toBe(true);
   expect(neighborhoodAction(town, { type: 'visit', location: { kind: 'interior', building: 999, room: 'sala' } })).toBe(town);
 });
+it('quem segura o microfone quando o show acaba continua com ele: só o show e o piano param', () => {
+  const singing = transition(transition(withPiano(), { type: 'pick', actor: 'bia', item: 'microfone' }).state, { type: 'use', id: 900 }).state;
+  expect(singing.items.find(i => i.id === 'microfone')!.holder).toBe('bia');
+  const ended = endShow(singing);
+  expect(ended.show).toBe(false);
+  expect(ended.items).toBe(singing.items);
+  expect(ended.actors).toBe(singing.actors);
+});
