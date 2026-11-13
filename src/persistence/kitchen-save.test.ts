@@ -9,6 +9,8 @@ import { actorIds } from '../domain/types';
 import type { PieceKind } from '../domain/types';
 
 const roundTrip = (town: Neighborhood) => decodeNeighborhood(encodeNeighborhood(town));
+/** The pantry filled again (W3L-20: an untouched pantry reads as full). */
+const refilled = (town: Neighborhood): Neighborhood => ({ ...town, buildings: town.buildings.map(b => { const fresh = { ...b }; delete fresh.stock; return fresh; }) });
 /** The piece with the recipe's utensil: the piece under test when it has it, else the counter (51) or the stove (52). */
 const benchFor = (kind: PieceKind, utensil: string) => {
   if (benchUtensils[kind as keyof typeof benchUtensils].includes(utensil as never)) return 50;
@@ -32,6 +34,7 @@ it('cozinhar qualquer receita, em qualquer canto, até a mesa encher, sobrevive 
     for (const recipe of recipes) {
       // A full table first: the 7th is refused; then the table is cleared and the recipe cooks.
       const action = { type: 'cook' as const, building: 1, piece: benchFor(kind, recipe.utensil), cook: 'bia' as const, ingredients: recipe.ingredients, utensil: recipe.utensil };
+      town = refilled(town);
       if (town.items.filter(i => i.kind === 'prato' && i.holder === null).length === 6) {
         expect(neighborhoodAction(town, action)).toBe(town);
         town = { ...town, items: town.items.filter(i => i.kind !== 'prato') };

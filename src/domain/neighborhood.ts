@@ -14,6 +14,7 @@ import { transport } from './neighborhood-transfer';
 import { cook } from './recipes';
 import { garden, gardenActions } from './garden';
 import { feel, life, lifeActions } from './needs';
+import { keepStock } from './stock';
 export function migrateNeighborhood(album: Album): Neighborhood {
   const town = albumTown(album);
   return { ...town, progress: initialProgress(), nextItem: nextItemAfter(town.items) };
@@ -105,5 +106,5 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
  *  undo removes goes with it), and item ids never go back. */
 export function undoTo(next: Neighborhood, current: Neighborhood): Neighborhood {
   const dishes = current.items.filter(i => i.kind === 'prato' && validLocation(next, i.location));
-  return { ...feel(next, current), progress: current.progress, nextItem: Math.max(next.nextItem, current.nextItem), items: [...next.items.filter(i => i.kind !== 'prato'), ...dishes] };
+  return { ...feel(next, current), buildings: keepStock(next, current), progress: current.progress, nextItem: Math.max(next.nextItem, current.nextItem), items: [...next.items.filter(i => i.kind !== 'prato'), ...dishes] };
 }

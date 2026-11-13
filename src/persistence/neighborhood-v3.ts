@@ -7,6 +7,7 @@ import { itemKinds } from '../domain/item-kind';
 import { member, record } from './values';
 import { knownPlant } from './progress-validation';
 import { knownCast } from './cast';
+import { stocked } from './stock-validation';
 
 /** v2 → v3: the same neighborhood, with the starting progress and item numbering after its items. The old flowerbed's `watered`
  *  became the four plots and no longer counts: it stays in the save (earlier v3 builds require it) and is always false (§4.3). */
@@ -37,9 +38,9 @@ export function knownTown(value: unknown): unknown {
 function knownBuilding(value: unknown): unknown {
   if (!record(value) || !record(value.layout)) return value;
   const { rooms, pieces } = value.layout;
-  return { ...value, model: member(buildingModels, value.model) ? value.model : 'house',
+  return stocked({ ...value, model: member(buildingModels, value.model) ? value.model : 'house',
     layout: { ...value.layout, rooms: record(rooms) ? Object.fromEntries(Object.entries(rooms).map(([id, room]) => [id, knownTemplate(room)])) : rooms,
-      pieces: Array.isArray(pieces) ? pieces.filter(p => !record(p) || member(pieceKinds, p.kind)).map(knownPiece) : pieces } };
+      pieces: Array.isArray(pieces) ? pieces.filter(p => !record(p) || member(pieceKinds, p.kind)).map(knownPiece) : pieces } });
 }
 function knownTemplate(room: unknown): unknown {
   return record(room) && !member(roomTemplates, room.template) ? { ...room, template: 'empty' } : room;

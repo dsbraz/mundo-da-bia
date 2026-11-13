@@ -1,6 +1,6 @@
 import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
 import type { PlazaPlot, Progress, RecipeId } from './progress';
-import type { Ingredient, Utensil } from './ingredients';
+import type { Ingredient, Stock, Utensil } from './ingredients';
 import type { Phase } from './clock';
 import type { Game } from './tastes';
 export interface Outdoor { bench: ActorId | null; swing: ActorId | null; watered: boolean; mail: number[]; bells: number[] }
@@ -8,7 +8,9 @@ export type OutdoorAction = { type: 'outdoor'; actor: ActorId; target: 'bench' |
 export type Location = { kind: 'street' } | { kind: 'interior'; building: number; room: RoomId };
 export const buildingModels = ['house', 'apartment', 'shop', 'hospital', 'police', 'office', 'fire-station', 'school', 'stadium', 'sports-club'] as const;
 export type BuildingModel = typeof buildingModels[number];
-export interface Building { id: number; name: string; model: BuildingModel; color: Palette; plot: number; entry: RoomId; layout: Layout; show: boolean }
+export interface Building { id: number; name: string; model: BuildingModel; color: Palette; plot: number; entry: RoomId; layout: Layout; show: boolean;
+  /** The pantry (W3L-20): absent until the house first cooks, which reads as full. */
+  stock?: Stock }
 export interface Resident extends Actor { location: Location }
 /** A dish carries its recipe (and `fancy` when made fancy). */
 export interface NeighborhoodItem extends Item { location: Location; recipe?: RecipeId; fancy?: true }

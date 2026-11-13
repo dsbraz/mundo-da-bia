@@ -1,6 +1,7 @@
 import { benchUtensils, cook, pantry, utensilPiece } from '../domain/recipes';
 import type { Outcome } from '../domain/recipes';
-import type { Ingredient, Utensil } from '../domain/ingredients';
+import type { Basic, Ingredient, Utensil } from '../domain/ingredients';
+import { stockOf } from '../domain/stock';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { pieceBounds } from '../domain/layout';
 import type { ActorId, CropId, Piece } from '../domain/types';
@@ -29,7 +30,12 @@ export function kitchen(deps: KitchenDeps) {
     const where = deps.town().location;
     return where.kind === 'interior' ? deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.id === piece && p.room === where.room) : undefined;
   };
-  const stock = () => { const progress = deps.town().progress; return pantry(progress).map(id => ({ id, pile: progress.basket[id as CropId] })); };
+  /** The house's pantry (W3L-20) and the basket, each drawn as a pile of up to 4 or 6 icons. */
+  const stock = () => {
+    const town = deps.town(), where = town.location, house = where.kind === 'interior' ? town.buildings.find(b => b.id === where.building) : undefined;
+    const shelf = house ? stockOf(house) : {};
+    return pantry(town.progress, shelf).map(id => ({ id, pile: town.progress.basket[id as CropId] ?? shelf[id as Basic] }));
+  };
   function open(id: number) {
     piece = id; const at = current(); if (!at) { piece = null; return; }
     deps.root.classList.add('at-bench');
