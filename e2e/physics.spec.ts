@@ -45,6 +45,11 @@ for (const reduced of [false, true]) test(`soltar o ursinho acima da mesa o deix
   expect(teddy).toMatchObject({ spot: 'table', holder: null });
   expect(Math.abs(teddy.x - above[0])).toBeLessThanOrEqual(12);
   await page.screenshot({ path: `${shots}/physics-teddy-on-table-1024${reduced ? '-reduced' : ''}.png` });
+  if (!reduced) {
+    await page.setViewportSize({ width: 844, height: 390 }); await page.clock.runFor(300);
+    await page.screenshot({ path: `${shots}/physics-teddy-on-table-844.png` });
+    await page.setViewportSize({ width: 1024, height: 768 }); await page.clock.runFor(300);
+  }
   // Let go high on the wall, away from the table: it falls to the floor below, never stays in the air.
   await carry(page, [teddy.x, teddy.y - 28], [880, 250]);
   await page.clock.runFor(800);

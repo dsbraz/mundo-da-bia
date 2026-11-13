@@ -58,8 +58,9 @@ for (const reduced of [false, true]) test(`à noite, deitar a Bia leva à manhã
   expect(JSON.stringify(await readTown(page))).not.toMatch(/"needs"|sono/);
 });
 
-test('numa cozinha, Descansar mostra a bolha da cama com a porta, e tocar nela leva a Bia até o quarto', async ({ page }) => {
+for (const [width, height] of [[1024, 768], [844, 390]] as const) test(`numa cozinha, Descansar mostra a bolha da cama com a porta, e tocar nela leva a Bia até o quarto (${width})`, async ({ page }) => {
   test.setTimeout(90_000);
+  await page.setViewportSize({ width, height });
   const world = initialWorld();
   world.layout = { ...world.layout, rooms: { ...world.layout.rooms, sala: { ...world.layout.rooms.sala, template: 'kitchen' } }, pieces: world.layout.pieces.filter(p => p.kind !== 'sofa') };
   world.actors = world.actors.map(a => ({ ...a, seat: null, y: 530 }));
@@ -71,7 +72,10 @@ test('numa cozinha, Descansar mostra a bolha da cama com a porta, e tocar nela l
   await expect(bubble.locator('img.need')).toHaveAttribute('src', '/art/needs.svg#bed');
   expect(await actor(page, 'bia')).toMatchObject({ resting: false, room: 'sala' });
   await page.clock.runFor(200);
-  await page.screenshot({ path: `${shots}/sleep-no-bed-bubble-1024.png` });
+  await page.screenshot({ path: `${shots}/sleep-no-bed-bubble-${width}.png` });
+  // The bubble takes a touch now: it never covers the open action ring.
+  const [b, ring] = [await bubble.boundingBox(), await page.locator('#actor-context').boundingBox()];
+  if (b && ring) expect(b.x + b.width <= ring.x || b.x >= ring.x + ring.width || b.y + b.height <= ring.y || b.y >= ring.y + ring.height).toBe(true);
   await bubble.click();
   for (let t = 0; t < 8000 && (await actor(page, 'bia')).room !== 'quarto'; t += 100) await page.clock.runFor(100);
   expect((await actor(page, 'bia')).location).toMatchObject({ kind: 'interior', room: 'quarto' });

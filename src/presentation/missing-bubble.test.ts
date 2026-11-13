@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { bubblePlace, missingParts } from './missing-bubble';
+import { besideMenu, bubblePlace, missingParts } from './missing-bubble';
 import { needLine } from '../content/feedback-text';
 import type { Need } from '../domain/types';
 
@@ -27,4 +27,12 @@ it('a peça que falta: aqui, em outro cômodo (porta) ou em nenhum lugar (cartã
   expect(missingWay(world, 'bed')).toBe('door');
   expect(missingWay(world, 'piano')).toBe('create');
   expect(missingWay(world, undefined)).toBe('here');
+});
+
+it('a bolha do que falta (16 px acima da ponta) também sai de baixo do anel de ações aberto (W3L-15: ela agora é tocável)', () => {
+  const size = { width: 200, height: 100 }, menu = { left: 300, right: 600, top: 300, bottom: 400 };
+  // Same tip: with the thought bubble's 40 px it clears the ring; with this bubble's 16 px it would cover it, so it goes beside it.
+  expect(besideMenu({ x: 450, y: 330 }, size, menu, 1024)).toEqual({ x: 450, y: 330 });
+  expect(besideMenu({ x: 450, y: 330 }, size, menu, 1024, 16)).toEqual({ x: 712, y: 330 });
+  expect(besideMenu({ x: 450, y: 530 }, size, menu, 1024, 16)).toEqual({ x: 450, y: 530 });
 });

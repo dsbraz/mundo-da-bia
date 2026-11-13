@@ -1,6 +1,7 @@
 import type { ActorId, Point, World } from '../domain/types';
 import { band, needsOf, type Band, type Need } from '../domain/needs';
-import { bubblePlace } from './missing-bubble';
+import { besideMenu, bubblePlace } from './missing-bubble';
+export { besideMenu } from './missing-bubble';
 import { worldToScreen } from './viewport';
 
 /** What the room thinks (W3L-12): one thought bubble at most, of who is selected if she asks for something, else of the highest need. */
@@ -26,15 +27,6 @@ export function portraitNeed(world: World, id: ActorId): Need | null {
   return actor && actor.room !== world.room ? topNeed(actor)?.need ?? null : null;
 }
 
-type Box = { left: number; top: number; right: number; bottom: number };
-/** Where the bubble's tip goes so the bubble (`size`, drawn above the tip with its 40 px of little clouds) stays clear of the open
- *  character menu: beside the menu (right, else left, within `width`) when it would sit under it. */
-export function besideMenu(tip: Point, size: { width: number; height: number }, menu: Box | null, width: number): Point {
-  const box = { left: tip.x - size.width / 2, right: tip.x + size.width / 2, top: tip.y - 40 - size.height, bottom: tip.y - 40 };
-  if (!menu || box.right <= menu.left || box.left >= menu.right || box.bottom <= menu.top || box.top >= menu.bottom) return tip;
-  const right = menu.right + 12 + size.width / 2;
-  return { x: right + size.width / 2 <= width ? right : menu.left - 12 - size.width / 2, y: tip.y };
-}
 interface Deps {
   world: () => World; selected: () => ActorId; head: (id: ActorId) => Point | null; canvas: () => HTMLCanvasElement | null;
   /** Only in Brincar. */
