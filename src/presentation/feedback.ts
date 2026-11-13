@@ -8,6 +8,8 @@ import { textStyle } from './text-style';
 type Container = Phaser.GameObjects.Container;
 const bubbles = new WeakMap<Phaser.Scene, Map<string, Container>>();
 export const bubbleDuration = (text: string) => 1800 + 60 * text.length;
+/** Whether `owner`'s speech bubble is up (the room's thought bubble waits for it, lot 6B). */
+export const speaking = (scene: Phaser.Scene, owner: string) => bubbles.get(scene)?.get(owner)?.active === true;
 
 /** The single speech bubble of `owner` (an actor id or a place), drawn near the touch. */
 const tones = { happy: { color: palette.plum, fill: 'bubbleBg' }, neutral: { color: palette.chalk, fill: 'card' } } as const;
@@ -48,6 +50,9 @@ export function speechBubble(scene: Phaser.Scene, anchor: Point, text: string, o
   return bubble;
 }
 
+/** Where a figure's line starts (offset from its feet): at its usual place `head`, but for whoever is selected over the star drawn at
+ *  `star` above the name tag (lot 6B: the line never covers the name). */
+export const speechTop = (head: number, star?: number) => Math.min(head, star === undefined ? 0 : star - 22);
 /** A refusal: gentle shake of whoever tried, and a neutral bubble near the target. Never a red "×". */
 type PoseFrame = { hop?: number; tilt?: number; shake?: number; squash?: number; arms?: number };
 const poses: Record<ReactionPose, (t: number) => PoseFrame> = {
@@ -71,7 +76,7 @@ const frameKeys = ['hop', 'tilt', 'shake', 'squash', 'arms'] as const;
  *  shows, and a cheer or a shrug keeps the arms up for a moment, without moving. */
 export function pokeFigure(scene: Phaser.Scene, figure: Container, pose: ReactionPose, line: string, height: number) {
   scene.game.canvas.dataset.reaction = `${figure.name}:${line}`;
-  if (line) speechBubble(scene, { x: figure.x, y: figure.y - height - 8 }, line, figure.name);
+  if (line) speechBubble(scene, { x: figure.x, y: figure.y + speechTop(-height - 8, figure.getByName<Container>('selection-star')?.y) }, line, figure.name);
   const write = (value: PoseFrame) => frameKeys.forEach(k => figure.setData(k, value[k] ?? 0));
   const duration = poseMs[pose] ?? 360;
   if (reducedMotion()) { if (stillArms.includes(pose)) { write({ arms: 1 }); scene.time.delayedCall(duration, () => write({})); } return; }
@@ -93,8 +98,15 @@ export function applyReaction(figure: Container, pose: Container) {
   const base = Number(pose.getData('baseScale') ?? pose.scaleX); pose.setData('baseScale', base);
   const squash = Number(figure.getData('squash') ?? 0);
   pose.setScale(base * (1 - squash / 2), base * (1 + squash));
-  pose.x += Number(figure.getData('shake') ?? 0);
+  const lean = Number(figure.getData('lean') ?? 0);
+  pose.x += Number(figure.getData('shake') ?? 0) + lean;
   pose.y += Number(figure.getData('hop') ?? 0);
-  pose.rotation += Number(figure.getData('tilt') ?? 0);
-  pose.getByName<Phaser.GameObjects.Image>('hands')?.setFlipY(Number(figure.getData('arms') ?? 0) > .5);
+  pose.rotation += Number(figure.getData('tilt') ?? 0) + lean * .003;
+  const hands = pose.getByName<Phaser.GameObjects.Image>('hands');
+  hands?.setFlipY(Number(figure.getData('arms') ?? 0) > .5);
+  hugArm(hands, Number(figure.getData('hugSide') ?? 0));
+}
+/** In a hug (lot 6B) the arm on the partner's side goes around them: the hanging one on that side is not drawn. */
+function hugArm(hands: Phaser.GameObjects.Image | null, side: number) {
+  if (hands && side) hands.setCrop(side > 0 ? 0 : hands.width / 2, 0, hands.width / 2, hands.height);
 }

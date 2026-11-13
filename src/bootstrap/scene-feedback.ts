@@ -4,6 +4,7 @@ import { cards, personalities, pickReaction } from '../content/personalities';
 import { createSound } from '../presentation/sound';
 import { missingBubble, missingWay } from '../presentation/missing-bubble';
 import { needBubbles } from '../presentation/need-bubble';
+import { speaking } from '../presentation/feedback';
 import { worldToScreen } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import { loadSoundOn, saveSoundOn } from '../persistence/storage';
@@ -23,7 +24,7 @@ export function sceneFeedback(deps: Deps) {
   const pointAt = (by?: ActorId) => by ? deps.scene.head(by) : null;
   const bubble = missingBubble(deps.root, () => deps.root.querySelector('#world')!.getBoundingClientRect());
   needBubbles(deps.root, { world: deps.state, selected: deps.selected, head: id => deps.scene.head(id), canvas: () => deps.root.querySelector('canvas'),
-    playing: deps.playing, label: (id, need) => thoughtLine(need, nameOf(actor(id)!)) });
+    playing: deps.playing, label: (id, need) => thoughtLine(need, nameOf(actor(id)!)), speaking: id => speaking(deps.scene, id) });
   /** The shrug, the drawn bubble (with a door when the piece is in another room) and the soft cue; a piece found nowhere lights its card in Create. */
   function missing(need: Need, lack: Lack = {}) {
     const who = lack.actor ?? deps.selected(), head = deps.scene.shrug(who), canvas = deps.root.querySelector('canvas');

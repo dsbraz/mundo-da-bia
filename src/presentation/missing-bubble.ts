@@ -22,12 +22,28 @@ export function bubblePlace(at: Point, scene: Frame): Point {
 }
 type Box = { left: number; top: number; right: number; bottom: number };
 /** Where the bubble's tip goes so the bubble (`size`, drawn `lift` px above the tip: 40 for the thought's little clouds, 16 for this one)
- *  stays clear of the open character menu: beside the menu (right, else left, within `width`) when it would sit under it. */
+ *  stays clear of the open character menu when it would sit under it: beside the head, level with it (right, else left, within `width`),
+ *  so the tail reaches it (lot 6B); without room there, beside the menu. */
 export function besideMenu(tip: Point, size: { width: number; height: number }, menu: Box | null, width: number, lift = 40): Point {
-  const box = { left: tip.x - size.width / 2, right: tip.x + size.width / 2, top: tip.y - lift - size.height, bottom: tip.y - lift };
-  if (!menu || box.right <= menu.left || box.left >= menu.right || box.bottom <= menu.top || box.top >= menu.bottom) return tip;
+  const clear = (at: Point) => !menu || at.x + size.width / 2 <= menu.left || at.x - size.width / 2 >= menu.right || at.y - lift <= menu.top || at.y - lift - size.height >= menu.bottom;
+  if (!menu || clear(tip)) return tip;
+  const reach = size.width / 2 + 24, level = tip.y + lift + size.height / 2;
+  const head = [tip.x + reach, tip.x - reach].find(x => x - size.width / 2 >= 0 && x + size.width / 2 <= width && clear({ x, y: level }));
+  if (head !== undefined) return { x: head, y: level };
   const right = menu.right + 12 + size.width / 2;
   return { x: right + size.width / 2 <= width ? right : menu.left - 12 - size.width / 2, y: tip.y };
+}
+/** The tail's offsets (px from where it is drawn) so it points back to the head at `head` once the bubble's tip moved to `tip` (beside the
+ *  menu, lot 6B): the near circle (or the point) 40% of the way, kept under the bubble (`width`), the far circle 70%, at most 44 px past it. */
+export function tailToward(head: Point, tip: Point, width: number): { near: number; far: number } {
+  const dx = head.x - tip.x, bound = (value: number, edge: number) => Math.round(Math.max(-edge, Math.min(edge, value)));
+  return { near: bound(dx * .4, width / 2 - 20), far: bound(dx * .7, width / 2 + 44) };
+}
+/** Puts the bubble's tip at `tip` with its tail toward `head` (missing-bubble.css reads the offsets). */
+export function placeBubble(bubble: HTMLElement, head: Point, tip: Point) {
+  const tail = tailToward(head, tip, bubble.offsetWidth);
+  bubble.style.left = `${tip.x}px`; bubble.style.top = `${tip.y}px`;
+  bubble.style.setProperty('--tail-near', `${tail.near}px`); bubble.style.setProperty('--tail-far', `${tail.far}px`);
 }
 /** One bubble at a time, over the scene, gone after a moment; never over the open action ring. */
 export function missingBubble(host: HTMLElement, scene: () => Frame) {
@@ -45,8 +61,8 @@ export function missingBubble(host: HTMLElement, scene: () => Frame) {
     if (missing.go) tappable(bubble, missing.go);
     host.append(bubble); shown = bubble;
     const menu = host.querySelector<HTMLElement>('#actor-context')?.getBoundingClientRect();
-    const place = besideMenu(bubblePlace(at, scene()), { width: bubble.offsetWidth, height: bubble.offsetHeight }, menu?.width ? menu : null, window.innerWidth, 16);
-    bubble.style.left = `${place.x}px`; bubble.style.top = `${place.y}px`;
+    const head = bubblePlace(at, scene());
+    placeBubble(bubble, head, besideMenu(head, { width: bubble.offsetWidth, height: bubble.offsetHeight }, menu?.width ? menu : null, window.innerWidth, 16));
     timer = window.setTimeout(() => { bubble.remove(); if (shown === bubble) shown = null; }, missing.go ? 4000 : 2400);
   };
 }

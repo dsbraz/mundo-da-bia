@@ -1,6 +1,6 @@
 /* W3L-02: what is missing, drawn (never written), above the character who needs it. */
 .missing-bubble{position:fixed;z-index:20;transform:translate(-50%,calc(-100% - 16px));display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bubble-bg);border:3px solid var(--outline);border-radius:30px;box-shadow:0 6px 16px #343c5333;pointer-events:none;animation:missing-pop .18s ease-out}
-.missing-bubble::after{content:"";position:absolute;left:50%;bottom:-15px;width:22px;height:22px;background:var(--bubble-bg);border:solid var(--outline);border-width:0 3px 3px 0;transform:translateX(-50%) rotate(45deg) scale(.8,1);border-bottom-right-radius:6px}
+.missing-bubble::after{content:"";position:absolute;left:calc(50% + var(--tail-near,0px));bottom:-15px;width:22px;height:22px;background:var(--bubble-bg);border:solid var(--outline);border-width:0 3px 3px 0;transform:translateX(-50%) rotate(45deg) scale(.8,1);border-bottom-right-radius:6px}
 .missing-bubble img{display:block;width:72px;height:72px;pointer-events:none}
 .missing-bubble .face{width:58px;height:58px;border-radius:50%;background:#fffdf7;border:3px solid var(--outline)}
 .missing-bubble .door{width:60px;height:60px}
@@ -11,8 +11,8 @@
    the trays and the character menu (z 3+), which it never covers. */
 .missing-bubble:is(.thought,.wish){z-index:2;transform:translate(-50%,calc(-100% - 40px));padding:8px 12px;border-radius:40px;animation:none}
 .missing-bubble.thought[hidden]{display:none}
-.missing-bubble:is(.thought,.wish)::after{left:46%;bottom:-24px;width:16px;height:16px;border-width:3px;border-radius:50%;transform:none}
-.missing-bubble:is(.thought,.wish)::before{content:"";position:absolute;left:40%;bottom:-38px;width:9px;height:9px;background:var(--bubble-bg);border:3px solid var(--outline);border-radius:50%}
+.missing-bubble:is(.thought,.wish)::after{left:calc(46% + var(--tail-near,0px));bottom:-24px;width:16px;height:16px;border-width:3px;border-radius:50%;transform:none}
+.missing-bubble:is(.thought,.wish)::before{content:"";position:absolute;left:calc(40% + var(--tail-far,0px));bottom:-38px;width:9px;height:9px;background:var(--bubble-bg);border:3px solid var(--outline);border-radius:50%}
 .missing-bubble:is(.thought,.wish) img{width:56px;height:56px}
 .missing-bubble.thought.urgent{animation:thought-pulse 1.6s ease-in-out infinite alternate}
 @keyframes thought-pulse{from{transform:translate(-50%,calc(-100% - 40px)) scale(1)}to{transform:translate(-50%,calc(-100% - 40px)) scale(1.08)}}

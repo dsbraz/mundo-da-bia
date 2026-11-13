@@ -22,7 +22,7 @@ it('corta a câmera de uma vez com movimento reduzido', () => {
   expect(followFactor(1000 / 60, true)).toBe(1);
   expect(followFactor(0, true)).toBe(1);
 });
-it('balão sobe e esmaece, ou fica parado e só esmaece em 120 ms', () => {
-  expect(bubbleExit(300, 24, 1300, false)).toEqual({ y: 276, alpha: 0, delay: 0, duration: 1300 });
+it('balão sobe e só esmaece no fim, legível quase o tempo todo (lote 6B), ou fica parado e só esmaece em 120 ms', () => {
+  expect(bubbleExit(300, 24, 1300, false)).toEqual({ y: 276, alpha: { value: 0, ease: 'Quint.In' }, delay: 0, duration: 1300 });
   expect(bubbleExit(300, 24, 1300, true)).toEqual({ y: 300, alpha: 0, delay: 1180, duration: 120 });
 });

@@ -21,7 +21,7 @@ it('o menu do personagem fica acima da estrela de quem está selecionado, adulto
     const actor = who(id), star = -selectionLayout(actor).star + 14;
     expect(ringClearance(actor)).toBeGreaterThan(star);
   }
-  expect(ringClearance(who('bia'))).toBe(300);
+  expect(ringClearance(who('bia'))).toBe(324);
   expect(ringClearance(who('mimi'))).toBe(170);
   expect(stature(who('daniel'))).toBeCloseTo(1.3);
 });

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { besideMenu, bubblePlace, missingParts } from './missing-bubble';
+import { besideMenu, bubblePlace, missingParts, tailToward } from './missing-bubble';
 import { needLine } from '../content/feedback-text';
 import type { Need } from '../domain/types';
 
@@ -39,5 +39,21 @@ it('a bolha do que falta (16 px acima da ponta) também sai de baixo do anel de 
   // Same tip: with the thought bubble's 40 px it clears the ring; with this bubble's 16 px it would cover it, so it goes beside it.
   expect(besideMenu({ x: 450, y: 330 }, size, menu, 1024)).toEqual({ x: 450, y: 330 });
   expect(besideMenu({ x: 450, y: 330 }, size, menu, 1024, 16)).toEqual({ x: 712, y: 330 });
+  // With room under a higher menu, it stands beside the head, level with it (lot 6B).
+  expect(besideMenu({ x: 450, y: 330 }, size, { ...menu, top: 180, bottom: 270 }, 1024, 16)).toEqual({ x: 574, y: 396 });
   expect(besideMenu({ x: 450, y: 530 }, size, menu, 1024, 16)).toEqual({ x: 450, y: 530 });
+});
+
+it('ao lado do menu, a cauda aponta de volta para a cabeça (lote 6B): os dois círculos seguem até ela, o de longe mais, sem sair da bolha', () => {
+  // Sem mudar de lugar, a cauda fica onde é desenhada.
+  expect(tailToward({ x: 450, y: 330 }, { x: 450, y: 330 }, 120)).toEqual({ near: 0, far: 0 });
+  // 262 px à direita da cabeça: a cauda vai para a esquerda, o círculo de longe além do de perto, nunca além da beira da bolha.
+  const right = tailToward({ x: 450, y: 330 }, { x: 712, y: 330 }, 120);
+  expect(right.near).toBeLessThan(0); expect(right.far).toBeLessThan(right.near);
+  expect(right.near).toBeGreaterThanOrEqual(-40); expect(right.far).toBeGreaterThanOrEqual(-104);
+  // À esquerda da cabeça: a cauda vai para a direita.
+  const left = tailToward({ x: 450, y: 330 }, { x: 300, y: 330 }, 120);
+  expect(left.near).toBeGreaterThan(0); expect(left.far).toBeGreaterThan(left.near);
+  // Um desvio pequeno move a cauda na mesma proporção.
+  expect(tailToward({ x: 450, y: 330 }, { x: 460, y: 330 }, 120)).toEqual({ near: -4, far: -7 });
 });

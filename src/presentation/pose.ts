@@ -11,8 +11,9 @@ export const figureHeight = (actor: Pick<Actor, 'id' | 'kind'>) => actor.kind ==
 export const artHeight = (actor: Pick<Actor, 'id' | 'kind'>) => actor.kind === 'cat' ? 120 : isAdult(actor.id) ? 264 : 220;
 /** The drawing's width: the art grows whole, never stretched. */
 export const figureWidth = (actor: Pick<Actor, 'id' | 'kind'>) => 140 * figureHeight(actor) / artHeight(actor);
-/** How far above the feet the action ring starts (scene units before the context scale): above the head, the name tag and the star. */
-export const ringClearance = (actor: Pick<Actor, 'id' | 'kind'>) => actor.kind === 'cat' ? 170 : 80 + figureHeight(actor);
+/** How far above the feet the action ring starts (scene units before the context scale): above the head, the name tag, the star and the
+ *  line said over them (lot 6B). */
+export const ringClearance = (actor: Pick<Actor, 'id' | 'kind'>) => actor.kind === 'cat' ? 170 : 104 + figureHeight(actor);
 /** How much taller than a child's drawing: every height measured on a child's figure (knees, hand, seat, head) scales by it. */
 export const stature = (actor: Pick<Actor, 'id' | 'kind'>) => actor.kind === 'cat' ? 1 : figureHeight(actor) / 220;
 /** How far the body sinks into a seat: a grown-up's longer thighs take it lower, so the hips rest on the cushion. */
