@@ -1,7 +1,8 @@
 import { basics, stockLimit } from './ingredients';
 import type { Basic, Stock } from './ingredients';
 import type { SpecialId } from './progress';
-import type { ActorId, CropId, Layout, Piece, PieceKind, RoomId } from './types';
+import type { ActorId, CropId, Layout, Piece, PieceKind, Point, RoomId } from './types';
+import { pieceBounds } from './layout';
 import type { Building, MarketAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { consumeItem, spawnItem } from './portable';
 import { stockOf } from './stock';
@@ -67,6 +68,17 @@ export function buy(town: Neighborhood, action: { actor: ActorId; piece: number;
 export function checkout(town: Neighborhood, actor: ActorId): Shopped {
   const hand = heldBy(town, actor);
   return marketRoom(town, actor) && isBag(hand) ? { town: patch(town, hand.id, { paid: true }), outcome: { kind: 'paid' } } : none(town);
+}
+/** The checkout a bag or a person is let go at (lot 6F): over the counter, or on the floor in front of it or just beside it. */
+export function checkoutAt(layout: Layout, room: RoomId, point: Point): Piece | undefined {
+  const { width, height } = pieceBounds.checkout;
+  return layout.pieces.find(p => p.room === room && p.kind === 'checkout' && point.x >= p.x - 80 && point.x <= p.x + width + 80 && point.y >= p.y && point.y <= p.y + height + 100);
+}
+/** The checkout that calls `actor` (lot 6F): she is in the market room on screen with goods in an unpaid bag. */
+export function checkoutCall(town: Neighborhood, actor: ActorId): Piece | null {
+  const at = marketRoom(town, actor), hand = heldBy(town, actor), where = town.location;
+  if (!at || !isBag(hand) || hand.paid || !hand.contents.length || where.kind !== 'interior' || where.building !== at.building.id || where.room !== at.room) return null;
+  return at.building.layout.pieces.find(p => p.room === at.room && p.kind === 'checkout') ?? null;
 }
 /** Leaving the market's building with a bag that did not go through the checkout is refused: the bubble shows the checkout. */
 export function unpaidExit(town: Neighborhood, action: Extract<NeighborhoodAction, { type: 'transport' }>): Outcome | null {

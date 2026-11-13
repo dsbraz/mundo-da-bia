@@ -11,6 +11,7 @@ import { itemKind } from '../domain/item-kind';
 import { floorTop } from './floor-band';
 import { drawnUse, drawUse } from './use-effects';
 import { itemTexture } from './art-sheet';
+import { fridgeFood } from './fridge-stock';
 export function orderedPieces(state: World) {
   return state.layout.pieces.filter(p => p.room === state.room).sort((a, b) => pieceDepth(a) - pieceDepth(b));
 }
@@ -87,6 +88,8 @@ export function drawObjects(scene: Phaser.Scene, state: World) {
   return state.items.flatMap(item => {
     const point = itemPoint(state, item); if (!point) return [];
     const depth = objectDepth(state, item);
-    return [scene.add.image(point.x, point.y, itemTexture(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth)];
+    const image = scene.add.image(point.x, point.y, itemTexture(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth);
+    fridgeFood(scene, state, item, image);
+    return [image];
   });
 }

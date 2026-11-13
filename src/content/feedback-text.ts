@@ -43,6 +43,8 @@ export const needLine = (need: Need, by?: string) => by ? say('{nome} já está 
 /** What a thought bubble means (W3L-12), for screen readers only. */
 const thoughtLines: Record<'fome' | 'sono' | 'tedio', string> = { fome: '{nome} está com fome.', sono: '{nome} está com sono.', tedio: '{nome} quer brincar.' };
 export const thoughtLine = (need: 'fome' | 'sono' | 'tedio', name: string) => say(thoughtLines[need], name);
+/** Hungry with nothing left at home (lot 6F): the bubble draws the market. */
+export const marketThought = (name: string) => say('{nome} está com fome e a comida acabou. Toque para ver o mercado.', name);
 /** The routine's dashed bubble (W3L-27), for screen readers only: a suggestion and where a touch takes the Map. */
 const routineLines: Record<Suggestion, string> = { mochila: 'Hora da escola, {nome}? Toque para ver no mapa.', pasta: 'Hora do trabalho, {nome}? Toque para ver no mapa.',
   bola: 'Vamos brincar, {nome}? Toque para ver no mapa.', prato: 'Hora de comer, {nome}? Toque para ver no mapa.', travesseiro: 'Hora de dormir, {nome}? Toque para ver no mapa.',

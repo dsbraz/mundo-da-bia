@@ -1,5 +1,5 @@
 import type { ActorId, Need, PieceKind, Point, PresentationEvent, RoomId, World } from '../domain/types';
-import { lineRotation, nameOf, needLine, say, thoughtLine } from '../content/feedback-text';
+import { lineRotation, marketThought, nameOf, needLine, say, thoughtLine } from '../content/feedback-text';
 import { cards, personalities, pickReaction } from '../content/personalities';
 import { createSound } from '../presentation/sound';
 import { missingBubble, missingWay } from '../presentation/missing-bubble';
@@ -10,9 +10,13 @@ import type { PlayScene } from '../presentation/scene';
 import { loadSoundOn, saveSoundOn } from '../persistence/storage';
 interface Deps { root: HTMLElement; scene: PlayScene; state: () => World; selected: () => ActorId; playing: () => boolean;
   /** The selected one goes to `room` of this house (a touch on a bubble's door, W3L-15). */
-  goRoom?: (room: RoomId) => void }
+  goRoom?: (room: RoomId) => void;
+  /** Lot 6F: whether home still has food for `actor` (else her hunger draws the market), and a touch on the market bubble (the Map). */
+  food?: (actor: ActorId) => boolean; toMarket?: () => void }
 /** What a refusal adds: who sits there, the piece that is not in this room, where to point, the screen-reader line. */
-interface Lack { actor?: ActorId | undefined; by?: ActorId | undefined; want?: PieceKind | undefined; point?: Point | undefined; text?: string | undefined }
+interface Lack { actor?: ActorId | undefined; by?: ActorId | undefined; want?: PieceKind | undefined; point?: Point | undefined; text?: string | undefined;
+  /** A touch on the bubble does this (the checkout's: she goes to pay). */
+  go?: (() => void) | undefined }
 /** Feedback near the finger (bubble, motion, sound); `#announcement` only mirrors it for screen readers. */
 export function sceneFeedback(deps: Deps) {
   const status = deps.root.querySelector('#announcement')!;
@@ -24,13 +28,16 @@ export function sceneFeedback(deps: Deps) {
   const pointAt = (by?: ActorId) => by ? deps.scene.head(by) : null;
   const bubble = missingBubble(deps.root, () => deps.root.querySelector('#world')!.getBoundingClientRect());
   needBubbles(deps.root, { world: deps.state, selected: deps.selected, head: id => deps.scene.head(id), canvas: () => deps.root.querySelector('canvas'),
-    playing: deps.playing, label: (id, need) => thoughtLine(need, nameOf(actor(id)!)), speaking: id => speaking(deps.scene, id) });
+    playing: deps.playing, label: (id, need, market) => market ? marketThought(nameOf(actor(id)!)) : thoughtLine(need, nameOf(actor(id)!)), speaking: id => speaking(deps.scene, id),
+    ...(deps.food ? { food: deps.food } : {}), ...(deps.toMarket ? { toMarket: deps.toMarket } : {}) });
+  /** What a touch on the bubble does: what the refusal asks (the checkout), the market's Map, or the door's room. */
+  const goOf = (need: Need, lack: Lack) => { const go = lack.go ?? (need === 'market' ? deps.toMarket : undefined); return go ? { go } : {}; };
   /** The shrug, the drawn bubble (with a door when the piece is in another room) and the soft cue; a piece found nowhere lights its card in Create. */
   function missing(need: Need, lack: Lack = {}) {
     const who = lack.actor ?? deps.selected(), head = deps.scene.shrug(who), canvas = deps.root.querySelector('canvas');
     const anchor = pointAt(lack.by) || lack.point || head || above(actor(who));
     const label = lack.text ?? needLine(need, lack.by && nameOf(actor(lack.by)!));
-    bubble({ need, ...(lack.by ? { by: lack.by } : {}), ...doorOf(lack.want, who), label }, canvas ? worldToScreen(canvas, anchor) : anchor);
+    bubble({ need, ...(lack.by ? { by: lack.by } : {}), ...doorOf(lack.want, who), ...goOf(need, lack), label }, canvas ? worldToScreen(canvas, anchor) : anchor);
     announce(label); sound.cue('refuse');
   }
   /** The door in the bubble when `want` is in another room, and for the selected one a touch there goes to a room with it (W3L-15). */

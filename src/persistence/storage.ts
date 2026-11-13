@@ -86,6 +86,14 @@ export function loadFirstTouchSeen(storage?: StoragePort): boolean {
 export function saveFirstTouchSeen(storage?: StoragePort): boolean {
   try { (storage ?? globalThis.localStorage).setItem(firstTouchKey, 'seen'); return true; } catch { return false; }
 }
+const checkoutHintKey = 'mundo-da-bia:checkout-hint';
+/** The ghost hand on the checkout (lot 6F): the first time she holds goods not paid for, and never again. */
+export function loadCheckoutHintSeen(storage?: StoragePort): boolean {
+  try { return (storage ?? globalThis.localStorage).getItem(checkoutHintKey) === 'seen'; } catch { return false; }
+}
+export function saveCheckoutHintSeen(storage?: StoragePort): boolean {
+  try { (storage ?? globalThis.localStorage).setItem(checkoutHintKey, 'seen'); return true; } catch { return false; }
+}
 const drawerKey = 'mundo-da-bia:drawer';
 /** The Turma drawer (W3L-03): closed unless the child left it open. */
 export function loadDrawerOpen(storage?: StoragePort): boolean {

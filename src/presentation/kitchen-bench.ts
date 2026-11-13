@@ -15,7 +15,7 @@ export interface BenchActions {
 }
 /** The cooking animation; nothing waits for it (the bowl is free again at once). */
 export const cookMs = 1200;
-export const ingredientIcon = (id: Ingredient) => id === 'peixe' ? '/icons/peixe.svg' : `/icons/ing-${id}.svg`;
+export const ingredientIcon = (id: Ingredient | 'lanche') => id === 'peixe' || id === 'lanche' ? `/icons/${id}.svg` : `/icons/ing-${id}.svg`;
 const places = 3, wobbleMs = 700, coverBox = { width: 120, height: 100 };
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, label?: string): HTMLElementTagNameMap[K] {

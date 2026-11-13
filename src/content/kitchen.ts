@@ -26,5 +26,6 @@ export const bookText = { region: 'Livro de receitas', toggle: 'Receitas', open:
 /** The market (W3L-22): names only for screen readers; the panel shows pictures, never a price or a number. */
 export const goodNames: Record<Good, string> = { ...ingredientNames, 'semente-alface': 'Sementes de alface', 'semente-tomate': 'Sementes de tomate',
   'semente-cenoura': 'Sementes de cenoura', 'semente-milho': 'Sementes de milho', 'semente-morango': 'Sementes de morango', 'semente-abobora': 'Sementes de abóbora', lanche: 'Lanche' };
-export const marketText = { region: 'Prateleira do mercado', close: 'Fechar a prateleira',
+export const marketText = { region: 'Prateleira do mercado', close: 'Fechar a prateleira', pay: 'Pagar no caixa',
+  call: 'O caixa está chamando: toque para pagar',
   bag: (goods: string[]) => goods.length ? `Sacola com ${goods.join(', ')}` : 'Sacola vazia' };

@@ -3,7 +3,9 @@ import { basics, stockLimit } from '../domain/ingredients';
 import type { Basic, Stock } from '../domain/ingredients';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { stockOf } from '../domain/stock';
-import type { World } from '../domain/types';
+import type { Item, World } from '../domain/types';
+import { itemKind } from '../domain/item-kind';
+import { runOut } from '../domain/larder';
 import { pieceBounds } from '../domain/layout';
 import { drawShelfGoods } from './market-art';
 import { drawFridgeDrawings } from './school-art';
@@ -28,6 +30,16 @@ export function fridgeSpots(stock: Stock): FridgeSpot[] {
       return { id, x: place.x + depth * 3, y: place.y - depth * 3, back: depth > 0 };
     });
   });
+}
+/** The fridge's own food (lot 6F): what ran out stays in its place as a silhouette (a touch on it shows the market); each snack left
+ *  beyond the first stands just behind it, so the fridge shows how many are left without a number. Drawn beside `image`, never moved. */
+export function fridgeFood(scene: Phaser.Scene, state: World, item: Item, image: Phaser.GameObjects.Image) {
+  if (item.spot !== 'fridge' || item.holder || !state.larder) return;
+  if (runOut(state, item)) { image.setTint(0x6b5d55).setAlpha(.38); return; }
+  if (itemKind(item) !== 'lanche') return;
+  for (let n = 1; n < Math.min(stockLimit, state.larder.lanche); n++) {
+    scene.add.image(image.x + 9 * n, image.y - 5 * n, image.texture.key).setDisplaySize(image.displayWidth, image.displayHeight).setTint(0xe2d6c4).setDepth(image.depth - n * .01);
+  }
 }
 /** The room's open fridges draw the house's pantry. */
 function drawFridgeStock(scene: Phaser.Scene, state: World, pieces: Map<number, Phaser.GameObjects.Container>, stock: Stock) {
