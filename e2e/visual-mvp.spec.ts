@@ -4,7 +4,8 @@ import { addRoom } from '../src/domain/rooms';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { lookIds, roomTemplates } from '../src/domain/types';
+import { roomTemplates } from '../src/domain/types';
+import { wardrobeOf } from '../src/domain/family';
 import type { LookId, World } from '../src/domain/types';
 import { ready, readTown, tap, tray, closeTray } from './helpers';
 test.use({ video: 'on' });
@@ -16,13 +17,13 @@ function cast(look: LookId): World {
     { id: 3, kind: 'armchair', room: 'sala', x: 500, y: 270, color: 'original', flipped: false },
   ]; world.layout.nextId = 4;
   world.items = world.items.map(i => ({ ...i, spot: 'floor' }));
-  world.actors = world.actors.map((a, i) => ({ ...a, look, x: [330, 150, 1085, 780, 450, 650, 1000][i]!, y: 530, seat: null }));
+  world.actors = world.actors.map((a, i) => i < 7 ? { ...a, look, x: [330, 150, 1085, 780, 450, 650, 1000][i]!, y: 530, seat: null } : { ...a, room: 'quarto', x: 300 + (i - 7) * 200, y: 530, seat: null });
   world.actors.slice(0, 4).forEach((a, index) => { world = transition(world, { type: 'pick', actor: a.id, item: world.items[index]!.id }).state; });
   world = transition(world, { type: 'sit', actor: 'luna', seat: '1.0' }).state;
   world = transition(world, { type: 'sit', actor: 'leo', seat: '2.0' }).state;
   return { ...world, show: false };
 }
-for (const look of lookIds) test(`visual: ${look}, corpo, roupa e objeto em poses e caminhada`, async ({ page }) => {
+for (const look of wardrobeOf('bia')) test(`visual: ${look}, corpo, roupa e objeto em poses e caminhada`, async ({ page }) => {
   await page.setViewportSize({ width: 1792, height: 768 });
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   const saved = encodeNeighborhood(migrateNeighborhood(initialAlbum(cast(look))));

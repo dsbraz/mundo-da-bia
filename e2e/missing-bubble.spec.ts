@@ -69,7 +69,7 @@ test('nenhuma recusa produz texto sem desenho: sofá ocupado', async ({ page }) 
 test('nenhuma recusa produz texto sem desenho: balanço ocupado na praça', async ({ page }) => {
   // The same plaza as touch-feedback.spec: only the sofa inside, the Turma spread out.
   const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
-  world.actors = world.actors.map((a, i) => ({ ...a, room: 'sala', x: 130 + i * 125, y: 530, seat: null }));
+  world.actors = world.actors.map((a, i) => ({ ...a, room: i < 7 ? 'sala' : 'quarto', x: i < 7 ? 130 + i * 125 : 300 + (i - 7) * 200, y: 530, seat: null }));
   world.items = world.items.map((i, n) => ({ ...i, room: 'sala', spot: 'floor', x: 400 + n * 80, y: 300 }));
   const town = migrateNeighborhood(initialAlbum(world));
   town.location = { kind: 'street' };

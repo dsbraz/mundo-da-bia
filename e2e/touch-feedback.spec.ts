@@ -7,7 +7,7 @@ import { points, read, ready, tap } from './helpers';
 const saveKey = 'mundo-da-bia:neighborhood:v3';
 function spreadTown() {
   const world = initialWorld(); world.layout.pieces = world.layout.pieces.filter(p => p.kind === 'sofa');
-  world.actors = world.actors.map((a, i) => ({ ...a, room: 'sala', x: 130 + i * 125, y: 530, seat: null }));
+  world.actors = world.actors.map((a, i) => ({ ...a, room: i < 7 ? 'sala' : 'quarto', x: i < 7 ? 130 + i * 125 : 300 + (i - 7) * 200, y: 530, seat: null }));
   world.items = world.items.map((i, n) => ({ ...i, room: 'sala', spot: 'floor', x: 400 + n * 80, y: 300 }));
   return migrateNeighborhood(initialAlbum(world));
 }
@@ -27,7 +27,7 @@ async function body(page: Page, i: number) { const a = (await read(page)).actors
 
 test('cada um dos 7 personagens reage ao segundo toque em até 150 ms', async ({ page }) => {
   await seed(page); await watchReactions(page);
-  expect((await read(page)).actors.map(a => a.x)).toEqual([130, 255, 380, 505, 630, 755, 880]);
+  expect((await read(page)).actors.slice(0, 7).map(a => a.x)).toEqual([130, 255, 380, 505, 630, 755, 880]);
   const ids = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'];
   for (const [i, id] of ids.entries()) {
     const { x, y } = await body(page, i);
