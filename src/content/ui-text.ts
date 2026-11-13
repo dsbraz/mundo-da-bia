@@ -5,6 +5,8 @@ export const uiText = {
   street: 'Rua',
   /** After a night slept through (W3L-15), for screen readers. */
   goodMorning: 'Bom dia! Já é de manhã.',
+  /** The moon in the Turma drawer at dusk and night (lot 6B), for screen readers. */
+  bedtime: 'Todos para a cama',
   header: { play: 'Brincar', create: 'Criar', decorate: 'Decorar', enlarge: 'Ampliar' },
   tray: { cast: 'Turma', furniture: 'Móveis e cores', street: 'Construir', rooms: 'Casas e cômodos' },
   map: {
