@@ -14,11 +14,11 @@ describe('salvamento versionado', () => {
     expect(decode(raw)).toEqual(initialWorld());
   });
   it.each([
-    (s: ReturnType<typeof initialWorld>) => { s.actors.pop(); },
+    (s: ReturnType<typeof initialWorld>) => { s.actors.push({ ...s.actors[0]! }); },
     (s: ReturnType<typeof initialWorld>) => { s.actors[0]!.x = -1; },
     (s: ReturnType<typeof initialWorld>) => { s.actors[0]!.y = 550; },
     (s: ReturnType<typeof initialWorld>) => { s.actors[1]!.id = 'bia'; },
-    (s: ReturnType<typeof initialWorld>) => { s.actors[0]!.kind = 'cat'; },
+    (s: ReturnType<typeof initialWorld>) => { (s.actors[0] as { room: string }).room = 'garagem'; },
     (s: ReturnType<typeof initialWorld>) => { s.items[0]!.holder = 'bia'; s.items[1]!.holder = 'bia'; },
     (s: ReturnType<typeof initialWorld>) => { s.items.pop(); },
   ])('rejeita estado inconsistente', change => {

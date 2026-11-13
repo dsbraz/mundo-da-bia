@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import type { Actor, World } from '../domain/types';
+import type { Resident } from '../domain/neighborhood-types';
 import { breath, catTail, earTwitch, glancing, kickAngle, phaseOf, stretch } from './idle-life';
 import { bandOf } from '../domain/needs';
 import { curled, poseTail } from './cat-pose';
@@ -11,10 +12,17 @@ export function lifePose(pose: Container, actor: Actor, time: number, reduced: b
   const phase = phaseOf(actor.id), shown = actor.kind === 'cat' ? catLife(pose, actor, time, phase, reduced) : [];
   if (kickLeg(pose, actor, still && bored(actor) ? kickAngle(time, phase, reduced) : 0)) shown.push('kick');
   if (!still) return shown;
+  shown.push(...workNod(pose, actor, time, reduced));
   // Curled up (its own drawing), a cat breathes but does not stretch.
   const curl = curled(actor) ? 1 : 0, air = breath(time, phase, reduced), long = actor.kind === 'cat' && !curl ? stretch(time, phase, reduced) : 0;
   pose.setScale(pose.scaleX * (1 + long), pose.scaleY * (1 + air - long));
   return [...shown, ...[['breath', air], ['stretch', long], ['curl', curl]].filter(([, on]) => on).map(([name]) => name as string)];
+}
+/** A grown-up at work (W3L-25) nods along to the job while it stands or sits there. */
+function workNod(pose: Container, actor: Actor, time: number, reduced: boolean): string[] {
+  const shift = (actor as Partial<Resident>).work;
+  if (!shift || shift.off) return [];
+  pose.rotation += reduced ? 0 : Math.sin(time / 260) * .035; return ['work'];
 }
 /** A standing child with boredom asking (`pede` or more) kicks the floor now and then. */
 const bored = (actor: Actor) => actor.kind === 'human' && !actor.seat && bandOf(actor, 'tedio') !== 'bem';
@@ -22,9 +30,10 @@ const bored = (actor: Actor) => actor.kind === 'human' && !actor.seat && bandOf(
 function kickLeg(pose: Container, actor: Actor, angle: number) {
   if (actor.kind !== 'human') return false;
   const cos = Math.cos(angle), sin = Math.sin(angle);
-  pose.getByName<Container>('knees')?.list.forEach(part => {
+  const knees = pose.getByName<Container>('knees'), shin = (knees?.getData('shin') as number | undefined) ?? 60;
+  knees?.list.forEach(part => {
     const leg = part as Phaser.GameObjects.Image; if (Number(leg.getData('side')) !== 1) return;
-    if (angle) leg.setPosition(12 - 12 * cos - 60 * sin, -12 * sin + 60 * cos);
+    if (angle) leg.setPosition(12 - 12 * cos - shin * sin, -12 * sin + shin * cos);
     leg.setRotation(angle);
   });
   return angle !== 0;

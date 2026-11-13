@@ -1,6 +1,7 @@
 import { parseSeat, seatRef, seatSlots } from '../domain/seats';
 import type { PieceKind } from '../domain/types';
 import { record } from './values';
+import { worldCast } from './cast';
 import type { RecordValue } from './values';
 
 /** The four seats saves had before W3L-06: the first piece of that kind in the room, and which of its seats. */
@@ -18,8 +19,9 @@ function legacySeat(here: RecordValue[], [kind, slot]: readonly [PieceKind, numb
   const piece = here.find(p => p.kind === kind);
   return piece ? seatRef(Number(piece.id), slot) : null;
 }
-/** The actors of a single-house world (album and the v1 to v4 house saves) with their seats read. */
-export function seatedWorld(value: unknown): unknown {
+/** The actors of a single-house world (album and the v1 to v4 house saves): the cast this build knows (`worldCast`), seats read. */
+export function seatedWorld(saved: unknown): unknown {
+  const value = worldCast(saved);
   if (!record(value) || !Array.isArray(value.actors) || !record(value.layout)) return value;
   const pieces = value.layout.pieces;
   return { ...value, actors: value.actors.map(a => record(a) && a.seat !== undefined ? { ...a, seat: knownSeat(pieces, a.room, a.seat) } : a) };

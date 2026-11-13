@@ -26,8 +26,8 @@ import { doorFront } from '../presentation/neighborhood-doors';
 import { doorWalk } from './door-walk';
 import { uiText } from '../content/ui-text';
 import { mirrorFaces } from '../content/personalities';
-import { localWorld, storeWorld } from '../domain/neighborhood';
-import type { NeighborhoodAction } from '../domain/neighborhood-types';
+import { localWorld, neighborhoodAction, storeWorld } from '../domain/neighborhood';
+import type { Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { neighborhoodControls } from '../presentation/neighborhood-controls';
 import { buttonArt } from '../presentation/button-art';
 import { cancelTrayDrag } from '../presentation/tray-drag';
@@ -132,7 +132,9 @@ root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!bu
 root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
 root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());
 root.querySelector('#play-mode')!.addEventListener('click', () => { if (building) toggleBuild(); });
-function persist() { town = storeWorld(town, state); saved = saveNeighborhood(town); }
+function persist() { town = storeWorld(town, state); const worked = atWork(town); if (worked !== town) { town = worked; state = localWorld(town); edits = history(state); } saved = saveNeighborhood(town); }
+/** W3L-25: whoever moved, the grown-ups dress for where they are and come home from work with groceries. */
+function atWork(next: Neighborhood) { return neighborhoodAction(next, { type: 'work', phase: life.phase() }); }
 function toggleBuild() {
   cancelGame();
   constructing = false;
@@ -160,7 +162,7 @@ function newBuilding() {
   neighborhood.choosePlot();
 }
 const townActs = townActions({ town: () => town, selected: () => selected, camera: () => camera, setCamera: x => { camera = x; }, refresh: then => refresh(then), scene, cue: sound => feedback.sound.cue(sound),
-  commit: next => { town = next; state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); },
+  commit: next => { town = atWork(next); state = localWorld(town); edits = history(state); selectedPiece = null; saved = saveNeighborhood(town); },
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
   feel: next => { town = next; state = feel(state, town); scene.feel(state); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },

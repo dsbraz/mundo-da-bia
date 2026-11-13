@@ -29,7 +29,7 @@ it('rejeita versão desconhecida, identidade duplicada, local ausente e nomes in
 });
 it('falha de armazenamento é explícita e leitura inválida recupera legado', () => {
   const port = { getItem: () => { throw Error(); }, setItem: () => { throw Error(); } };
-  const town = loadNeighborhood(port); expect(town.actors).toHaveLength(7);
+  const town = loadNeighborhood(port); expect(town.actors).toHaveLength(9);
   expect(saveNeighborhood(town, port)).toBe(false);
 });
 it('valida invariantes de cômodos, assentos, mãos e terrenos', () => {

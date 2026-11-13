@@ -1,7 +1,7 @@
 import { lying, sitting } from './posture';
 import type { VisualContext } from './pose';
 import { textStyle } from './text-style';
-import { actorScale, settlePose, contextScale } from './pose';
+import { actorScale, settlePose, contextScale, figureHeight, seatDrop, stature } from './pose';
 import Phaser from 'phaser';
 import { applyReaction } from './feedback';
 import { drawSelection } from './selection-art';
@@ -77,7 +77,6 @@ function cover(scene: Phaser.Scene, container: Phaser.GameObjects.Container, cat
   container.add(blanket);
 }
 
-function actorHeight(actor: Actor) { return actor.kind === 'cat' ? 120 : 220; }
 function coverActor(scene: Phaser.Scene, container: Phaser.GameObjects.Container, actor: Actor) {
   if (lying(actor) && actor.resting) cover(scene, container, actor.kind === 'cat');
 }
@@ -85,15 +84,18 @@ function coverActor(scene: Phaser.Scene, container: Phaser.GameObjects.Container
 function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor: Actor, part: string) {
   if (actor.kind === 'cat' && part === 'tail') { addCatTail(scene, pose, actor); return; }
   const key = `${actor.id}-${part}`;
-  const image = scene.add.image(0, 0, key).setDisplaySize(140, actorHeight(actor)).setOrigin(.5, 1).setName(part);
+  const height = figureHeight(actor), tall = stature(actor);
+  const image = scene.add.image(0, 0, key).setDisplaySize(140, height).setOrigin(.5, 1).setName(part);
   pose.add(image);
   if (actor.kind !== 'human' || (part !== 'legs' && part !== actor.look)) return;
-  image.setCrop(0, 0, 280, 320).setData('hitCrop', { x: 0, y: 0, width: 280, height: 320 });
+  // The knees bend 60 units above the feet of a child's drawing (texture rows below 320 of 440), a grown-up's in proportion.
+  const knee = 320 * tall, shin = 120 * tall;
+  image.setCrop(0, 0, 280, knee).setData('hitCrop', { x: 0, y: 0, width: 280, height: knee });
   let knees = pose.getByName<Phaser.GameObjects.Container>('knees');
-  if (!knees) { knees = scene.add.container(0, -60).setName('knees'); pose.add(knees); }
+  if (!knees) { knees = scene.add.container(0, -60 * tall).setName('knees').setData('shin', 60 * tall); pose.add(knees); }
   for (const side of [0, 1]) {
-    const lower = scene.add.image(0, 60, key).setDisplaySize(140, 220).setOrigin(.5, 1).setCrop(side * 140, 320, 140, 120);
-    lower.setData('hitCrop', { x: side * 140, y: 320, width: 140, height: 120 });
+    const lower = scene.add.image(0, 60 * tall, key).setDisplaySize(140, height).setOrigin(.5, 1).setCrop(side * 140, knee, 140, shin);
+    lower.setData('hitCrop', { x: side * 140, y: knee, width: 140, height: shin });
     lower.setData('side', side); knees.add(lower);
   }
 }
@@ -101,10 +103,10 @@ function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor:
 function seatLayers(pose: Phaser.GameObjects.Container, actor: Actor, reduced: boolean) {
   const seated = sitting(actor);
   const amount = settlePose(pose.getData('seatAmount') ?? Number(seated), Number(seated), reduced);
-  pose.setData('seatAmount', amount); pose.y = 22 * amount * pose.scaleY;
-  const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
+  const knees = pose.getByName<Phaser.GameObjects.Container>('knees'), shin = knees.getData('shin') as number;
+  pose.setData('seatAmount', amount); pose.y = seatDrop(actor) * amount * pose.scaleY;
   knees.setScale(1, 1 - .35 * amount).setRotation(-.35 * amount);
-  knees.list.forEach(part => (part as Phaser.GameObjects.Image).setPosition(0, 60));
+  knees.list.forEach(part => (part as Phaser.GameObjects.Image).setPosition(0, shin));
 }
 
 function heroLayer(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor: Actor, side: 'back' | 'front') {
@@ -124,9 +126,10 @@ export function walkPose(figure: Phaser.GameObjects.Container, actor: Actor, sca
   pose.y -= gait.bob; pose.rotation += gait.lean;
   pose.getByName<Phaser.GameObjects.Image>('eyes').setX(direction * 1.5);
   pose.getByName<Phaser.GameObjects.Image>('lids').setX(direction * 1.5);
-  pose.getByName<Phaser.GameObjects.Container>('knees')?.list.forEach(part => {
+  const knees = pose.getByName<Phaser.GameObjects.Container>('knees');
+  knees?.list.forEach(part => {
     const leg = part as Phaser.GameObjects.Image, step = gait.legs[Number(leg.getData('side'))]!;
-    leg.y = 60 - step.lift; leg.x = step.x;
+    leg.y = (knees.getData('shin') as number) - step.lift; leg.x = step.x;
   });
 }
 export function gazePose(figure: Phaser.GameObjects.Container, direction: number) {

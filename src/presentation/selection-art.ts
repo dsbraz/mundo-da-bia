@@ -1,7 +1,7 @@
 import { lying } from './posture';
 import type Phaser from 'phaser';
 import type { VisualContext } from './pose';
-import { actorScale, contextScale } from './pose';
+import { actorScale, contextScale, figureHeight, seatDrop } from './pose';
 import { textStyle } from './text-style';
 import { hex } from './palette';
 import type { Actor } from '../domain/types';
@@ -9,8 +9,8 @@ import type { Actor } from '../domain/types';
 /** Vertical anchors (relative to the feet) for the selected label and star. */
 export function selectionLayout(actor: Actor, context?: VisualContext) {
   if (lying(actor)) return { x: -80, labelBottom: -70, star: -110 };
-  const head = -(actor.kind === 'cat' ? 120 : 220) * actorScale(actor, context);
-  const seated = actor.seat ? 22 * actorScale(actor, context) : 0;
+  const head = -figureHeight(actor) * actorScale(actor, context);
+  const seated = actor.seat ? seatDrop(actor) * actorScale(actor, context) : 0;
   return { x: 0, labelBottom: head + seated - 6, star: head + seated - 44 * contextScale(context) };
 }
 export function drawSelection(scene: Phaser.Scene, container: Phaser.GameObjects.Container, actor: Actor, name: string, context?: VisualContext) {

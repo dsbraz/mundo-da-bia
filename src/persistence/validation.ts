@@ -7,6 +7,7 @@ import type { Actor, Item, World } from '../domain/types';
 import { spotKind } from '../domain/furniture';
 import { parseSeat, seatPoint } from '../domain/seats';
 import { seatedWorld } from './seats';
+import { worldCast } from './cast';
 import { fridgeKinds } from '../domain/item-kind';
 import { roomWidth, validPoint } from '../domain/geometry';
 
@@ -62,11 +63,11 @@ export function savedWorld(value: unknown): World | null {
 }
 function legacyWorld(value: unknown): World | null {
   if (!record(value) || !Array.isArray(value.actors) || !Array.isArray(value.items)) return null;
-  const state = {
+  const state = worldCast({
     ...value, layout: initialLayout(), home: { lamp: true, fridge: true, drawer: false },
     actors: value.actors.map(a => record(a) ? { ...a, seat: null } : a),
     items: value.items.map(i => record(i) ? { ...i, spot: 'floor' } : i),
-  };
+  });
   return validWorld(state) ? state : null;
 }
 function validSeat(value: unknown): boolean { return value === null || (typeof value === 'string' && parseSeat(value) !== null); }

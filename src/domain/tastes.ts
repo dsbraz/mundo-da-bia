@@ -23,4 +23,7 @@ export const tastes: Record<ActorId, Taste> = {
   mimi: { favorite: 'petisco-de-gato', gift: 'curativo', game: 'bola', pace: cat },
   nino: { favorite: 'leite-batidinho', gift: 'lanterna', game: 'bola', pace: cat },
   pipoca: { favorite: 'ovo-mexido', gift: 'mel', game: 'bola', pace: cat },
+  // The grown-ups (W3L-24, §3.6): bored ×0.6, and their "game" is the TV. Dishes and gifts are proposals for the family.
+  daniel: { favorite: 'misto-quente', gift: 'canela', game: 'tv', pace: { tedio: 0.6 } },
+  fabiana: { favorite: 'sopa-de-legumes', gift: 'colher', game: 'tv', pace: { tedio: 0.6 } },
 };

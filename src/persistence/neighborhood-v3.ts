@@ -15,10 +15,10 @@ import { knownBags } from './bag-validation';
 export function upgradeToV3(town: LegacyNeighborhood): Neighborhood {
   return { ...unwatered(town), progress: initialProgress(), nextItem: nextItemAfter(town.items) };
 }
-/** Without the session's needs (§3.1), which are never saved nor loaded. */
+/** Without the session's needs (§3.1) and a grown-up's work shift (W3L-25), which are never saved nor loaded. */
 export function unfelt<T>(actor: T): T {
-  if (!record(actor) || !Object.hasOwn(actor, 'needs')) return actor;
-  const rest = { ...actor }; delete rest.needs; return rest as T;
+  if (!record(actor) || (!Object.hasOwn(actor, 'needs') && !Object.hasOwn(actor, 'work'))) return actor;
+  const rest = { ...actor }; delete rest.needs; delete rest.work; return rest as T;
 }
 export const unwatered = <T extends LegacyNeighborhood>(town: T): T => ({ ...town, outdoor: { ...town.outdoor, watered: false } });
 /** Unknown looks become the default one; objects of unknown kinds and dishes of unknown recipes drop out (whoever held them is left empty-handed);

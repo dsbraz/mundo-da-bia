@@ -1,12 +1,12 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
 import { selectionLayout } from './selection-art';
-import { actorScale } from './pose';
+import { actorScale, figureHeight } from './pose';
 import { selectionPulse } from './motion';
 
 it('the selected label sits above the head, less than 40 px away, at both scales', () => {
   for (const actor of initialWorld().actors.filter(a => !a.seat)) for (const context of ['interior', 'street'] as const) {
-    const head = -(actor.kind === 'cat' ? 120 : 220) * actorScale(actor, context);
+    const head = -figureHeight(actor) * actorScale(actor, context);
     const layout = selectionLayout(actor, context);
     expect(layout.labelBottom).toBeLessThan(head + 1);
     expect(head - layout.labelBottom).toBeLessThan(40);

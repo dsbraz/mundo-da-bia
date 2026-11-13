@@ -6,6 +6,7 @@ export { validPoint } from './geometry';
 import { enterRoom, travel } from './room-state';
 import { fixture, initialLayout, toPiece, fromPiece } from './layout';
 import { actorIds, actorKinds, itemIds } from './types';
+import { isAdult, wardrobeOf } from './family';
 import type { Action, Actor, Point, PresentationEvent, RoomId, Transition, World } from './types';
 import { interact, put, sit, foodHome } from './furniture';
 import { give, micDown, visibleItem } from './objects';
@@ -18,12 +19,14 @@ import { refuse } from './missing';
 const start: readonly Pick<Actor, 'x' | 'y' | 'seat'>[] = [
   { x: 520, y: 530, seat: null }, { x: 245, y: 405, seat: '2.1' }, { x: 420, y: 530, seat: null }, { x: 830, y: 530, seat: null },
   { x: 330, y: 540, seat: null }, { x: 740, y: 540, seat: null }, { x: 610, y: 540, seat: null },
+  // The grown-ups (W3L-24) start in the bedroom, in front of the dresser and the bed, leaving the living room to the children.
+  { x: 620, y: 530, seat: null }, { x: 420, y: 530, seat: null },
 ];
 export function initialWorld(): World {
   return {
     room: 'sala', show: false, layout: initialLayout(), home: { lamp: true, fridge: true, drawer: false },
     actors: actorIds.map((id, index) => ({
-      id, kind: actorKinds[id], room: 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol'] as const)[index]!,
+      id, kind: actorKinds[id], room: isAdult(id) ? 'quarto' : 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol', 'outing', 'sol'] as const)[index]!,
       ...start[index]!, fed: false, resting: false,
     })),
     items: itemIds.map((id, index) => ({ id, room: 'sala', holder: null, spot: index < 2 ? 'fridge' : 'floor',
@@ -57,9 +60,9 @@ function release(state: World, actor: Actor, feeding: boolean): Transition {
     ? { ...i, ...foodHome(state, i, actor, feeding) } : i) } };
 }
 
-/** Only people change clothes. */
+/** Only people change clothes, and only into their own wardrobe's looks (W3L-24). */
 function dress(state: World, actor: Actor, look: Extract<Action, { type: 'dress' }>['look']): Transition {
-  return actor.kind === 'human' ? changeActor(state, actor, { look }, 'dressed') : { state, events: [] };
+  return actor.kind === 'human' && wardrobeOf(actor.id).includes(look) ? changeActor(state, actor, { look }, 'dressed') : { state, events: [] };
 }
 function actorAction(state: World, actor: Actor, action: Action): Transition {
   switch (action.type) {

@@ -6,7 +6,7 @@ it('migra casas com IDs locais iguais sem perder objetos ou duplicar a turma', (
   const world = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'microfone' }).state;
   const album = duplicateHouse(initialAlbum(world), false);
   const town = migrateNeighborhood(album);
-  expect(town.actors).toHaveLength(7); expect(town.items).toHaveLength(8);
+  expect(town.actors).toHaveLength(9); expect(town.items).toHaveLength(8);
   expect(new Set(town.items.map(i => i.id)).size).toBe(8);
   expect(town.items.filter(i => i.holder)).toHaveLength(1);
   expect(town.items.find(i => i.id === '1:microfone')!.holder).toBeNull();
@@ -27,7 +27,7 @@ it('leva personagem e objeto entre locais sem duplicação, visita não transpor
 it('constrói modelos, expande terrenos e duplica decoração sem a turma', () => {
   let town = migrateNeighborhood(initialAlbum(initialWorld()));
   for (const [plot, model] of [[1, 'shop'], [2, 'apartment'], [3, 'house']] as const) town = neighborhoodAction(town, { type: 'construct', plot, model });
-  expect(town.plots).toBe(6); expect(town.actors).toHaveLength(7);
+  expect(town.plots).toBe(6); expect(town.actors).toHaveLength(9);
   expect(Object.keys(town.buildings[2]!.layout.rooms)).toHaveLength(3);
   expect(neighborhoodAction(town, { type: 'construct', plot: 0, model: 'shop' })).toBe(town);
   const copy = neighborhoodAction(town, { type: 'duplicate', building: 1 });

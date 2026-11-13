@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { contextScale, visualContext } from './pose';
+import { contextScale, stature, visualContext } from './pose';
 import { speechBubble } from './feedback';
 import { showHeart } from './care-heart';
 import type { Actor, ActorId, Point, PresentationEvent, World } from '../domain/types';
@@ -17,7 +17,7 @@ export function react(scene: Phaser.Scene, state: World, events: PresentationEve
     const actor = state.actors.find(a => a.id === event.actor);
     if (!actor || actor.room !== state.room) continue;
     const line = said[index] ?? null;
-    const scale = contextScale(visualContext(state)), height = (actor.kind === 'cat' ? 100 : 196) * scale;
+    const scale = contextScale(visualContext(state)), height = (actor.kind === 'cat' ? 100 : 196 * stature(actor)) * scale;
     const answer = () => {
       if (line) speechBubble(scene, { x: actor.x, y: actor.y - height }, line, actor.id);
       meal(scene, event, actor, { x: actor.x - 46 * scale, y: actor.y - height * .8 }, dance);

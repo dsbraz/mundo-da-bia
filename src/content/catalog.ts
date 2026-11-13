@@ -7,6 +7,8 @@ export const actors: Record<ActorId, { name: string; skin: number; hair: number 
   mimi: { name: 'Mimi', skin: 0xe9a35e, hair: 0x925833 },
   nino: { name: 'Nino', skin: 0x59536e, hair: 0x29253c },
   pipoca: { name: 'Pipoca', skin: 0xfff6dc, hair: 0xb09d85 },
+  daniel: { name: 'Daniel', skin: 0xe6b48e, hair: 0x4a3a33 },
+  fabiana: { name: 'Fabiana', skin: 0xf1cdb0, hair: 0x7a4a2e },
 };
 export const looks: Record<LookId, { name: string; color: number }> = {
   nurse: { name: 'Enfermagem', color: 0x76aaa6 }, police: { name: 'Polícia', color: 0x687f9e },
@@ -30,6 +32,7 @@ export const looks: Record<LookId, { name: string; color: number }> = {
   mar: { name: 'Onda azul', color: 0x6aa9cb },
   festa: { name: 'Festa', color: 0xe889a1 },
   pijama: { name: 'Pijama', color: 0xa9b5db },
+  market: { name: 'Mercado', color: 0x5f9e6e }, firefighter: { name: 'Bombeiros', color: 0xc8473c },
 };
 export const rooms: Record<'sala' | 'quarto', { name: string }> = {
   sala: { name: 'Sala & palco' }, quarto: { name: 'Quarto dos sonhos' },

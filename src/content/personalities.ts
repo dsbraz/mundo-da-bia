@@ -39,6 +39,16 @@ export const personalities: Record<ActorId, Reaction[]> = {
     { pose: 'purr', line: 'Rrrron… ({nome} amou o carinho)', cue: 'purr' },
     { pose: 'stretch', line: 'Prrr… {nome} rolou no tapete.', cue: 'purr' },
   ],
+  daniel: [
+    { pose: 'hop', line: 'Oi, filhota! {nome} chegou!', cue: 'cheer' },
+    { pose: 'wiggle', line: 'Cosquinha não! {nome} riu!', cue: 'poke' },
+    { pose: 'stretch', line: 'Ufa! {nome} vai ver TV.', cue: 'poke' },
+  ],
+  fabiana: [
+    { pose: 'hop', line: 'Abraço de mãe! {nome} adora!', cue: 'cheer' },
+    { pose: 'wiggle', line: 'Escola hoje? {nome} quer ouvir!', cue: 'poke' },
+    { pose: 'stretch', line: 'Sopinha hoje? {nome} faz!', cue: 'poke' },
+  ],
 };
 /** The Turma card: a motto of up to 4 words, the social gesture (drawn in W3-08), the voice (pitch of the touch sound) and the favourite
  *  crop. Gesture, voice and crop of the six others are proposals still to be watched with the child. */
@@ -51,6 +61,8 @@ export const cards: Record<ActorId, Card> = {
   mimi: { motto: 'Miau! Cadê meu petisco?', gesture: 'abraco', voice: 1.1, crop: 'alface' },
   nino: { motto: 'Miau? Vamos explorar?', gesture: 'toca-aqui', voice: .85, crop: 'abobora' },
   pipoca: { motto: 'Prrr… Ovinho e soneca!', gesture: 'abraco', voice: 1.3, crop: 'milho' },
+  daniel: { motto: 'Pai da turma toda!', gesture: 'toca-aqui', voice: .75, crop: 'tomate' },
+  fabiana: { motto: 'Mãe da turma toda!', gesture: 'abraco', voice: .95, crop: 'abobora' },
 };
 
 /** Lines during a game, about the child who plays ({nome}): a spectator claps, the child celebrates or makes a funny face on a miss. */
@@ -62,4 +74,4 @@ export function pickReaction(size: number, previous: number | undefined, random:
   return (previous + offset) % size;
 }
 /** The face each one pulls at the mirror (W3L-08): Bia and Rui goof, Luna wiggles, Léo stretches, the cats purr. */
-export const mirrorFaces: Record<ActorId, ReactionPose> = { bia: 'goof', luna: 'wiggle', leo: 'stretch', rui: 'goof', mimi: 'purr', nino: 'purr', pipoca: 'purr' };
+export const mirrorFaces: Record<ActorId, ReactionPose> = { bia: 'goof', luna: 'wiggle', leo: 'stretch', rui: 'goof', mimi: 'purr', nino: 'purr', pipoca: 'purr', daniel: 'goof', fabiana: 'wiggle' };

@@ -1,6 +1,6 @@
 import { lying, posed } from './posture';
 import { supportedActor, visualPiecePoint } from './furniture-scale';
-import { handAnchor, posePoint, contextScale, visualContext } from './pose';
+import { handAnchor, posePoint, contextScale, visualContext, stature } from './pose';
 import type { VisualContext } from './pose';
 import { fixture, fromPiece } from '../domain/layout';
 import { availableSpot, spotKind } from '../domain/furniture';
@@ -69,7 +69,7 @@ function actorContains(actor: Actor, point: Point, context: VisualContext, slack
   const scale = contextScale(context), m = slack / scale;
   const p = { x: actor.x + (point.x - actor.x) / scale, y: actor.y + (point.y - actor.y) / scale };
   if (lying(actor)) return p.x >= actor.x - 185 - m && p.x <= actor.x + 20 + m && Math.abs(p.y - actor.y) < 45 + m;
-  return Math.abs(actor.x - p.x) < 43 + m && p.y <= actor.y + 20 + m && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175) - m;
+  return Math.abs(actor.x - p.x) < 43 + m && p.y <= actor.y + 20 + m && p.y >= actor.y - (actor.kind === 'cat' ? 100 : 175 * stature(actor)) - m;
 }
 
 export function handPoint(actor: Actor, context: VisualContext = 'interior'): Point {

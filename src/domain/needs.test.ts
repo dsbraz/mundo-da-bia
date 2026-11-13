@@ -82,7 +82,8 @@ describe('necessidades de uma sessão (§3.1)', () => {
   });
   it('as taxas por personalidade moram em tastes.ts', () => {
     expect(Object.fromEntries(Object.entries(tastes).filter(([, t]) => t.pace).map(([id, t]) => [id, t.pace]))).toEqual({
-      leo: { sono: 1.1 }, rui: { tedio: 1.4, fome: 0.6 }, mimi: { sono: 1.5, fome: 0.6 }, nino: { sono: 1.5, fome: 0.6 }, pipoca: { sono: 1.5, fome: 0.6 } });
+      leo: { sono: 1.1 }, rui: { tedio: 1.4, fome: 0.6 }, mimi: { sono: 1.5, fome: 0.6 }, nino: { sono: 1.5, fome: 0.6 }, pipoca: { sono: 1.5, fome: 0.6 },
+      daniel: { tedio: 0.6 }, fabiana: { tedio: 0.6 } });
   });
 });
 

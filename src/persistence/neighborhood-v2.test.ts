@@ -56,8 +56,8 @@ it('preserves named residents, held objects and relative room order across legac
 });
 it('a save made with the old starting positions keeps them after the new defaults', () => {
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
-  const old = [520, 440, 755, 880, 600, 710, 835];
-  town.actors = town.actors.map((a, i) => ({ ...a, x: old[i]!, y: i < 4 ? 530 : 540, seat: null }));
+  const old = [520, 440, 755, 880, 600, 710, 835, 300, 650];
+  town.actors = town.actors.map((a, i) => ({ ...a, x: old[i]!, y: i < 4 || i > 6 ? 530 : 540, seat: null }));
   const map = new Map<string, string>();
   const port = { getItem: (key: string) => map.get(key) ?? null, setItem: (key: string, value: string) => { map.set(key, value); } };
   expect(saveNeighborhood(town, port)).toBe(true);

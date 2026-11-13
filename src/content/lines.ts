@@ -76,6 +76,8 @@ const loved: Record<ActorId, string[]> = {
   mimi: ['Prrr! ({nome} ama petisco)', 'Miau! ({nome} rolou de alegria)', 'Rrrron… ({nome} no paraíso)'],
   nino: ['Miau! ({nome} ama leitinho)', 'Prrr… ({nome} lambeu o copo)', 'Miau! ({nome} pediu mais leitinho)'],
   pipoca: ['Miau! ({nome} ama ovinho)', 'Prrr… ({nome} ronrona de alegria)', 'Rrrron… ({nome} feliz da vida)'],
+  daniel: ['Misto-quente! {nome} amou!', 'Hum! {nome} pediu bis!', '{nome} sorriu: que delícia!'],
+  fabiana: ['Sopa de legumes! {nome} amou!', 'Quentinha! {nome} sorriu!', '{nome} adorou a sopinha!'],
 };
 /** A cat offered a dish it does not eat sniffs it (§3.2): never disgust, it just prefers fish. Cats only. */
 const sniffed = ['Miau? ({nome}: prefiro peixinho)', 'Sniff… ({nome} quer peixinho)', 'Miau! ({nome} sonha com peixinho)'];

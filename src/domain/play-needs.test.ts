@@ -18,9 +18,9 @@ const onStreet = (town: Neighborhood): Neighborhood =>
   ({ ...town, location: { kind: 'street' }, actors: town.actors.map(a => ({ ...a, location: { kind: 'street' as const } })) });
 
 describe('o que satisfaz, por personalidade (W3L-13)', () => {
-  it('cada um tem uma brincadeira favorita: Bia corda, Luna amarelinha, Léo regar, Rui e os gatos bola', () => {
+  it('cada um tem uma brincadeira favorita: Bia corda, Luna amarelinha, Léo regar, Rui e os gatos bola, os adultos TV', () => {
     expect(Object.fromEntries(Object.entries(tastes).map(([id, t]) => [id, t.game])))
-      .toEqual({ bia: 'corda', luna: 'amarelinha', leo: 'regar', rui: 'bola', mimi: 'bola', nino: 'bola', pipoca: 'bola' });
+      .toEqual({ bia: 'corda', luna: 'amarelinha', leo: 'regar', rui: 'bola', mimi: 'bola', nino: 'bola', pipoca: 'bola', daniel: 'tv', fabiana: 'tv' });
   });
   it('o balanço tira 40 de tédio de quem não o tem como favorito e 70 do Rui com a bola, com alegria', () => {
     const town = withNeeds(withNeeds(onStreet(startTown()), 'bia', { tedio: 90 }), 'rui', { tedio: 90 });

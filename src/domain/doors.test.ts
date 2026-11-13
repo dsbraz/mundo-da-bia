@@ -8,7 +8,7 @@ it('atravessa, volta e preserva identidade, roupa e objeto carregado', () => {
   const next = transition(state, { type: 'cross', actor: 'bia', direction: 'right' }).state;
   expect(next.room).toBe('quarto'); expect(next.actors[0]).toMatchObject({ id: 'bia', room: 'quarto', x: 110, y: 510, seat: null });
   expect(next.items.find(i => i.id === 'ursinho')?.holder).toBe('bia');
-  expect(next.actors).toHaveLength(7); expect(decode(encode(next))).toEqual(next);
+  expect(next.actors).toHaveLength(9); expect(decode(encode(next))).toEqual(next);
   const back = crossDoor(next, 'bia', 'left');
   expect(back.actors[0]).toMatchObject({ room: 'sala', x: 890 });
   expect(back.actors.slice(1)).toEqual(state.actors.slice(1));

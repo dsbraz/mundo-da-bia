@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { Actor, ActorId, Point, World } from '../domain/types';
 import { supportedActor } from './furniture-scale';
-import { contextScale, visualContext } from './pose';
+import { contextScale, stature, visualContext } from './pose';
 import { actorLabel, drawActor } from './art';
 import { drawSelection } from './selection-art';
 import { actorDepth } from './piece-art';
@@ -46,7 +46,7 @@ export function moveFigure(s: FigureState, id: ActorId | null, point: Point | nu
 export function pokeActor(s: Pick<FigureState, 'scene' | 'world' | 'figures'>, expressions: ReturnType<typeof faces>, id: ActorId, pose: ReactionPose, line: string) {
   expressions.trigger(id, pokeFace(pose), performance.now(), 900);
   const figure = s.figures.find(f => f.name === id), actor = s.world.actors.find(a => a.id === id);
-  if (figure && actor) pokeFigure(s.scene, figure, pose, line, (actor.kind === 'cat' ? 100 : 196) * contextScale(visualContext(s.world)));
+  if (figure && actor) pokeFigure(s.scene, figure, pose, line, (actor.kind === 'cat' ? 100 : 196 * stature(actor)) * contextScale(visualContext(s.world)));
 }
 /** Something is missing: `id` shrugs (curious face, palms up) and the point just above its head is returned for the bubble. */
 export function shrugActor(s: Pick<FigureState, 'scene' | 'world' | 'figures'>, expressions: ReturnType<typeof faces>, id: ActorId): Point | null {
