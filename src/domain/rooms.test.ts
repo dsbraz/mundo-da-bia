@@ -3,6 +3,7 @@ import { initialWorld, transition } from './world';
 import { addRoom, renameRoom, moveRoom } from './rooms';
 import { editWorld, history, recordEdit, undo } from './design';
 import { decode, encode } from '../persistence/save';
+import { pieceBounds } from './layout';
 it('cria um estúdio amplo, nomeia, posiciona e recupera após salvar', () => {
   const original = initialWorld();
   const state = addRoom(original, { name: '  Estúdio Aurora  ', template: 'studio', size: 'large', cell: 4 });
@@ -84,4 +85,17 @@ it('modelos novos deixam a faixa frontal livre sem alterar cômodos anteriores',
     for (const piece of pieces) expect(footprint(piece)?.bottom ?? 0).toBeLessThanOrEqual(500);
     expect(state.layout.pieces.filter(p => p.room !== state.room)).toEqual(original.layout.pieces);
   }
+});
+it('o jardim e o pátio espalham as peças em colunas fixas, a terceira mais ao fundo; os outros modelos se distribuem pela parede', () => {
+  for (const template of ['garden', 'playground'] as const) {
+    const state = addRoom(initialWorld(), { name: template, template, size: 'medium', cell: 2 });
+    const pieces = state.layout.pieces.filter(p => p.room === state.room);
+    expect(pieces.map(p => p.x)).toEqual([60, 320, 60]);
+    const [bottom, , third] = pieces.map(p => p.y + pieceBounds[p.kind].height);
+    expect(third!).toBeLessThan(bottom! - 30);
+  }
+  const studio = addRoom(initialWorld(), { name: 'Estúdio', template: 'studio', size: 'medium', cell: 2 });
+  const pieces = studio.layout.pieces.filter(p => p.room === studio.room);
+  expect(pieces.map(p => p.x)).toEqual([40, 400, 660, 1000]);
+  expect(pieces.every(p => p.y + pieceBounds[p.kind].height >= 440)).toBe(true);
 });
