@@ -1,5 +1,6 @@
 import type { Point, World } from '../domain/types';
 import { pieceBounds } from '../domain/layout';
+import { passages } from '../domain/passages';
 import { followElapsed, followFactor } from './motion';
 const clamp = (value: number, maximum: number) => Math.max(0, Math.min(maximum, value));
 /** Logical height the street shows (its lower part, y 110-600): the camera comes closer, facades and people at the same scale. */
@@ -12,17 +13,22 @@ export function framing(width: number, height: number, worldWidth: number, cente
 export interface Span { left: number; right: number }
 export const pieceSpans = (state: World): Span[] => state.layout.pieces.filter(p => p.room === state.room).map(p => ({ left: p.x, right: p.x + pieceBounds[p.kind].width }));
 /** Each character in the current room as the width of its selection ring (cats are narrower). */
+/** The doorways and stairs of the current room, as their drawn openings. */
+export const passageSpans = (state: World): Span[] => passages(state.layout, state.room).map(({ box }) => ({ left: box.x, right: box.x + box.width }));
 export const peopleSpans = (state: World): Span[] => state.actors.filter(a => a.room === state.room).map(a => ({ left: a.x - (a.kind === 'cat' ? 35 : 42), right: a.x + (a.kind === 'cat' ? 35 : 42) }));
 /** Where a place opens: always with `must` (the chosen character, with its margin) in view when it fits, then the window with the most
- *  whole people, then the most whole furniture by width (a bed outweighs a lamp); ties lean toward the people. */
-export function openingX(spans: Span[], visible: number, world: number, must: Span | Span[] = [], people: Span[] = []) {
+ *  whole people, then no doorway or stairs cut by the edge (whole in view or wholly out), then the most whole furniture by width (a bed
+ *  outweighs a lamp); ties lean toward the people. */
+export function openingX(spans: Span[], visible: number, world: number, must: Span | Span[] = [], people: Span[] = [], doors: Span[] = []) {
   const middle = (world - visible) / 2;
   if (visible >= world) return middle;
   const options = Array.from({ length: Math.floor((world - visible) / 10) + 1 }, (_, i) => i * 10).concat(world - visible);
   const fits = (x: number, s: Span) => s.left >= x && s.right <= x + visible;
   // `must` may list fallbacks: the first one that fits the view is kept whole.
   const allowed = [must].flat().map(m => options.filter(x => fits(x, m))).find(fitting => fitting.length) ?? options;
-  const whole = (x: number) => people.filter(s => fits(x, s)).length * personWeight + spans.filter(s => fits(x, s)).reduce((sum, s) => sum + s.right - s.left, 0);
+  const cut = (x: number) => doors.filter(s => s.left < x + visible && s.right > x && !fits(x, s)).length;
+  const whole = (x: number) => people.filter(s => fits(x, s)).length * personWeight - cut(x) * personWeight / 2
+    + spans.filter(s => fits(x, s)).reduce((sum, s) => sum + s.right - s.left, 0);
   // Ties lean toward the people (centred on them), or the middle of the place without anyone.
   const lean = people.length ? people.reduce((sum, s) => sum + s.left + s.right, 0) / people.length / 2 - visible / 2 : middle;
   return allowed.reduce((best, x) => whole(x) > whole(best) || whole(x) === whole(best) && Math.abs(x - lean) < Math.abs(best - lean) ? x : best);
@@ -47,7 +53,7 @@ function offset(center: number, world: number, visible: number) {
 export function viewport(canvas: HTMLCanvasElement, changed: (width: number, height: number, x: number, y: number) => void, covered: () => number = () => 0) {
   const parent = canvas.parentElement!;
   let center: Point = { x: 500, y: 360 }, width = 1000, frame = 600, room = '', manual = false, followed: number | null = null;
-  let opening: { spans: Span[]; must?: Span | Span[] | undefined; people: Span[] } | null = null;
+  let opening: { spans: Span[]; must?: Span | Span[] | undefined; people: Span[]; doors: Span[] } | null = null;
   let view = { scale: 1, x: 0, y: 0 }, pinned: number | null = null;
   // `center` is the intended focus and survives resizes (a tray opening and closing must not drift the view);
   // panning and following start from what is actually shown.
@@ -57,7 +63,7 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
     if (opening) {
       const visible = parent.clientWidth / view.scale, margin = openingMargin / view.scale;
       const must = [opening.must ?? []].flat().map(m => ({ left: m.left - margin, right: m.right + margin }));
-      center.x = openingX(opening.spans, visible, width, must, opening.people) + visible / 2; opening = null;
+      center.x = openingX(opening.spans, visible, width, must, opening.people, opening.doors) + visible / 2; opening = null;
       view = framing(parent.clientWidth, parent.clientHeight, width, center, frame);
     }
     pin();
@@ -78,10 +84,10 @@ export function viewport(canvas: HTMLCanvasElement, changed: (width: number, hei
   new ResizeObserver(render).observe(parent);
   return {
     render,
-    /** `spans` (pieces), `must` (the chosen character) and `people` pick where a newly entered place opens; without them it opens on its 1000-wide core. */
-    scene(key: string, logicalWidth: number, logicalHeight = 600, spans: Span[] = [], must?: Span | Span[], people: Span[] = []) {
+    /** `spans` (pieces), `must` (the chosen character), `people` and `doors` (doorways and stairs) pick where a newly entered place opens; without them it opens on its 1000-wide core. */
+    scene(key: string, logicalWidth: number, logicalHeight = 600, spans: Span[] = [], must?: Span | Span[], people: Span[] = [], doors: Span[] = []) {
       width = logicalWidth; frame = logicalHeight;
-      if (room !== key) { room = key; center = { x: Math.min(width, 1000) / 2, y: 360 }; manual = false; pinned = null; opening = spans.length || must || people.length ? { spans, must, people } : null; }
+      if (room !== key) { room = key; center = { x: Math.min(width, 1000) / 2, y: 360 }; manual = false; pinned = null; opening = spans.length || must || people.length ? { spans, must, people, doors } : null; }
       render();
     },
     pan(dx: number, dy: number) { manual = true; pinned = null; shown(); center.x -= dx / view.scale; center.y -= dy / view.scale; render(); },

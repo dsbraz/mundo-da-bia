@@ -3,7 +3,7 @@ import { streetWidth } from '../domain/neighborhood-geometry';
 import type { ActorId, Album, World } from '../domain/types';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import type { history } from '../domain/design';
-import { streetFrame, pieceSpans, peopleSpans, type viewport } from '../presentation/viewport';
+import { streetFrame, pieceSpans, peopleSpans, passageSpans, type viewport } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import type { townActions } from './town-actions';
 
@@ -45,7 +45,7 @@ export function sceneRefresh(deps: RefreshDeps) {
     const state = deps.state(), chosen = state.actors.find(a => a.id === deps.selected() && a.room === state.room), street = !!state.streetWidth;
     const opening = deps.townActs().opening();
     if (street) { deps.view()?.scene(JSON.stringify(deps.town().location), 1000, streetFrame, opening.spans, opening.must, opening.people); return; }
-    deps.view()?.scene(JSON.stringify(deps.town().location), roomWidth(state), 600, pieceSpans(state), chosen && { left: chosen.x - 42, right: chosen.x + 42 }, peopleSpans(state));
+    deps.view()?.scene(JSON.stringify(deps.town().location), roomWidth(state), 600, pieceSpans(state), chosen && { left: chosen.x - 42, right: chosen.x + 42 }, peopleSpans(state), passageSpans(state));
   }
   function renderControls() {
     const state = deps.state(), piece = deps.piece();
