@@ -35,7 +35,7 @@ test('o bom-dia é legível e fica acima do nome e da estrela da Bia, sem cobrir
   await page.clock.install({ time: new Date('2026-11-13T10:00:00') });
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
-  await ready(page); await page.clock.pauseAt(new Date('2026-11-13T10:00:30'));
+  await ready(page); await page.clock.pauseAt(new Date('2026-11-13T10:01:30'));
   await playMinutes(page, 12);
   await page.clock.runFor(1500);
   await press(page, 'Deitar');

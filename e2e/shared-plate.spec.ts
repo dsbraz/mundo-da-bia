@@ -34,8 +34,12 @@ for (const size of sizes) test(`um prato, dois à mesa: os dois comem e matam a 
   await page.getByRole('button', { name: 'Comer', exact: true }).click();
   await page.clock.runFor(1200);
   await expect(page.locator('canvas')).toHaveAttribute('data-meal-actor', 'bia');
+  await expect(page.locator('canvas')).toHaveAttribute('data-meal-on', 'table');
   await page.screenshot({ path: `reports/review/lot6b-shared-plate-${size.width}.png` });
-  for (let t = 0; t < 4000 && (await faces(page)).leo !== 'happy'; t += 200) await page.clock.runFor(200);
+  // Only one plate: when it is empty both answer, happy.
+  for (let t = 0; t < 4000 && await page.locator('canvas').getAttribute('data-meal') !== 'done'; t += 200) await page.clock.runFor(200);
+  await expect(page.locator('canvas')).toHaveAttribute('data-meal', 'done');
+  await page.clock.runFor(400);
   expect(await faces(page)).toMatchObject({ bia: 'happy', leo: 'happy' });
   expect((await readTown(page)).items.some(i => i.kind === 'prato')).toBe(false);
   await page.screenshot({ path: `reports/review/lot6b-shared-plate-after-${size.width}.png` });

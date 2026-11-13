@@ -43,7 +43,9 @@ for (const size of sizes) test(`ao lado do anel de ações, a cauda da bolha apo
   await page.screenshot({ path: `reports/review/lot6b-need-tail-${size.width}.png` });
   expect(box.right <= ring.left || box.left >= ring.right || box.bottom <= ring.top || box.top >= ring.bottom).toBe(true);
   expect(Math.abs(geometry.center - head)).toBeLessThan(box.width * 1.5);
-  // Moved aside, the tail bends back to her; right above her (the ring left room), it simply points down at her.
+  // Moved aside, the tail bends back to her; right above her (the ring left room), it simply points down at her. At 1024 the ring is
+  // where the thought would be: it stands beside her head.
+  if (size.width === 1024) expect(Math.abs(geometry.center - head)).toBeGreaterThan(20);
   if (Math.abs(geometry.center - head) > 20) {
     expect(Math.abs(geometry.near - head)).toBeLessThan(Math.abs(geometry.center - head));
     expect(Math.abs(geometry.far - head)).toBeLessThan(Math.abs(geometry.near - head));
