@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { initialWorld, transition } from './world';
-import { crossDoor, neighbor } from './doors';
+import { crossDoor, neighbor, roomLinks } from './doors';
 import { addRoom, moveRoom } from './rooms';
 import { encode, decode } from '../persistence/save';
 it('atravessa, volta e preserva identidade, roupa e objeto carregado', () => {
@@ -31,4 +31,20 @@ it('entra pela extremidade correta de um cômodo amplo e acorda o personagem', (
   expect(next.actors[0]).toMatchObject({ room: 'room-3', x: 1290, y: 510, resting: false, seat: null });
   expect(decode(encode(next))).toEqual(next);
   expect(transition(next, { type: 'cross', actor: 'luna', direction: 'left' }).state).toBe(next);
+});
+it('liga cada cômodo aos vizinhos do andar e, no primeiro cômodo de cada andar, às escadas dos andares ocupados', () => {
+  let state = initialWorld();
+  expect(roomLinks(state.layout, 'sala')).toEqual({ right: 'quarto' });
+  expect(roomLinks(state.layout, 'quarto')).toEqual({ left: 'sala' });
+  state = addRoom(state, { name: 'Sótão', template: 'empty', size: 'small', cell: 9 });
+  state = addRoom(state, { name: 'Varanda', template: 'empty', size: 'small', cell: 10 });
+  // Floor 1 is empty: the stairs skip it, from the ground floor's first room to floor 2's first room and back.
+  expect(roomLinks(state.layout, 'sala')).toEqual({ right: 'quarto', up: 'room-3' });
+  expect(roomLinks(state.layout, 'quarto')).toEqual({ left: 'sala' });
+  expect(roomLinks(state.layout, 'room-3')).toEqual({ right: 'room-4', down: 'sala' });
+  expect(roomLinks(state.layout, 'room-4')).toEqual({ left: 'room-3' });
+  state = addRoom(state, { name: 'Meio', template: 'empty', size: 'small', cell: 5 });
+  expect(roomLinks(state.layout, 'room-5')).toEqual({ up: 'room-3', down: 'sala' });
+  expect(roomLinks(state.layout, 'room-3')).toEqual({ right: 'room-4', down: 'room-5' });
+  expect(roomLinks(state.layout, 'room-99')).toEqual({});
 });

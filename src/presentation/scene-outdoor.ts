@@ -4,6 +4,7 @@ import { doorStep } from './neighborhood-doors';
 import { outdoorEffect } from './outdoor-effects';
 import { drawStreet, drawExit } from './street';
 import { drawRoom } from './room';
+import { drawPassages } from './room-passages';
 import { swingMotion } from './swing-motion';
 import { reducedMotion } from './motion';
 import { basketWobble, drawGarden, harvestFlight, plantPop, plantSway } from './garden-art';
@@ -27,7 +28,10 @@ export function sceneOutdoor(view: OutdoorView) {
   let sky: ReturnType<typeof drawStreet> | null = null;
   function exitDoor(town: Neighborhood | null) {
     const location = town?.location;
-    if (location?.kind === 'interior' && town!.buildings.find(b => b.id === location.building)?.entry === location.room) drawExit(view.scene);
+    const building = location?.kind === 'interior' ? town!.buildings.find(b => b.id === location.building) : undefined;
+    if (!building || location?.kind !== 'interior') return;
+    if (building.entry === location.room) drawExit(view.scene);
+    drawPassages(view.scene, building.layout, location.room);
   }
   /** A touch on the swing (or its rider, or sitting down on it): a push, and the rider laughs. */
   function push(rider: ActorId) { view.faces().trigger(rider, 'laugh', performance.now(), 900); swing.push(performance.now(), reducedMotion()); }

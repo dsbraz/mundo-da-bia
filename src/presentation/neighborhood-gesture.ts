@@ -3,7 +3,7 @@ import type { Neighborhood, NeighborhoodAction, Location } from '../domain/neigh
 import type { ActorId, ItemId, Point, World } from '../domain/types';
 import type { VisibleWorld } from './targets';
 import { actorAt, grabActor, sourceAt } from './targets';
-import { doorAt, doorDropAt, destinationPoint, type Door } from './neighborhood-doors';
+import { doorAt, doorBox, doorDropAt, destinationPoint, type Door } from './neighborhood-doors';
 import { onFloor } from './floor-band';
 type Gesture = { start: (id: number, p: Point) => boolean; update: (id: number, p: Point) => void; end: (id: number, p: Point) => void; cancel: () => void; transferring?: () => boolean };
 interface Actions {
@@ -36,7 +36,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
   }
   function light(a: Active, point: Point) {
     const door = feetDoor(a, point);
-    if (door?.name !== a.door?.name) { a.door = door; actions.glow?.(door ?? null); }
+    if (JSON.stringify(door?.location) !== JSON.stringify(a.door?.location)) { a.door = door; actions.glow?.(door ?? null); }
   }
   function transfer(a: Active): NeighborhoodAction {
     return { type: 'transport', ...(a.actor ? { actor: a.actor } : { item: a.item! }), location: a.destination!, point: destinationPoint(actions.town(), a.destination!) };
@@ -63,7 +63,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
       const world = actions.world(), token = sourceAt(world, point, false);
       // Off the drawing but inside a body's capsule: the character is taken only if the finger moves (a tap stays a tap).
       const exact = token ? undefined : actorAt(world, point), found = exact ?? (token ? undefined : grabActor(world, point)), actor = exact?.id;
-      active = { id, start: point, offset: found ? { x: found.x - point.x, y: found.y - point.y } : { x: 0, y: 0 }, ready: false, claimed: claimed(world, point, token), ...(actions.building() ? {} : { actor, near: found?.id, item: loose(world, token) }) };
+      active = { id, start: point, offset: found ? { x: found.x - point.x, y: found.y - point.y } : { x: 0, y: 0 }, ready: false, claimed: claimed(world, point, token, actions.town()), ...(actions.building() ? {} : { actor, near: found?.id, item: loose(world, token) }) };
       if (startBase(active, point, actions)) base.start(id, point);
       return true;
     }, update,
@@ -111,6 +111,8 @@ function plotTap(actions: Actions, point: Point) {
   const plot = plotAt(point.x);
   return plot >= 0 && plot < town.plots && point.y >= 270 && point.y <= 455 && !town.buildings.some(b => b.plot === plot);
 }
-function claimed(world: VisibleWorld, point: Point, token: ReturnType<typeof sourceAt>) {
-  return !!token || (world.occludingDepth?.(point) ?? 0) > 150;
+/** A token, or a piece drawn in front of what is there: the "Rua" door (behind the furniture) or a doorway or stairs (in front of it). */
+function claimed(world: VisibleWorld, point: Point, token: ReturnType<typeof sourceAt>, town: Neighborhood) {
+  const door = doorAt(town, point), depth = door ? doorBox(town, door).depth ?? 150 : 150;
+  return !!token || (world.occludingDepth?.(point) ?? 0) > depth;
 }

@@ -34,7 +34,7 @@ function floorLines(g: Phaser.GameObjects.Graphics, width: number, tiled: boolea
   }
 }
 
-function roomColors(finish: Room, tiled: boolean) {
+export function roomColors(finish: Room, tiled = finish.template === 'bathroom' || finish.template === 'kitchen') {
   const outside = outdoorColors[finish.template];
   if (outside) return outside;
   return {
