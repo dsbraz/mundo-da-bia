@@ -122,3 +122,29 @@ it('preserva ambientes locais homônimos, posições, roupas e decoração de v�
   expect(town.buildings.map(b => b.layout.pieces)).toEqual(album.houses.map(h => h.state.layout.pieces));
   expect(decodeNeighborhood(encodeNeighborhood(town))).toEqual(town);
 });
+it('o álbum vira um bairro com terreno livre para mais uma casa: 5 casas pedem 6 terrenos', () => {
+  let album = initialAlbum(initialWorld());
+  for (let n = 1; n < 5; n++) album = duplicateHouse(album, true);
+  expect(migrateNeighborhood(album).plots).toBe(6);
+});
+it('a rua vista de dentro: sem prédio, na sala de largura da rua; quem está em outro prédio fica fora da cena', () => {
+  const town = migrateNeighborhood(duplicateHouse(initialAlbum(initialWorld()), true));
+  const street = neighborhoodAction(town, { type: 'visit', location: { kind: 'street' } }), world = localWorld(street);
+  expect(world).toMatchObject({ room: 'sala', show: false, streetWidth: 660 + 4 * 440 });
+  expect(world.layout.pieces).toEqual([]); expect(new Set(world.actors.map(a => a.room))).toEqual(new Set(['room-0']));
+  const inside = localWorld({ ...town, location: { kind: 'interior', building: 1, room: 'sala' } });
+  expect(inside.actors.every(a => a.room === 'room-0')).toBe(true); expect(inside.layout).toBe(town.buildings[0]!.layout);
+});
+it('guardar a cena só muda o prédio visto; quem estava fora dela não se move, e só quem se moveu solta o banco e o balanço', () => {
+  const base = migrateNeighborhood(duplicateHouse(initialAlbum(initialWorld()), true));
+  const away = { kind: 'interior' as const, building: 1, room: 'sala' as const };
+  const town = { ...base, outdoor: { ...base.outdoor, bench: 'luna' as const, swing: 'leo' as const },
+    actors: base.actors.map(a => a.id === 'mimi' ? { ...a, location: away } : a) };
+  const world = localWorld(town);
+  const moved = { ...world, show: true, actors: world.actors.map(a => a.id === 'luna' ? { ...a, x: a.x + 10 } : a.id === 'leo' ? { ...a, y: a.y + 5 } : a) };
+  const next = storeWorld(town, moved);
+  expect(next.outdoor).toMatchObject({ bench: null, swing: null });
+  expect(storeWorld(town, world).outdoor).toMatchObject({ bench: 'luna', swing: 'leo' });
+  expect(next.actors.find(a => a.id === 'mimi')).toEqual(town.actors.find(a => a.id === 'mimi'));
+  expect(next.buildings[1]!.show).toBe(true); expect(next.buildings[0]).toBe(town.buildings[0]);
+});
