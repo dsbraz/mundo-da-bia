@@ -1,5 +1,6 @@
 import { adultIds } from '../domain/family';
 import { lesson } from '../domain/school';
+import { staffAt } from '../domain/staff';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import type { Action, ActorId } from '../domain/types';
 import type { PlayScene } from '../presentation/scene';
@@ -22,9 +23,12 @@ export function schoolPlay(deps: SchoolDeps) {
     const where = deps.town().location;
     if (where.kind !== 'interior') return null;
     const piece = deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.id === id && p.room === where.room);
-    return piece?.kind === 'board' ? { building: where.building, room: where.room, grownUps: adultIds } : null;
+    return piece?.kind === 'board' ? { building: where.building, room: where.room, grownUps: adultIds, staffed: staffAt(deps.town(), where)?.profession === 'teacher' } : null;
   };
+  const board = () => { const where = deps.town().location; return where.kind === 'interior' ? deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.room === where.room && p.kind === 'board') : undefined; };
   return {
+    /** The teacher tapped (lot 7): the same as tapping her board. */
+    teach(): boolean { const piece = board(); return !!piece && this.intercept({ type: 'use', id: piece.id }); },
     /** A tap on a board: the lesson begins (a second tap while it is drawn changes nothing). */
     intercept(action: Action): boolean {
       const room = action.type === 'use' ? boardAt(action.id) : null;

@@ -14,6 +14,8 @@ import { actorSource, adultArtReady, isCat, keepAdult, lookSource, masculine, ou
 import { isAdult } from '../domain/family';
 import { faceParts } from './expression';
 import { loadGarden } from './plaza-garden';
+import { loadStaffArt } from './staff-art';
+import { staffAt } from '../domain/staff';
 
 export const roomLayers = ['wardrobe-closed', 'wardrobe-open', 'drawer-closed', 'drawer-open', 'fridge-closed', 'fridge-open', 'lamp-on', 'lamp-off'] as const;
 export const humanLayers = ['hair-back', 'legs', 'hands', 'face', ...faceParts.human];
@@ -52,6 +54,7 @@ export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | 
   loadPieces(scene, state); loadSchoolArt(scene, state, town?.progress.drawings ?? []);
   loadDishes(scene, town?.items ?? state.items);
   if (state.streetWidth) loadGarden(scene);
+  loadStaffArt(scene, town ? staffAt(town, town.location)?.profession : undefined);
   actorIds.forEach(id => loadActor(scene, id, state.actors.find(a => a.id === id)!.look));
   lookIds.filter(look => !scene.textures.exists(`look-${look}`)).forEach(look => {
     const garment = lookSource(look).replace('viewBox="0 0 140 220"', 'viewBox="15 98 110 122"').replace('width="140" height="220"', 'width="110" height="122"');

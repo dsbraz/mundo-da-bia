@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="264" viewBox="0 0 140 264">
+<!-- The professionals (lot 7): the teacher, the firefighter, the police officer, the doctor, the coach and the office clerk, on the
+     grown-ups' 140x264 canvas (adult.svg). Their face and expressions are the children's own layers (human.svg), drawn smaller by
+     actor-paint's adultArt; url(#material-2) is the hair and url(#material-3) the skin, painted by role. Per profession:
+     staff-<p>-back (behind the head), staff-<p> (body with the left arm), staff-<p>-hair and staff-<p>-hat (head coordinates),
+     staff-<p>-arm (the right arm resting) and staff-<p>-act (the right arm at work, with the tool). Every arm starts inside the
+     torso, so the sleeve overlaps the shirt at the shoulder. -->
+
+<!-- Teacher: mustard cardigan over a white blouse, teal skirt, a red book, an apple badge, a bun and red glasses. -->
+<g id="staff-teacher-back" transform="translate(14 4) scale(.8)" stroke="#3a2a24" stroke-width="1.4" stroke-linejoin="round"><circle cx="70" cy="26" r="14" fill="url(#material-2)" /><path d="M36 70q-4-30 16-40" fill="none" stroke="#3a2a24" /></g>
+<g id="staff-teacher" stroke="#6b5440" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M50 238h12v12H50Zm28 0h12v12H78Z" fill="url(#material-3)" />
+<path d="M45 246h19l2 12H38q0-8 7-12Zm31 0h19q7 4 7 12H74Z" fill="#7a4a3a" /><path d="M38 258h28m8 0h28" stroke="#4f3a30" stroke-width="2" />
+<path d="M42 164h56l9 78H33Z" fill="#4f8f8a" /><path d="M46 186l-4 52m52-52 4 52" fill="none" stroke="#3b706b" opacity=".6" />
+<path d="M56 97h28l2 70H54Z" fill="#fbf7ee" /><path d="M58 99l12 10 12-10" fill="none" />
+<path d="M54 96l-15 7-3 65h34l-6-62Zm32 0 15 7 3 65H70l6-62Z" fill="#e2b04a" />
+<path d="M64 108l-2 56m14-56 2 56" fill="none" stroke="#b98a2a" stroke-width="1.2" /><circle cx="66" cy="132" r="1.8" fill="#8a6a2a" /><circle cx="66" cy="148" r="1.8" fill="#8a6a2a" />
+<path d="M62 100l8 26 8-26" fill="none" stroke="#c0453a" stroke-width="1.6" /><path d="M70 126q-6 0-6 7t6 8q6-1 6-8t-6-7Z" fill="#d9483c" stroke="#8f2f27" /><path d="M70 126q1-4 4-5" fill="none" stroke="#5f8a3a" stroke-width="1.6" />
+<path d="M43 108L35 140L31 168" fill="none" stroke="#9a7a32" stroke-width="17" /><path d="M43 108L35 140L31 166" fill="none" stroke="#e2b04a" stroke-width="14" />
+<path d="M30 168l-3 6" fill="none" stroke="#9a7a32" stroke-width="12" />
+<path d="M18 160l20 3-3 26-20-3Z" fill="#c0453a" stroke="#7f2c25" /><path d="M20 163l14 2" fill="none" stroke="#fbf0d8" stroke-width="2" />
+<circle cx="31" cy="176" r="6.5" fill="url(#material-3)" /></g>
+<g id="staff-teacher-hair" transform="translate(14 4) scale(.8)" stroke="#3a2a24" stroke-width="1.4" stroke-linejoin="round"><path d="M38 76Q30 34 70 32q40 2 32 44l-6-20q-10-12-26-12-16 0-26 12Z" fill="url(#material-2)" /><path d="M48 46q10-8 22-8" fill="none" stroke="#fff" stroke-width="2" opacity=".2" /><path d="M78 22l14-14" stroke="#f2c84b" stroke-width="3" /><path d="M92 8l3-3" stroke="#e98a8a" stroke-width="3" /></g>
+<g id="staff-teacher-hat" transform="translate(14 4) scale(.8)" fill="#fffdf4" fill-opacity=".18" stroke="#b5473a" stroke-width="2.4"><rect x="45" y="67" width="20" height="16" rx="6" /><rect x="75" y="67" width="20" height="16" rx="6" /><path d="M65 74q5-3 10 0M45 72l-5-2m55 2 5-2" fill="none" /></g>
+<g id="staff-teacher-arm" stroke-linejoin="round" stroke-linecap="round"><path d="M97 108L105 140L109 168" fill="none" stroke="#9a7a32" stroke-width="17" /><path d="M97 108L105 140L109 166" fill="none" stroke="#e2b04a" stroke-width="14" /><circle cx="109" cy="176" r="6.5" fill="url(#material-3)" stroke="#6b5440" stroke-width="1.4" /></g>
+<g id="staff-teacher-act" stroke-linejoin="round" stroke-linecap="round"><path d="M124 58L137 14" stroke="#8a5a34" stroke-width="3.4" /><path d="M136 18l2-6" stroke="#f2ead0" stroke-width="3.4" /><path d="M96 108L116 88L123 64" fill="none" stroke="#9a7a32" stroke-width="17" /><path d="M96 108L116 88L122 66" fill="none" stroke="#e2b04a" stroke-width="14" /><circle cx="124" cy="58" r="6.5" fill="url(#material-3)" stroke="#6b5440" stroke-width="1.4" /></g>
+
+<!-- Firefighter: red jacket and trousers with yellow reflective bands, black boots, a red helmet with a gold shield, a moustache. -->
+<g id="staff-firefighter-back" />
+<g id="staff-firefighter" stroke="#6e2a24" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M42 238h22l2 20H38q0-14 4-20Zm34 0h22q4 6 4 20H74Z" fill="#2f2b2b" /><path d="M38 258h28m8 0h28" stroke="#161414" stroke-width="2" />
+<path d="M41 164h58l2 78H75l-5-52-5 52H39Z" fill="#c23b2f" /><path d="M40 222h26m8 0h26" stroke="#f2d34b" stroke-width="5" /><path d="M40 222h26m8 0h26" stroke="#d8d8d0" stroke-width="1.4" />
+<path d="M52 96q18 12 36 0l17 7-2 66H37l-2-66Z" fill="#c23b2f" /><path d="M70 104v64" stroke="#3e3a3a" stroke-width="2" />
+<path d="M38 148h64" stroke="#f2d34b" stroke-width="6" /><path d="M38 148h64" stroke="#d8d8d0" stroke-width="1.6" /><path d="M38 164h64" stroke="#2f2b2b" stroke-width="5" />
+<path d="M56 98l14 9 14-9" fill="none" stroke="#8f2a22" stroke-width="3" />
+<path d="M43 108L35 140L31 168" fill="none" stroke="#6e2a24" stroke-width="17" /><path d="M43 108L35 140L31 166" fill="none" stroke="#c23b2f" stroke-width="14" /><path d="M33 152l-1 6" stroke="#f2d34b" stroke-width="9" stroke-linecap="butt" />
+<circle cx="31" cy="176" r="7" fill="#2f2b2b" /></g>
+<g id="staff-firefighter-hair" transform="translate(14 4) scale(.8)" stroke="#6b4030" stroke-width="1.4" stroke-linejoin="round"><path d="M40 70q-2-14 4-20h52q6 6 4 20l-6-12H46Z" fill="url(#material-2)" /><path d="M56 93q14-8 28 0q-7 5-14 2-7 3-14-2Z" fill="url(#material-2)" /></g>
+<g id="staff-firefighter-hat" transform="translate(14 4) scale(.8)" stroke="#7a2a20" stroke-width="1.6" stroke-linejoin="round"><path d="M34 62Q34 16 70 16t36 46Z" fill="#d8432f" /><path d="M70 16v44" fill="none" stroke="#a83224" stroke-width="5" /><path d="M24 60q46-12 92 0l-2 9q-44-10-88 0Z" fill="#b8352a" /><path d="M58 22h24l4 22-16 8-16-8Z" fill="#f2c84b" stroke="#a8802a" /><circle cx="70" cy="36" r="5" fill="#d8432f" stroke="#a8802a" /><path d="M42 34q8-12 20-14" fill="none" stroke="#fff" stroke-width="3" opacity=".3" /></g>
+<g id="staff-firefighter-arm" stroke-linejoin="round" stroke-linecap="round"><path d="M97 108L105 140L109 168" fill="none" stroke="#6e2a24" stroke-width="17" /><path d="M97 108L105 140L109 166" fill="none" stroke="#c23b2f" stroke-width="14" /><path d="M107 152l1 6" stroke="#f2d34b" stroke-width="9" /><circle cx="109" cy="176" r="7" fill="#2f2b2b" stroke="#161414" stroke-width="1.4" /></g>
+<g id="staff-firefighter-act" stroke-linejoin="round" stroke-linecap="round"><path d="M122 126q-4 40-26 70t-30 62" fill="none" stroke="#6e2a24" stroke-width="9" /><path d="M122 126q-4 40-26 70t-30 62" fill="none" stroke="#a8453a" stroke-width="6" /><path d="M118 116h12l10-3v12l-10-3h-12Z" fill="#e0b24a" stroke="#8a6a2a" stroke-width="1.4" /><path d="M96 108L114 126L124 120" fill="none" stroke="#6e2a24" stroke-width="17" /><path d="M96 108L114 126L122 121" fill="none" stroke="#c23b2f" stroke-width="14" /><circle cx="124" cy="120" r="7" fill="#2f2b2b" stroke="#161414" stroke-width="1.4" /></g>
+
+<!-- Police officer: navy shirt and trousers under a bright traffic vest, a navy cap with a gold badge, a whistle on a cord. -->
+<g id="staff-police-back" transform="translate(14 4) scale(.8)" stroke="#2a201c" stroke-width="1.4"><circle cx="70" cy="106" r="11" fill="url(#material-2)" /></g>
+<g id="staff-police" stroke="#2a3a52" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M44 246h20l2 12H38q0-8 6-12Zm32 0h20q6 4 6 12H74Z" fill="#1f2228" /><path d="M38 258h28m8 0h28" stroke="#0f1014" stroke-width="2" />
+<path d="M41 164h58l2 84H75l-5-56-5 56H39Z" fill="#2f4a6e" /><path d="M44 172l-2 72m56-72 2 72" fill="none" stroke="#d8b84a" stroke-width="1.6" />
+<path d="M52 96q18 12 36 0l16 7-2 66H38l-2-66Z" fill="#2f4a6e" />
+<path d="M48 100l10-2 12 12 12-12 10 2 4 64H44Z" fill="#cfe04a" stroke="#7d8a2a" /><path d="M45 138h50m-51 14h52" stroke="#e8ecef" stroke-width="4" /><path d="M45 138h50m-51 14h52" stroke="#9aa3a8" stroke-width="1" />
+<path d="M84 116l4-3 4 3-1 6h-6Z" fill="#f2c84b" stroke="#a8802a" /><path d="M58 100q2 16 10 24" fill="none" stroke="#e8ecef" stroke-width="1.4" /><rect x="64" y="122" width="10" height="5" rx="2" fill="#c8ccd0" stroke="#6a7076" />
+<path d="M40 164h60" stroke="#1f2228" stroke-width="5" /><rect x="66" y="161" width="9" height="7" rx="1.5" fill="#d8b84a" stroke="#8a6a2a" />
+<path d="M43 108L35 140L31 168" fill="none" stroke="#1d2f47" stroke-width="17" /><path d="M43 108L35 140L31 166" fill="none" stroke="#2f4a6e" stroke-width="14" />
+<circle cx="31" cy="176" r="6.5" fill="url(#material-3)" /></g>
+<g id="staff-police-hair" transform="translate(14 4) scale(.8)" stroke="#2a201c" stroke-width="1.4" stroke-linejoin="round"><path d="M38 78q-4-20 4-28h56q8 8 4 28l-6-16H44Z" fill="url(#material-2)" /></g>
+<g id="staff-police-hat" transform="translate(14 4) scale(.8)" stroke="#16243a" stroke-width="1.6" stroke-linejoin="round"><path d="M34 50q4-26 36-28 32 2 36 28Z" fill="#2f4a6e" /><path d="M36 50h68v8H36Z" fill="#1d2f47" /><path d="M36 58q34 10 70 0l-4 8q-32 6-62 0Z" fill="#111418" /><path d="M64 30l6-4 6 4-1 9h-10Z" fill="#f2c84b" stroke="#a8802a" /><path d="M36 54h68" stroke="#e8ecef" stroke-width="1.6" /></g>
+<g id="staff-police-arm" stroke-linejoin="round" stroke-linecap="round"><path d="M97 108L105 140L109 168" fill="none" stroke="#1d2f47" stroke-width="17" /><path d="M97 108L105 140L109 166" fill="none" stroke="#2f4a6e" stroke-width="14" /><circle cx="109" cy="176" r="6.5" fill="url(#material-3)" stroke="#2a3a52" stroke-width="1.4" /></g>
+<g id="staff-police-act" stroke-linejoin="round" stroke-linecap="round"><path d="M121 58V38" stroke="#3a3530" stroke-width="4.5" /><circle cx="120" cy="21" r="18" fill="#e0483c" stroke="#8f2a22" stroke-width="1.8" /><circle cx="120" cy="21" r="14.5" fill="none" stroke="#fffdf4" stroke-width="2.2" /><path d="M108 21h24" stroke="#fffdf4" stroke-width="7" /><path d="M96 108L116 92L121 64" fill="none" stroke="#1d2f47" stroke-width="17" /><path d="M96 108L116 92L120 66" fill="none" stroke="#2f4a6e" stroke-width="14" /><circle cx="122" cy="58" r="6.5" fill="url(#material-3)" stroke="#2a3a52" stroke-width="1.4" /><path d="M72 79h10l3 2-3 2H72Z" fill="#c8ccd0" stroke="#6a7076" stroke-width="1.2" /></g>
+
+<!-- Doctor: a long white coat over teal scrubs, a stethoscope round the neck, a badge, a head mirror and grey hair. -->
+<g id="staff-doctor-back" />
+<g id="staff-doctor" stroke="#5f6f6c" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M44 246h20l2 12H38q0-8 6-12Zm32 0h20q6 4 6 12H74Z" fill="#5a5f66" /><path d="M38 258h28m8 0h28" stroke="#33373c" stroke-width="2" />
+<path d="M42 164h56l2 84H75l-5-56-5 56H40Z" fill="#5aa39a" />
+<path d="M57 98h26l2 72H55Z" fill="#5aa39a" /><path d="M60 99l10 12 10-12" fill="none" stroke="#3f7f77" />
+<path d="M54 96l-17 7-4 104h30l-1-100Zm32 0 17 7 4 104H77l1-100Z" fill="#f7f7f2" /><path d="M62 107l-2 98m18-98 2 98" fill="none" stroke="#c8ccc4" />
+<path d="M40 176h14m32 0h14" stroke="#c8ccc4" /><rect x="84" y="118" width="12" height="15" rx="2" fill="#bfe0f2" stroke="#5f7f8f" /><path d="M86 123h8m-8 4h6" stroke="#5f7f8f" stroke-width="1.2" />
+<path d="M60 100q-8 26 4 34m16-34q8 26-4 34" fill="none" stroke="#4a525a" stroke-width="2.4" /><circle cx="70" cy="140" r="5" fill="#c8ccd0" stroke="#4a525a" stroke-width="1.6" /><path d="M64 134q6 4 6 1m6-1q-6 4-6 1" fill="none" stroke="#4a525a" stroke-width="2.4" />
+<path d="M43 108L35 140L31 168" fill="none" stroke="#9aa09c" stroke-width="17" /><path d="M43 108L35 140L31 166" fill="none" stroke="#f7f7f2" stroke-width="14" />
+<circle cx="31" cy="176" r="6.5" fill="url(#material-3)" /></g>
+<g id="staff-doctor-hair" transform="translate(14 4) scale(.8)" stroke="#7a7470" stroke-width="1.4" stroke-linejoin="round"><path d="M38 72Q32 36 62 32q34-4 40 26l-4 14-4-16q-18 2-34-10-8 10-18 12Z" fill="url(#material-2)" /><path d="M58 93q12-6 24 0q-6 4-12 2-6 2-12-2Z" fill="url(#material-2)" /></g>
+<g id="staff-doctor-hat" transform="translate(14 4) scale(.8)" stroke="#4a525a" stroke-width="1.6"><path d="M38 52q32-14 64 0" fill="none" stroke="#4a525a" stroke-width="4" /><circle cx="70" cy="40" r="10" fill="#e8f2f6" /><circle cx="70" cy="40" r="4" fill="#9fc6d6" stroke="none" /><path d="M64 36q3-3 6-3" fill="none" stroke="#fff" stroke-width="2" /></g>
+<g id="staff-doctor-arm" stroke-linejoin="round" stroke-linecap="round"><path d="M97 108L105 140L109 168" fill="none" stroke="#9aa09c" stroke-width="17" /><path d="M97 108L105 140L109 166" fill="none" stroke="#f7f7f2" stroke-width="14" /><circle cx="109" cy="176" r="6.5" fill="url(#material-3)" stroke="#5f6f6c" stroke-width="1.4" /></g>
+<g id="staff-doctor-act" stroke-linejoin="round" stroke-linecap="round"><path d="M80 110q20 2 44 20" fill="none" stroke="#4a525a" stroke-width="2.4" /><path d="M96 108L114 128L126 128" fill="none" stroke="#9aa09c" stroke-width="17" /><path d="M96 108L114 128L124 128" fill="none" stroke="#f7f7f2" stroke-width="14" /><circle cx="127" cy="128" r="6.5" fill="url(#material-3)" stroke="#5f6f6c" stroke-width="1.4" /><circle cx="134" cy="130" r="5.5" fill="#c8ccd0" stroke="#4a525a" stroke-width="1.6" /></g>
+
+<!-- Coach: a green tracksuit with white stripes, a cap, a whistle and a clipboard, and a red ponytail. -->
+<g id="staff-coach-back" transform="translate(14 4) scale(.8)" stroke="#7a3420" stroke-width="1.4" stroke-linejoin="round"><path d="M44 46q-24 4-22 34 2 20 14 30-2-22 12-40Z" fill="url(#material-2)" /></g>
+<g id="staff-coach" stroke="#2a5a38" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M44 246h20l2 12H38q0-8 6-12Zm32 0h20q6 4 6 12H74Z" fill="#fbfbf6" /><path d="M38 258h28m8 0h28" stroke="#c8423a" stroke-width="2.4" />
+<path d="M41 164h58l2 84H75l-5-56-5 56H39Z" fill="#3f9a5a" /><path d="M42 168l-1 76m58-76 1 76" fill="none" stroke="#fbfbf6" stroke-width="3" />
+<path d="M52 96q18 12 36 0l16 7-2 66H38l-2-66Z" fill="#3f9a5a" /><path d="M70 100v66" stroke="#2a5a38" stroke-width="1.6" /><path d="M56 97l14 8 14-8" fill="none" stroke="#fbfbf6" stroke-width="3" />
+<path d="M62 100q8 22 8 22t8-22" fill="none" stroke="#c8423a" stroke-width="1.4" /><rect x="66" y="121" width="9" height="5" rx="2" fill="#c8ccd0" stroke="#6a7076" />
+<path d="M43 108L35 140L31 168" fill="none" stroke="#2a5a38" stroke-width="17" /><path d="M43 108L35 140L31 166" fill="none" stroke="#3f9a5a" stroke-width="14" /><path d="M39 112l-8 46" stroke="#fbfbf6" stroke-width="2.4" />
+<path d="M14 156l24 2-2 34-24-2Z" fill="#c89a5a" stroke="#7a5a2a" /><path d="M17 162l17 1-2 26-17-1Z" fill="#fffdf4" stroke="#b8b0a0" stroke-width="1" /><path d="M20 168h10m-10 6h8m-8 6h10" stroke="#5aa39a" stroke-width="1.4" /><rect x="21" y="153" width="10" height="5" rx="1.5" fill="#9aa3a8" stroke="#5a6066" stroke-width="1" />
+<circle cx="31" cy="176" r="6.5" fill="url(#material-3)" /></g>
+<g id="staff-coach-hair" transform="translate(14 4) scale(.8)" stroke="#7a3420" stroke-width="1.4" stroke-linejoin="round"><path d="M38 78q-4-22 4-30h56q8 8 4 30l-6-18H44Z" fill="url(#material-2)" /></g>
+<g id="staff-coach-hat" transform="translate(14 4) scale(.8)" stroke="#2a5a38" stroke-width="1.6" stroke-linejoin="round"><path d="M36 56q0-30 34-32 34 2 34 32Z" fill="#fbfbf6" /><path d="M36 56h68" stroke="#3f9a5a" stroke-width="5" /><path d="M126 58q-30-8-58-2l2 8q26-4 54 2Z" fill="#3f9a5a" /><circle cx="70" cy="26" r="3" fill="#3f9a5a" /><path d="M58 40l12-8 12 8" fill="none" stroke="#3f9a5a" stroke-width="3" /></g>
+<g id="staff-coach-arm" stroke-linejoin="round" stroke-linecap="round"><path d="M97 108L105 140L109 168" fill="none" stroke="#2a5a38" stroke-width="17" /><path d="M97 108L105 140L109 166" fill="none" stroke="#3f9a5a" stroke-width="14" /><path d="M101 112l8 46" stroke="#fbfbf6" stroke-width="2.4" /><circle cx="109" cy="176" r="6.5" fill="url(#material-3)" stroke="#2a5a38" stroke-width="1.4" /></g>
+<g id="staff-coach-act" stroke-linejoin="round" stroke-linecap="round"><path d="M96 108L116 90L119 62" fill="none" stroke="#2a5a38" stroke-width="17" /><path d="M96 108L116 90L118 64" fill="none" stroke="#3f9a5a" stroke-width="14" /><path d="M100 104l15-13 2-24" fill="none" stroke="#fbfbf6" stroke-width="2.4" /><circle cx="119" cy="56" r="7.5" fill="url(#material-3)" stroke="#2a5a38" stroke-width="1.4" /><path d="M72 79h10l3 2-3 2H72Z" fill="#c8ccd0" stroke="#6a7076" stroke-width="1.2" /></g>
+
+<!-- Office clerk: a pale yellow shirt, a blue tie, grey trousers, a badge on a lanyard, a blue folder, neat black hair. -->
+<g id="staff-clerk-back" />
+<g id="staff-clerk" stroke="#5a5a52" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M44 246h20l2 12H38q0-8 6-12Zm32 0h20q6 4 6 12H74Z" fill="#4a3a32" /><path d="M38 258h28m8 0h28" stroke="#2a201c" stroke-width="2" />
+<path d="M41 164h58l2 84H75l-5-56-5 56H39Z" fill="#6a7078" /><path d="M70 168v20" stroke="#4a5058" />
+<path d="M52 96q18 12 36 0l16 7-2 66H38l-2-66Z" fill="#f3e7b8" /><path d="M56 97l14 10 14-10-4 8-10 4-10-4Z" fill="#fbf5dc" />
+<path d="M67 108h6l3 40-6 7-6-7Z" fill="#3f6fb0" stroke="#2a4a7a" /><path d="M66 110l8 8m-8 8 9 9m-9 8 8 8" stroke="#6f98d0" stroke-width="1.6" />
+<path d="M58 100q2 20 22 30" fill="none" stroke="#c8423a" stroke-width="1.4" /><rect x="78" y="128" width="12" height="16" rx="2" fill="#fffdf4" stroke="#7a7a72" /><rect x="81" y="131" width="6" height="6" rx="1" fill="#9fc6d6" stroke="none" />
+<path d="M40 164h60" stroke="#3a3530" stroke-width="4" />
+<path d="M43 108L35 140L31 168" fill="none" stroke="#a8a070" stroke-width="17" /><path d="M43 108L35 140L31 166" fill="none" stroke="#f3e7b8" stroke-width="14" />
+<path d="M12 150l26 4-4 34-26-4Z" fill="#4f86c8" stroke="#2a4a7a" /><path d="M14 154l6 1" stroke="#fffdf4" stroke-width="3" />
+<circle cx="31" cy="176" r="6.5" fill="url(#material-3)" /></g>
+<g id="staff-clerk-hair" transform="translate(14 4) scale(.8)" stroke="#1a1614" stroke-width="1.4" stroke-linejoin="round"><path d="M38 72Q32 34 70 32q36 2 32 40l-4-16q-14-10-26-8l-6 8q-14 0-24 4-4 4-4 12Z" fill="url(#material-2)" /><path d="M66 36q-6 10-14 14" fill="none" stroke="#fff" stroke-width="2" opacity=".2" /></g>
+<g id="staff-clerk-hat" />
+<g id="staff-clerk-arm" stroke-linejoin="round" stroke-linecap="round"><path d="M97 108L105 140L109 168" fill="none" stroke="#a8a070" stroke-width="17" /><path d="M97 108L105 140L109 166" fill="none" stroke="#f3e7b8" stroke-width="14" /><circle cx="109" cy="176" r="6.5" fill="url(#material-3)" stroke="#5a5a52" stroke-width="1.4" /></g>
+<g id="staff-clerk-act" stroke-linejoin="round" stroke-linecap="round"><path d="M96 108L116 92L121 66" fill="none" stroke="#a8a070" stroke-width="17" /><path d="M96 108L116 92L120 68" fill="none" stroke="#f3e7b8" stroke-width="14" /><path d="M119 48h6v18h-6Z" fill="#8a5a34" stroke="#5a3a20" stroke-width="1.4" /><circle cx="122" cy="45" r="6" fill="#8a5a34" stroke="#5a3a20" stroke-width="1.4" /><path d="M111 66h22l-2 7h-18Z" fill="#c8423a" stroke="#7a2a20" stroke-width="1.4" /><circle cx="122" cy="58" r="6.5" fill="url(#material-3)" stroke="#5a5a52" stroke-width="1.4" /></g>
+</svg>

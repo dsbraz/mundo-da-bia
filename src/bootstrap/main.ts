@@ -60,6 +60,7 @@ import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { marketPlay } from './market';
 import { schoolPlay } from './school';
+import { staffPlay } from './staff';
 import { routineWiring } from './routine';
 import { suggestionIcon } from '../presentation/routine-bubble';
 import { selfCareWiring } from './self-care';
@@ -173,6 +174,7 @@ function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback });
 const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback });
+const staffing = staffPlay({ state: () => state, scene, school: schooling, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
 /** Session time in Brincar (Criar pauses life, §3.1). */
@@ -249,7 +251,7 @@ void loadFonts().then(() => { game = new Phaser.Game({
     cancelInput = wireInput(current, { root, scene, view: () => view, state: () => state, town: () => town, selected: () => selected, building: () => building, wardrobe: () => wardrobeOpen,
       camera: () => camera, setCamera: x => { camera = x; }, moveCamera: x => { camera = x; scene.camera(x); positionContext(root, state.actors.find(a => a.id === selected)!, state); neighborhood.refresh(building); outside(town, selected, camera, building); navigationBar(); },
       play, square, walker, townActs, dispatch, townDispatch, blocks: action => shopping.blocks(action), toggleWardrobe, poke: id => { root.classList.add('actor-chosen'); if (!square.leave(id)) feedback.poke(id); }, choosePiece: id => { selectedPiece = id; refresh(); },
-      previewBuild, dropPiece, progress, plot: neighborhood.plot, enter: enterDoor, place });
+      previewBuild, dropPiece, progress, plot: neighborhood.plot, enter: enterDoor, place, staff: staffing.tap });
   } },
 }); });
 bindKeyboard(root, { building: () => building, state: () => state, piece: () => selectedPiece, actor: () => state.actors.find(a => a.id === selected)!,
