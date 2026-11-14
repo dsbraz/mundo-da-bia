@@ -5,15 +5,11 @@ import { visualPiecePoint } from './furniture-scale';
 import { pieceDepth } from './piece-art';
 import { visualContext } from './pose';
 import type { Span } from './viewport';
+import { glassOf, type Glass } from './mirror-glass';
 import type { Expression } from './expression';
 
 type Container = Phaser.GameObjects.Container;
-export interface Glass { x: number; y: number; width: number; height: number; radius: number }
-/** The mirror's glass (the rounded rect at 19,13 62×103 of the 100×150 drawing), in scene units as drawn. */
-export function glassOf(piece: Piece): Glass {
-  const a = visualPiecePoint(piece, { x: piece.x + 19, y: piece.y + 13 }), b = visualPiecePoint(piece, { x: piece.x + 81, y: piece.y + 116 });
-  return { x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y, radius: 22 };
-}
+export { glassOf, type Glass } from './mirror-glass';
 /** Who looks into `mirror`: the person standing nearest in front of it (within 110 px of its middle), if any. */
 export function frontOf(mirror: Piece, people: readonly { id: ActorId; x: number }[]): ActorId | undefined {
   const middle = mirror.x + 50, near = people.filter(p => Math.abs(p.x - middle) <= 110);

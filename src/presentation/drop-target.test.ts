@@ -4,7 +4,7 @@ import { seatPoint, seatPiece } from '../domain/seats';
 import type { Piece, World } from '../domain/types';
 import { visualPiecePoint } from './furniture-scale';
 import { actorDropTarget, drawnBox, personTarget, targetName } from './drop-target';
-import { glassOf } from './mirror-reflection';
+import { glassOf } from './mirror-glass';
 import { noteFrame, waveFrame } from './play-effects';
 
 const standing = (world: World): World => ({ ...world, actors: world.actors.map(a => ({ ...a, seat: null, x: 300 + a.id.length * 40, y: 530 })) });
