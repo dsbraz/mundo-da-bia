@@ -3,7 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { readTown, ready } from './helpers';
+import { readTown, ready, tap } from './helpers';
 import { playMinutes, playUntilTrue } from './session';
 
 /** A school next door, everyone at home in the living room; the morning begins with the session. */
@@ -60,6 +60,21 @@ test('W3L-27: de manhã o sino da escola brilha na rua; com fome na rua, a suges
   await expect(wish(page)).toHaveAttribute('data-suggestion', 'prato');
   await wish(page).click();
   await expect(page.locator('#neighborhood-list [data-building="1"]')).toHaveClass(/marked/);
+});
+
+test('lote 8C: a bolha da rotina espera enquanto ela fala, para não cobrir a fala; depois volta', async ({ page }) => {
+  test.setTimeout(120_000);
+  await openHome(page); await page.clock.pauseAt(new Date('2026-11-13T09:00:30'));
+  await playMinutes(page, .5); await page.clock.runFor(100);
+  await expect(wish(page)).toHaveAttribute('data-actor', 'bia');
+  // A touch on the Bia: she says a line, and the dashed bubble over her head gives way to it.
+  const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!;
+  await tap(page, bia.x, bia.y - 120);
+  await page.clock.runFor(200);
+  await expect(page.locator('canvas')).toHaveAttribute('data-said', /./);
+  await expect(wish(page)).toHaveCount(0);
+  // Once the line is gone, the backpack comes back for the rest of its turn.
+  await expect.poll(async () => { await page.clock.runFor(200); return wish(page).count(); }, { timeout: 30_000 }).toBe(1);
 });
 
 // Captures for the art review, landscape only.

@@ -13,6 +13,8 @@ interface Deps<W extends Wish> {
   /** What the selected character's day suggests now, or null (Criar, the first 30 s, nowhere to go, someone else's bubble up). */
   wish: () => W | null;
   head: (id: ActorId) => Point | null; canvas: () => HTMLCanvasElement | null;
+  /** Whether `actor` is saying a line: the bubble waits for it (lot 8C: "Era uma vez… lê." was under it), without taking its turn. */
+  speaking?: (actor: ActorId) => boolean;
   /** A touch on the bubble: the Map opens with the place marked. */
   go: (wish: W) => void;
 }
@@ -28,7 +30,7 @@ export function routineBubble<W extends Wish>(host: HTMLElement, deps: Deps<W>) 
   bubble.addEventListener('click', press);
   bubble.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') press(event); });
   function place(wish: W | null, now: number): Point | null {
-    if (!wish || host.querySelector('.missing-bubble:not(.wish)')) return null;
+    if (!wish || deps.speaking?.(wish.actor) || host.querySelector('.missing-bubble:not(.wish)')) return null;
     const head = deps.head(wish.actor), canvas = deps.canvas();
     if (!head || !canvas || !mayAsk(`wish:${wish.actor}:${wish.suggestion}`, now)) return null;
     return bubblePlace(worldToScreen(canvas, head), canvas.getBoundingClientRect());

@@ -48,6 +48,7 @@ import type { Destination, Suggestion } from '../domain/routine';
 import { firstTouch } from '../presentation/first-touch';
 import { createControls, positionContext } from '../presentation/controls';
 import { PlayScene } from '../presentation/scene';
+import { speaking } from '../presentation/feedback';
 import '../presentation/style.css';
 import '../presentation/immersive.css';
 import '../presentation/home-menu.css';
@@ -199,7 +200,7 @@ const daylight = () => { scene.daylight(life.phase()); bedtime(life.phase(), tow
 const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); daylight(); },
   slept: id => townActs.sleepThrough(id), greet: () => { scene.poke(selected, 'cheer', uiText.goodMorning); announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
 routineWiring({ root, town: () => town, selected: () => selected, playing: () => !building, phase: () => life.phase(), played: () => life.played(), head: id => scene.head(id),
-  openMap });
+  speaking: id => speaking(scene, id), openMap });
 let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); daylight(); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };

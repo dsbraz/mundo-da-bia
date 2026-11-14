@@ -11,6 +11,8 @@ import { nameOf, routineLine } from '../content/feedback-text';
 interface RoutineDeps {
   root: HTMLElement; town: () => Neighborhood; selected: () => ActorId; playing: () => boolean;
   phase: () => Phase; played: () => number; head: (id: ActorId) => Point | null;
+  /** Whether `id` is saying a line (the bubble waits for it). */
+  speaking: (id: ActorId) => boolean;
   /** Opens the Map with `place` marked (the "Ir" there takes her). */
   openMap: (place: Destination, wish: Suggestion) => void;
 }
@@ -26,5 +28,5 @@ export function routineWiring(deps: RoutineDeps) {
     const wanted = suggestion(deps.phase(), actor, placeOf(town, actor.location), isAdult(actor.id), foodAtHome(town, actor.id)), place = wanted && destination(town, wanted, actor.location);
     return wanted && place ? { actor: actor.id, suggestion: wanted, place, label: routineLine(wanted, nameOf(actor)) } : null;
   }
-  routineBubble(deps.root, { wish, head: deps.head, canvas: () => deps.root.querySelector('canvas'), go: shown => deps.openMap(shown.place, shown.suggestion) });
+  routineBubble(deps.root, { wish, head: deps.head, speaking: deps.speaking, canvas: () => deps.root.querySelector('canvas'), go: shown => deps.openMap(shown.place, shown.suggestion) });
 }
