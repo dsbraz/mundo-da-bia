@@ -8,6 +8,7 @@ import { speaking } from '../presentation/feedback';
 import { worldToScreen } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import { loadSoundOn, saveSoundOn } from '../persistence/storage';
+import { unspoken } from '../domain/toilet';
 interface Deps { root: HTMLElement; scene: PlayScene; state: () => World; selected: () => ActorId; playing: () => boolean;
   /** The selected one goes to `room` of this house (a touch on a bubble's door, W3L-15). */
   goRoom?: (room: RoomId) => void }
@@ -43,7 +44,8 @@ export function sceneFeedback(deps: Deps) {
     announce, sound, missing,
     events(events: PresentationEvent[]) {
       // Each line is taken from the rotation once: the bubble and the announcement say the same.
-      const said = events.map(event => { const who = event.actor && actor(event.actor); return line(event.type, who || undefined, who ? who.kind === 'cat' : false, event.favorite === true); });
+      // Sitting down on the toilet says nothing.
+      const said = events.map(event => { const who = event.actor && actor(event.actor); return unspoken(deps.state(), event) ? null : line(event.type, who || undefined, who ? who.kind === 'cat' : false, event.favorite === true); });
       deps.scene.react(events, said); sound.events(events, id => actor(id)?.kind === 'cat', id => deps.state().layout.pieces.find(p => p.id === id && (p.active || p.kind === 'toilet'))?.kind);
       if (said[0]) announce(said[0]);
       events.forEach(event => { if (event.type === 'missing') missing(event.need!, event); });

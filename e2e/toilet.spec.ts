@@ -24,14 +24,17 @@ for (const [width, height] of [[1024, 768], [1280, 800]] as const) test(`no banh
   const world = await read(page), toilet = world.layout.pieces.find(p => p.room === world.room && p.kind === 'toilet')!;
   expect(toilet).toBeDefined();
   const seat = `${toilet.id}.0` as const, at = visualPiecePoint(toilet, seatPoint(world, seat)!), start = await bia(page);
+  const said = await page.locator('canvas').getAttribute('data-said');
   await drag(page, [start.x, start.y - 110], [at.x, at.y - 40]);
   await expect.poll(async () => (await bia(page)).seat).toBe(seat);
   await page.waitForTimeout(400);
+  // Sitting down on the toilet says nothing.
+  expect(await page.locator('canvas').getAttribute('data-said')).toBe(said);
   await page.screenshot({ path: `reports/review/toilet-sit-${width}.png` });
-  // The tank's lever stays in view beside her: a touch there flushes, with nobody walking over.
-  await tap(page, toilet.x + 9, toilet.y + 22);
+  // A 7-year-old taps the Bia, not the lever: a touch on her flushes, with nobody walking over.
+  await tap(page, at.x, at.y - 60);
   await expect(page.locator('canvas')).toHaveAttribute('data-flush', String(toilet.id));
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(450);
   await page.screenshot({ path: `reports/review/toilet-flush-${width}.png` });
   await expect.poll(async () => (await bia(page)).seat).toBeNull();
   const after = await bia(page);

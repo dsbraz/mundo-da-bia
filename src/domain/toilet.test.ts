@@ -3,6 +3,7 @@ import { initialWorld, transition } from './world';
 import { addRoom } from './rooms';
 import { pieceBounds } from './layout';
 import { passages } from './passages';
+import { unspoken } from './toilet';
 import { freeFor, mealSeat, seatPoint } from './seats';
 import { roomSizes, type Piece, type RoomSize, type World } from './types';
 
@@ -61,4 +62,11 @@ it('o vaso nunca é lugar de comer: sentada nele, ou com ele como único assento
   expect(mealSeat(state, who(state, 'bia'))).toBeUndefined();
   const sat = transition(state, { type: 'sit', actor: 'bia', seat: seat(toilet) }).state;
   expect(mealSeat(sat, who(sat, 'bia'))).toBeUndefined();
+});
+it('sentar no vaso não tem fala: o evento de sentar ali é silencioso; sentar noutro lugar segue com fala', () => {
+  const state = bathroom(), toilet = toiletOf(state);
+  const sat = transition(state, { type: 'sit', actor: 'bia', seat: seat(toilet) });
+  expect(sat.events.map(event => unspoken(sat.state, event))).toEqual([true]);
+  const sofa = transition(initialWorld(), { type: 'sit', actor: 'luna', seat: '2.0' });
+  expect(sofa.events.map(event => unspoken(sofa.state, event))).toEqual([false]);
 });

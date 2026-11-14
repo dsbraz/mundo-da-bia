@@ -8,10 +8,11 @@ describe('a descarga desenhada', () => {
     expect(middle.turn).toBeGreaterThan(0);
     expect(middle.size).toBeLessThan(1);
     expect(middle.alpha).toBe(1);
+    expect(middle.rise).toBeGreaterThan(flushFrame(0, false).rise);
     expect(flushFrame(flushDuration, false).alpha).toBe(0);
   });
   it('com movimento reduzido: o redemoinho fica parado, só aparece e some', () => {
-    for (const t of [0, flushDuration / 2, flushDuration]) expect(flushFrame(t, true)).toMatchObject({ turn: 0, size: 1 });
+    for (const t of [0, flushDuration / 2, flushDuration]) expect(flushFrame(t, true)).toMatchObject({ turn: 0, size: 1, rise: .5 });
     expect(flushFrame(0, true).alpha).toBe(0);
     expect(flushFrame(flushDuration / 2, true).alpha).toBe(1);
     expect(flushFrame(flushDuration, true).alpha).toBe(0);
