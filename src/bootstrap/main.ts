@@ -62,6 +62,8 @@ import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { marketPlay } from './market';
 import { schoolPlay } from './school';
+import { libraryPlay } from './library';
+import { readers } from '../domain/library';
 import { staffPlay } from './staff';
 import { routineWiring } from './routine';
 import { suggestionIcon } from '../presentation/routine-bubble';
@@ -174,12 +176,13 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
   feel: next => { town = next; state = feel(state, town); scene.feel(state); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
-  pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, busy: () => [games.player()].filter(id => id !== null), structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
+  pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, busy: () => [games.player(), ...readers(state)].filter(id => id !== null), structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)) townActs.dispatch(action); }
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback, perform: action => play.perform(action), scene,
   openMap: place => openMap(place, 'mercado'), hint: { seen: () => loadCheckoutHintSeen(), done: () => { saveCheckoutHintSeen(); } } });
 const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback });
+const books = libraryPlay({ town: () => town, selected: () => selected, apply: next => townActs.apply(next), feedback });
 const staffing = staffPlay({ state: () => state, scene, school: schooling, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
@@ -219,8 +222,8 @@ function walksFirst(action: Action, interrupt: boolean): boolean {
   if (play.sitToEat(action)) return true;
   cancelGame(); walker.cancel(); return false;
 }
-/** The market and the school take some taps over (a shelf, the checkout, the fridge with a bag, a board). */
-const takenOver = (action: Action) => shopping.intercept(action) || schooling.intercept(action);
+/** The market, the school and the bookcases take some taps over (a shelf, the checkout, the fridge with a bag, a board, a bookcase). */
+const takenOver = (action: Action) => shopping.intercept(action) || schooling.intercept(action) || books.intercept(action);
 function dispatch(action: Action, interrupt = true) {
   if (walksFirst(action, interrupt) || takenOver(action)) return;
   if ('actor' in action) root.classList.add('actor-chosen');

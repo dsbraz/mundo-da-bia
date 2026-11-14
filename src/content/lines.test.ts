@@ -8,7 +8,7 @@ const banned = /\b(erro|errado|ocupad[oa]|Escolha|Solte|Pronto para brincar|Obri
 const cat = (id: ActorId) => ['mimi', 'nino', 'pipoca'].includes(id);
 
 it('cobre os eventos novos da onda 3 além dos antigos', () => {
-  expect(spokenEvents).toEqual(['named', 'dressed', 'picked', 'dropped', 'fed', 'rested', 'cooked', 'ate', 'harvested', 'served', 'letter', 'hint']);
+  expect(spokenEvents).toEqual(['named', 'dressed', 'picked', 'dropped', 'fed', 'rested', 'cooked', 'ate', 'harvested', 'served', 'letter', 'hint', 'read']);
 });
 
 it('a mesma ação 4 vezes dá 3 ou mais falas diferentes, para cada personagem e evento', () => {

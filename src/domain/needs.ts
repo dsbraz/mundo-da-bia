@@ -9,7 +9,7 @@ import { parseSeat } from './seats';
 export type Need = 'fome' | 'sono' | 'tedio';
 export type Band = 'bem' | 'pede' | 'precisa';
 export type Mood = 'feliz' | 'normal' | 'triste';
-export type Relief = 'prato' | 'favorito' | 'lanche' | 'brincar' | 'favorita' | 'escola' | 'abraco';
+export type Relief = 'prato' | 'favorito' | 'lanche' | 'brincar' | 'favorita' | 'escola' | 'abraco' | 'leitura';
 
 const minute = 60_000, joy = 60_000, ceiling = 100, unseen = 69;
 const needs: readonly Need[] = ['fome', 'sono', 'tedio'];
@@ -31,9 +31,10 @@ export function mood(actor: Pick<Actor, 'needs'>): Mood {
 const reliefs: Record<Relief, Partial<Record<Need, number>> & { joy?: true }> = {
   prato: { fome: 60 }, favorito: { fome: ceiling, joy: true }, lanche: { fome: 30 },
   brincar: { tedio: 40 }, favorita: { tedio: 70, joy: true }, escola: { tedio: 40, joy: true }, abraco: { tedio: 20, joy: true },
+  leitura: { tedio: 30 },
 };
 /** What satisfies (§3.1): a dish −60 (the favourite to 0, with joy), the everyday snack or the cat's fish −30, a game −40 (the favourite
- *  −70, with joy), school −40 with joy, a hug −20 with joy. Nothing goes below 0, and a character always recovers. */
+ *  −70, with joy), school −40 with joy, a hug −20 with joy, starting to read −30 (lot 8C). Nothing goes below 0, and a character always recovers. */
 export function relieve(current: Needs, relief: Relief): Needs {
   const effect = reliefs[relief], next = { ...current, ...(effect.joy ? { alegria: joy } : {}) };
   for (const need of needs) next[need] = Math.max(0, current[need] - (effect[need] ?? 0));

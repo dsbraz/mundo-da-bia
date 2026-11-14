@@ -12,6 +12,8 @@ import { floorTop } from './floor-band';
 import { drawnUse, drawUse } from './use-effects';
 import { itemTexture } from './art-sheet';
 import { fridgeFood } from './fridge-stock';
+import { bookTexture, readingCue } from './book-art';
+import { reading, readers } from '../domain/library';
 export function orderedPieces(state: World) {
   return state.layout.pieces.filter(p => p.room === state.room).sort((a, b) => pieceDepth(a) - pieceDepth(b));
 }
@@ -83,13 +85,18 @@ function seatFront(scene: Phaser.Scene, piece: Piece, state: World) {
   scene.add.image(piece.x + box.width / 2, piece.y + box.height / 2, `piece-${piece.kind}-${piece.color}`)
     .setDisplaySize(box.width, box.height).setFlipX(piece.flipped).setCrop(0, top * rasterScale, box.width * rasterScale, (box.height - top) * rasterScale).setDepth(pieceDepth(piece) + 2);
 }
-/** The loose and held objects of this room, named by id, each at its drawn depth. */
+/** The loose and held objects of this room, named by id, each at its drawn depth; a book read sitting is drawn open (lot 8C). */
 export function drawObjects(scene: Phaser.Scene, state: World) {
+  if (navigator.webdriver) scene.game.canvas.dataset.reading = readers(state).join(' ');
   return state.items.flatMap(item => {
     const point = itemPoint(state, item); if (!point) return [];
-    const depth = objectDepth(state, item);
-    const image = scene.add.image(point.x, point.y, itemTexture(item)).setDisplaySize(ballSize(itemKind(item), visualContext(state)), ballSize(itemKind(item), visualContext(state))).setName(item.id).setDepth(depth);
+    const depth = objectDepth(state, item), holder = state.actors.find(a => a.id === item.holder), open = !!holder && reading(state, holder);
+    const size = ballSize(itemKind(item), visualContext(state)) * (open ? openBook : 1);
+    const image = scene.add.image(point.x, point.y, open ? bookTexture(item, true) : itemTexture(item)).setDisplaySize(size, size).setName(item.id).setDepth(depth);
+    if (open) readingCue(scene, image);
     fridgeFood(scene, state, item, image);
     return [image];
   });
 }
+/** An open book reads bigger than a closed one in the hand. */
+const openBook = 1.35;

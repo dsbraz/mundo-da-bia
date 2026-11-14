@@ -8,6 +8,7 @@ import { phaseOf, yawning } from './idle-life';
 import { expressionOf, type Expression, type faces } from './expression';
 import { plazaSeat, posed as posedIn, sitting } from './posture';
 import type { weightFigures } from './weight-figures';
+import { followBook } from './book-art';
 
 type Container = Phaser.GameObjects.Container;
 /** What one frame of a figure needs from the scene. */
@@ -46,7 +47,7 @@ function hold(ctx: FrameContext, pose: Container, actor: Actor, posed: Actor) {
   const arms = pose.getByName<Phaser.GameObjects.Image>('hands'), own = arms?.getData('arms') as { up: string } | undefined;
   const up = !!own && arms!.texture.key === own.up;
   const hand = up ? raisedHand(posed) : handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
-  ctx.world.items.filter(i => i.holder === actor.id).forEach(i => ctx.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));
+  ctx.world.items.filter(i => i.holder === actor.id).forEach(i => { const o = ctx.objects.find(x => x.name === i.id); if (o) followBook(o.setPosition(p.x, p.y).setRotation(pose.rotation)); });
 }
 /** Carried, just let go, walking or trotting: layers it on the pose and lists it in `ctx.gaits`. */
 function moveLayers(ctx: FrameContext, figure: Container, actor: Actor, walking: boolean, reduced: boolean) {

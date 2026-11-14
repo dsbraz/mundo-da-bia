@@ -12,12 +12,13 @@ function withPiece(kind: PieceKind, active?: boolean): World {
   return { ...world, layout: { ...world.layout, pieces: [piece, ...others] } };
 }
 const piece = (world: World, id = 900) => world.layout.pieces.find(p => p.id === id)!;
-const newKinds = ['sink', 'washer', 'planter', 'bookcase', 'picnic-table'] as const;
+const newKinds = ['sink', 'washer', 'planter', 'picnic-table'] as const;
 const oldKinds = ['bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium', 'reading-lamp'] as const;
 
 describe('móveis que respondem a usar', () => {
-  it('a lista de usáveis é a antiga mais pia, lavadora, horta, estante de livros e mesa de piquenique; fogão e carrinho abrem a bancada', () => {
+  it('a lista de usáveis é a antiga mais pia, lavadora, horta e mesa de piquenique; fogão e carrinho abrem a bancada, a estante de livros empresta livros (lote 8C)', () => {
     expect([...usableKinds].sort()).toEqual([...oldKinds, ...newKinds].sort());
+    expect(usableKinds).not.toContain('bookcase');
     expect(usableKinds).not.toContain('stove'); expect(usableKinds).not.toContain('kitchen-cart');
   });
   it.each([...oldKinds, ...newKinds])('%s liga e desliga só com active, avisando a peça usada', kind => {

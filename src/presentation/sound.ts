@@ -27,7 +27,7 @@ const pieceCues: Partial<Record<PieceKind, Cue>> = { toilet: 'splash', sink: 'sp
 /** The sound of a piece switched on (its own for the everyday pieces); a piece switched off or without its own sound pops. */
 export function pieceCue(kind: PieceKind | undefined): Cue { return (kind && pieceCues[kind]) ?? 'pop'; }
 const volume = .05;
-const eventCues: Partial<Record<PresentationEvent['type'], Cue>> = { dressed: 'dress', picked: 'pick', dropped: 'drop', fed: 'eat', room: 'door', summoned: 'cheer', show: 'cheer', furniture: 'pop', cooked: 'clink', ate: 'eat', sniffed: 'meow' };
+const eventCues: Partial<Record<PresentationEvent['type'], Cue>> = { dressed: 'dress', picked: 'pick', dropped: 'drop', fed: 'eat', room: 'door', summoned: 'cheer', show: 'cheer', furniture: 'pop', cooked: 'clink', ate: 'eat', sniffed: 'meow', read: 'page' };
 export function eventCue(type: PresentationEvent['type'], cat: boolean): Cue | null {
   if (type === 'rested') return cat ? 'purr' : null;
   const cue = eventCues[type] ?? null;
