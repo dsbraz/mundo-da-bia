@@ -21,7 +21,8 @@ export function lessonArt(scene: Phaser.Scene) {
   let board: Phaser.GameObjects.Container | null = null, notes: Phaser.GameObjects.Graphics | null = null, floor = 396;
   const writer = lessonWriter(scene);
   const mark = (key: string, value: string) => { if (navigator.webdriver && scene.game.canvas.dataset[key] !== value) scene.game.canvas.dataset[key] = value; };
-  const end = () => { current = null; mark('lesson', ''); mark('lessonWriter', ''); };
+  /** A lesson left unfinished clears its mark; a finished one keeps `<theme>:done` (it is over, whatever the teacher's walk back takes). */
+  const end = (finished = false) => { current = null; if (!finished) mark('lesson', ''); mark('lessonWriter', ''); };
   return {
     /** Called when the lesson is over: the pupils cheer. */
     finished: (() => {}) as (pupils: ActorId[]) => void,
@@ -60,7 +61,7 @@ export function lessonArt(scene: Phaser.Scene) {
     /** At 20 s the lesson is over (the pupils cheer); she walks back to her place, then the lesson is gone. */
     close(cur: Current, elapsed: number, reduced: boolean) {
       if (!cur.done && elapsed >= lessonMs) { cur.done = true; mark('lesson', `${cur.theme}:done`); this.finished(cur.pupils); }
-      if (cur.done && elapsed >= lessonMs + (reduced ? 0 : leaveMs)) { end(); writer.frame(null); notes?.clear(); }
+      if (cur.done && elapsed >= lessonMs + (reduced ? 0 : leaveMs)) { end(true); writer.frame(null); notes?.clear(); }
     },
   };
 }
