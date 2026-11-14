@@ -1,5 +1,5 @@
 import { loadSchoolArt } from './school-art';
-import { buildingFacadeKey, buildingFacadeSvg, roomArchitecture, svgUrl } from './architecture-art';
+import { architectureKey, buildingFacadeKey, buildingFacadeSvg, roomArchitecture, svgUrl } from './architecture-art';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { roomTemplates } from '../domain/types';
 import { loadSvg } from './rendering';
@@ -48,6 +48,7 @@ function adultReady(scene: Phaser.Scene) {
 export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | null) {
   town?.buildings.forEach(b => loadSvg(scene, buildingFacadeKey(b), svgUrl(buildingFacadeSvg(b))));
   roomTemplates.filter(template => !scene.textures.exists(`architecture-${template}`)).forEach(template => loadSvg(scene, `architecture-${template}`, svgUrl(roomArchitecture(template))));
+  loadStairHall(scene, state);
   loadPieces(scene, state); loadSchoolArt(scene, state, town?.progress.drawings ?? []);
   loadDishes(scene, town?.items ?? state.items);
   if (state.streetWidth) loadGarden(scene);
@@ -56,6 +57,11 @@ export function loadArt(scene: Phaser.Scene, state: World, town: Neighborhood | 
     const garment = lookSource(look).replace('viewBox="0 0 140 220"', 'viewBox="15 98 110 122"').replace('width="140" height="220"', 'width="110" height="122"');
     loadSvg(scene, `look-${look}`, layer(garment, outfitLayer(look)));
   });
+}
+/** The room's stair hall variant, when it has stairs up (loaded on demand: few rooms have one). */
+function loadStairHall(scene: Phaser.Scene, state: World) {
+  const hall = state.layout.rooms[state.room] && architectureKey(state);
+  if (hall?.stairs && !scene.textures.exists(hall.key)) loadSvg(scene, hall.key, svgUrl(roomArchitecture(state.layout.rooms[state.room]!.template, true)));
 }
 /** Every dish of the neighborhood, cut from the dishes sheet (loaded in preload) with its garnish when fancy. */
 function loadDishes(scene: Phaser.Scene, items: World['items']) {

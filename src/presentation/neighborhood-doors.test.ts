@@ -51,21 +51,21 @@ describe('passagens entre cômodos', () => {
   it('a sala tem a porta da rua e uma porta no fim da parede, à direita, para o quarto; o quarto, uma à esquerda de volta', () => {
     const town = sala(), quarto = at(town, 'quarto');
     expect(doors(town).map(d => [d.name, d.kind])).toEqual([['Rua', 'door'], ['Quarto dos sonhos', 'passage']]);
-    expect(doors(town)[1]!.box).toEqual({ x: 880, y: 182, width: 104, height: 228 });
+    expect(doors(town)[1]!.box).toEqual({ x: 1080, y: 182, width: 104, height: 228 });
     expect(doors(quarto).map(d => [d.location, d.box.x])).toEqual([[where(town, 'sala'), 16]]);
-    expect(doorAt(town, { x: 930, y: 300 })?.location).toEqual(where(town, 'quarto'));
-    expect(doorAt(town, { x: 870, y: 300 })).toBeUndefined();
-    expect(doorDropAt(town, { x: 930, y: 430 })?.location).toEqual(where(town, 'quarto'));
-    expect(doorBox(town, doors(town)[1]!)).toEqual({ x: 880, y: 182, width: 104, height: 228, depth: 406 });
+    expect(doorAt(town, { x: 1130, y: 300 })?.location).toEqual(where(town, 'quarto'));
+    expect(doorAt(town, { x: 1070, y: 300 })).toBeUndefined();
+    expect(doorDropAt(town, { x: 1130, y: 430 })?.location).toEqual(where(town, 'quarto'));
+    expect(doorBox(town, doors(town)[1]!)).toEqual({ x: 1080, y: 182, width: 104, height: 228, depth: 406 });
   });
   it('anda até a passagem, sai por ela e chega diante da passagem correspondente do outro cômodo', () => {
     const town = sala(), quarto = at(town, 'quarto');
-    expect(doorFront(town, where(town, 'quarto'))).toEqual({ x: 932, y: 432 });
+    expect(doorFront(town, where(town, 'quarto'))).toEqual({ x: 1132, y: 432 });
     expect(destinationPoint(town, where(town, 'quarto'))).toEqual({ x: 68, y: 480 });
-    expect(destinationPoint(quarto, where(town, 'sala'))).toEqual({ x: 932, y: 480 });
+    expect(destinationPoint(quarto, where(town, 'sala'))).toEqual({ x: 1132, y: 480 });
     expect(doorStep(quarto, where(town, 'sala'))).toEqual({ x: 68, y: 412 });
     // Back in the living room from the bedroom: out of the right doorway, not the street door.
-    expect(doorStep(town, where(town, 'quarto'))).toEqual({ x: 932, y: 412 });
+    expect(doorStep(town, where(town, 'quarto'))).toEqual({ x: 1132, y: 412 });
     expect(doorFront(town, { kind: 'street' })).toEqual({ x: 550, y: 432 });
   });
   it('o primeiro cômodo de cada andar tem escada: sobe no fim esquerdo da parede e desce por um vão no chão', () => {

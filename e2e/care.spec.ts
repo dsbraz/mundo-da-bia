@@ -9,7 +9,7 @@ test('pega roupa no armário e brinquedo na gaveta e entrega no colo', async ({ 
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await ready(page);
-  await expect(page.locator('canvas')).toHaveAttribute('data-logical-width', '1000');
+  await expect(page.locator('canvas')).toHaveAttribute('data-logical-width', '1200');
   await tap(page, 400, 230); await drag(page, await onPiece(page, 'wardrobe', 473, 248), [520, 430]);
   expect((await read(page)).actors[0]!.look).toBe('rumi');
   await tap(page, 400, 230);

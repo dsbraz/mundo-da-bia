@@ -45,7 +45,7 @@ it('viaja com um personagem e o objeto na mão, respeitando o tamanho do destino
   state = transition(state, { type: 'move', actor: 'bia', point: { x: 1300, y: 500 } }).state;
   expect(state.actors[0]!.x).toBe(1300);
   const home = transition(state, { type: 'travel', actor: 'bia', room: 'sala' }).state;
-  expect(home.actors[0]).toMatchObject({ x: 940, room: 'sala', seat: null });
+  expect(home.actors[0]).toMatchObject({ x: 1140, room: 'sala', seat: null });
   expect(home.items[2]?.holder).toBe('bia');
   expect(transition(state, { type: 'travel', actor: 'bia', room: 'room-99' }).state).toBe(state);
 });
@@ -85,7 +85,8 @@ it('modelos novos deixam a faixa frontal livre sem alterar cômodos anteriores',
     const state = addRoom(original, { name: template, template, size: 'medium', cell: 2 });
     const pieces = state.layout.pieces.filter(p => p.room === state.room);
     for (const piece of pieces) expect(footprint(piece)?.bottom ?? 0).toBeLessThanOrEqual(500);
-    expect(state.layout.pieces.filter(p => p.room !== state.room)).toEqual(original.layout.pieces);
+    // Only the bedroom's bed moves: out of the doorway the new room opens at the end of its wall.
+    expect(state.layout.pieces.filter(p => p.room !== state.room && p.kind !== 'bed')).toEqual(original.layout.pieces.filter(p => p.kind !== 'bed'));
   }
 });
 it('o jardim e o pátio espalham as peças em colunas fixas, a terceira mais ao fundo; os outros modelos se distribuem pela parede', () => {

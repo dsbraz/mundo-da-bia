@@ -6,6 +6,7 @@ import { pieceBounds } from './layout';
 import { roomWidth, validPoint } from './geometry';
 import { seatPoint } from './seats';
 import { enterRoom } from './room-state';
+import { clearPassages } from './passage-clearance';
 export interface NewRoom { name: string; template: RoomTemplate; size: RoomSize; cell: number }
 const furnishings: Record<RoomTemplate, PieceKind[]> = {
   classroom: ['bookcase', 'school-desk', 'school-desk', 'school-desk', 'board'], sportsfield: ['planter'], gym: ['shelf', 'speaker'],
@@ -32,13 +33,17 @@ export function freeCell(state: World, cell: number): boolean {
   return Number.isInteger(cell) && cell >= 0 && cell < 12 && !Object.values(state.layout.rooms).some(r => r.cell === cell);
 }
 export function addRoom(state: World, options: NewRoom): World {
+  const next = placeRoom(state, options);
+  return next === state ? state : clearPassages(furnishRoom(next, options.template), state.layout);
+}
+/** The new room, entered and still bare (a plan furnishes its rooms once they all stand, with every doorway and stairs known). */
+export function placeRoom(state: World, options: NewRoom): World {
   const name = options.name.trim().slice(0, 32);
   if (!name || !freeCell(state, options.cell)) return state;
   const id: RoomId = `room-${state.layout.nextRoomId}`;
   const room: Room = { ...options, name, wall: 'original', floor: 'original', home: { lamp: true, fridge: true, drawer: false } };
-  const next = enterRoom({ ...state, layout: { ...state.layout, nextRoomId: state.layout.nextRoomId + 1,
+  return enterRoom({ ...state, layout: { ...state.layout, nextRoomId: state.layout.nextRoomId + 1,
     rooms: { ...state.layout.rooms, [id]: room } } }, id);
-  return furnishRoom(next, options.template);
 }
 export function furnishRoom(state: World, template: RoomTemplate): World {
   let next = state;

@@ -50,7 +50,7 @@ describe('física leve: soltar é cair na vertical (W3L-17, §3.7)', () => {
   });
   it('fora do cômodo, abaixo do chão ou sem número: nada muda', () => {
     const world = initialWorld();
-    for (const [x, y] of [[20, 400], [990, 400], [500, 560], [NaN, 400], [500, Infinity]]) expect(place(world, x!, y!)).toEqual({ state: world, events: [] });
+    for (const [x, y] of [[20, 400], [1190, 400], [500, 560], [NaN, 400], [500, Infinity]]) expect(place(world, x!, y!)).toEqual({ state: world, events: [] });
   });
   it('a mesa de outro cômodo não segura nada', () => {
     const world = transition(initialWorld(), { type: 'room', room: 'quarto' }).state;

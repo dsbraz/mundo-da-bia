@@ -38,14 +38,16 @@ export const pieceBounds: Record<PieceKind, Point & { width: number; height: num
 };
 /** One of each per room: the pieces the home's switches and spots belong to (seats may repeat, W3L-06). */
 export const fixtures: readonly PieceKind[] = ['wardrobe', 'fridge', 'lamp', 'table', 'stage'];
-/** Where a new game puts the pieces that would stand in a doorway: the cat bed and the dresser right of the bedroom's door back. */
-const opening: Partial<Record<PieceKind, number>> = { 'cat-bed': 136, dresser: 340 };
+/** Where a new game puts the pieces that would stand in a doorway: the cat bed and the dresser right of the bedroom's door back; in the
+ *  wider living room (1200, so the stage fits before its doorway) the stage leaves room at its right for the lamp, which the stairs of a
+ *  second floor push there. */
+const opening: Partial<Record<PieceKind, number>> = { 'cat-bed': 136, dresser: 340, stage: 760 };
 export function initialLayout(): Layout {
   const kinds: PieceKind[] = ['rug', 'sofa', 'wardrobe', 'fridge', 'lamp', 'table', 'stage', 'bed', 'dresser', 'cat-bed'];
   return {
     nextId: kinds.length + 1, nextRoomId: 3,
     rooms: {
-      sala: { name: 'Sala & palco', template: 'empty', size: 'small', cell: 0, home: { lamp: true, fridge: true, drawer: false }, wall: 'original', floor: 'original' },
+      sala: { name: 'Sala & palco', template: 'empty', size: 'medium', cell: 0, home: { lamp: true, fridge: true, drawer: false }, wall: 'original', floor: 'original' },
       quarto: { name: 'Quarto dos sonhos', template: 'bedroom', size: 'small', cell: 1, home: { lamp: true, fridge: true, drawer: false }, wall: 'lilac', floor: 'original' },
     },
     pieces: kinds.map((kind, index) => ({ id: index + 1, kind, room: index < 7 ? 'sala' : 'quarto',

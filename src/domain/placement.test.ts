@@ -66,11 +66,11 @@ it('móveis de chão ficam com o pé no chão: mover a cama para a parede a enco
 });
 it('nada se põe nas passagens: portas do fim da parede, escada e vão da escada; o que já estava lá só pode sair', () => {
   const world = editWorld(initialWorld(), { type: 'clear' });
-  // The living room's doorway to the bedroom spans x 880-984 (frame 871-993), up to the sill at 410.
-  expect(canPlace(world, plant({ x: 900, y: 300 }))).toBe(false);
-  expect(canPlace(world, plant({ kind: 'picture', x: 900, y: 200 }))).toBe(false);
-  expect(canPlace(world, plant({ x: 780, y: 300 }))).toBe(true);
-  expect(canPlace(world, plant({ x: 900, y: 430 }))).toBe(true);
+  // The living room's doorway to the bedroom spans x 1080-1184 (frame 1071-1193), up to the sill at 410.
+  expect(canPlace(world, plant({ x: 1100, y: 300 }))).toBe(false);
+  expect(canPlace(world, plant({ kind: 'picture', x: 1100, y: 200 }))).toBe(false);
+  expect(canPlace(world, plant({ x: 980, y: 300 }))).toBe(true);
+  expect(canPlace(world, plant({ x: 1100, y: 430 }))).toBe(true);
   expect(canPlace(world, plant({ kind: 'rug', x: 0, y: 440 }))).toBe(true);
   expect(canPlace(world, plant({ x: 60, y: 300 }))).toBe(true);
   const upstairs = addRoom(world, { name: 'Sótão', template: 'empty', size: 'small', cell: 4 });

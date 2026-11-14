@@ -5,7 +5,7 @@ import type { World } from '../domain/types';
 import { roomWidth } from '../domain/geometry';
 import { floorCount } from '../domain/modules';
 import { plotStart, streetWidth } from '../domain/neighborhood-geometry';
-import { facadeSvg, roomArchitecture } from './architecture-art';
+import { architectureKey, facadeSvg, hallShift, roomArchitecture } from './architecture-art';
 import { schoolBellPoint } from './panoramic-facade';
 
 /** How a phase of the session's day looks (W3L-11): a tinted veil over the backdrop only (furniture and faces keep their colors), the
@@ -45,9 +45,9 @@ function windows(g: Graphics, state: World, town: Neighborhood | null, light: Li
     });
     return;
   }
-  const template = state.layout.rooms[state.room]!.template, scale = roomWidth(state) / 1000;
+  const template = state.layout.rooms[state.room]!.template, scale = roomWidth(state) / 1000, { key, stairs } = architectureKey(state);
   const glass = light.stars ? nightGlass : duskGlass;
-  panes(template, () => roomArchitecture(template)).forEach(r => {
+  panes(key, () => roomArchitecture(template, stairs)).map(r => stairs ? { ...r, x: hallShift(r.x), width: r.width * .8 } : r).forEach(r => {
     g.fillStyle(glass, .82).fillRect(r.x * scale, r.y, r.width * scale, r.height);
     if (light.stars) [[.2, .25], [.7, .18], [.45, .6], [.85, .7]].forEach(([u, v]) => g.fillStyle(0xfffbe8, .9).fillCircle((r.x + r.width * u!) * scale, r.y + r.height * v!, 2.2));
   });

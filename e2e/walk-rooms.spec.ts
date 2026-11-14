@@ -3,7 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { closeTray, playUntil as play, point, readTown, tap, tray } from './helpers';
+import { closeTray, playUntil as play, point, points, readTown, tap, tray } from './helpers';
 
 const canvas = (page: Page) => page.locator('canvas');
 const shots = 'reports/review';
@@ -38,7 +38,7 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 800
     await open(page, viewport);
     const before = await readTown(page);
     await page.screenshot({ path: `${shots}/walk-rooms-door-${viewport.width}.png` });
-    await walkThrough(page, [932, 300], 'quarto');
+    await walkThrough(page, [1132, 300], 'quarto');
     const after = await readTown(page);
     // She comes out of the bedroom's doorway on its left, the one that leads back.
     expect(after.actors.find(a => a.id === 'bia')).toMatchObject({ location: after.location, x: 68, y: 480 });
@@ -47,7 +47,7 @@ for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 800
     await page.screenshot({ path: `${shots}/walk-rooms-arrive-${viewport.width}.png` });
     // And back the same way.
     await walkThrough(page, [68, 300], 'sala');
-    expect(await bia(page)).toMatchObject({ x: 932, y: 480 });
+    expect(await bia(page)).toMatchObject({ x: 1132, y: 480 });
   });
   test(`a escada leva a Bia ao andar de cima e de volta (${viewport.width})`, async ({ page }) => {
     await open(page, viewport, { upstairs: true });
@@ -65,8 +65,8 @@ test('arrastar a Bia com um objeto até a porta atravessa as duas coisas', async
   await open(page, { width: 1024, height: 768 }, { paused: false });
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Ursinho', exact: true }).click(); await closeTray(page);
   await expect.poll(async () => (await readTown(page)).items.find(i => i.id === '1:ursinho')!.holder).toBe('bia');
-  // Held by the chest, 90 above the feet: the feet land on the doorway's sill.
-  const actor = await bia(page), [a, b] = [await point(page, actor.x, actor.y - 90), await point(page, 932, 330)];
+  // Held by the chest, 90 above the feet: the feet land on the doorway's sill (its left part, so she and the doorway fit in one view).
+  const actor = await bia(page), [a, b] = await points(page, [[actor.x, actor.y - 90], [1090, 330]]);
   await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 10 });
   await expect(canvas(page)).toHaveAttribute('data-door-glow', 'true');
   await page.screenshot({ path: `${shots}/walk-rooms-drag-1024.png` });
@@ -79,6 +79,6 @@ test('arrastar a Bia com um objeto até a porta atravessa as duas coisas', async
 });
 test('com movimento reduzido, a porta do fim da parede ainda leva ao cômodo ao lado', async ({ page }) => {
   await open(page, { width: 1024, height: 768 }, { reduced: true });
-  await walkThrough(page, [932, 300], 'quarto');
+  await walkThrough(page, [1132, 300], 'quarto');
   expect(await bia(page)).toMatchObject({ x: 68, y: 480 });
 });

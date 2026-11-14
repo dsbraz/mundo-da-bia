@@ -146,8 +146,8 @@ describe('o prato que nasce', () => {
     expect(at(fourth)).toEqual({ x: 355, y: 428 });
     const edge = cook(busy(kitchen()), input(['pao', 'queijo'], 'tabua', { piece: 51 })).town;
     expect(at(edge)).toEqual({ x: 890, y: 454 });
-    const wall = { ...kitchen(), buildings: kitchen().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.id === 51 ? { ...p, kind: 'kitchen-cart' as const, x: 860 } : p) } })) };
-    expect(at(cook(cook(busy(wall), input(['pao', 'queijo'], 'tabua', { piece: 51 })).town, input(['pao', 'queijo'], 'tabua', { piece: 51 })).town)).toEqual({ x: 940, y: 474 });
+    const wall = { ...kitchen(), buildings: kitchen().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.id === 51 ? { ...p, kind: 'kitchen-cart' as const, x: 1060 } : p) } })) };
+    expect(at(cook(cook(busy(wall), input(['pao', 'queijo'], 'tabua', { piece: 51 })).town, input(['pao', 'queijo'], 'tabua', { piece: 51 })).town)).toEqual({ x: 1140, y: 474 });
     const low = cook({ ...busy(kitchen()), buildings: kitchen().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.id === 51 ? { ...p, x: 0, y: 420 } : p) } })) },
       input(['pao', 'queijo'], 'tabua', { piece: 51 })).town;
     expect(at(low)).toEqual({ x: 110, y: 540 });

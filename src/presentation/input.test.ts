@@ -76,7 +76,8 @@ it('trocar de cômodo durante arraste descarta a entrega e limpa a prévia', () 
   expect(preview).toHaveBeenLastCalledWith(null);
 });
 it('soltar a personagem além da borda da cena a leva até a borda; em Criar, soltar fora devolve a peça', () => {
-  const state = initialWorld();
+  // A room as wide as the scene (1000), so its border is the scene's.
+  const state = initialWorld(); state.layout.rooms.sala.size = 'small';
   const parent = { closest: () => null, getBoundingClientRect: () => ({ left: 0, top: 0, right: 1000, bottom: 600, width: 1000, height: 600 }) };
   const canvas = Object.assign(new EventTarget(), {
     dataset: { viewWidth: '1000', viewX: '0', viewY: '0', cameraX: '0' }, parentElement: parent,

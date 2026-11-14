@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import type { World, RoomTemplate, Room } from '../domain/types';
 import { roomWidth } from '../domain/geometry';
 import { palettes } from '../content/furnishings';
+import { architectureKey } from './architecture-art';
 const outdoorColors: Partial<Record<RoomTemplate, { wall: number; floor: number }>> = {
   garden: { wall: 0xcce7e1, floor: 0xb3bf92 }, playground: { wall: 0xcce7e1, floor: 0xb3bf92 }, sportsfield: { wall: 0xdbece6, floor: 0x87ad7d },
 };
@@ -19,7 +20,7 @@ export function drawRoom(scene: Phaser.Scene, state: World, extend = true) {
   if (!outside) floorLines(g, width, tiled);
   g.fillStyle(0x6e655a, .07).fillRect(-margin, 392, width + margin * 2, 8);
   g.fillStyle(0xf6f4ec).fillRect(-margin, 382, width + margin * 2, 10);
-  scene.add.image(0, 0, `architecture-${finish.template}`).setOrigin(0).setDisplaySize(width, 600);
+  scene.add.image(0, 0, architectureKey(state).key).setOrigin(0).setDisplaySize(width, 600);
 }
 
 function floorLines(g: Phaser.GameObjects.Graphics, width: number, tiled: boolean) {

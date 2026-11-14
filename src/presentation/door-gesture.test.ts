@@ -5,6 +5,6 @@ it('soltar o personagem na lateral do cômodo não troca de cômodo: ele fica en
   const state = initialWorld(); const dispatch = vi.fn(); const move = vi.fn();
   const play = { dispatch, preview: vi.fn(), wardrobe: () => true, toggleWardrobe: vi.fn() };
   const gesture = createPlayGesture(() => state, vi.fn(), move, play);
-  gesture.start(3, { x: 520, y: 400 }); gesture.end(3, { x: 990, y: 370 });
-  expect(dispatch).not.toHaveBeenCalled(); expect(move).toHaveBeenCalledExactlyOnceWith({ x: 940, y: 500 });
+  gesture.start(3, { x: 520, y: 400 }); gesture.end(3, { x: 1190, y: 370 });
+  expect(dispatch).not.toHaveBeenCalled(); expect(move).toHaveBeenCalledExactlyOnceWith({ x: 1140, y: 500 });
 });

@@ -1,6 +1,9 @@
 import { expect, it } from 'vitest';
 import { glassRects, lightOf, starsAt, twinkle } from './day-night';
-import { facadeSvg, roomArchitecture } from './architecture-art';
+import { architectureKey, facadeSvg, hallShift, roomArchitecture } from './architecture-art';
+import { roomTemplates } from '../domain/types';
+import { initialWorld } from '../domain/world';
+import { addRoom } from '../domain/rooms';
 
 it('de dia não há véu; o entardecer escurece um pouco, a noite mais, e o amanhecer clareia', () => {
   expect(lightOf('manha', true).veil).toBe(0);
@@ -24,6 +27,18 @@ it('os vidros da fachada e das janelas do cômodo são lidos da arte (as janelas
   for (const r of house) { expect(r.width).toBeGreaterThan(10); expect(r.height).toBeGreaterThan(10); expect(r.x + r.width).toBeLessThanOrEqual(440); expect(r.y + r.height).toBeLessThanOrEqual(480); }
   expect(glassRects(roomArchitecture('dining'))).toContainEqual({ x: 100, y: 85, width: 220, height: 180 });
   expect(glassRects('<svg><rect x="1" y="2" width="3" height="4" fill="#fff"/></svg>')).toEqual([]);
+});
+it('num cômodo com escada, a arte da parede se estreita à direita do vão: nenhuma janela fica atrás da escada (x < 192)', () => {
+  for (const template of roomTemplates.filter(t => !['garden', 'playground'].includes(t))) {
+    const svg = roomArchitecture(template, true);
+    expect(svg).toContain('<g transform="translate(200 0) scale(.8 1)">');
+    for (const r of glassRects(svg)) expect([template, hallShift(r.x) >= 200]).toEqual([template, true]);
+  }
+  expect(roomArchitecture('empty')).not.toContain('<g transform');
+  const world = initialWorld();
+  expect(architectureKey(world)).toEqual({ key: 'architecture-empty', stairs: false });
+  expect(architectureKey(addRoom(world, { name: 'Sótão', template: 'empty', size: 'medium', cell: 4 }))).toEqual({ key: 'architecture-empty', stairs: false });
+  expect(architectureKey({ ...addRoom(world, { name: 'Sótão', template: 'empty', size: 'medium', cell: 4 }), room: 'sala' })).toEqual({ key: 'architecture-empty-stairs', stairs: true });
 });
 it('estrelas fixas no céu (repintar não as mexe) e, com movimento reduzido, sem piscar', () => {
   const a = starsAt(2000), b = starsAt(2000);

@@ -106,6 +106,17 @@ describe('onde o cômodo abre', () => {
     // The chosen character is a hard rule: kept in view even when the others are elsewhere.
     expect(openingX([], 500, 1000, { left: 40, right: 140 }, [{ left: 700, right: 780 }, { left: 800, right: 880 }])).toBeLessThanOrEqual(40);
   });
+  it('não abre com uma porta ou a escada cortada pela borda: inteira à vista ou fora dela; uma pessoa inteira vem antes', () => {
+    // The living room of 2 floors at 1024 (898 of 1200 in view): centred on the group, the edge would cut the stairs (16-186).
+    const people = [{ left: 203, right: 287 }, { left: 788, right: 872 }], stairs = { left: 16, right: 186 }, door = { left: 1080, right: 1184 };
+    expect(openingX([], 898, 1200, [], people)).toBeGreaterThan(16);
+    expect(openingX([], 898, 1200, [], people, [stairs, door])).toBeLessThanOrEqual(16);
+    // At 1280 (1072 in view) the doorway stays out of view rather than show its edge.
+    expect(openingX([{ left: 0, right: 150 }], 1072, 1200, [], people, [door]) + 1072).toBeLessThanOrEqual(1080);
+    // A doorway wider than the view cannot be whole: the person beside it is kept whole instead.
+    const x = openingX([], 150, 1000, [], [{ left: 200, right: 284 }], [{ left: 100, right: 300 }]);
+    expect(x).toBeGreaterThanOrEqual(134); expect(x).toBeLessThanOrEqual(200);
+  });
   it('a escolhida abre a 24 px ou mais da borda da cena', () => {
     vi.stubGlobal('ResizeObserver', class { observe() {} });
     const canvas = { parentElement: { clientWidth: 390, clientHeight: 467 }, style: { setProperty() {} }, dataset: {} as Record<string, string> } as unknown as HTMLCanvasElement;
@@ -133,6 +144,13 @@ it('cada peça do cômodo atual vira uma faixa horizontal pelo seu desenho', asy
   const world = initialWorld();
   expect(pieceSpans(world)).toContainEqual({ left: 292, right: 518 });
   expect(pieceSpans(world)).toHaveLength(world.layout.pieces.filter(p => p.room === world.room).length);
+});
+it('cada porta do fim da parede e a escada do cômodo atual viram a faixa da sua abertura', async () => {
+  const { initialWorld } = await import('../domain/world');
+  const { passageSpans } = await import('./viewport');
+  const world = initialWorld();
+  expect(passageSpans(world)).toEqual([{ left: 1080, right: 1184 }]);
+  expect(passageSpans({ ...world, room: 'quarto' })).toEqual([{ left: 16, right: 120 }]);
 });
 it('cada personagem do cômodo atual vira uma faixa da largura do seu anel', async () => {
   const { initialWorld } = await import('../domain/world');

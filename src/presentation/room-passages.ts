@@ -18,7 +18,7 @@ export function drawPassages(scene: Phaser.Scene, layout: Layout, room: RoomId) 
   const g = scene.add.graphics().setDepth(passageDepth);
   passages(layout, room).forEach(p => {
     if (p.kind === 'down') stairwell(g);
-    else if (p.kind === 'up') stairsUp(scene.add.graphics().setDepth(stairsDepth), p.box);
+    else if (p.kind === 'up') stairsUp(scene.add.graphics().setDepth(stairsDepth), p.box, roomColors(layout.rooms[p.room]!));
     else doorway(g, p.box, roomColors(layout.rooms[p.room]!), p.box.x > 16 ? 'right' : 'left');
   });
 }
@@ -40,38 +40,66 @@ function doorway(g: Shape, d: Rect, beyond: { wall: number; floor: number }, sid
   const knob = inset(.84, d.y + 128); g.fillStyle(0xf7db94).fillCircle(knob.x, knob.y, 4.5);
   g.fillStyle(0xd7c3ab).fillRect(d.x - 12, d.y + d.height - 2, d.width + 24, 9);
 }
-/** Stairs climbing to the left, into a hatch lit by the floor above, with a banister. */
-function stairsUp(g: Shape, d: Rect) {
-  const hatch = { x: d.x, y: d.y, width: 92, height: 46 }, steps = 6, run = (d.width - 18) / steps, rise = (d.height - hatch.height) / steps;
-  g.fillStyle(0xf5e8d3).fillRoundedRect(hatch.x - 6, hatch.y - 6, hatch.width + 12, hatch.height + 12, 6).fillStyle(0xfff2c8).fillRect(hatch.x, hatch.y, hatch.width, hatch.height);
-  g.lineStyle(2, 0xb9a68c).strokeRoundedRect(hatch.x - 6, hatch.y - 6, hatch.width + 12, hatch.height + 12, 6);
-  const bottom = d.y + d.height, right = d.x + d.width, outline: Points = [{ x: right, y: bottom }];
-  for (let i = 0; i < steps; i++) outline.push({ x: right - i * run, y: bottom - (i + 1) * rise }, { x: right - (i + 1) * run, y: bottom - (i + 1) * rise });
-  outline.push({ x: d.x + 18, y: bottom });
-  // Attached, not cut out: a soft shadow on the wall behind the flight and on the floor at its foot.
-  g.fillStyle(0x4a3c32, .16).fillPoints(outline.map(p => ({ x: p.x + 10, y: p.y + 4 })), true);
-  g.fillStyle(0x4a3c32, .22).fillEllipse(d.x + d.width / 2 + 8, bottom + 6, d.width + 34, 20);
-  fill(g, 0xd2a77f, outline, 0x8c6f55);
-  for (let i = 1; i <= steps; i++) g.lineStyle(3, 0xf0d6b4).lineBetween(right - i * run + 2, bottom - i * rise + 2, right - (i - 1) * run - 2, bottom - i * rise + 2);
-  // The handrail rises from a newel post at the foot and ends on a wall plate beside the hatch.
-  const top = { x: hatch.x + hatch.width + 10, y: bottom - 70 - (right - hatch.x - hatch.width - 10) * rise / run };
-  g.lineStyle(5, 0x8c6f55).lineBetween(right, bottom - 70, top.x, top.y);
-  [1.5, 3].forEach(i => g.lineStyle(3, 0x8c6f55).lineBetween(right - i * run - 4, bottom - Math.ceil(i) * rise, right - i * run - 4, bottom - i * rise - 70));
-  g.fillStyle(0x8c6f55).fillRect(right - 7, bottom - 76, 9, 76).fillCircle(right - 2.5, bottom - 78, 6);
-  g.fillStyle(0xf5e8d3).fillCircle(top.x, top.y, 7).lineStyle(2, 0xb9a68c).strokeCircle(top.x, top.y, 7);
-  g.fillStyle(0xd7c3ab).fillRect(d.x + 6, bottom - 2, d.width, 9);
+/** A mix of two colors, `t` of the way from `a` to `b`. */
+const mix = (a: number, b: number, t: number) => [16, 8, 0].reduce((c, shift) => c | Math.round(((a >> shift) & 255) * (1 - t) + ((b >> shift) & 255) * t) << shift, 0);
+const quad = (left: (y: number) => number, right: (y: number) => number, top: number, bottom: number): Points =>
+  [{ x: left(top), y: top }, { x: right(top), y: top }, { x: right(bottom), y: bottom }, { x: left(bottom), y: bottom }];
+/** Stairs seen from the front, rising into an opening in the back wall framed like the doorways: two steps out on the floor, then a
+ *  flight going away, narrower and darker step by step, up to the landing lit by the floor above (its wall and floor colours). */
+function stairsUp(g: Shape, d: Rect, above: { wall: number; floor: number }) {
+  const wall = 390, landing = d.y + 52, x0 = d.x, x1 = d.x + d.width;
+  g.fillStyle(0xf5e8d3).fillRoundedRect(x0 - 9, d.y - 9, d.width + 18, wall - d.y + 9, 8).lineStyle(2, 0xb9a68c).strokeRoundedRect(x0 - 9, d.y - 9, d.width + 18, wall - d.y + 9, 8);
+  g.fillStyle(above.wall).fillRect(x0, d.y, d.width, landing - d.y).fillStyle(0xfff2c8, .45).fillRect(x0, d.y, d.width, landing - d.y);
+  g.fillStyle(above.floor).fillRect(x0, landing - 8, d.width, 8);
+  // The flight's sides narrow toward the landing; the stairwell's own walls show beside it, the far one in shade.
+  const inset = (y: number) => 6 + (wall - y) * 30 / (wall - landing), left = (y: number) => x0 + inset(y), right = (y: number) => x1 - inset(y);
+  fill(g, 0x9a8676, [{ x: x0, y: landing }, { x: left(landing), y: landing }, { x: left(wall), y: wall }, { x: x0, y: wall }]);
+  fill(g, 0xbfae9c, [{ x: right(landing), y: landing }, { x: x1, y: landing }, { x: x1, y: wall }, { x: right(wall), y: wall }]);
+  const steps = 6, ratio = .82, first = (wall - landing) * (1 - ratio) / (1 - ratio ** steps);
+  let bottom = wall;
+  for (let i = 0; i < steps; i++) {
+    const top = bottom - first * ratio ** i, shade = i / (steps - 1);
+    fill(g, mix(0xc99a70, 0x7d6450, shade), quad(left, right, top, bottom));
+    fill(g, mix(0xecc9a1, 0x9c8068, shade), quad(left, right, top, top + Math.max(3, (bottom - top) * .3)));
+    bottom = top;
+  }
+  floorSteps(g, x0, x1);
+  banister(g, x1, landing, right);
 }
-/** A hole in the floor at the front left, with steps going down into it between two banisters. */
+/** The first two steps, out on the floor in front of the wall, wider than the flight, with their shadow on the floor. */
+function floorSteps(g: Shape, x0: number, x1: number) {
+  g.fillStyle(0x4a3c32, .2).fillEllipse((x0 + x1) / 2, 442, x1 - x0 + 50, 16);
+  [[384, 398, 412, 4], [404, 418, 440, -6]].forEach(([top, edge, bottom, out]) => {
+    fill(g, 0xe6c39c, [{ x: x0 - out! + 4, y: top! }, { x: x1 + out! - 4, y: top! }, { x: x1 + out!, y: edge! }, { x: x0 - out!, y: edge! }], 0x8c6f55);
+    fill(g, 0xc99a70, [{ x: x0 - out!, y: edge! }, { x: x1 + out!, y: edge! }, { x: x1 + out!, y: bottom! }, { x: x0 - out!, y: bottom! }], 0x8c6f55);
+  });
+}
+/** On the room's side a newel post stands on the first step; its handrail climbs with the flight into the opening, on balusters. */
+function banister(g: Shape, x1: number, landing: number, right: (y: number) => number) {
+  const foot = { x: x1 + 8, y: 418 }, end = { x: right(landing + 20) - 4, y: landing - 26 }, post = 74;
+  const along = (t: number) => ({ x: foot.x + (end.x - foot.x) * t, y: foot.y - post + (end.y - foot.y + post) * t });
+  [.2, .4, .6, .8].forEach(t => { const top = along(t); g.lineStyle(3 - t * 1.5, 0x8c6f55).lineBetween(top.x, top.y, top.x, top.y + post * (1 - t * .7)); });
+  g.lineStyle(5, 0x8c6f55).lineBetween(foot.x, foot.y - post, end.x, end.y);
+  g.fillStyle(0x8c6f55).fillRect(foot.x - 5, foot.y - post, 10, post).fillCircle(foot.x, foot.y - post - 2, 7);
+}
+/** A hole in the floor at the front left, steps going down into it (darker as they go), fenced by a banister with a gap to go in. */
 function stairwell(g: Shape) {
-  fill(g, 0xd7c3ab, [{ x: 64, y: 510 }, { x: 236, y: 510 }, { x: 258, y: 600 }, { x: 32, y: 600 }], 0xb9a68c);
-  const colors = [0x5d5048, 0x7a6656, 0x9c8068, 0xc29e7c], top = 518, bottom = 600, band = (bottom - top) / colors.length;
-  const left = (y: number) => 72 - (y - top) * 32 / (bottom - top), right = (y: number) => 228 + (y - top) * 22 / (bottom - top);
-  colors.forEach((color, i) => {
-    const y0 = top + i * band, y1 = y0 + band;
-    fill(g, color, [{ x: left(y0), y: y0 }, { x: right(y0), y: y0 }, { x: right(y1), y: y1 }, { x: left(y1), y: y1 }]);
-    g.lineStyle(2, 0xf0d6b4, .8).lineBetween(left(y0), y0 + 1, right(y0), y0 + 1);
-  });
-  [[64, 32], [236, 258]].forEach(([back, front]) => {
-    g.lineStyle(4, 0x8c6f55).lineBetween(back!, 510, back!, 470).lineBetween(front!, 600, front!, 548).lineBetween(back!, 470, front!, 548);
-  });
+  const top = 516, bottom = 600, left = (y: number) => 64 - (y - top) * 32 / (bottom - top), right = (y: number) => 236 + (y - top) * 22 / (bottom - top);
+  g.fillStyle(0x4a3c32, .18).fillEllipse(148, 512, 210, 16);
+  fill(g, 0xd7c3ab, quad(y => left(y) - 8, y => right(y) + 8, top - 6, bottom), 0xb9a68c);
+  fill(g, 0x4e433c, quad(left, right, top, bottom));
+  const steps = 5, band = (bottom - top - 10) / steps;
+  for (let i = 0; i < steps; i++) {
+    const y0 = top + 10 + i * band, shade = 1 - i / (steps - 1);
+    fill(g, mix(0xc29e7c, 0x5d5048, shade), quad(left, right, y0, y0 + band));
+    g.lineStyle(2, 0xf0d6b4, .7 - shade * .5).lineBetween(left(y0), y0 + 1, right(y0), y0 + 1);
+  }
+  g.fillStyle(0x3b322c, .5).fillRect(left(top), top, right(top) - left(top), 10);
+  const rail = 0x8c6f55, posts: [number, number][] = [[left(top) - 4, top - 2], [right(top) + 4, top - 2], [right(bottom) + 6, bottom]];
+  posts.forEach(([x, y]) => g.fillStyle(rail).fillRect(x - 4, y - 46, 8, 46).fillCircle(x, y - 48, 5));
+  g.lineStyle(4, rail).lineBetween(posts[0]![0], posts[0]![1] - 44, posts[1]![0], posts[1]![1] - 44).lineBetween(posts[1]![0], posts[1]![1] - 44, posts[2]![0], posts[2]![1] - 44);
+  for (let t = .2; t < 1; t += .2) {
+    const x = posts[0]![0] + (posts[1]![0] - posts[0]![0]) * t;
+    g.lineStyle(2.5, rail).lineBetween(x, top - 2, x, top - 46);
+  }
 }

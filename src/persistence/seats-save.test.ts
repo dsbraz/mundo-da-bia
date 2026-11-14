@@ -86,3 +86,15 @@ it('o save da casa única e o álbum convertem os ids antigos', () => {
   expect(decodeAlbum(JSON.stringify(raw))).toEqual(album);
   expect(decodeAlbum(JSON.stringify({ version: 1, album: raw.album }))?.houses[0]!.state.actors[1]!.seat).toBe('2.1');
 });
+it('dois sofás na sala e duas camas no quarto voltam iguais do save; só os fixos são únicos por cômodo, como no build de rollback (W3L-18)', async () => {
+  const { editWorld } = await import('../domain/design');
+  const { fixtures } = await import('../domain/layout');
+  let world = editWorld(initialWorld(), { type: 'add', kind: 'sofa' });
+  world = { ...editWorld({ ...world, room: 'quarto' }, { type: 'add', kind: 'bed' }), room: 'sala' };
+  const doubled = upgradeToV3(migrateNeighborhood(initialAlbum(world))), pieces = doubled.buildings[0]!.layout.pieces;
+  expect([pieces.filter(p => p.kind === 'sofa').length, pieces.filter(p => p.kind === 'bed').length]).toEqual([2, 2]);
+  expect(decodeNeighborhood(encodeNeighborhood(doubled))).toEqual(doubled);
+  // The one-per-room rule of every build since W3L-06 (the W3L-18 rollback build and lot 4 read this save): a sofa or a bed among the
+  // fixtures would refuse it whole.
+  expect(fixtures).toEqual(['wardrobe', 'fridge', 'lamp', 'table', 'stage']);
+});
