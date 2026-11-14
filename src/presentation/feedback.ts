@@ -103,19 +103,20 @@ export function applyReaction(figure: Container, pose: Container) {
   pose.x += Number(figure.getData('shake') ?? 0) + lean;
   pose.y += Number(figure.getData('hop') ?? 0);
   pose.rotation += Number(figure.getData('tilt') ?? 0) + lean * .003;
-  const hands = pose.getByName<Phaser.GameObjects.Image>('hands');
-  raiseArms(hands, figure, pose);
-  hugArm(hands, Number(figure.getData('hugSide') ?? 0));
+  const hands = pose.getByName<Phaser.GameObjects.Image>('hands'), side = Number(figure.getData('hugSide') ?? 0);
+  raiseArms(hands, figure, pose, side);
+  hugArm(hands, side);
 }
 /** Arms up: a grown-up's raised-arms drawing, sleeves and all (lot 8B); a child's arms layer upside down (its shoulders are at the
- *  drawing's middle) with its garment's sleeves turned up the same way. */
-function raiseArms(hands: Phaser.GameObjects.Image | null, figure: Container, pose: Container) {
+ *  drawing's middle) with its garment's sleeves turned up the same way. In a hug a child's garment lets go of that side's sleeve. */
+function raiseArms(hands: Phaser.GameObjects.Image | null, figure: Container, pose: Container, side: number) {
   const raised = Number(figure.getData('arms') ?? 0) > .5, own = hands?.getData('arms') as { down: string; up: string } | undefined;
-  if (!own) { hands?.setFlipY(raised); raiseSleeves(pose, raised); return; }
+  if (!own) { hands?.setFlipY(raised); raiseSleeves(pose, raised, side); return; }
   const key = raised ? own.up : own.down;
   if (hands!.texture.key !== key) hands!.setTexture(key);
 }
-/** In a hug (lot 6B) the arm on the partner's side goes around them: the hanging one on that side is not drawn. */
+/** In a hug (lot 6B) the arm on the partner's side goes around them: the hanging one on that side is not drawn (back once it ends). */
 function hugArm(hands: Phaser.GameObjects.Image | null, side: number) {
   if (hands && side) hands.setCrop(side > 0 ? 0 : hands.width / 2, 0, hands.width / 2, hands.height);
+  else if (hands?.isCropped) hands.setCrop();
 }
