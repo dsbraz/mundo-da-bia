@@ -126,7 +126,7 @@ test('lote 6F: sem mercado no bairro, o lanche em silhueta acende o Criar', asyn
   await expect(page.locator('#build-toggle.wanted')).toHaveCount(1);
 });
 
-test('lote 6F: o lanche acaba depois de 4; em silhueta mostra o mercado, e com fome o balão desenha o mercado e leva ao Mapa', async ({ page }) => {
+test('lote 6F: o lanche acaba depois de 4; em silhueta mostra o mercado', async ({ page }) => {
   test.setTimeout(240_000);
   await page.clock.install({ time: new Date('2026-11-13T15:00:00') });
   await open(page, town('home'));
@@ -142,6 +142,12 @@ test('lote 6F: o lanche acaba depois de 4; em silhueta mostra o mercado, e com f
   await tap(page, 680, 310);
   await expect(page.locator('.missing-bubble[data-need="market"]')).toBeVisible();
   await page.screenshot({ path: 'reports/review/fridge-empty-silhouette-1024.png' });
+});
+
+test('lote 6F: com fome e sem lanche em casa, o balão desenha o mercado e leva ao Mapa', async ({ page }) => {
+  test.setTimeout(240_000);
+  await page.clock.install({ time: new Date('2026-11-13T15:00:00') });
+  await open(page, town('home', 0));
   // Hungry later, with nothing left at home: her bubble (the need's thought or the routine's dashed one, whichever is up) draws the
   // market, never the plate, and a touch marks the market on the Map.
   const market = page.locator('.missing-bubble.thought[data-market="true"], .missing-bubble.wish[data-suggestion="mercado"]');
