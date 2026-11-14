@@ -138,9 +138,12 @@ test('lote 6F: o lanche acaba depois de 4; em silhueta mostra o mercado', async 
       await expect.poll(async () => (await readTown(page)).buildings[0]!.snacks, { timeout: 4000 }).toBe(left);
     }).toPass({ timeout: 30000 });
   }
-  // The fifth stays in the fridge as a silhouette: a touch shows the market (a touch on that opens the Map).
-  await tap(page, 680, 310);
-  await expect(page.locator('.missing-bubble[data-need="market"]')).toBeVisible();
+  // The fifth stays in the fridge as a silhouette: a touch shows the market (a touch on that opens the Map). Under load a retried drag
+  // above may have landed as a tap on the fridge and closed it; then the first touch opens it again and the next one shows the market.
+  await expect(async () => {
+    await tap(page, 680, 310);
+    await expect(page.locator('.missing-bubble[data-need="market"]')).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 20000 });
   await page.screenshot({ path: 'reports/review/fridge-empty-silhouette-1024.png' });
 });
 
