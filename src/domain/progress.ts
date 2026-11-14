@@ -17,6 +17,17 @@ export type ShelfUnlock = typeof shelfIds[number];
 /** The 12 themes of the school's drawing of the day (W3L-26), in the order they come out; these strings are save format. */
 export const drawingIds = ['sol', 'gato', 'casa', 'flor', 'foguete', 'arvore', 'peixe', 'borboleta', 'arco-iris', 'barco', 'lua', 'passaro'] as const;
 export type DrawingId = typeof drawingIds[number];
+/** What the other lessons leave on the fridge (lot 8D): a written page with a short word, and a math sheet with a sum (a + b ≤ 9);
+ *  these strings are save format, kept in `drawings` with the drawings (an earlier v3 build drops them, as 4.4 allows). */
+export const wordIds = ['palavra-bia', 'palavra-sol', 'palavra-gato', 'palavra-lua', 'palavra-casa', 'palavra-bola', 'palavra-pato',
+  'palavra-flor', 'palavra-sapo', 'palavra-uva', 'palavra-mel', 'palavra-pipa'] as const;
+export const sumIds = ['conta-2-3', 'conta-1-4', 'conta-3-3', 'conta-4-2', 'conta-5-1', 'conta-2-6', 'conta-3-4', 'conta-1-7', 'conta-4-4',
+  'conta-2-5', 'conta-3-6', 'conta-1-8'] as const;
+export type WordId = typeof wordIds[number];
+export type SumId = typeof sumIds[number];
+/** A paper a lesson leaves: a drawing, a written page or a math sheet. */
+export type Keepsake = DrawingId | WordId | SumId;
+export const keepsakeIds: readonly Keepsake[] = [...drawingIds, ...wordIds, ...sumIds];
 /** Letters L01–L12 and the notes B1–B8. */
 export const letterCount = 20;
 export const inboxLimit = 3;
@@ -33,8 +44,9 @@ export interface Progress {
   revealed: RecipeId[]; favorites: ActorId[]; goals: GoalId[];
   /** What has appeared on the market's shelves (W3L-23); it only grows. */
   shelves: ShelfUnlock[];
-  /** The school's drawings of the day (W3L-26), oldest first and each once: the newest 4 hang on the fridge door. */
-  drawings: DrawingId[];
+  /** The school's papers (W3L-26, lot 8D: drawings, written pages and math sheets), oldest first and each once: the newest 4 hang on
+   *  the fridge door. */
+  drawings: Keepsake[];
 }
 export function initialProgress(): Progress {
   return { recipes: [], fancy: [], seeds: ['alface', 'tomate', 'cenoura'], specials: [], basket: {}, plaza: {},

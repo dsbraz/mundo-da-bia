@@ -255,7 +255,7 @@ export class PlayScene extends Phaser.Scene {
     this.mirrors.frame(time, this.figures, expressions, reduced); this.balls.step(this.world, this.objects, this.kicker(), ctx.now);
     this.ambient.life.flush(); this.mark('gait', ctx.gaits.join(' '));
     this.mark('faces', shown.join(' '));
-    this.outdoor.frame(time, reduced); this.night.frame(time, reduced); this.lessons.frame(ctx.now, this.figures, reduced); this.staff.frame(ctx.now, reduced, this.lessons.active());
+    this.outdoor.frame(time, reduced); this.night.frame(time, reduced); this.lessons.frame(ctx.now, this.figures, reduced, this.staff.at()); this.staff.frame(ctx.now, reduced, this.lessons.away());
     this.mark('uses', animatePieces(this.pieces, time, reduced));
   }
 }

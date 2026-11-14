@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { isSchool, lesson, nextTheme, pupilsOf } from './school';
+import { isSchool, lesson, nextKeepsake, nextTheme, pupilsOf } from './school';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
 import { initialAlbum } from './houses';
 import { initialWorld } from './world';
-import { drawingIds, type DrawingId } from './progress';
+import { drawingIds, sumIds, wordIds, type DrawingId, type Keepsake } from './progress';
 import { needsOf } from './needs';
 import type { ActorId } from './types';
 import type { Neighborhood } from './neighborhood-types';
@@ -47,7 +47,7 @@ describe('a escola (W3L-26)', () => {
     const bored = seated(school(), 'bia', 'leo');
     const town = { ...bored, actors: bored.actors.map(a => ({ ...a, needs: { fome: 20, sono: 0, tedio: 60, alegria: 0 } })) };
     const { town: after, outcome } = lesson(town, here);
-    expect(outcome).toEqual({ kind: 'lesson', theme: drawingIds[0], pupils: ['bia', 'leo'] });
+    expect(outcome).toEqual({ kind: 'lesson', subject: 'desenho', theme: drawingIds[0], pupils: ['bia', 'leo'] });
     expect(after.progress.drawings).toEqual([drawingIds[0]]);
     for (const id of ['bia', 'leo']) expect(needsOf(after.actors.find(a => a.id === id)!)).toMatchObject({ tedio: 20, alegria: 60_000 });
     expect(needsOf(after.actors.find(a => a.id === 'luna')!).tedio).toBe(60);
@@ -84,3 +84,28 @@ describe('a escola (W3L-26)', () => {
     expect(nextTheme([...drawingIds].reverse())).toBe(drawingIds[11]);
   });
 });
+describe('a matéria da aula (lote 8D)', () => {
+  it('escrita dá uma folha com palavra e matemática uma folha com conta; cada matéria roda as suas, na mesma lista da geladeira', () => {
+    let town = seated(school(), 'bia');
+    const kept: Keepsake[] = [];
+    for (const subject of ['escrita', 'matematica', 'desenho', 'escrita'] as const) {
+      const result = lesson(town, here, subject); town = result.town;
+      expect(result.outcome).toMatchObject({ kind: 'lesson', subject, pupils: ['bia'] });
+      kept.push((result.outcome as { theme: Keepsake }).theme);
+    }
+    expect(kept).toEqual([wordIds[0], sumIds[0], drawingIds[0], wordIds[1]]);
+    expect(town.progress.drawings).toEqual(kept);
+  });
+  it('nextKeepsake: só olha a própria matéria; quando todas saíram volta a mais antiga dela, nunca a de outra', () => {
+    expect(nextKeepsake([], 'matematica')).toBe(sumIds[0]);
+    expect(nextKeepsake([...wordIds], 'desenho')).toBe(drawingIds[0]);
+    expect(nextKeepsake([drawingIds[3], ...wordIds], 'escrita')).toBe(wordIds[0]);
+    expect(nextKeepsake([wordIds[2], ...drawingIds], 'desenho')).toBe(drawingIds[0]);
+    expect(nextTheme([wordIds[0], ...drawingIds])).toBe(drawingIds[0]);
+  });
+  it('as palavras são curtas e as contas cabem num algarismo (7 a 10 anos)', () => {
+    for (const id of wordIds) expect(id.replace('palavra-', '')).toMatch(/^[a-z]{2,4}$/);
+    for (const id of sumIds) { const [a, b] = id.replace('conta-', '').split('-').map(Number); expect(a! + b!).toBeLessThanOrEqual(9); expect(a).toBeGreaterThan(0); }
+  });
+});
+

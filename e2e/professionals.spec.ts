@@ -5,7 +5,7 @@ import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborh
 import type { Neighborhood } from '../src/domain/neighborhood-types';
 import { drag, readTown, swipe } from './helpers';
 import { openPro, proTown, tapStaff } from './pro-helpers';
-import { openSchool, seatAt } from './school-helpers';
+import { chooseSubject, openSchool, seatAt } from './school-helpers';
 
 const canvas = (page: Page) => page.locator('canvas');
 async function goTo(page: Page, building: string, room: string) {
@@ -38,6 +38,7 @@ test('lote 7: tocar na professora com a Bia e o Léo sentados começa a aula, e 
   await expect(canvas(page)).toHaveAttribute('data-staff', /^teacher:/);
   await seatAt(page, 'bia', 0); await seatAt(page, 'leo', 1);
   await tapStaff(page);
+  await chooseSubject(page);
   await expect.poll(() => canvas(page).getAttribute('data-lesson')).toBe('sol:drawing');
   expect((await readTown(page)).progress.drawings).toEqual(['sol']);
   await page.clock.runFor(5000);
