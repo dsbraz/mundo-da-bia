@@ -43,7 +43,8 @@ async function raise(page: Page, id: string, name: string) {
 }
 
 for (const [girls, boys] of batches) test(`lote 8B: a manga sobe com o braço — ${girls} e ${boys}`, async ({ page }) => {
-  test.setTimeout(90_000);
+  // Four crops at twice the pixels, each with clock steps that render slowly: more than the 90 s of the other batches.
+  test.setTimeout(180_000);
   await start(page, { bia: girls, luna: boys, leo: girls, rui: boys }, kids);
   for (const [id, look] of [['bia', girls], ['luna', boys], ['leo', girls], ['rui', boys]] as const) await raise(page, id, `${id}-${look}`);
 });

@@ -4,7 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { readTown, ready, tap } from './helpers';
-import { playMinutes } from './session';
+import { playMinutes, playUntilTrue } from './session';
 
 // Lot 6B: when the thought bubble would sit under the open action ring, it stands beside the head of who thinks it, its tail toward it.
 const sizes = [{ width: 1024, height: 768 }, { width: 1280, height: 800 }];
@@ -20,9 +20,11 @@ const thought = (page: Page) => page.locator('.missing-bubble.thought');
 for (const size of sizes) test(`ao lado do anel de ações, a cauda da bolha aponta para a cabeça da Bia, a ${size.width}`, async ({ page }) => {
   test.setTimeout(180_000);
   await seed(page, size);
-  // 13 min without eating: she asks from 6 min 40 s, and her thought's turn comes at 13 min 30 s (Léo's hunger took the room's turn at
-  // 5 min 30 s, and asks are 8 min apart: lot 8E). Needs are never saved, so they are played.
-  await playMinutes(page, 13);
+  // Léo's hunger takes the room's first turn (about 5 min 30 s, after however long the page took to open), and asks are 8 min apart
+  // (lot 8E): she asks from 6 min 40 s, so her thought's turn is the next one. Needs are never saved, so they are played.
+  await playUntilTrue(page, async () => { await page.clock.runFor(100); return await page.locator('.missing-bubble.thought[data-actor=leo]').count() > 0; }, 8);
+  // Half a minute before her turn.
+  await playMinutes(page, 7.5);
   // Choosing the Bia opens her ring above her head, where her thought would be: the thought stands beside it.
   const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!;
   await tap(page, bia.x, bia.y - 120);

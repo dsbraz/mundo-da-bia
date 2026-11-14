@@ -60,8 +60,8 @@ test('lote 8C: com o Rui muito entediado, ler na poltrona da biblioteca alivia o
   await page.locator('#tray-toggle').click(); await page.locator('#cast [data-actor=rui]').click(); await page.locator('#tray-toggle').click();
   await tapBookcase(page, 'room-3');
   await expect.poll(async () => (await books(page)).map(b => b.holder)).toEqual(['rui']);
-  // Rui (boredom ×1.4) left standing still: about 10 minutes later his boredom is in `precisa`, the bored face.
-  await playMinutes(page, 9);
+  // Rui (boredom ×1.4, +3/min: lot 8E) left standing still: about 17 minutes later his boredom is in `precisa`, the bored face.
+  await playMinutes(page, 16);
   await playUntilTrue(page, async () => await face(page, 'rui') === 'bored', 3);
   const armchair = (await readTown(page)).buildings[1]!.layout.pieces.find(p => p.room === 'room-3' && p.kind === 'armchair')!;
   const rui = (await readTown(page)).actors.find(a => a.id === 'rui')!, seat = visualPiecePoint(armchair, { x: armchair.x + 90, y: armchair.y + 145 });
