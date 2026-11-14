@@ -26,4 +26,6 @@ export const tastes: Record<ActorId, Taste> = {
   // The grown-ups (W3L-24, §3.6): bored ×0.6, and their "game" is the TV. Dishes and gifts are proposals for the family.
   daniel: { favorite: 'misto-quente', gift: 'canela', game: 'tv', pace: { tedio: 0.6 } },
   fabiana: { favorite: 'sopa-de-legumes', gift: 'colher', game: 'tv', pace: { tedio: 0.6 } },
+  // Laura (lot 8B), 18: between the children and the parents, bored ×0.8; she plays the piano.
+  laura: { favorite: 'vitamina-de-morango', gift: 'chocolate', game: 'piano', pace: { tedio: 0.8 } },
 };

@@ -20,7 +20,7 @@ describe('necessidades de uma sessão (§3.1)', () => {
     expect(initialNeeds('bia')).toEqual({ fome: 30, sono: 0, tedio: 0, alegria: 0 });
     expect(initialNeeds()).toEqual(initialNeeds('bia'));
     expect(startTown().actors.map(a => [a.id, initialNeeds(a.id).fome])).toEqual([['bia', 30], ['luna', 27], ['leo', 32], ['rui', 30], ['mimi', 28],
-      ['nino', 24], ['pipoca', 20], ['daniel', 24], ['fabiana', 21]]);
+      ['nino', 24], ['pipoca', 20], ['daniel', 24], ['fabiana', 21], ['laura', 26]]);
     for (const a of startTown().actors) expect(needsOf(a)).toEqual(initialNeeds(a.id));
     expect(who(startTown(), 'bia').needs).toBeUndefined();
   });
@@ -110,7 +110,7 @@ describe('necessidades de uma sessão (§3.1)', () => {
   it('as taxas por personalidade moram em tastes.ts', () => {
     expect(Object.fromEntries(Object.entries(tastes).filter(([, t]) => t.pace).map(([id, t]) => [id, t.pace]))).toEqual({
       leo: { sono: 1.1 }, rui: { tedio: 1.4, fome: 0.6 }, mimi: { sono: 1.5, fome: 0.6 }, nino: { sono: 1.5, fome: 0.6 }, pipoca: { sono: 1.5, fome: 0.6 },
-      daniel: { tedio: 0.6 }, fabiana: { tedio: 0.6 } });
+      daniel: { tedio: 0.6 }, fabiana: { tedio: 0.6 }, laura: { tedio: 0.8 } });
   });
 });
 

@@ -41,13 +41,13 @@ describe('os adultos no save (W3L-24, §4)', () => {
     const world = initialWorld(), old = withoutAdults(world);
     for (const version of [1, 2, 4]) {
       const loaded = savedWorld({ version, state: old })!;
-      expect(loaded.actors.filter(a => adult(a.id)).map(a => [a.id, a.room, a.seat])).toEqual([['daniel', 'sala', null], ['fabiana', 'sala', null]]);
+      expect(loaded.actors.filter(a => adult(a.id)).map(a => [a.id, a.room, a.seat])).toEqual([['daniel', 'sala', null], ['fabiana', 'sala', null], ['laura', 'sala', null]]);
     }
     const album = decodeAlbum(encodeAlbum({ active: 1, houses: [{ id: 1, name: 'Minha casa', state: old as World }] }))!;
     expect(album.houses[0]!.state.actors.map(a => a.id)).toEqual(world.actors.map(a => a.id));
   });
   it('o turno de trabalho nunca vai para o save (W3L-25, §4): com ou sem ele, os bytes são os mesmos', () => {
-    const value = town(), working = { ...value, actors: value.actors.map(a => a.id === 'daniel' ? { ...a, look: 'office' as const, work: { look: 'outing' as const } } : a) };
+    const value = town(), working = { ...value, actors: value.actors.map(a => a.id === 'daniel' ? { ...a, look: 'office' as const, work: {} } : a) };
     const plainLook = { ...value, actors: value.actors.map(a => a.id === 'daniel' ? { ...a, look: 'office' as const } : a) };
     expect(encodeNeighborhood(working)).toBe(encodeNeighborhood(plainLook));
     expect(decodeNeighborhood(JSON.stringify({ version: 3, town: { ...plain(working), actors: working.actors } }))!.actors.find(a => a.id === 'daniel')!.work).toBeUndefined();
@@ -58,7 +58,7 @@ describe('os adultos no save (W3L-24, §4)', () => {
   });
   it('round-trip: o save novo com os adultos volta igual', () => {
     const value = town();
-    expect(value.actors.filter(a => adult(a.id))).toHaveLength(2);
+    expect(value.actors.filter(a => adult(a.id))).toHaveLength(3);
     expect(decodeNeighborhood(encodeNeighborhood(value))).toEqual(value);
   });
 });

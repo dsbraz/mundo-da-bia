@@ -1,10 +1,10 @@
 import type Phaser from 'phaser';
-import type { ActorId, Point } from '../domain/types';
+import type { Point } from '../domain/types';
 import type { ReactionPose } from '../content/personalities';
 import { bubbleExit, reducedMotion } from './motion';
 import { hex, palette } from './palette';
 import { textStyle } from './text-style';
-import { raisedArmsY } from './pose';
+import { raiseSleeves } from './raised-sleeves';
 
 type Container = Phaser.GameObjects.Container;
 const bubbles = new WeakMap<Phaser.Scene, Map<string, Container>>();
@@ -104,13 +104,16 @@ export function applyReaction(figure: Container, pose: Container) {
   pose.y += Number(figure.getData('hop') ?? 0);
   pose.rotation += Number(figure.getData('tilt') ?? 0) + lean * .003;
   const hands = pose.getByName<Phaser.GameObjects.Image>('hands');
-  raiseArms(hands, figure);
+  raiseArms(hands, figure, pose);
   hugArm(hands, Number(figure.getData('hugSide') ?? 0));
 }
-/** Arms up: the arms layer upside down, lifted back to a grown-up's shoulder (`raisedArmsY`). */
-function raiseArms(hands: Phaser.GameObjects.Image | null, figure: Container) {
-  const raised = Number(figure.getData('arms') ?? 0) > .5;
-  hands?.setFlipY(raised).setY(raised ? raisedArmsY({ id: figure.name as ActorId, kind: 'human' }) : 0);
+/** Arms up: a grown-up's raised-arms drawing, sleeves and all (lot 8B); a child's arms layer upside down (its shoulders are at the
+ *  drawing's middle) with its garment's sleeves turned up the same way. */
+function raiseArms(hands: Phaser.GameObjects.Image | null, figure: Container, pose: Container) {
+  const raised = Number(figure.getData('arms') ?? 0) > .5, own = hands?.getData('arms') as { down: string; up: string } | undefined;
+  if (!own) { hands?.setFlipY(raised); raiseSleeves(pose, raised); return; }
+  const key = raised ? own.up : own.down;
+  if (hands!.texture.key !== key) hands!.setTexture(key);
 }
 /** In a hug (lot 6B) the arm on the partner's side goes around them: the hanging one on that side is not drawn. */
 function hugArm(hands: Phaser.GameObjects.Image | null, side: number) {
