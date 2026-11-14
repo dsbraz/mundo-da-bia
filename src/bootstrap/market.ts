@@ -76,7 +76,7 @@ export function marketPlay(deps: MarketDeps) {
     if (outcome === 'bagged') deps.feedback.sound.cue('pick');
     panel.show(bagView(), outcome === 'full');
   }
-  function close() { shelf = null; panel.close(); }
+  function close() { shelf = null; panel.close(); callOut(); }
   /** She walks to the checkout that calls her and pays there (the arrow, the register beside the bag, the bubble). */
   function goPay() { const piece = calling(deps.town(), deps.selected()); if (piece) { close(); deps.perform({ type: 'use', id: piece.id }); } }
   /** Beep, beep: the bag gets its ribbon, the receipt pops out of the register and she cheers (whoever works there waves). */

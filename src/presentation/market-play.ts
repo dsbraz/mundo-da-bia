@@ -31,7 +31,7 @@ export function marketPanel(root: HTMLElement, actions: MarketActions) {
   const slots = Array.from({ length: bagLimit }, () => element('span', 'bag-slot'));
   bag.append(bagArt, ...slots);
   // Lot 6F: with goods not paid for, the register beside the bag calls her to the checkout.
-  const pay = element('button', 'market-pay', marketText.pay); pay.append(picture('/art/market.svg#checkout')); pay.hidden = true;
+  const pay = element('button', 'market-pay', marketText.pay); pay.append(picture('/icons/register.svg')); pay.hidden = true;
   pay.addEventListener('click', () => actions.pay());
   const top = element('div', 'bench-top'); top.append(close, bag, pay);
   panel.append(top, shelf); root.append(panel);

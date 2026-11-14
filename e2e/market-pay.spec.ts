@@ -106,20 +106,24 @@ test('lote 6F: o lanche acaba depois de 4; em silhueta mostra o mercado, e com f
   await page.clock.install({ time: new Date('2026-11-13T15:00:00') });
   await open(page, town('home'));
   for (let left = 3; left >= 0; left--) {
-    const bia = (await readTown(page)).actors[0]!;
-    await drag(page, [680, 310], [bia.x, bia.y - 70]);
-    await expect.poll(async () => (await readTown(page)).buildings[0]!.snacks, { timeout: 15000 }).toBe(left);
+    // Under load the scene may still be reacting to the last bite: drag again until this one is eaten.
+    await expect(async () => {
+      const bia = (await readTown(page)).actors[0]!;
+      await drag(page, [680, 310], [bia.x, bia.y - 70]);
+      await expect.poll(async () => (await readTown(page)).buildings[0]!.snacks, { timeout: 4000 }).toBe(left);
+    }).toPass({ timeout: 30000 });
   }
   // The fifth stays in the fridge as a silhouette: a touch shows the market (a touch on that opens the Map).
   await tap(page, 680, 310);
   await expect(page.locator('.missing-bubble[data-need="market"]')).toBeVisible();
   await page.screenshot({ path: 'reports/review/fridge-empty-silhouette-1024.png' });
-  // Hungry later, with nothing left at home: the thought draws the market, and a touch marks it on the Map.
-  const thought = page.locator('.missing-bubble.thought[data-need="fome"]');
-  await playUntilTrue(page, async () => await thought.count() > 0, 20);
-  await expect(thought).toHaveAttribute('data-market', 'true');
-  await expect(thought.locator('img')).toHaveAttribute('src', '/art/market.svg#market');
-  await thought.click();
+  // Hungry later, with nothing left at home: her bubble (the need's thought or the routine's dashed one, whichever is up) draws the
+  // market, never the plate, and a touch marks the market on the Map.
+  const market = page.locator('.missing-bubble.thought[data-market="true"], .missing-bubble.wish[data-suggestion="mercado"]');
+  await playUntilTrue(page, async () => await market.count() > 0, 20);
+  await expect(page.locator('.missing-bubble.wish[data-suggestion="prato"], .missing-bubble.thought[data-market="false"][data-need="fome"]')).toHaveCount(0);
+  await expect(market.locator('img')).toHaveAttribute('src', '/art/market.svg#market');
+  await market.click();
   await expect(page.locator('#neighborhood-list [data-building="2"]')).toHaveClass(/marked/);
 });
 

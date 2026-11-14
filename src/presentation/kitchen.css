@@ -73,12 +73,13 @@
 .market-pay{width:60px;height:60px;padding:4px!important;border:2px solid var(--outline);border-radius:14px;background:var(--card);animation:wanted-glow 1.4s ease-in-out infinite alternate}
 .market-pay[hidden]{display:none}.market-pay img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
 #checkout-call{position:absolute;z-index:8;width:120px;height:150px;margin:-112px 0 0 -60px;padding:0;border:0;background:none;cursor:pointer}
-#checkout-call .arrow{position:absolute;left:50%;top:0;width:58px;height:72px;margin-left:-29px;pointer-events:none;filter:drop-shadow(0 4px 4px #43394033);animation:call-bounce .9s ease-in-out infinite}
-#checkout-call .halo{position:absolute;left:50%;top:84px;width:110px;height:70px;margin-left:-55px;border:5px solid #f2b630;border-radius:50%;box-shadow:0 0 14px 4px #f2b63088;pointer-events:none;animation:halo-pulse 1.2s ease-out infinite}
+#checkout-call .arrow{position:absolute;left:50%;top:-8px;width:66px;height:82px;margin-left:-33px;pointer-events:none;filter:drop-shadow(0 4px 4px #43394033);animation:call-bounce .9s ease-in-out infinite}
+#checkout-call .halo{position:absolute;left:50%;top:84px;width:116px;height:76px;margin-left:-58px;border:7px solid #f2b630;border-radius:50%;background:radial-gradient(#f2b63033,#f2b63000 70%);box-shadow:0 0 18px 6px #f2b630aa;pointer-events:none;animation:halo-pulse 1.2s ease-in-out infinite alternate}
 #checkout-call.nudge .arrow{animation:call-jump .45s ease-out 3}
 @keyframes call-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
 @keyframes call-jump{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-22px) scale(1.25)}}
-@keyframes halo-pulse{from{transform:scale(.8);opacity:1}to{transform:scale(1.25);opacity:.15}}
+@keyframes halo-pulse{from{transform:scale(.9);opacity:1}to{transform:scale(1.15);opacity:.55}}
+#market-chip[hidden]{display:none}
 #market-chip{position:absolute;z-index:11;top:96px;left:12px;display:flex;align-items:center;gap:6px;padding:6px 8px 6px 10px;background:var(--paper);border:1.5px solid var(--outline);border-radius:18px;box-shadow:0 6px 18px #343c531f}
 #market-chip .chip-bag{width:52px;height:52px;pointer-events:none}
 #market-chip .chip-goods{display:flex;flex-wrap:wrap;max-width:120px;gap:2px}

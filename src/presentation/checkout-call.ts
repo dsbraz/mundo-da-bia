@@ -30,7 +30,7 @@ export function checkoutCall(root: HTMLElement, actions: CallActions) {
   const call = node('button', 'checkout-call', 'checkout-call'), arrow = picture('/icons/checkout-arrow.svg', 'arrow');
   call.setAttribute('aria-label', marketText.call); call.append(node('span', 'checkout-halo', 'halo'), arrow); payButton(call, actions.pay);
   const chip = node('div', 'market-chip', 'market-chip'), goods = node('span', 'market-chip-goods', 'chip-goods'), register = node('button', 'market-chip-pay', 'chip-pay');
-  chip.setAttribute('role', 'group'); register.setAttribute('aria-label', marketText.pay); register.append(picture('/art/market.svg#checkout', 'register'));
+  chip.setAttribute('role', 'group'); register.setAttribute('aria-label', marketText.pay); register.append(picture('/icons/register.svg', 'register'));
   chip.append(picture('/icons/sacola.svg', 'chip-bag'), goods, register); payButton(register, actions.pay);
   const hand = picture('/icons/ghost-hand.svg', ''); hand.id = 'checkout-hint'; hand.setAttribute('aria-hidden', 'true');
   const dismiss = () => { hand.remove(); window.removeEventListener('pointerdown', dismiss, true); };
@@ -44,6 +44,7 @@ export function checkoutCall(root: HTMLElement, actions: CallActions) {
     show(at: Point | null, contents: readonly Good[], shelf: boolean) {
       if (!at) { call.remove(); chip.remove(); dismiss(); return; }
       anchor(call, at); if (!call.isConnected) root.append(call, chip);
+      chip.hidden = shelf;
       if (chip.dataset.bag !== contents.join(' ')) { goods.replaceChildren(...contents.map(good => { const slot = node('span', '', 'chip-good'); slot.append(...goodPictures(good)); return slot; })); chip.dataset.bag = contents.join(' '); }
       chip.setAttribute('aria-label', marketText.bag(contents.map(good => goodNames[good])));
       if (!shelf) hint(at);
