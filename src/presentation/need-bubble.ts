@@ -1,6 +1,6 @@
 import type { ActorId, Point, World } from '../domain/types';
 import { band, needsOf, type Band, type Need } from '../domain/needs';
-import { besideMenu, bubblePlace } from './missing-bubble';
+import { besideMenu, bubblePlace, placeBubble } from './missing-bubble';
 export { besideMenu } from './missing-bubble';
 import { worldToScreen } from './viewport';
 
@@ -31,6 +31,8 @@ interface Deps {
   world: () => World; selected: () => ActorId; head: (id: ActorId) => Point | null; canvas: () => HTMLCanvasElement | null;
   /** Only in Brincar. */
   playing: () => boolean; label: (actor: ActorId, need: Need) => string;
+  /** Whether `actor` is saying something: the thought waits for the line to go, so the two never cover each other (lot 6B). */
+  speaking?: (actor: ActorId) => boolean;
 }
 /** The room's thought bubble, drawn (never text) in the same bubble as what is missing, which it gives way to; it follows the head. Also
  *  keeps the Turma portraits' small bubbles. */
@@ -40,11 +42,13 @@ export function needBubbles(host: HTMLElement, deps: Deps) {
   bubble.className = 'missing-bubble thought'; bubble.setAttribute('role', 'img');
   image.className = 'need'; image.alt = ''; image.draggable = false; bubble.append(image);
   let key = '', since = 0;
+  /** The thought waits outside Brincar, while `actor` says a line and under a refusal's bubble. */
+  const waits = (actor: ActorId) => !deps.playing() || !!deps.speaking?.(actor) || !!host.querySelector('.missing-bubble:not(.thought)');
   /** Where the bubble's tip goes on screen, or null when it is not shown now (Criar, a refusal bubble up, between two `pede` showings). */
   function anchor(thought: Thought | null, now: number): Point | null {
     const next = thought ? `${thought.actor}:${thought.need}:${thought.band}` : '';
     if (next !== key) { key = next; since = now; }
-    if (!thought || !deps.playing() || !thoughtShown(thought.band, since, now) || host.querySelector('.missing-bubble:not(.thought)')) return null;
+    if (!thought || !thoughtShown(thought.band, since, now) || waits(thought.actor)) return null;
     const head = deps.head(thought.actor), canvas = deps.canvas();
     return head && canvas ? bubblePlace(worldToScreen(canvas, head), canvas.getBoundingClientRect()) : null;
   }
@@ -53,8 +57,7 @@ export function needBubbles(host: HTMLElement, deps: Deps) {
     if (!place || !thought) { bubble.remove(); return; }
     if (!bubble.isConnected) host.append(bubble);
     const menu = host.querySelector<HTMLElement>('#actor-context')?.getBoundingClientRect() ?? null;
-    const tip = besideMenu(place, { width: bubble.offsetWidth, height: bubble.offsetHeight }, menu?.width ? menu : null, window.innerWidth);
-    bubble.style.left = `${tip.x}px`; bubble.style.top = `${tip.y}px`;
+    placeBubble(bubble, place, besideMenu(place, { width: bubble.offsetWidth, height: bubble.offsetHeight }, menu?.width ? menu : null, window.innerWidth));
     if (image.getAttribute('src') !== thoughtIcon(thought.need)) image.src = thoughtIcon(thought.need);
     bubble.classList.toggle('urgent', thought.band === 'precisa'); bubble.setAttribute('aria-label', deps.label(thought.actor, thought.need));
     if (navigator.webdriver) Object.assign(bubble.dataset, { actor: thought.actor, need: thought.need, band: thought.band });

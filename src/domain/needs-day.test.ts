@@ -31,7 +31,7 @@ const span = (from: number, to: number) => Array.from({ length: (to - from) / 30
 it('o dia de 16 min só com a Bia (§3.1): Luna e Léo, sem comer, ficam tristes só no fim do dia, pela fome e pelo sono', () => {
   const town = startTown();
   const luna = sadTimes(town, 'luna'), leo = sadTimes(town, 'leo');
-  // Luna: hunger in `precisa` at 8:30, sleep at 14:30 (the night's +12/min) — sad from 14:30 to the end, the last 1.5 min.
+  // Luna: hunger in `precisa` at 14:30 (breakfast at 27, +3/min), sleep too (the night's +12/min) — sad from 14:30 to the end, the last 1.5 min.
   expect(luna.sad).toEqual(span(870, 960));
   // Léo (sleep ×1.1) yawns first: his sleep reaches `precisa` at 14:00, so his sad face takes the day's last 2 min.
   expect(leo.sad).toEqual(span(840, 960));
@@ -39,23 +39,24 @@ it('o dia de 16 min só com a Bia (§3.1): Luna e Léo, sem comer, ficam tristes
   expect(bandOf(who(luna.end, 'luna'), 'tedio')).toBe('bem');
 });
 
-it('a fome chega a precisa às 8 min 30 s e o sono da Luna às 14 min 30 s', () => {
+it('a fome da Luna, sem comer o dia todo, só chega a precisa às 14 min 30 s, com o sono', () => {
   const marks: Record<string, number> = {};
   play(startTown(), 16 * 60, [], (current, at) => {
     for (const need of ['fome', 'sono'] as const) if (!marks[need] && bandOf(who(current, 'luna'), need) === 'precisa') marks[need] = at;
   });
-  expect(marks).toEqual({ fome: 510, sono: 870 });
+  expect(marks).toEqual({ fome: 870, sono: 870 });
 });
 
 it('quem fica parado sem brincar também se entedia, mas a tristeza não vem antes de 14 min (W3L-13, ajuste do lote 3)', () => {
-  expect(sadTimes(startTown(), 'luna', ['luna']).sad[0]).toBe(840);
+  expect(sadTimes(startTown(), 'luna', ['luna']).sad[0]).toBe(870);
 });
 
 const everyone: readonly ActorId[] = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'];
 it('ninguém fica triste antes de 14 min, parado ou não, sem comer nem dormir: Léo e os gatos também (ajuste do lote 3)', () => {
   const first = (idle: boolean) => Object.fromEntries(everyone.map(id => [id, sadTimes(startTown(), id, idle ? [id] : []).sad[0]]));
-  expect(first(true)).toEqual({ bia: 840, luna: 840, leo: 840, rui: 840, mimi: 840, nino: 840, pipoca: 840 });
-  expect(first(false)).toEqual({ bia: 870, luna: 870, leo: 840, rui: 870, mimi: 840, nino: 840, pipoca: 840 });
+  expect(first(true)).toEqual({ bia: 840, luna: 870, leo: 840, rui: 870, mimi: 840, nino: 840, pipoca: 840 });
+  // Busy, the cats and Rui (hunger ×0.6) only have sleep in `precisa` by the day's end: never sad on the first day.
+  expect(first(false)).toEqual({ bia: 870, luna: 870, leo: 840, rui: undefined, mimi: undefined, nino: undefined, pipoca: undefined });
 });
 
 /** The ticks (end of each) at which `id`'s top need in `precisa` is boredom and she is not sad: the bored face (expression.ts). She
@@ -71,8 +72,8 @@ function boredTimes(town: Neighborhood, id: ActorId, meals: readonly number[] = 
   }
   return bored;
 }
-it('o rosto de tédio aparece no jogo normal: o Rui parado, de 10 a 14 min; quem comeu, aos 14 min (ajuste do lote 3)', () => {
-  expect(boredTimes(startTown(), 'rui')).toEqual(span(600, 810));
+it('o rosto de tédio aparece no jogo normal: o Rui parado, de 10 a 14 min 30 s; quem comeu, aos 14 min (ajuste do lote 3)', () => {
+  expect(boredTimes(startTown(), 'rui')).toEqual(span(600, 840));
   expect(boredTimes(startTown(), 'bia', [300, 600])).toEqual([840]);
 });
 

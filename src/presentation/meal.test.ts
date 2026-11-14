@@ -34,6 +34,12 @@ it('o prato vai para a mesa ao lado da cadeira, para o tampo do piquenique, ou p
   expect(plateSpot(alone, who(alone, 'bia')).on).toBe('lap');
 });
 
+it('o prato dividido (lote 6B) fica no tampo entre os dois que dividem', () => {
+  const picnic = withPieces(standing(initialWorld()), piece(41, 'picnic-table', 600, 300));
+  const both = transition(transition(picnic, { type: 'sit', actor: 'bia', seat: '41.0' }).state, { type: 'sit', actor: 'leo', seat: '41.2' }).state;
+  const bench = both.layout.pieces.at(-1)!, middle = (who(both, 'bia').x + who(both, 'leo').x) / 2;
+  expect(plateSpot(both, who(both, 'bia'), who(both, 'leo'))).toEqual({ ...visualPiecePoint(bench, { x: middle, y: 362 }), on: 'table' });
+});
 it('antes de comer, quem recebe o prato anda até o assento da refeição; sentado ali, sem assento ou gato, não anda', () => {
   const world = { ...withPieces(standing(initialWorld()), piece(40, 'chair', 60, 320)), items: [...initialWorld().items, dish()] };
   const walk = mealApproach(world, { type: 'give', actor: 'luna', item: '9:prato' });

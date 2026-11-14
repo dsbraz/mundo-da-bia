@@ -13,9 +13,12 @@ export type Relief = 'prato' | 'favorito' | 'lanche' | 'brincar' | 'favorita' | 
 
 const minute = 60_000, joy = 60_000, ceiling = 100, unseen = 69;
 const needs: readonly Need[] = ['fome', 'sono', 'tedio'];
-/** Every session starts in the morning, rested: breakfast time. */
-export const initialNeeds = (): Needs => ({ fome: 20, sono: 0, tedio: 0, alegria: 0 });
-export const needsOf = (actor: Pick<Actor, 'needs'>): Needs => actor.needs ?? initialNeeds();
+/** Breakfast hunger, a little different for each one (fixed, never random), so the morning's asks come one or two at a time: at +3/min the
+ *  Bia asks at 3 min 20 s, Léo just before her, the grown-ups and the cats (×0.6) later in the morning. */
+const breakfast: Record<ActorId, number> = { bia: 30, luna: 27, leo: 32, rui: 30, mimi: 28, nino: 24, pipoca: 20, daniel: 24, fabiana: 21 };
+/** Every session starts in the morning, rested: breakfast time (without `actor`, the Bia's). */
+export const initialNeeds = (actor: ActorId = 'bia'): Needs => ({ fome: breakfast[actor], sono: 0, tedio: 0, alegria: 0 });
+export const needsOf = (actor: Pick<Actor, 'needs'> & { id?: ActorId }): Needs => actor.needs ?? initialNeeds(actor.id);
 export function band(value: number): Band { return value < 40 ? 'bem' : value < 70 ? 'pede' : 'precisa'; }
 export function bandOf(actor: Pick<Actor, 'needs'>, need: Need): Band { return band(needsOf(actor)[need]); }
 /** Joy (under 60 s old) or all three fine is `feliz`; two needs in `precisa` is `triste`, and it ends the moment that stops being true. */
@@ -45,13 +48,13 @@ export function enjoy<T extends { actors: readonly Actor[] }>(place: T, action: 
 }
 
 const sleepy: Record<Phase, number> = { manha: 2, tarde: 2, amanhecer: 2, entardecer: 12, noite: 12 };
-/** Per minute: hunger +6; sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +5 for the
+/** Per minute: hunger +3, by meals (a dish at the top of `pede` leaves 9: it asks again 10 min later, needs 20 min later); sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +5 for the
  *  idle (lot 3 tuning: `precisa` at 14 min, so the bored face shows in play once hunger was cared for, while standing still all day
  *  still makes nobody sad before 14 min). */
 function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<Need, number> {
   const pace = tastes[actor.id].pace ?? {}, of = (need: Need, base: number) => base * (pace[need] ?? 1);
-  if (actor.resting) return { fome: of('fome', 6), sono: bed ? -25 : -12, tedio: 0 };
-  return { fome: of('fome', 6), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 5) : 0 };
+  if (actor.resting) return { fome: of('fome', 3), sono: bed ? -25 : -12, tedio: 0 };
+  return { fome: of('fome', 3), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 5) : 0 };
 }
 /** The piece `actor` sits on (W3L-06: the seat names a piece of the building it is in), if any. */
 function seatKind(town: Neighborhood, actor: Resident) {

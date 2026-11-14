@@ -34,7 +34,13 @@ it('sem preferência o balão sobe enquanto esmaece e fala o nome de quem reagiu
   const world = initialWorld(), bia = world.actors[0]!, { tweens, said, fake } = scene();
   react(fake, world, [{ type: 'dressed', actor: bia.id }], ['Bia amou o look novo!']);
   expect(said[0]).toContain('Bia');
-  expect(tweens.at(-1)).toMatchObject({ y: bia.y - 196 - 18, alpha: 0, duration: bubbleDuration(said[0]!) });
+  expect(tweens.at(-1)).toMatchObject({ y: bia.y - 196 - 18, alpha: { value: 0 }, duration: bubbleDuration(said[0]!) });
+});
+it('a fala de quem está selecionado sai acima do nome e da estrela (lote 6B)', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const world = initialWorld(), bia = world.actors[0]!, { tweens, fake } = scene();
+  react(fake, world, [{ type: 'dressed', actor: bia.id }], ['Bia amou o look novo!'], 'bia');
+  expect(Number(tweens.at(-1)!.y)).toBeCloseTo(bia.y - 255.2 - 18);
 });
 it('mudar de lugar não gera fala', () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
@@ -59,4 +65,20 @@ it('o balão mostra a fala já sorteada na rotação, a mesma do anúncio, sem s
   const world = initialWorld(), { said, fake } = scene();
   react(fake, world, [{ type: 'dressed', actor: 'bia' }, { type: 'fed', actor: 'luna' }], ['Look novo! Bia aprovou!', null]);
   expect(said).toEqual(['Look novo! Bia aprovou!']);
+});
+it('um prato dividido (lote 6B) põe um prato só na mesa: quem divide fala junto, quando o prato acaba', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const world = initialWorld(), { said, fake } = scene(), images: string[] = [], delayed: number[] = [], calls: (() => void)[] = [];
+  // Any drawing call answers with the same object, so the plate can be drawn.
+  const any: object = new Proxy(() => any, { get: (_t, key) => key === 'active' ? true : key === 'width' || key === 'height' ? 80 : any, apply: () => any });
+  const add = (fake as unknown as { add: Record<string, unknown> }).add;
+  add.image = (_x: number, _y: number, key: string) => { images.push(key); return any; };
+  add.graphics = () => any;
+  Object.assign(fake, { textures: { exists: () => true }, time: { delayedCall: (ms: number, call: () => void) => { delayed.push(ms); calls.push(call); } } });
+  react(fake, world, [{ type: 'ate', actor: 'bia', recipe: 'panqueca' }, { type: 'ate', actor: 'leo', recipe: 'panqueca', by: 'bia' }], ['Hummm!', 'Que delícia!']);
+  expect(images.filter(key => key.startsWith('dish-'))).toHaveLength(1);
+  expect(delayed).toEqual([2400]);
+  expect(said).not.toContain('Que delícia!');
+  calls[0]!();
+  expect(said).toContain('Que delícia!');
 });

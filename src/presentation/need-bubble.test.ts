@@ -39,11 +39,15 @@ it('no retrato da Turma, a bolha pequena é de quem pede algo noutro lugar', () 
   expect(portraitNeed(away, 'bia')).toBeNull();
 });
 
-it('a bolha da selecionada não fica embaixo do menu dela: vai para o lado do menu (direita, senão esquerda)', () => {
+it('a bolha da selecionada não fica embaixo do menu dela: vai para o lado da cabeça, na altura dela (lote 6B), senão para o lado do menu', () => {
   const size = { width: 80, height: 70 }, menu = { left: 300, right: 640, top: 260, bottom: 340 };
   expect(besideMenu({ x: 470, y: 420 }, size, null, 1024)).toEqual({ x: 470, y: 420 });
-  expect(besideMenu({ x: 470, y: 420 }, size, menu, 1024)).toEqual({ x: 692, y: 420 });
-  expect(besideMenu({ x: 470, y: 420 }, size, { ...menu, right: 980 }, 1024)).toEqual({ x: 248, y: 420 });
+  // Beside the head (right, else left), level with it, under the menu: the tail reaches the head.
+  expect(besideMenu({ x: 470, y: 420 }, size, menu, 1024)).toEqual({ x: 534, y: 495 });
+  expect(besideMenu({ x: 980, y: 420 }, size, { ...menu, right: 1000 }, 1024)).toEqual({ x: 916, y: 495 });
+  // No room beside the head (a menu down to the feet): beside the menu, right, else left.
+  expect(besideMenu({ x: 470, y: 420 }, size, { ...menu, bottom: 600 }, 1024)).toEqual({ x: 692, y: 420 });
+  expect(besideMenu({ x: 470, y: 420 }, size, { ...menu, right: 980, bottom: 600 }, 1024)).toEqual({ x: 248, y: 420 });
   expect(besideMenu({ x: 470, y: 520 }, size, menu, 1024)).toEqual({ x: 470, y: 520 });
   expect(besideMenu({ x: 800, y: 420 }, size, menu, 1024)).toEqual({ x: 800, y: 420 });
 });

@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
-import { bubbleDuration, bubblePlace, pokeFigure, speechBubble } from './feedback';
+import { bubbleDuration, bubblePlace, pokeFigure, speaking, speechBubble, speechTop } from './feedback';
 afterEach(() => vi.unstubAllGlobals());
 
 function fakeScene() {
@@ -42,8 +42,18 @@ it('fala com fonte de 22 px ou mais e mostra um balão por personagem', () => {
   expect(s.destroyed).toContain('bubble');
   speechBubble(s.scene, { x: 300, y: 400 }, 'Oi!', 'luna');
   expect(s.destroyed.filter(d => d === 'bubble')).toHaveLength(1);
-  const exit = s.tweens.filter(t => t.alpha === 0).at(-1)!;
+  const exit = s.tweens.filter(t => 'alpha' in t).at(-1)!;
   expect(Number(exit.duration) + Number(exit.delay)).toBe(bubbleDuration('Oi!'));
+});
+
+it('enquanto alguém fala, o balão dela está de pé (o pensamento dá a vez, lote 6B); ao sumir, não fala mais', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  const s = fakeScene();
+  expect(speaking(s.scene, 'bia')).toBe(false);
+  const bubble = speechBubble(s.scene, { x: 100, y: 400 }, 'Oi!', 'bia');
+  expect([speaking(s.scene, 'bia'), speaking(s.scene, 'leo')]).toEqual([true, false]);
+  bubble.destroy();
+  expect(speaking(s.scene, 'bia')).toBe(false);
 });
 
 it('com movimento reduzido o balão não sobe e some por fade de 120 ms', () => {
@@ -119,4 +129,13 @@ it('o balão marca no canvas a sua caixa no mundo', () => {
   speechBubble(s.scene, { x: 30, y: 400 }, 'Oi!', 'bia');
   const [left, top, width, height] = s.canvas.dataset.saidBox!.split(',').map(Number);
   expect(left).toBe(8); expect(width).toBe(132); expect(top! + height!).toBe(400 - 14);
+});
+
+it('a fala de quem está selecionado sai acima do nome e da estrela, nunca em cima deles (lote 6B)', () => {
+  expect(speechTop(-204)).toBe(-204);
+  // A child's star is drawn 233 above the feet (14 tall): the line starts above it.
+  expect(speechTop(-204, -233)).toBe(-255);
+  // A grown-up's star is higher still; lying in bed, the star is low and the usual place already clears it.
+  expect(speechTop(-263, -290)).toBe(-312);
+  expect(speechTop(-204, -110)).toBe(-204);
 });

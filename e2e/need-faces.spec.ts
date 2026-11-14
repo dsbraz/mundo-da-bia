@@ -55,19 +55,20 @@ test('6 min sem comer: a bolha de prato na Bia, uma só por cômodo, e a bolha p
   await page.clock.runFor(5000); await oneDrawnBubble(page);
 });
 
-for (const reduced of [false, true]) test(`10 min: rosto de fome; com sono alto também, triste (sem lágrima); um prato devolve o rosto feliz no mesmo segundo${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
+for (const reduced of [false, true]) test(`13 min 20 s: rosto de fome; com sono alto também, triste (sem lágrima); um prato devolve o rosto feliz no mesmo segundo${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
   test.setTimeout(120_000);
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await seed(page);
-  await playWalking(page, 10);
+  // Hunger +3/min from breakfast at 30: `precisa` at 13 min 20 s of play, before her sleep (14 min 30 s).
+  await playWalking(page, 12.5);
+  for (let n = 0; n < 4 && await face(page, 'bia') !== 'hungry'; n++) await playWalking(page, .5);
   await expect.poll(() => face(page, 'bia')).toBe('hungry');
   // `precisa`: the bubble stays.
   await expect(thought(page)).toHaveAttribute('data-band', 'precisa');
   const suffix = reduced ? '-reduced' : '';
   await page.screenshot({ path: `${shots}/face-hungry-1024${suffix}.png` });
-  // Sleep reaches `precisa` around 14 min of play (dusk and night add +12/min).
-  await playWalking(page, 3);
-  for (let n = 0; n < 5 && await face(page, 'bia') !== 'sad'; n++) await playWalking(page, .5);
+  // Sleep reaches `precisa` at 14 min 30 s of play (dusk and night add +12/min).
+  for (let n = 0; n < 6 && await face(page, 'bia') !== 'sad'; n++) await playWalking(page, .5);
   expect(await face(page, 'bia')).toBe('sad');
   await oneDrawnBubble(page);
   await page.screenshot({ path: `${shots}/face-sad-1024${suffix}.png` });

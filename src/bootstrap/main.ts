@@ -64,6 +64,8 @@ import { routineWiring } from './routine';
 import { suggestionIcon } from '../presentation/routine-bubble';
 import { selfCareWiring } from './self-care';
 import { nightSleep } from './night-sleep';
+import { bedtimeButton, bedtimeMoves } from '../presentation/bedtime-button';
+import { endShow } from '../domain/show';
 
 let town = loadNeighborhood();
 let state = localWorld(town);
@@ -177,11 +179,17 @@ const remember = () => townActs.remember(), streetUndo = (forward: boolean) => t
 const life = playTime(realClock);
 const selfCare = selfCareWiring({ root, state: () => state, selected: () => selected, location: () => town.location, stroll: moves => scene.stroll(moves), dispatch: action => dispatch(action, false),
   hop: id => scene.poke(id, 'hop', ''), played: id => townActs.enjoy(id, 'bola') });
-const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); scene.daylight(life.phase()); },
+// "Todos para a cama" (lot 6B): who stays in this room walks to the spot; the moon shows at dusk and at night. With the selected one in
+// a bed (in any room), the night passes as when she lies down.
+const bedtime = bedtimeButton(root, uiText.bedtime, () => {
+  scene.stroll(bedtimeMoves(state, transition(state, { type: 'bedtime' }).state)); dispatch({ type: 'bedtime' }, false); nights([{ type: 'rested', actor: selected }], true);
+});
+const daylight = () => { scene.daylight(life.phase()); bedtime(life.phase(), town.location.kind === 'interior'); };
+const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); daylight(); },
   slept: id => townActs.sleepThrough(id), greet: () => { scene.poke(selected, 'cheer', uiText.goodMorning); announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
 routineWiring({ root, town: () => town, selected: () => selected, playing: () => !building, phase: () => life.phase(), played: () => life.played(), head: id => scene.head(id),
   openMap: (place, wish) => { root.querySelector<HTMLButtonElement>('#map-toggle')!.click(); neighborhood.mark(place, suggestionIcon(wish)); } });
-let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); scene.daylight(life.phase()); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
+let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); daylight(); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
   scene.previewLayout(preview.world); scene.placementHint(action?.type === 'move' ? action.id : null, preview.invalid);
@@ -194,8 +202,8 @@ function dropPiece(action: EditAction) {
 let stale = false;
 const { refresh: repaint, frameScene, renderControls, ui: repaintControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
-  panels: () => { rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); } });
-const showTime = showMoment((ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); }, () => { state = { ...state, show: false }; persist(); scene.endShow(); });
+  panels: () => { bedtime(life.phase(), town.location.kind === 'interior'); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); } });
+const showTime = showMoment((ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); }, () => { state = endShow(state); persist(); scene.endShow(state); });
 function refresh(then?: () => void) { stale = false; showTime(state.show); place.refresh(repaint, then, repaintControls); }
 /** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
 function walksFirst(action: Action, interrupt: boolean): boolean {

@@ -63,6 +63,8 @@ export type Action =
   | { type: 'rest'; actor: ActorId; own?: boolean }
   | { type: 'room'; room: RoomId }
   | { type: 'summon' }
+  /** "Todos para a cama" (lot 6B): everyone of the house to a free bed or sofa (`bedtime.ts`). */
+  | { type: 'bedtime' }
   | { type: 'show' };
 /** Ephemeral: never saved. `cooked`, `ate`, `harvested`, `served`, `letter` and `hint` belong to the wave 3 systems (lines in W3-02). */
 /** What a refusal shows is missing (W3L-02): a free seat, a place to put it, a free hand, the right food, a way there, a table with a

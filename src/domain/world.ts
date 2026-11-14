@@ -13,6 +13,7 @@ import { give, micDown, visibleItem } from './objects';
 import { eat, hug, rest, snack, wake } from './care';
 import { usePiece } from './use';
 import { refuse } from './missing';
+import { bedtime } from './bedtime';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -82,6 +83,16 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
 export function transition(state: World, action: Action): Transition {
   return action.type === 'name' ? nameActor(state, action.actor, action.name) : micDown(state, playTransition(state, action));
 }
+type HouseWide = Extract<Action, { type: 'show' | 'summon' | 'bedtime' }>;
+const isHouseWide = (action: Action): action is HouseWide => ['show', 'summon', 'bedtime'].includes(action.type);
+/** What the whole house does: the show on or off, everyone called here, everyone to bed (lot 6B). */
+function houseWide(state: World, type: HouseWide['type']): Transition {
+  if (type === 'show') return { state: { ...state, show: !state.show }, events: [{ type: 'show' }] };
+  if (type === 'bedtime') return bedtime(state);
+  return {
+    state: { ...state, actors: state.actors.map(a => ({ ...a, x: Math.min(a.x, roomWidth(state) - 60), room: state.room, seat: null })) }, events: [{ type: 'summoned' }],
+  };
+}
 function playTransition(state: World, action: Exclude<Action, { type: 'name' }>): Transition {
   if (action.type === 'cross') return cross(state, action);
   if ('room' in action) return navigate(state, action);
@@ -89,12 +100,7 @@ function playTransition(state: World, action: Exclude<Action, { type: 'name' }>)
   if (action.type === 'interact') return interact(state, action.target);
   if (action.type === 'put') return put(state, action.item, action.spot);
   if (action.type === 'place') return placeItem(state, action);
-  if (action.type === 'show') return { state: { ...state, show: !state.show }, events: [{ type: 'show' }] };
-  if (action.type === 'summon') {
-    return {
-      state: { ...state, actors: state.actors.map(a => ({ ...a, x: Math.min(a.x, roomWidth(state) - 60), room: state.room, seat: null })) }, events: [{ type: 'summoned' }],
-    };
-  }
+  if (isHouseWide(action)) return houseWide(state, action.type);
   const actor = state.actors.find(a => a.id === action.actor && a.room === state.room);
   return actor ? actorAction(state, actor, action) : { state, events: [] };
 }

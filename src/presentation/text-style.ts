@@ -10,7 +10,6 @@ export const textStyles = {
   sign: { ...bold, fontSize: '16px', color: palette.moss },
   plaza: { ...bold, fontSize: '22px', color: '#587563', backgroundColor: palette.signBg, padding: { x: 18, y: 10 } },
   hopscotch: { ...bold, fontSize: '22px', color: palette.chalk },
-  live: { ...bold, fontSize: '18px', color: '#425b66', backgroundColor: '#f3efe4', padding: { x: 12, y: 8 } },
   effect: { ...bold, fontSize: '24px', color: '#3f8799' },
   mark: { ...bold, fontSize: '21px', color: '#77558b' },
   heart: { ...bold, fontSize: '20px', color: '#d75c78' },

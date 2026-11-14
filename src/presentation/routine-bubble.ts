@@ -1,6 +1,6 @@
 import type { ActorId, Point } from '../domain/types';
 import type { Suggestion } from '../domain/routine';
-import { besideMenu, bubblePlace } from './missing-bubble';
+import { besideMenu, bubblePlace, placeBubble } from './missing-bubble';
 import { worldToScreen } from './viewport';
 
 /** The drawing of each suggestion of the day (W3L-27): the backpack, the briefcase, the ball, the plate and the pillow. */
@@ -33,8 +33,7 @@ export function routineBubble<W extends Wish>(host: HTMLElement, deps: Deps<W>) 
   function show(wish: W, at: Point) {
     if (!bubble.isConnected) host.append(bubble);
     const menu = host.querySelector<HTMLElement>('#actor-context')?.getBoundingClientRect() ?? null;
-    const tip = besideMenu(at, { width: bubble.offsetWidth, height: bubble.offsetHeight }, menu?.width ? menu : null, window.innerWidth);
-    bubble.style.left = `${tip.x}px`; bubble.style.top = `${tip.y}px`;
+    placeBubble(bubble, at, besideMenu(at, { width: bubble.offsetWidth, height: bubble.offsetHeight }, menu?.width ? menu : null, window.innerWidth));
     if (image.getAttribute('src') !== icons[wish.suggestion]) image.src = icons[wish.suggestion];
     bubble.setAttribute('aria-label', wish.label);
     if (navigator.webdriver) Object.assign(bubble.dataset, { actor: wish.actor, suggestion: wish.suggestion });
