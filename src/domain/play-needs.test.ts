@@ -39,23 +39,24 @@ describe('o que satisfaz, por personalidade (W3L-13)', () => {
   });
 });
 
-/** Plays `minutes` in 30 s ticks with the clock's phase, everyone in view and, with `idle`, everyone still (nobody eats or plays). */
+/** Plays a day in 30 s ticks with the clock's phase, everyone in view and, with `idle`, everyone still (nobody eats or plays). */
 function firstSad(idle: boolean) {
   let town = startTown(); const first: Partial<Record<ActorId, number>> = {};
-  for (let at = 0; at < 16 * 60; at += 30) {
+  for (let at = 0; at < 32 * 60; at += 30) {
     town = neighborhoodAction(town, { type: 'live', elapsed: 30_000, phase: phaseAt(at * 1000, 'calmo'), idle: idle ? town.actors.map(a => a.id) : [] });
     for (const a of town.actors) if (first[a.id] === undefined && mood(a) === 'triste') first[a.id] = at + 30;
   }
   return first;
 }
 describe('o tédio de quem fica parado (W3L-13)', () => {
-  it('cresce 5 por minuto (Rui 7): parado o dia inteiro, ninguém fica triste antes de 14 min (ajuste do lote 3)', () => {
+  it('cresce 3 por minuto (Rui 4,2): parado o dia inteiro, ninguém fica triste antes de 24 min (lote 8E)', () => {
     const minute = neighborhoodAction(startTown(), { type: 'live', elapsed: 60_000, phase: 'manha', idle: ['bia', 'rui'] });
-    expect([needsOf(who(minute, 'bia')).tedio, needsOf(who(minute, 'rui')).tedio].map(v => Math.round(v * 100) / 100)).toEqual([5, 7]);
+    expect([needsOf(who(minute, 'bia')).tedio, needsOf(who(minute, 'rui')).tedio].map(v => Math.round(v * 100) / 100)).toEqual([3, 4.2]);
     const still = firstSad(true), busy = firstSad(false);
-    expect(busy).toEqual({ bia: 870, luna: 870, leo: 840 });
-    // Standing still brings boredom to `precisa` at 14 min (Rui at 10 min, but he forgets to eat): never a second need before 14 min.
-    expect(still).toEqual({ bia: 840, luna: 870, leo: 840, rui: 870, mimi: 840, nino: 840, pipoca: 840 });
+    expect(busy).toEqual({ bia: 1620, luna: 1740, leo: 1530 });
+    // Standing still brings boredom to `precisa` at 23 min 20 s (Rui at 16 min 40 s, but he is slow to get hungry): a second need only
+    // comes with the night, the cats first (their sleep ×1.5).
+    expect(still).toEqual({ bia: 1560, luna: 1560, leo: 1530, rui: 1560, mimi: 1440, nino: 1440, pipoca: 1440 });
   });
 });
 

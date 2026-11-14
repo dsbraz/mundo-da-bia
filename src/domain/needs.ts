@@ -13,8 +13,8 @@ export type Relief = 'prato' | 'favorito' | 'lanche' | 'brincar' | 'favorita' | 
 
 const minute = 60_000, joy = 60_000, ceiling = 100, unseen = 69;
 const needs: readonly Need[] = ['fome', 'sono', 'tedio'];
-/** Breakfast hunger, a little different for each one (fixed, never random), so the morning's asks come one or two at a time: at +3/min the
- *  Bia asks at 3 min 20 s, Léo just before her, the grown-ups and the cats (×0.6) later in the morning. */
+/** Breakfast hunger, a little different for each one (fixed, never random), so the morning's asks come one or two at a time: at +1.5/min the
+ *  Bia asks at 6 min 40 s, Léo just before her, the grown-ups and the cats (×0.6) later in the morning. */
 const breakfast: Record<ActorId, number> = { bia: 30, luna: 27, leo: 32, rui: 30, mimi: 28, nino: 24, pipoca: 20, daniel: 24, fabiana: 21 };
 /** Every session starts in the morning, rested: breakfast time (without `actor`, the Bia's). */
 export const initialNeeds = (actor: ActorId = 'bia'): Needs => ({ fome: breakfast[actor], sono: 0, tedio: 0, alegria: 0 });
@@ -47,14 +47,17 @@ export function enjoy<T extends { actors: readonly Actor[] }>(place: T, action: 
   return { ...place, actors: place.actors.map(a => a.id === action.actor ? { ...a, needs: relieve(needsOf(a), played(a.id, action.game)) } : a) };
 }
 
-const sleepy: Record<Phase, number> = { manha: 2, tarde: 2, amanhecer: 2, entardecer: 12, noite: 12 };
-/** Per minute: hunger +3, by meals (a dish at the top of `pede` leaves 9: it asks again 10 min later, needs 20 min later); sleep +2 by day, +12 at dusk and night (falling 25 in bed and 12 elsewhere while resting); boredom +5 for the
- *  idle (lot 3 tuning: `precisa` at 14 min, so the bored face shows in play once hunger was cared for, while standing still all day
- *  still makes nobody sad before 14 min). */
+/** Sleep belongs to the night (lot 8E): it only grows at dusk and at night, and by day it eases off, so a night slept lasts the whole next
+ *  day and even a night awake is gone by mid-morning. */
+const sleepy: Record<Phase, number> = { manha: -5, tarde: -5, amanhecer: -5, entardecer: 12, noite: 12 };
+/** Per minute (lot 8E, the owner: needs came all the time): hunger +1.5, by meals (from breakfast the Bia asks at 6 min 40 s; a dish
+ *  takes 60, so after one she is calm for over 25 min, a snack about 20); sleep −5 by day and at dawn, +12 at dusk and night (asking a
+ *  little after night falls, falling 25 in bed and 12 elsewhere while resting); boredom +3 for the idle (standing still asks at 13 min,
+ *  needs at 23). */
 function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<Need, number> {
   const pace = tastes[actor.id].pace ?? {}, of = (need: Need, base: number) => base * (pace[need] ?? 1);
-  if (actor.resting) return { fome: of('fome', 3), sono: bed ? -25 : -12, tedio: 0 };
-  return { fome: of('fome', 3), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 5) : 0 };
+  if (actor.resting) return { fome: of('fome', 1.5), sono: bed ? -25 : -12, tedio: 0 };
+  return { fome: of('fome', 1.5), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 3) : 0 };
 }
 /** The piece `actor` sits on (W3L-06: the seat names a piece of the building it is in), if any. */
 function seatKind(town: Neighborhood, actor: Resident) {

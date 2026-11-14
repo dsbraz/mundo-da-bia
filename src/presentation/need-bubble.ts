@@ -3,6 +3,7 @@ import { band, needsOf, type Band, type Need } from '../domain/needs';
 import { besideMenu, bubblePlace, placeBubble } from './missing-bubble';
 export { besideMenu } from './missing-bubble';
 import { worldToScreen } from './viewport';
+import { mayAsk } from './ask-gate';
 
 /** What the room thinks (W3L-12): one thought bubble at most, of who is selected if she asks for something, else of the highest need. */
 export interface Thought { actor: ActorId; need: Need; band: Exclude<Band, 'bem'> }
@@ -17,8 +18,6 @@ export function thoughtOf(world: World, selected: ActorId): Thought | null {
   const chosen = here.find(a => a.id === selected) ?? here.sort((a, b) => b.top!.value - a.top!.value)[0];
   return chosen ? { actor: chosen.id, need: chosen.top!.need, band: band(chosen.top!.value) as Thought['band'] } : null;
 }
-/** `pede`: shown 4 s, back every 40 s from `since` (when the thought began); `precisa`: always there. */
-export function thoughtShown(level: Thought['band'], since: number, now: number) { return level === 'precisa' || (now - since) % 40_000 < 4000; }
 const icons: Record<Need, string> = { fome: '/art/needs.svg#food', sono: '/art/needs.svg#pillow', tedio: '/icons/bola.svg' };
 export const thoughtIcon = (need: Need) => icons[need];
 const marketIcon = '/art/market.svg#market';
@@ -44,19 +43,18 @@ export function needBubbles(host: HTMLElement, deps: Deps) {
   // Only in the page while shown, so a refusal's bubble stays the one `.missing-bubble` there.
   bubble.className = 'missing-bubble thought'; bubble.setAttribute('role', 'img');
   image.className = 'need'; image.alt = ''; image.draggable = false; bubble.append(image);
-  let key = '', since = 0;
   bubble.addEventListener('click', event => { if (bubble.dataset.market !== 'true') return; event.preventDefault(); event.stopPropagation(); deps.toMarket?.(); });
   /** Hungry with nothing left at home (lot 6F): the market instead of the plate. */
   const toMarket = (thought: Thought) => thought.need === 'fome' && deps.food?.(thought.actor) === false;
   /** The thought waits outside Brincar, while `actor` says a line and under a refusal's bubble. */
   const waits = (actor: ActorId) => !deps.playing() || !!deps.speaking?.(actor) || !!host.querySelector('.missing-bubble:not(.thought)');
-  /** Where the bubble's tip goes on screen, or null when it is not shown now (Criar, a refusal bubble up, between two `pede` showings). */
+  /** Where the bubble's tip goes on screen, or null when it is not shown now (Criar, a refusal bubble up, not its turn to ask: lot 8E,
+   *  `pede` and `precisa` alike, the faces show the rest). */
   function anchor(thought: Thought | null, now: number): Point | null {
-    const next = thought ? `${thought.actor}:${thought.need}:${thought.band}` : '';
-    if (next !== key) { key = next; since = now; }
-    if (!thought || !thoughtShown(thought.band, since, now) || waits(thought.actor)) return null;
+    if (!thought || waits(thought.actor)) return null;
     const head = deps.head(thought.actor), canvas = deps.canvas();
-    return head && canvas ? bubblePlace(worldToScreen(canvas, head), canvas.getBoundingClientRect()) : null;
+    if (!head || !canvas || !mayAsk(`thought:${thought.actor}:${thought.need}:${thought.band}`, now)) return null;
+    return bubblePlace(worldToScreen(canvas, head), canvas.getBoundingClientRect());
   }
   /** The thought's drawing: the need's, or the market (a button then) when she is hungry and home has nothing left. */
   function paint(thought: Thought) {
