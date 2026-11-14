@@ -15,6 +15,7 @@ import { usePiece } from './use';
 import { refuse } from './missing';
 import { bedtime } from './bedtime';
 import { eatOne, runOut } from './larder';
+import { startReading } from './library';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -84,7 +85,7 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
 }
 
 export function transition(state: World, action: Action): Transition {
-  return action.type === 'name' ? nameActor(state, action.actor, action.name) : micDown(state, playTransition(state, action));
+  return action.type === 'name' ? nameActor(state, action.actor, action.name) : startReading(state, micDown(state, playTransition(state, action)));
 }
 type HouseWide = Extract<Action, { type: 'show' | 'summon' | 'bedtime' }>;
 const isHouseWide = (action: Action): action is HouseWide => ['show', 'summon', 'bedtime'].includes(action.type);

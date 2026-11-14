@@ -43,10 +43,10 @@ for (const reduced of [false, true]) test(`tocar na pia leva a Bia até ela e as
   await expect(canvas(page)).toHaveAttribute('data-uses', '');
 });
 
-for (const reduced of [false, true]) test(`os móveis do dia a dia ligados mostram seus efeitos (o carrinho de cozinha agora abre a bancada)${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
+for (const reduced of [false, true]) test(`os móveis do dia a dia ligados mostram seus efeitos (o carrinho de cozinha agora abre a bancada; a estante de livros empresta livros, lote 8C)${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await room(page, [piece(1, 'sink', 20, 250, true), piece(2, 'washer', 230, 255, true), piece(3, 'planter', 390, 280, true), piece(4, 'bookcase', 590, 190, true), piece(5, 'kitchen-cart', 780, 260, true), piece(6, 'picnic-table', 960, 260, true)], 'large');
-  await expect(canvas(page)).toHaveAttribute('data-uses', 'sink washer planter bookcase picnic-table');
+  await expect(canvas(page)).toHaveAttribute('data-uses', 'sink washer planter picnic-table');
   await page.clock.pauseAt(new Date('2026-01-01T00:10:00Z'));
   await page.screenshot({ path: `reports/use-everyday${reduced ? '-reduced' : ''}.png` });
 });

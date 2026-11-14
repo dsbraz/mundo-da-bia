@@ -14,6 +14,7 @@ import { knownProgress } from './progress-validation';
 import { validLayout } from './layout-validation';
 import { actor, portable, consistentWorld } from './validation';
 import { validBag } from './bag-validation';
+import { validLoan } from './book-validation';
 /** The session's needs (§3.1) never reach the save: the bytes are the same with or without them. */
 export function encodeNeighborhood(town: Neighborhood) { return JSON.stringify({ version: 3, town: { ...town, actors: town.actors.map(unfelt) } }); }
 /** Envelopes v1 and v2 (upgraded to v3) and v3; null when the structure is not valid. */
@@ -62,7 +63,7 @@ function object(value: unknown): boolean {
 /** Only a dish names a recipe (always a known one) and only a dish may be fancy; only a bag has contents and a ribbon (W3L-22). */
 function dish(value: Record<string, unknown>): boolean {
   const isDish = value.kind === 'prato';
-  return (isDish ? member(recipeIds, value.recipe) : value.recipe === undefined) && (value.fancy === undefined || (isDish && value.fancy === true)) && validBag(value);
+  return (isDish ? member(recipeIds, value.recipe) : value.recipe === undefined) && (value.fancy === undefined || (isDish && value.fancy === true)) && validBag(value) && validLoan(value);
 }
 function unique(values: unknown[]): boolean { return new Set(values).size === values.length; }
 function validTown(value: unknown): value is LegacyNeighborhood {

@@ -16,7 +16,7 @@ export type RoomTemplate = typeof roomTemplates[number];
 export type RoomSize = typeof roomSizes[number];
 /** Objects outside the legacy single-house save: the ball, dishes and the 6 props. */
 export const portableKinds = ['bola', 'prato', 'estetoscopio', 'curativo', 'regador', 'lanterna', 'colher', 'cesta',
-  'sacola'] as const;
+  'sacola', 'livro'] as const;
 export type ItemKind = typeof itemIds[number] | typeof portableKinds[number];
 export type ItemId = ItemKind | `${number}:${ItemKind}`;
 export interface Point { x: number; y: number }
@@ -78,7 +78,7 @@ export type Need = 'seat' | 'place' | 'hands' | 'food' | 'path' | 'table' | 'bed
   | 'stove' | 'counter' | 'market' | 'checkout';
 export interface PresentationEvent {
   type: 'named' | 'furniture' | 'moved' | 'dressed' | 'picked' | 'dropped' | 'fed' | 'rested' | 'room' | 'summoned' | 'show'
-    | 'cooked' | 'ate' | 'sniffed' | 'harvested' | 'served' | 'letter' | 'hint' | 'missing' | 'hugged';
+    | 'cooked' | 'ate' | 'sniffed' | 'harvested' | 'served' | 'letter' | 'hint' | 'missing' | 'hugged' | 'read';
   actor?: ActorId; piece?: number;
   /** On `missing`: what was missing, and who already sits there (a taken seat); on `hugged`, who gave the hug. */
   need?: Need; by?: ActorId;

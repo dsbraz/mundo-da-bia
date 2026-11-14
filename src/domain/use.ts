@@ -1,8 +1,8 @@
 import type { PieceKind, Transition, World } from './types';
 import { flush } from './toilet';
-/** Pieces that answer a touch by switching `active` (the only state they keep): the old set plus sink, washer, planter, bookcase and picnic
- *  table. The stove and the kitchen cart open the kitchen bench instead (W3-16). */
-export const usableKinds: readonly PieceKind[] = ['bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium', 'reading-lamp', 'sink', 'washer', 'planter', 'bookcase', 'picnic-table'];
+/** Pieces that answer a touch by switching `active` (the only state they keep): the old set plus sink, washer, planter and picnic table.
+ *  The stove and the kitchen cart open the kitchen bench instead (W3-16); the bookcase lends a book (lot 8C, `library.ts`). */
+export const usableKinds: readonly PieceKind[] = ['bath', 'desk', 'speaker', 'mirror', 'piano', 'tv', 'aquarium', 'reading-lamp', 'sink', 'washer', 'planter', 'picnic-table'];
 export function usePiece(state: World, id: number): Transition {
   const piece = state.layout.pieces.find(p => p.id === id && p.room === state.room);
   if (piece?.kind === 'toilet') return flush(state, piece);

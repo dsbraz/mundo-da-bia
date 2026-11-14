@@ -48,18 +48,6 @@ it('mudar de lugar não gera fala', () => {
   react(fake, world, [{ type: 'moved', actor: 'bia' }], [null]);
   expect(said).toEqual([]);
 });
-it('ligar a estante de livros põe um livro na mão de quem foi até ela; desligar ou outra peça não', () => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false }));
-  const base = initialWorld();
-  const shelf = { id: 900, kind: 'bookcase' as const, room: 'sala' as const, x: 300, y: 200, color: 'original' as const, flipped: false };
-  const world = (active: boolean, kind: 'bookcase' | 'sink' = 'bookcase') => ({ ...base, layout: { ...base.layout, pieces: [{ ...shelf, kind, active }] } });
-  const book = (state: ReturnType<typeof world>, selected?: 'bia') => { const { said, tweens, fake } = scene(); react(fake, state, [{ type: 'furniture', piece: 900 }], ['A casa brinca junto!'], selected); return { said, tweens, dataset: fake.game.canvas.dataset as Record<string, string> }; };
-  const on = book(world(true), 'bia');
-  expect(on.dataset.book).toBe('hand'); expect(on.tweens).toHaveLength(1); expect(on.said).toEqual([]);
-  expect(book(world(false), 'bia').dataset.book).toBeUndefined();
-  expect(book(world(true, 'sink'), 'bia').dataset.book).toBeUndefined();
-  expect(book(world(true)).dataset.book).toBeUndefined();
-});
 it('o balão mostra a fala já sorteada na rotação, a mesma do anúncio, sem sortear de novo', () => {
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
   const world = initialWorld(), { said, fake } = scene();
