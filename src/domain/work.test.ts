@@ -22,26 +22,34 @@ const homeRoom: Resident['location'] = { kind: 'interior', building: 1, room: 's
 
 describe('trabalho (W3L-25, §3.6)', () => {
   it.each([
-    ['shop', true, 'market', 'market'], ['office', false, 'office', 'office'], ['hospital', false, 'consultation', 'doctor'],
-    ['fire-station', false, 'dispatch', 'firefighter'], ['police', false, 'dispatch', 'police'],
-  ] as const)('no cômodo de trabalho de %s o adulto veste o uniforme', (model, market, template, look) => {
-    const town = withBuilding(model, market);
-    expect(who(work(put(town, 'daniel', roomOf(town, template)), 'manha'), 'daniel').look).toBe(look);
+    ['shop', true, 'market'], ['office', false, 'office'], ['hospital', false, 'consultation'],
+    ['fire-station', false, 'dispatch'], ['police', false, 'dispatch'],
+  ] as const)('no cômodo de trabalho de %s o adulto continua com a roupa que veio, e o turno começa', (model, market, template) => {
+    const town = withBuilding(model, market), there = work(put(town, 'daniel', roomOf(town, template)), 'manha');
+    expect(who(there, 'daniel').look).toBe('outing');
+    expect(who(there, 'daniel').work).toEqual({});
   });
-  it('o look anterior é guardado e volta ao sair; as crianças nunca trocam de roupa', () => {
+  it('lot 8B: de cômodo em cômodo (recepção, escritório, reunião, rua, mercado, casa) cada adulto guarda a mesma roupa', () => {
+    const office = withBuilding('office'), town = neighborhoodAction(office, { type: 'construct', plot: 2, model: 'shop', plan: 'market' });
+    const building = town.buildings.find(b => b.model === 'office')!, shop = town.buildings.find(b => b.model === 'shop')!;
+    const roomsOf = (b: typeof building) => Object.keys(b.layout.rooms).map(room => ({ kind: 'interior' as const, building: b.id, room: room as Resident['room'] }));
+    const path: Resident['location'][] = [...roomsOf(building), { kind: 'street' }, ...roomsOf(shop), homeRoom];
+    let current = town;
+    for (const where of path) {
+      current = work(put(put(current, 'daniel', where), 'fabiana', where), 'tarde');
+      expect([who(current, 'daniel').look, who(current, 'fabiana').look]).toEqual(['outing', 'sol']);
+    }
+  });
+  it('a roupa que a criança escolheu para o adulto vale também no trabalho e na volta', () => {
     const town = withBuilding('office'), office = roomOf(town, 'office');
-    const there = work(put(put(town, 'fabiana', office), 'bia', office), 'manha');
-    expect(who(there, 'fabiana')).toMatchObject({ look: 'office', work: { look: 'sol' } });
+    const dressed = { ...town, actors: town.actors.map(a => a.id === 'fabiana' ? { ...a, look: 'doctor' as const } : a) };
+    const there = work(put(put(dressed, 'fabiana', office), 'bia', office), 'manha');
+    expect(who(there, 'fabiana').look).toBe('doctor');
     expect(who(there, 'bia').look).toBe('sol');
     const out = work(put(there, 'fabiana', { kind: 'street' }), 'manha');
-    expect(who(out, 'fabiana').look).toBe('sol');
+    expect(who(out, 'fabiana')).toMatchObject({ look: 'doctor', work: { off: true } });
     expect(work(out, 'manha')).toBe(out);
-  });
-  it('sem o look anterior guardado (o save não guarda o turno), volta à roupa do dia a dia', () => {
-    const town = withBuilding('office'), office = roomOf(town, 'office');
-    const dressed = { ...town, actors: town.actors.map(a => a.id === 'daniel' ? { ...a, look: 'office' as const } : a) };
-    const there = work(put(dressed, 'daniel', office), 'manha');
-    expect(who(work(put(there, 'daniel', homeRoom), 'manha'), 'daniel').look).toBe('outing');
+    expect(who(work(put(out, 'fabiana', homeRoom), 'manha'), 'fabiana').look).toBe('doctor');
   });
   it('fora do trabalho e sem turno nada muda', () => {
     const town = withBuilding('office');

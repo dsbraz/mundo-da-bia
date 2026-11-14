@@ -31,7 +31,7 @@ function workTown(): Neighborhood {
   const office = neighborhoodAction(migrateNeighborhood(initialAlbum(family())), { type: 'construct', plot: 1, model: 'office' });
   return neighborhoodAction(office, { type: 'construct', plot: 2, model: 'shop', plan: 'market' });
 }
-test('levar o Daniel ao escritório troca a roupa, e trazê-lo de volta à tarde mostra a sacola paga (W3L-25)', async ({ page }) => {
+test('levar o Daniel ao escritório não troca a roupa (lot 8B), e trazê-lo de volta à tarde mostra a sacola paga (W3L-25)', async ({ page }) => {
   test.setTimeout(120_000);
   await page.clock.install();
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -49,9 +49,10 @@ test('levar o Daniel ao escritório troca a roupa, e trazê-lo de volta à tarde
   await page.locator('#map-toggle').click();
   await page.locator('#room-map').getByRole('button', { name: `Ir para ${desk.name}`, exact: true }).click();
   await bringHere(page);
-  await expect.poll(async () => (await daniel()).look).toBe('office');
+  await expect.poll(async () => (await daniel()).location).toMatchObject({ kind: 'interior', building: office.id, room: Object.entries(office.layout.rooms).find(([, r]) => r === desk)![0] });
+  expect((await daniel()).look).toBe('outing');
   await page.screenshot({ path: 'reports/review/adults-work-office-1024.png' });
-  // The afternoon comes (5 min of play), and Daniel goes home: the outing look comes back and he brings groceries.
+  // The afternoon comes (5 min of play), and Daniel goes home, still in his outing look, with groceries.
   await playMinutes(page, 5.5);
   const home = (await readTown(page)).buildings[0]!;
   await page.locator('#map-toggle').click();

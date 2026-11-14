@@ -47,7 +47,7 @@ describe('os adultos no save (W3L-24, §4)', () => {
     expect(album.houses[0]!.state.actors.map(a => a.id)).toEqual(world.actors.map(a => a.id));
   });
   it('o turno de trabalho nunca vai para o save (W3L-25, §4): com ou sem ele, os bytes são os mesmos', () => {
-    const value = town(), working = { ...value, actors: value.actors.map(a => a.id === 'daniel' ? { ...a, look: 'office' as const, work: { look: 'outing' as const } } : a) };
+    const value = town(), working = { ...value, actors: value.actors.map(a => a.id === 'daniel' ? { ...a, look: 'office' as const, work: {} } : a) };
     const plainLook = { ...value, actors: value.actors.map(a => a.id === 'daniel' ? { ...a, look: 'office' as const } : a) };
     expect(encodeNeighborhood(working)).toBe(encodeNeighborhood(plainLook));
     expect(decodeNeighborhood(JSON.stringify({ version: 3, town: { ...plain(working), actors: working.actors } }))!.actors.find(a => a.id === 'daniel')!.work).toBeUndefined();
