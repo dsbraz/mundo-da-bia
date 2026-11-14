@@ -1,9 +1,10 @@
 import type Phaser from 'phaser';
-import type { Point } from '../domain/types';
+import type { ActorId, Point } from '../domain/types';
 import type { ReactionPose } from '../content/personalities';
 import { bubbleExit, reducedMotion } from './motion';
 import { hex, palette } from './palette';
 import { textStyle } from './text-style';
+import { raisedArmsY } from './pose';
 
 type Container = Phaser.GameObjects.Container;
 const bubbles = new WeakMap<Phaser.Scene, Map<string, Container>>();
@@ -103,8 +104,13 @@ export function applyReaction(figure: Container, pose: Container) {
   pose.y += Number(figure.getData('hop') ?? 0);
   pose.rotation += Number(figure.getData('tilt') ?? 0) + lean * .003;
   const hands = pose.getByName<Phaser.GameObjects.Image>('hands');
-  hands?.setFlipY(Number(figure.getData('arms') ?? 0) > .5);
+  raiseArms(hands, figure);
   hugArm(hands, Number(figure.getData('hugSide') ?? 0));
+}
+/** Arms up: the arms layer upside down, lifted back to a grown-up's shoulder (`raisedArmsY`). */
+function raiseArms(hands: Phaser.GameObjects.Image | null, figure: Container) {
+  const raised = Number(figure.getData('arms') ?? 0) > .5;
+  hands?.setFlipY(raised).setY(raised ? raisedArmsY({ id: figure.name as ActorId, kind: 'human' }) : 0);
 }
 /** In a hug (lot 6B) the arm on the partner's side goes around them: the hanging one on that side is not drawn. */
 function hugArm(hands: Phaser.GameObjects.Image | null, side: number) {

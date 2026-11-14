@@ -9,6 +9,9 @@ export const actorScale = (actor: Actor, context: VisualContext = 'interior') =>
 export const figureHeight = (actor: Pick<Actor, 'id' | 'kind'>) => actor.kind === 'cat' ? 120 : isAdult(actor.id) ? 286 : 220;
 /** The art's own canvas height (svg units, 140 wide): a grown-up's sheet (`adult.svg`) is 264 tall. */
 export const artHeight = (actor: Pick<Actor, 'id' | 'kind'>) => actor.kind === 'cat' ? 120 : isAdult(actor.id) ? 264 : 220;
+/** Raised, the arms layer is drawn upside down, which turns it about the drawing's middle: a child's shoulders are there, a grown-up's
+ *  (row 108 of `adult.svg`) would land at the waist, so its arms are lifted back to the shoulder (scene units before the pose scale). */
+export const raisedArmsY = (actor: Pick<Actor, 'id' | 'kind'>) => isAdult(actor.id) ? (2 * 108 - artHeight(actor)) * figureHeight(actor) / artHeight(actor) : 0;
 /** The drawing's width: the art grows whole, never stretched. */
 export const figureWidth = (actor: Pick<Actor, 'id' | 'kind'>) => 140 * figureHeight(actor) / artHeight(actor);
 /** How far above the feet the action ring starts (scene units before the context scale): above the head, the name tag, the star and the
