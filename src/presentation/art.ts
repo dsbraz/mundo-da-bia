@@ -15,6 +15,7 @@ import { expressionOf, faceParts, paintFace, type Expression } from './expressio
 import type { Actor } from '../domain/types';
 import { isAdult } from '../domain/family';
 import { partKey } from './outfit';
+import { addRaisedSleeves } from './raised-sleeves';
 
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, context?: VisualContext): Phaser.GameObjects.Container {
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
@@ -113,6 +114,7 @@ function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor:
     lower.setData('hitCrop', { x: side * 140, y: knee, width: 140, height: shin });
     lower.setData('side', side); knees.add(lower);
   }
+  if (part === actor.look && !isAdult(actor.id)) addRaisedSleeves(scene, pose, image, knee);
 }
 
 function seatLayers(pose: Phaser.GameObjects.Container, actor: Actor, reduced: boolean) {

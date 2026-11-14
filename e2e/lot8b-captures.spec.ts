@@ -51,9 +51,9 @@ for (const size of sizes) test(`lote 8B: a Laura andando pela sala, a ${size.wid
   await page.clock.runFor(300);
   await tap(page, 520, 400);
   await expect(page.locator('#actor-context')).toContainText(/Laura/);
-  await tap(page, 250, 600);
-  await page.clock.runFor(400);
-  await expect(page.locator('canvas')).toHaveAttribute('data-gait', /laura:walk/);
+  await tap(page, 680, 560);
+  // Mid-stride: the clock steps until she walks.
+  await expect.poll(async () => { await page.clock.runFor(60); return page.locator('canvas').getAttribute('data-gait'); }).toMatch(/laura:walk/);
   await shot(page, 'adults-walk', size.width);
 });
 
@@ -88,11 +88,12 @@ for (const size of sizes) test(`lote 8B: pai e mãe com a mesma roupa em casa e 
   await start(page, size, workTown());
   await page.clock.runFor(300);
   await shot(page, 'parents-home', size.width);
+  await page.clock.resume();
   const daniel = await who(page, 'daniel');
   await tap(page, daniel.x, daniel.y - 150);
   await expect(page.locator('#selected')).toHaveText('Daniel');
   await toOffice(page, 'daniel');
-  await page.clock.runFor(600);
+  await page.waitForTimeout(600);
   expect([(await who(page, 'daniel')).look, (await who(page, 'fabiana')).look]).toEqual(['outing', 'sol']);
   await shot(page, 'parents-office', size.width);
 });

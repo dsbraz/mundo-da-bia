@@ -3,47 +3,14 @@ import { expect, it } from 'vitest';
 import type Phaser from 'phaser';
 import { applyReaction } from './feedback';
 import { artHeight, figureHeight, handAnchor, raisedHand } from './pose';
+import { inside, outlines } from './svg-outline.test-kit';
 
 const sheet = readFileSync('public/art/adult.svg', 'utf8');
-type P = { x: number; y: number };
 /** The `d` of every path in the layer `id`. */
 const paths = (id: string) => {
   const start = sheet.indexOf(`<g id="${id}"`), end = sheet.indexOf('</g>', start);
   return [...sheet.slice(start, end).matchAll(/<path d="([^"]+)"/g)].map(m => m[1]!);
 };
-type Segment = (n: number[], base: P, at: P, last: P) => { to: P; ctrl?: P };
-const point = (base: P, x: number, y: number) => ({ x: base.x + x, y: base.y + y });
-/** Where each path command goes (and its curve's control point), with how many numbers it takes. */
-const segments: Record<string, [number, Segment]> = {
-  M: [2, (n, b) => ({ to: point(b, n[0]!, n[1]!) })], L: [2, (n, b) => ({ to: point(b, n[0]!, n[1]!) })],
-  H: [1, (n, b, at) => ({ to: { x: b.x + n[0]!, y: at.y } })], V: [1, (n, b, at) => ({ to: { x: at.x, y: b.y + n[0]! } })],
-  Q: [4, (n, b) => ({ ctrl: point(b, n[0]!, n[1]!), to: point(b, n[2]!, n[3]!) })],
-  T: [2, (n, b, at, last) => ({ ctrl: { x: 2 * at.x - last.x, y: 2 * at.y - last.y }, to: point(b, n[0]!, n[1]!) })],
-};
-/** A path's outline as closed polygons, each straight or curved segment sampled in eight steps. */
-function outlines(d: string): P[][] {
-  const shapes: P[][] = [];
-  let at: P = { x: 0, y: 0 }, open = at, last = at;
-  for (const [, command, args] of d.matchAll(/([a-zA-Z])([^a-zA-Z]*)/g)) {
-    const c = command!.toUpperCase(), rel = command !== c, nums = (args!.match(/-?\d*\.?\d+/g) ?? []).map(Number);
-    if (c === 'Z') { at = last = open; continue; }
-    const [size, segment] = segments[c]!;
-    for (let k = 0; k < nums.length; k += size) {
-      const { to, ctrl = { x: (at.x + to.x) / 2, y: (at.y + to.y) / 2 } } = segment(nums.slice(k, k + size), rel ? at : { x: 0, y: 0 }, at, last);
-      if (c === 'M' && k === 0) { shapes.push([to]); open = to; } else shapes.at(-1)!.push(...curve(at, ctrl, to));
-      last = ctrl; at = to;
-    }
-  }
-  return shapes;
-}
-const curve = (from: P, ctrl: P, to: P) => Array.from({ length: 8 }, (_, s) => {
-  const t = (s + 1) / 8, u = 1 - t;
-  return { x: u * u * from.x + 2 * u * t * ctrl.x + t * t * to.x, y: u * u * from.y + 2 * u * t * ctrl.y + t * t * to.y };
-});
-const inside = (p: P, polygon: P[]) => polygon.reduce((odd, a, k) => {
-  const b = polygon[(k + polygon.length - 1) % polygon.length]!;
-  return (a.y > p.y) !== (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x ? !odd : odd;
-}, false);
 const outfits = ['adult-sol-m', 'adult-sol', 'adult-sol-y', 'adult-outing-m', 'adult-outing', 'adult-outing-y', 'adult-market', 'adult-office', 'adult-doctor', 'adult-firefighter', 'adult-police'];
 /** The centre of every circle and ellipse of the layer: the sleeves' round shoulders and the hands. */
 const circles = (id: string) => {

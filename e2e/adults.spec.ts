@@ -15,7 +15,7 @@ const spots: Partial<Record<string, number>> = { bia: 470, daniel: 610, fabiana:
 function family(): World {
   const world = initialWorld();
   world.actors = world.actors.map(a => spots[a.id] ? { ...a, room: 'sala', x: spots[a.id]!, y: 530, seat: null } : { ...a, room: 'quarto', x: 300, y: 530, seat: null });
-  world.actors = world.actors.map((a, n) => a.room === 'quarto' ? { ...a, x: 160 + n * 90 } : a);
+  world.actors = world.actors.map((a, n) => a.room === 'quarto' ? { ...a, x: 160 + n * 80 } : a);
   return world;
 }
 async function open(page: Page, size: typeof sizes[number]) {
