@@ -30,3 +30,13 @@ it('arrastar o já selecionado só interrompe a caminhada quando o arraste come�
   s.gesture.end(1, { x: 380, y: 450 });
   expect(s.poke).not.toHaveBeenCalled(); expect(s.move).toHaveBeenCalled();
 });
+it('tocar em quem está sentado no vaso dá a descarga (escolhida ou não), em vez de reagir', () => {
+  for (const selected of ['luna', 'bia'] as const) {
+    const state = initialWorld(), dispatch = vi.fn(), poke = vi.fn();
+    state.layout = { ...state.layout, pieces: [...state.layout.pieces, { id: 40, kind: 'toilet', room: 'sala', x: 250, y: 310, color: 'original', flipped: false }], nextId: 41 };
+    state.actors = state.actors.map(a => a.id === 'luna' ? { ...a, x: 305, y: 428, seat: '40.0' } : { ...a, x: 900, y: 530, seat: null });
+    const gesture = createPlayGesture(() => state, vi.fn(), vi.fn(), { poke, dispatch, selected: () => selected, preview: vi.fn(), wardrobe: () => false, toggleWardrobe: vi.fn() });
+    gesture.start(1, { x: 305, y: 370 }); gesture.end(1, { x: 305, y: 370 });
+    expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'use', id: 40 }); expect(poke).not.toHaveBeenCalled();
+  }
+});

@@ -20,7 +20,7 @@ const furnishings: Record<RoomTemplate, PieceKind[]> = {
   breakroom: ['counter', 'fridge', 'kitchen-cart'],
   playground: ['picnic-table', 'planter', 'plant'],
   empty: [], bedroom: ['bed', 'wardrobe', 'lamp'], kitchen: ['fridge', 'counter', 'stove', 'table'],
-  bathroom: ['bath', 'mirror', 'plant'], studio: ['stage', 'speaker', 'desk', 'neon'], garden: ['plant', 'plant', 'cat-bed'],
+  bathroom: ['bath', 'toilet', 'mirror', 'plant'], studio: ['stage', 'speaker', 'desk', 'neon'], garden: ['plant', 'plant', 'cat-bed'],
   market: ['market-shelf', 'market-shelf', 'fridge', 'checkout'],
 };
 /** Fixed columns (piece left edges): the yard's scattered pieces, and the market hall (W3L-21 art pass) with both shelves left of the

@@ -10,6 +10,7 @@ import { hugTarget } from './drop-target';
 import { standingSpot } from './walking-path';
 import { overTable } from '../domain/world';
 import { fixture } from '../domain/layout';
+import { toiletUnder } from '../domain/toilet';
 import { logicalPiecePoint } from './furniture-scale';
 export interface PlayInput {
   hover?: (point: Point | null) => void;
@@ -80,9 +81,16 @@ function finish(active: Active, point: Point, state: World, move: (p: Point) => 
     if (play && !active.dragged && !tapFurniture(state, point, undefined, play)) play.walk?.(point);
     return;
   }
-  if (!active.dragged) { tapToken(active, play); return; }
+  if (!active.dragged) { if (!flushUnder(active, state, play)) tapToken(active, play); return; }
   if (active.token) { deliver(active.token, point, state, play!, active.samples); return; }
   finishActor(active, point, state, move, play);
+}
+/** A tap on someone sitting on the toilet flushes it (a child taps the character, not the lever); every other tap on a character is
+ *  unchanged. */
+function flushUnder(active: Active, state: World, play?: PlayInput) {
+  const sitter = state.actors.find(a => a.id === active.actor), toilet = sitter && toiletUnder(state, sitter);
+  if (toilet) play?.dispatch({ type: 'use', id: toilet.id });
+  return !!toilet;
 }
 function finishActor(active: Active, point: Point, state: World, move: (p: Point) => void, play?: PlayInput) {
   const actor = active.actor; if (!actor) return;

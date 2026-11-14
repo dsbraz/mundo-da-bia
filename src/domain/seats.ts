@@ -5,13 +5,13 @@ import type { Actor, Piece, PieceKind, Point, RoomId, SeatRef, World } from './t
 /** The seats each piece offers (§3.3), in the piece's drawing coordinates (`pieceBounds` origin): where the feet of whoever sits there are. */
 export const seatSlots: Partial<Record<PieceKind, readonly Point[]>> = {
   sofa: [{ x: 150, y: 405 }, { x: 245, y: 405 }], bed: [{ x: 790, y: 350 }], armchair: [{ x: 90, y: 145 }],
-  chair: [{ x: 45, y: 108 }], desk: [{ x: 100, y: 132 }], 'school-desk': [{ x: 75, y: 110 }], 'cat-bed': [{ x: 170, y: 408 }],
+  chair: [{ x: 45, y: 108 }], toilet: [{ x: 55, y: 118 }], desk: [{ x: 100, y: 132 }], 'school-desk': [{ x: 75, y: 110 }], 'cat-bed': [{ x: 170, y: 408 }],
   'picnic-table': [36, 92, 148, 204].map(x => ({ x, y: 140 })),
 };
 /** Sitting on these is resting: the bed (lying down) and the cats' bed. */
 export const restingKinds: readonly PieceKind[] = ['bed', 'cat-bed'];
-/** Only a cat fits the cats' bed. */
-export const fits = (kind: PieceKind, actor: Pick<Actor, 'kind'>) => kind !== 'cat-bed' || actor.kind === 'cat';
+/** Only a cat fits the cats' bed, and only a person the toilet. */
+export const fits = (kind: PieceKind, actor: Pick<Actor, 'kind'>) => kind === 'cat-bed' ? actor.kind === 'cat' : kind !== 'toilet' || actor.kind === 'human';
 export const seatRef = (piece: number, slot: number): SeatRef => `${piece}.${slot}`;
 export function parseSeat(seat: string): { piece: number; slot: number } | null {
   const match = /^([1-9]\d*)\.(0|[1-9]\d*)$/.exec(seat);
@@ -41,11 +41,14 @@ export function freeFor(state: World, actor: Actor, seat: SeatRef): boolean {
 export const freeSeat = (state: World, piece: Piece, actor: Actor) => seatsOf(piece).find(seat => freeFor(state, actor, seat));
 /** Seats at a table (W3L-07): eating prefers these. */
 const tableKinds: readonly PieceKind[] = ['chair', 'picnic-table'];
-/** Where `actor` eats seated: the seat she is on (not a bed), else the free seat here at a table, else any other free seat, nearest first. */
+/** Never a place to eat: the beds and the toilet. */
+const notForMeals: readonly PieceKind[] = [...restingKinds, 'toilet'];
+/** Where `actor` eats seated: the seat she is on (not a bed nor the toilet), else the free seat here at a table, else any other free seat,
+ *  nearest first. */
 export function mealSeat(state: World, actor: Actor): SeatRef | undefined {
   const own = actor.seat ? seatPiece(state, actor.seat) : undefined;
-  if (own && !restingKinds.includes(own.kind)) return actor.seat!;
-  const free = seatsIn(state, state.room).filter(seat => freeFor(state, actor, seat) && !restingKinds.includes(seatPiece(state, seat)!.kind));
+  if (own && !notForMeals.includes(own.kind)) return actor.seat!;
+  const free = seatsIn(state, state.room).filter(seat => freeFor(state, actor, seat) && !notForMeals.includes(seatPiece(state, seat)!.kind));
   const rank = (seat: SeatRef) => (tableKinds.includes(seatPiece(state, seat)!.kind) ? 0 : 10000) + Math.abs(seatPoint(state, seat)!.x - actor.x);
   return free.sort((a, b) => rank(a) - rank(b))[0];
 }
