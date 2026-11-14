@@ -1,5 +1,6 @@
-import type { ActorId, Point, World } from '../domain/types';
-import type { Neighborhood } from '../domain/neighborhood-types';
+import type { ActorId, Point, RoomId, World } from '../domain/types';
+import type { Location, Neighborhood } from '../domain/neighborhood-types';
+import { doorTo } from '../presentation/neighborhood-doors';
 import { placeTransition, type PlaceStep } from '../presentation/place-transition';
 import { worldToScreen } from '../presentation/viewport';
 
@@ -33,4 +34,12 @@ export function placeChange(deps: PlaceDeps) {
       if (changed) places.run(current, () => { repaint(); flush(); }, arrival); else { repaint(); flush(); }
     },
   };
+}
+/** How going through the way to `to` looks: across a floor edge (lot 8A) the view slides to that side room as a swipe does; through a
+ *  door or the stairs the iris closes on `at` (screen point). */
+export function throughStep(town: Neighborhood, to: Location, at: Point, slide: (room: RoomId, from: number, ms: number) => void): PlaceStep {
+  const edge = doorTo(town, to);
+  if (edge?.kind !== 'edge' || to.kind !== 'interior') return { kind: 'door', at };
+  const from = edge.box.x > 0 ? -.001 : .001;
+  return { kind: 'swipe', during: ms => slide(to.room, from, ms) };
 }

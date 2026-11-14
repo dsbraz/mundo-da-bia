@@ -16,6 +16,13 @@ export const pieceSpans = (state: World): Span[] => state.layout.pieces.filter(p
 /** The doorways and stairs of the current room, as their drawn openings. */
 export const passageSpans = (state: World): Span[] => passages(state.layout, state.room).map(({ box }) => ({ left: box.x, right: box.x + box.width }));
 export const peopleSpans = (state: World): Span[] => state.actors.filter(a => a.room === state.room).map(a => ({ left: a.x - (a.kind === 'cat' ? 35 : 42), right: a.x + (a.kind === 'cat' ? 35 : 42) }));
+/** What a room must open with: the chosen character (`chosen`) and the professional working there (lot 8A: she greets whoever
+ *  arrives) together when they fit, else the character alone. */
+export function keepInView(chosen: Span | undefined, staff: { x: number } | null): Span | Span[] | undefined {
+  const pro = staff && { left: staff.x - 64, right: staff.x + 64 };
+  if (!pro || !chosen) return chosen ?? pro ?? undefined;
+  return [{ left: Math.min(chosen.left, pro.left), right: Math.max(chosen.right, pro.right) }, chosen];
+}
 /** Where a place opens: always with `must` (the chosen character, with its margin) in view when it fits, then the window with the most
  *  whole people, then no doorway or stairs cut by the edge (whole in view or wholly out), then the most whole furniture by width (a bed
  *  outweighs a lamp); ties lean toward the people. */

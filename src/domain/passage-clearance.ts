@@ -1,13 +1,16 @@
 import { editWorld } from './design';
+import { pieceBounds } from './layout';
 import { footprint, freePlacement, inPassages, overlap } from './placement';
 import type { Layout, Piece, World } from './types';
-/** A new room or floor may open a doorway, the stairs or the stairwell where pieces stood in `before`: each moves to the nearest free
- *  spot of its room, along its own row first (it stays against the same wall), then anywhere. With no free spot left the piece stays.
- *  A piece that already stood in a passage before (an older save) is left alone. Whoever sits on a moved piece and what lies on it move
- *  with it. */
-export function clearPassages(state: World, before: Layout): World {
-  const newly = (world: World, piece: Piece) => inPassages(world, piece) > 0 && inPassages({ layout: before }, piece) === 0;
-  return state.layout.pieces.reduce((world, piece) => newly(world, piece) ? clearPiece(world, piece) : world, state);
+/** A new room or floor may open the stairwell where pieces stood in `before`: each moves to the nearest free spot of its room, along its
+ *  own row first (it stays against the same wall), then anywhere. With no free spot left the piece stays. A piece that already stood in
+ *  a passage before is left alone, unless `before` is null (lot 8A: a save opened from before the stairwell, every piece moves out).
+ *  Whoever sits on a moved piece and what lies on it move with it. */
+export function clearPassages(state: World, before: Layout | null): World {
+  const newly = (world: World, piece: Piece) => inPassages(world, piece) > 0 && (!before || inPassages({ layout: before }, piece) === 0);
+  // The narrowest first: they find room along their wall, and a wide piece that no longer fits there steps forward.
+  const order = [...state.layout.pieces].sort((a, b) => pieceBounds[a.kind].width - pieceBounds[b.kind].width);
+  return order.reduce((world, piece) => newly(world, piece) ? clearPiece(world, world.layout.pieces.find(p => p.id === piece.id)!) : world, state);
 }
 function clearPiece(state: World, piece: Piece): World {
   const room = { ...state, room: piece.room };

@@ -15,8 +15,13 @@ export function editModule(town: Neighborhood, action: ModuleAction): Neighborho
   return structural.includes(action.type) ? clearBuilding(next, { ...building, layout }, building.layout) : next;
 }
 const structural: readonly ModuleAction['type'][] = ['add-floor', 'add-module', 'move-module'];
-/** A new room or a moved one opens doorways and stairs: the pieces they would newly cover move out, with whoever sits on them. */
-function clearBuilding(town: Neighborhood, building: Building, before: Layout): Neighborhood {
+/** Lot 8A: a save from before the stairwell column opens with it free; the pieces standing there move out, with whoever sits on them. */
+export function clearStairwells(town: Neighborhood): Neighborhood {
+  return town.buildings.reduce((next, b) => clearBuilding(next, next.buildings.find(x => x.id === b.id)!, null), town);
+}
+/** A new room or a moved one opens the stairwell: the pieces it would newly cover move out, with whoever sits on them (`before` null:
+ *  every piece in it). */
+function clearBuilding(town: Neighborhood, building: Building, before: Layout | null): Neighborhood {
   const world = clearPassages(inside(town, building), before);
   if (world.layout === building.layout) return town;
   return { ...town, buildings: town.buildings.map(b => b.id === building.id ? { ...b, layout: world.layout } : b),

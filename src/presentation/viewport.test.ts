@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { framing, openingX, screenToWorld, streetFrame, viewport, worldToScreen } from './viewport';
+import { framing, keepInView, openingX, screenToWorld, streetFrame, viewport, worldToScreen } from './viewport';
 // Drawn height of a human (hair to shoes) in logical units, measured on the rendered capture: 131 px at scale .768.
 const human = 170;
 // The scene area of a 768x1024 tablet in portrait, below the header and above the panel.
@@ -145,12 +145,15 @@ it('cada peça do cômodo atual vira uma faixa horizontal pelo seu desenho', asy
   expect(pieceSpans(world)).toContainEqual({ left: 292, right: 518 });
   expect(pieceSpans(world)).toHaveLength(world.layout.pieces.filter(p => p.room === world.room).length);
 });
-it('cada porta do fim da parede e a escada do cômodo atual viram a faixa da sua abertura', async () => {
+it('lote 8A: só a escada vira faixa de abertura; as beiradas que levam aos cômodos do lado, não', async () => {
   const { initialWorld } = await import('../domain/world');
   const { passageSpans } = await import('./viewport');
+  const { addRoom } = await import('../domain/rooms');
   const world = initialWorld();
-  expect(passageSpans(world)).toEqual([{ left: 1080, right: 1184 }]);
-  expect(passageSpans({ ...world, room: 'quarto' })).toEqual([{ left: 16, right: 120 }]);
+  expect(passageSpans(world)).toEqual([]);
+  expect(passageSpans({ ...world, room: 'quarto' })).toEqual([]);
+  const upstairs = addRoom(world, { name: 'Sótão', template: 'empty', size: 'medium', cell: 4 });
+  expect(passageSpans({ ...upstairs, room: 'sala' })).toEqual([{ left: 0, right: 240 }]);
 });
 it('cada personagem do cômodo atual vira uma faixa da largura do seu anel', async () => {
   const { initialWorld } = await import('../domain/world');
@@ -159,4 +162,12 @@ it('cada personagem do cômodo atual vira uma faixa da largura do seu anel', asy
   expect(peopleSpans(world)).toContainEqual({ left: 478, right: 562 });
   expect(peopleSpans(world)).toContainEqual({ left: 295, right: 365 });
   expect(peopleSpans({ ...world, actors: world.actors.map(a => a.id === 'bia' ? { ...a, room: 'quarto' } : a) })).toHaveLength(6);
+});
+it('lote 8A: o cômodo abre com a personagem escolhida e o profissional juntos quando cabem; senão, só com ela', () => {
+  const must = keepInView({ left: 508, right: 592 }, { x: 900 });
+  expect(must).toEqual([{ left: 508, right: 964 }, { left: 508, right: 592 }]);
+  const x = openingX([], 898, 1200, must);
+  expect(x).toBeLessThanOrEqual(508); expect(x + 898).toBeGreaterThanOrEqual(964);
+  expect(keepInView(undefined, { x: 900 })).toEqual({ left: 836, right: 964 });
+  expect(keepInView({ left: 508, right: 592 }, null)).toEqual({ left: 508, right: 592 });
 });

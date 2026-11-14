@@ -28,11 +28,11 @@ it('os vidros da fachada e das janelas do cômodo são lidos da arte (as janelas
   expect(glassRects(roomArchitecture('dining'))).toContainEqual({ x: 100, y: 85, width: 220, height: 180 });
   expect(glassRects('<svg><rect x="1" y="2" width="3" height="4" fill="#fff"/></svg>')).toEqual([]);
 });
-it('num cômodo com escada, a arte da parede se estreita à direita do vão: nenhuma janela fica atrás da escada (x < 192)', () => {
+it('lote 8A: num cômodo com escada, a arte da parede fica à direita do vão da escada (x ≥ 250 da arte, 240 da cena num cômodo de 1000)', () => {
   for (const template of roomTemplates.filter(t => !['garden', 'playground'].includes(t))) {
     const svg = roomArchitecture(template, true);
-    expect(svg).toContain('<g transform="translate(200 0) scale(.8 1)">');
-    for (const r of glassRects(svg)) expect([template, hallShift(r.x) >= 200]).toEqual([template, true]);
+    expect(svg).toContain('<g transform="translate(250 0) scale(.75 1)">');
+    for (const r of glassRects(svg)) expect([template, hallShift(r.x) >= 250]).toEqual([template, true]);
   }
   expect(roomArchitecture('empty')).not.toContain('<g transform');
   const world = initialWorld();

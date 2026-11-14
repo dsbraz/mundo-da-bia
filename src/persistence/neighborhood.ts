@@ -2,6 +2,7 @@ import { validOutdoor } from './outdoor-validation';
 import { upgradeNeighborhood } from './neighborhood-upgrade';
 import { plotWidth, streetWidth } from '../domain/neighborhood-geometry';
 import { localWorld } from '../domain/neighborhood';
+import { clearStairwells } from '../domain/modules';
 import type { Building, LegacyNeighborhood, Location, Neighborhood } from '../domain/neighborhood-types';
 import { buildingModels } from '../domain/neighborhood-types';
 import { paletteIds } from '../domain/types';
@@ -25,14 +26,14 @@ export function decodeNeighborhood(raw: string | null): Neighborhood | null {
     if (value.version !== 1 && value.version !== 2) return null;
     const town = knownContent(value.town);
     if (!validTown(town) || !validVersion(town, value.version)) return null;
-    return upgradeToV3(value.version === 1 ? upgradeNeighborhood(town) : town);
+    return clearStairwells(upgradeToV3(value.version === 1 ? upgradeNeighborhood(town) : town));
   } catch { return null; }
 }
 function decodeV3(value: unknown): Neighborhood | null {
   const town = knownTown(value);
   if (!record(value) || !validTown(town) || !validVersion(town, 3)) return null;
   const first = nextItemAfter(town.items);
-  return { ...unwatered(town), progress: knownProgress(value.progress), nextItem: positiveId(value.nextItem) && value.nextItem >= first ? value.nextItem : first };
+  return clearStairwells({ ...unwatered(town), progress: knownProgress(value.progress), nextItem: positiveId(value.nextItem) && value.nextItem >= first ? value.nextItem : first });
 }
 function validVersion(town: LegacyNeighborhood, version: number) {
   if (version === 1) return [...town.actors, ...town.items].every(entity => entity.location.kind !== 'street' || entity.x <= town.plots * plotWidth - 60);

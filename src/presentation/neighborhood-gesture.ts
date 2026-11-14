@@ -46,7 +46,7 @@ export function neighborhoodGesture(base: Gesture, actions: Actions): Gesture {
     base.update(id, point);
     if (adopted(active, point)) { light(active, point); return; }
     if (!active.item) return;
-    const door = doorAt(actions.town(), point);
+    const door = itemDoor(actions.town(), point);
     if (JSON.stringify(door?.location) === JSON.stringify(active.destination)) return;
     stop(); active.destination = door?.location;
     if (!door) return;
@@ -85,7 +85,9 @@ function backgroundAction(actions: Actions, point: Point): (() => void) | null {
   if (door) return () => { if (!actions.enter?.(door.location)) actions.dispatch({ type: 'visit', location: door.location }); };
   return plotTap(actions, point) ? () => actions.plot(plotAt(point.x)) : null;
 }
-function loose(world: World, token: ReturnType<typeof sourceAt>): ItemId | undefined {
+/** An object at a floor edge goes by the house's own edge transfer (held at the scene's side), never by the door timer. */
+function itemDoor(town: Neighborhood, point: Point) { const door = doorAt(town, point); return door?.kind === 'edge' ? undefined : door; }
+function loose(world: World,token: ReturnType<typeof sourceAt>): ItemId | undefined {
   return token?.kind === 'item' && world.items.some(i => i.id === token.id && !i.holder && i.spot === 'floor') ? token.id : undefined;
 }
 
