@@ -14,7 +14,8 @@ function withoutTeacher(): Neighborhood {
 }
 
 for (const subject of subjects) test(`lote 8D: a matéria ${subject.name}: a professora escreve no quadro com o giz e a folha vai para a geladeira`, async ({ page }) => {
-  test.setTimeout(90_000);
+  // 20 s of chalk strokes repainted every frame, then the walk home: slow to render in CI's software GL.
+  test.setTimeout(150_000);
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.clock.install({ time: new Date('2026-11-13T09:00:00') });
   await openSchool(page);
@@ -42,7 +43,8 @@ for (const subject of subjects) test(`lote 8D: a matéria ${subject.name}: a pro
 });
 
 test('lote 8D: num quadro sem professora (um quarto), ela vem escrever a aula; fechar a escolha não guarda nada', async ({ page }) => {
-  test.setTimeout(90_000);
+  // 20 s of chalk strokes repainted every frame, then the walk home: slow to render in CI's software GL.
+  test.setTimeout(150_000);
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install({ time: new Date('2026-11-13T09:00:00') });
