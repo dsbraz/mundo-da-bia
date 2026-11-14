@@ -67,21 +67,24 @@ test('lote 8C: com o Rui muito entediado, ler na poltrona da biblioteca alivia o
   const rui = (await readTown(page)).actors.find(a => a.id === 'rui')!, seat = visualPiecePoint(armchair, { x: armchair.x + 90, y: armchair.y + 145 });
   await drag(page, [rui.x, rui.y - 60], [seat.x, seat.y - 60]);
   await expect(canvas(page)).toHaveAttribute('data-reading', 'rui');
-  // Reading −30: back to `pede`, no longer the bored face.
+  // Reading −30: back to `pede`, no longer the bored face (once the sitting's own face has passed).
+  await page.clock.runFor(2000);
   await expect.poll(() => face(page, 'rui')).not.toBe('bored');
-  await page.clock.runFor(900);
+  await page.clock.runFor(3500);
   await page.screenshot({ path: shot('reading-library', 1024) });
   await page.setViewportSize({ width: 1280, height: 800 }); await page.clock.runFor(300);
   await page.screenshot({ path: shot('reading-library', 1280) });
 });
 
-test('lote 8C: um livro largado no chão volta para a estante quando é arrastado até ela', async ({ page }) => {
-  const town = schoolTown(), shelf = bookcaseOf(town, 'quarto');
+test('lote 8C: um livro largado no chão volta para a estante (espelhada) quando é arrastado até ela', async ({ page }) => {
+  const base = schoolTown(), flip = (t: Neighborhood) => ({ ...t, buildings: t.buildings.map(b => b.id === 2 ? { ...b, layout: { ...b.layout, pieces: b.layout.pieces.map(p => p.kind === 'bookcase' ? { ...p, flipped: true } : p) } } : b) });
+  const town = flip(base), shelf = bookcaseOf(town, 'quarto');
   const lent = borrow(town, 'bia', shelf.id).town;
   const dropped = { ...lent, items: lent.items.map(i => i.kind === 'livro' ? { ...i, holder: null, x: 640, y: 540 } : i) };
   await page.clock.install({ time: new Date('2026-11-13T09:00:00') });
   await openSchool(page, dropped);
   await expect(canvas(page)).toHaveAttribute('data-bookcases', `${shelf.id}:0`);
+  await page.screenshot({ path: shot('shelf-flipped-gap', 1024) });
   const target = visualPiecePoint(shelf, { x: shelf.x + pieceBounds.bookcase.width / 2, y: shelf.y + 110 });
   await drag(page, [640, 525], [target.x, target.y]);
   await expect.poll(async () => (await books(page)).length).toBe(0);
