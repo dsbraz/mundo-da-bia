@@ -59,8 +59,17 @@ export function readingCue(scene: Phaser.Scene, book: Image) {
   book.setData('cue', cue).once('destroy', () => cue.destroy());
   return cue;
 }
-/** The cue stays over its book wherever the book is drawn this frame. */
-export function followBook(book: Image) { (book.getData('cue') as Phaser.GameObjects.Container | undefined)?.setPosition(book.x, book.y); }
+/** How an open book is drawn open and closed (`drawObjects` keeps it on the book), so lifting the reader can close it. */
+export interface OpenBook { key: string; size: number; closed: string; closedSize: number }
+/** The cue stays over its book wherever the book is drawn this frame. Told whether its reader is `lifted` off her seat, an open book
+ *  closes in her hand at once, cue and all, and opens again if she is put back without anything changing. */
+export function followBook(book: Image, lifted?: boolean) {
+  const cue = book.getData('cue') as Phaser.GameObjects.Container | undefined, open = book.getData('open') as OpenBook | undefined;
+  cue?.setPosition(book.x, book.y);
+  if (!cue || !open || lifted === undefined || cue.visible !== lifted) return;
+  book.setTexture(lifted ? open.closed : open.key).setDisplaySize(lifted ? open.closedSize : open.size, lifted ? open.closedSize : open.size);
+  cue.setVisible(!lifted);
+}
 function star(x: number, y: number, outer: number, inner: number) {
   return Array.from({ length: 10 }, (_, i) => { const r = i % 2 ? inner : outer, a = -Math.PI / 2 + i * Math.PI / 5; return { x: x + Math.cos(a) * r, y: y + Math.sin(a) * r }; });
 }

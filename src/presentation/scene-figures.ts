@@ -39,7 +39,7 @@ export function moveFigure(s: FigureState, id: ActorId | null, point: Point | nu
   data.walking = id ?? ''; data.walkX = String(destination.x); data.walkY = String(destination.y);
   s.world.items.filter(i => i.holder === active).forEach(item => {
     const p = handPoint(preview, visualContext(s.world));
-    const held = s.objects.find(o => o.name === item.id); if (held) followBook(held.setPosition(p.x, p.y).setDepth(depth + 2));
+    const held = s.objects.find(o => o.name === item.id); if (held) followBook(held.setPosition(p.x, p.y).setDepth(depth + 2), !!point);
   });
   return id;
 }

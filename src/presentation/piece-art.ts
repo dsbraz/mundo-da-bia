@@ -93,7 +93,7 @@ export function drawObjects(scene: Phaser.Scene, state: World) {
     const depth = objectDepth(state, item), holder = state.actors.find(a => a.id === item.holder), open = !!holder && reading(state, holder);
     const size = ballSize(itemKind(item), visualContext(state)) * (open ? openBook : 1);
     const image = scene.add.image(point.x, point.y, open ? bookTexture(item, true) : itemTexture(item)).setDisplaySize(size, size).setName(item.id).setDepth(depth);
-    if (open) readingCue(scene, image);
+    if (open) readingCue(scene, image.setData('open', { key: image.texture.key, size, closed: itemTexture(item), closedSize: size / openBook }));
     fridgeFood(scene, state, item, image);
     return [image];
   });
