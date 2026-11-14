@@ -15,6 +15,7 @@ import { cook } from './recipes';
 import { garden, gardenActions } from './garden';
 import { feel, life, lifeActions } from './needs';
 import { keepStock } from './stock';
+import { larderOf, storeLarder } from './larder';
 import { marketActions, shop, unpaidExit } from './market';
 import { work } from './work';
 import { leaveShow } from './show';
@@ -80,7 +81,7 @@ export function localWorld(town: LegacyNeighborhood): World {
   const building = location.kind === 'interior' ? town.buildings.find(b => b.id === location.building)! : null;
   const room = location.kind === 'interior' ? location.room : 'sala';
   const layout = building?.layout ?? streetLayout(town.plots);
-  return { ...(building ? {} : { streetWidth: streetWidth(town.plots) }), layout, room, home: layout.rooms[room]!.home, show: building?.show ?? false,
+  return { larder: larderOf(building ?? homeOf(town)), ...(building ? {} : { streetWidth: streetWidth(town.plots) }), layout, room, home: layout.rooms[room]!.home, show: building?.show ?? false,
     actors: town.actors.map(a => ({ ...a, room: localRoom(a.location, location) })),
     items: town.items.filter(i => localRoom(i.location, location) !== 'room-0').map(i => ({ ...i, room: localRoom(i.location, location) })),
   };
@@ -105,12 +106,17 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
     if (holder) return { ...(updated ?? i), room: holder.room, x: holder.x, y: holder.y, location: holder.location };
     return updated ? { ...updated, location: location(updated.room) } : i;
   });
-  const buildings = town.buildings.map(b => view.kind === 'interior' && b.id === view.building ? { ...b, show: world.show,
-    layout: { ...world.layout, rooms: { ...world.layout.rooms, [world.room]: { ...world.layout.rooms[world.room], home: world.home } } } } : b);
+  const buildings = town.buildings.map(b => view.kind === 'interior' && b.id === view.building ? fed({ ...b, show: world.show,
+    layout: { ...world.layout, rooms: { ...world.layout.rooms, [world.room]: { ...world.layout.rooms[world.room], home: world.home } } } }, world)
+    : view.kind === 'street' && b === homeOf(town) ? fed(b, world) : b);
   let outdoor = town.outdoor;
   town.actors.forEach(a => { const next = actors.find(n => n.id === a.id)!; if (!sameLocation(next.location, a.location) || next.x !== a.x || next.y !== a.y) outdoor = releaseOutdoor(outdoor, a.id); });
   return { ...town, outdoor, buildings, actors, items, location: location(world.room) };
 }
+/** "Minha casa", the lowest id: on the street, what is eaten comes out of its fridge. */
+const homeOf = <B extends { id: number }>(town: { buildings: B[] }): B => town.buildings.reduce((a, b) => b.id < a.id ? b : a);
+/** What the house shown (on the street, "Minha casa") ate from its fridge goes back to it. */
+const fed = (building: Neighborhood['buildings'][number], world: World) => world.larder ? storeLarder(building, world.larder) : building;
 /** Undo and redo bring old houses back, never take a gain away: progress and the dishes stay as they are now (a dish in a house the
  *  undo removes goes with it), and item ids never go back. */
 export function undoTo(next: Neighborhood, current: Neighborhood): Neighborhood {

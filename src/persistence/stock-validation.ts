@@ -11,8 +11,12 @@ export function knownStock(value: unknown): Stock | undefined {
     return Number.isInteger(amount) && Number(amount) > 0 ? [[id, Math.min(Number(amount), stockLimit)]] : [];
   }));
 }
-/** The building with only a pantry this build knows. */
+/** Snacks read from the save (lot 6F): a whole number kept between 0 and 4; anything else was never counted (absent, read as 4). */
+export function knownSnacks(value: unknown): number | undefined {
+  return Number.isInteger(value) ? Math.max(0, Math.min(Number(value), stockLimit)) : undefined;
+}
+/** The building with only a pantry and a fridge this build knows. */
 export function stocked<T extends Record<string, unknown>>(building: T): T {
-  const { stock, ...rest } = building, known = knownStock(stock);
-  return (known ? { ...rest, stock: known } : rest) as T;
+  const { stock, snacks, ...rest } = building, known = knownStock(stock), left = knownSnacks(snacks);
+  return { ...rest, ...(known ? { stock: known } : {}), ...(left === undefined ? {} : { snacks: left }) } as T;
 }

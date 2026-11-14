@@ -73,3 +73,16 @@ it('o interruptor de adulto da autonomia (W3L-13) começa ligado e lembra a esco
   expect(saveAutonomy(false)).toBe(true); expect(loadAutonomy()).toBe(false);
   vi.unstubAllGlobals();
 });
+it('a mão do caixa (lote 6F) aparece uma vez só, numa chave própria, e sem armazenamento não quebra', async () => {
+  const { loadCheckoutHintSeen, saveCheckoutHintSeen } = await import('./storage');
+  const port = storage();
+  expect(loadCheckoutHintSeen(port)).toBe(false);
+  expect(saveCheckoutHintSeen(port)).toBe(true);
+  expect([...port.map.entries()]).toEqual([['mundo-da-bia:checkout-hint', 'seen']]);
+  expect(loadCheckoutHintSeen(port)).toBe(true);
+  expect(loadCheckoutHintSeen(storage([], true))).toBe(false);
+  expect(saveCheckoutHintSeen(storage([], true))).toBe(false);
+  vi.stubGlobal('localStorage', storage());
+  expect(saveCheckoutHintSeen()).toBe(true); expect(loadCheckoutHintSeen()).toBe(true);
+  vi.unstubAllGlobals();
+});

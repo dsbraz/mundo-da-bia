@@ -1,6 +1,7 @@
 import { destination, placeOf, suggestion, type Destination, type Suggestion } from '../domain/routine';
 import { sameLocation } from '../domain/location';
 import { isAdult } from '../domain/family';
+import { foodAtHome } from '../domain/larder';
 import type { Phase } from '../domain/clock';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import type { ActorId, Point } from '../domain/types';
@@ -22,7 +23,7 @@ export function routineWiring(deps: RoutineDeps) {
     if (!deps.playing() || deps.played() < routineDelay) return null;
     const town = deps.town(), actor = town.actors.find(a => a.id === deps.selected());
     if (!actor || !sameLocation(actor.location, town.location)) return null;
-    const wanted = suggestion(deps.phase(), actor, placeOf(town, actor.location), isAdult(actor.id)), place = wanted && destination(town, wanted, actor.location);
+    const wanted = suggestion(deps.phase(), actor, placeOf(town, actor.location), isAdult(actor.id), foodAtHome(town, actor.id)), place = wanted && destination(town, wanted, actor.location);
     return wanted && place ? { actor: actor.id, suggestion: wanted, place, label: routineLine(wanted, nameOf(actor)) } : null;
   }
   routineBubble(deps.root, { wish, head: deps.head, canvas: () => deps.root.querySelector('canvas'), go: shown => deps.openMap(shown.place, shown.suggestion) });

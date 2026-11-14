@@ -41,7 +41,11 @@ export interface Actor extends Point {
  *  the last joy (favourite dish, favourite game, hug), 0 when there is none. */
 export interface Needs { fome: number; sono: number; tedio: number; alegria: number }
 export interface Item extends Point { id: ItemId; kind?: ItemKind; room: RoomId; holder: ActorId | null; spot: Spot }
-export interface World { streetWidth?: number; layout: Layout; home: Home; room: RoomId; actors: Actor[]; items: Item[]; show: boolean }
+/** What the fridge feeds (lot 6F): the everyday snack and the cats' fish, each used up as it is eaten. */
+export type FridgeFood = 'lanche' | 'peixe';
+export interface World { streetWidth?: number; layout: Layout; home: Home; room: RoomId; actors: Actor[]; items: Item[]; show: boolean;
+  /** How much of each fridge food the house shown has left (0 to 4), never saved; absent where nothing is counted (the street). */
+  larder?: Record<FridgeFood, number> }
 export type Action =
   | { type: 'name'; actor: ActorId; name: string }
   | { type: 'transfer'; item: ItemId; room: RoomId; point: Point }

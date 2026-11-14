@@ -60,11 +60,37 @@
 .market-bag .bag-art{grid-row:1/3;width:56px;height:56px;pointer-events:none}
 .bag-slot{position:relative;width:40px;height:40px;border:2px dashed var(--silhouette-line);border-radius:50%;background:#fffdf7b3}
 .bag-slot:not([data-good=""]){border:2px solid var(--outline);background:var(--card)}
-.bag-slot img,.market-good img{position:absolute;inset:12%;width:76%;height:76%;object-fit:contain;pointer-events:none}
-.bag-slot img.seed,.market-good img.seed{inset:auto 22% 14% 22%;width:56%;height:56%}
+.bag-slot img,.market-good img,.chip-good img{position:absolute;inset:12%;width:76%;height:76%;object-fit:contain;pointer-events:none}
+.bag-slot img.seed,.market-good img.seed,.chip-good img.seed{inset:auto 22% 14% 22%;width:56%;height:56%}
 .bag-slot.hop{animation:bag-hop .42s ease-out}.market-bag.shake{animation:wobble .7s ease-in-out}
 .market-goods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;border-radius:14px;background:#f6ead6;border:2px solid #d9a05b}
 .market-good{position:relative;aspect-ratio:1;min-height:64px;padding:0;border:2px solid var(--outline);border-radius:14px;background:var(--card)}
 @keyframes bag-hop{from{transform:translateY(-38px) scale(.6);opacity:.3}60%{transform:translateY(4px) scale(1.08);opacity:1}to{transform:none}}
 @media(prefers-reduced-motion:reduce){.bag-slot.hop,.market-bag.shake{animation:none}}
 @media(max-width:700px){#market-panel{top:auto;bottom:76px;max-height:60dvh}}
+/* Lot 6F: the checkout calls her while her goods are not paid for: a ring pulses on the register and an arrow bounces over it; the bag
+   beside a register to touch; the receipt with its check when she pays; the ghost hand the very first time. Drawings only. */
+.market-pay{width:60px;height:60px;padding:4px!important;border:2px solid var(--outline);border-radius:14px;background:var(--card);animation:wanted-glow 1.4s ease-in-out infinite alternate}
+.market-pay[hidden]{display:none}.market-pay img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+#checkout-call{position:absolute;z-index:8;width:120px;height:150px;margin:-112px 0 0 -60px;padding:0;border:0;background:none;cursor:pointer}
+#checkout-call .arrow{position:absolute;left:50%;top:-8px;width:66px;height:82px;margin-left:-33px;pointer-events:none;filter:drop-shadow(0 4px 4px #43394033);animation:call-bounce .9s ease-in-out infinite}
+#checkout-call .halo{position:absolute;left:50%;top:84px;width:116px;height:76px;margin-left:-58px;border:7px solid #f2b630;border-radius:50%;background:radial-gradient(#f2b63033,#f2b63000 70%);box-shadow:0 0 18px 6px #f2b630aa;pointer-events:none;animation:halo-pulse 1.2s ease-in-out infinite alternate}
+#checkout-call.nudge .arrow{animation:call-jump .45s ease-out 3}
+@keyframes call-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
+@keyframes call-jump{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-22px) scale(1.25)}}
+@keyframes halo-pulse{from{transform:scale(.9);opacity:1}to{transform:scale(1.15);opacity:.55}}
+#market-chip[hidden]{display:none}
+#market-chip{position:absolute;z-index:11;top:96px;left:12px;display:flex;align-items:center;gap:6px;padding:6px 8px 6px 10px;background:var(--paper);border:1.5px solid var(--outline);border-radius:18px;box-shadow:0 6px 18px #343c531f}
+#market-chip .chip-bag{width:52px;height:52px;pointer-events:none}
+#market-chip .chip-goods{display:flex;flex-wrap:wrap;max-width:120px;gap:2px}
+#market-chip .chip-good{position:relative;width:38px;height:38px;border-radius:50%;background:#fffdf7;border:2px solid var(--outline)}
+#market-chip .chip-pay{width:64px;height:64px;padding:4px;border:2px solid var(--outline);border-radius:14px;background:var(--card);cursor:pointer;animation:wanted-glow 1.4s ease-in-out infinite alternate}
+#market-chip .chip-pay img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+#checkout-receipt{position:absolute;z-index:9;width:96px;height:112px;margin:-128px 0 0 -48px;pointer-events:none}
+#checkout-receipt .paper{position:absolute;left:8px;top:0;width:80px;height:100px;animation:receipt-up .5s ease-out both}
+#checkout-receipt .paid-bag{position:absolute;left:-58px;top:44px;width:64px;height:64px;animation:paid-pop .45s .4s ease-out both}
+@keyframes receipt-up{from{transform:translateY(60px) scaleY(.2);opacity:0}to{transform:none;opacity:1}}
+@keyframes paid-pop{from{transform:scale(.3);opacity:0}70%{transform:scale(1.2);opacity:1}to{transform:none}}
+#checkout-hint{position:absolute;z-index:10;width:72px;height:72px;margin:-70px 0 0 -10px;pointer-events:none;animation:ghost-tap 1.4s ease-in-out infinite;filter:drop-shadow(0 4px 6px #43394033)}
+@media(prefers-reduced-motion:reduce){.market-pay,#market-chip .chip-pay,#checkout-call .arrow,#checkout-call .halo,#checkout-call.nudge .arrow,#checkout-receipt .paper,#checkout-receipt .paid-bag,#checkout-hint{animation:none}}
+@media(max-width:700px){#market-chip{top:auto;bottom:76px}}

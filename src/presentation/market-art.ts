@@ -31,7 +31,7 @@ export function loadMarketArt(scene: Phaser.Scene, state: World) {
   const inRoom = (kind: string) => state.layout.pieces.some(p => p.room === state.room && p.kind === kind);
   const shelves = inRoom('market-shelf');
   if (!shelves && !(inRoom('fridge') && state.home.fridge) && !state.items.some(i => i.kind === 'sacola' && i.room === state.room)) return;
-  ingredientIds.forEach(id => { if (!scene.textures.exists(`ing-${id}`)) scene.load.svg(`ing-${id}`, ingredientIcon(id), { width: 64, height: 64 }); });
+  [...ingredientIds, 'lanche' as const].forEach(id => { if (!scene.textures.exists(`ing-${id}`)) scene.load.svg(`ing-${id}`, ingredientIcon(id), { width: 64, height: 64 }); });
   // Signs and the seed packet are cut from the market sheet, so only a room with shelves waits for them: an open fridge at home
   // shows basics only and must not hold the scene back for them.
   if (!shelves || scene.textures.exists('seed-packet') || !marketReady(scene)) return;

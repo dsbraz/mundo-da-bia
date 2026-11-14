@@ -5,6 +5,7 @@ import type { Neighborhood, NeighborhoodItem, Resident } from './neighborhood-ty
 import { adultIds } from './family';
 import { hasMarket, isMarket } from './market';
 import { stockOf } from './stock';
+import { snacksOf } from './larder';
 import { spawnItem } from './portable';
 import { initialWorld } from './world';
 
@@ -48,10 +49,11 @@ function offWork(town: Neighborhood, adult: Resident, shift: NonNullable<Residen
   const back = home(town, adult, look);
   return (phase === 'tarde' || phase === 'entardecer') && hasMarket(town) ? groceries(back, adult) : back;
 }
-/** A paid bag of the 3 basics with the least in the home's pantry, in the grown-up's hand (at its feet when the hand is full). */
+/** A paid bag of the 3 goods the home has least of (the basics of the pantry and the fridge's snack), in the grown-up's hand (at its
+ *  feet when the hand is full). */
 function groceries(town: Neighborhood, adult: Resident): Neighborhood {
-  const stock = stockOf(town.buildings.find(b => b.id === homeOf(town))!);
-  const contents = [...basics].sort((a, b) => (stock[a] ?? 0) - (stock[b] ?? 0)).slice(0, 3);
+  const house = town.buildings.find(b => b.id === homeOf(town))!, stock = { ...stockOf(house), lanche: snacksOf(house) };
+  const contents = [...basics, 'lanche' as const].sort((a, b) => (stock[a] ?? 0) - (stock[b] ?? 0)).slice(0, 3);
   const spawned = spawnItem(town, { kind: 'sacola', location: adult.location, point: { x: adult.x, y: adult.y } }), bag = spawned.items.at(-1)!;
   const busy = town.items.some(i => i.holder === adult.id);
   const filled: NeighborhoodItem = { ...bag, contents, paid: true, ...(busy ? {} : { holder: adult.id }) };

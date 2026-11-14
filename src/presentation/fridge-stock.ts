@@ -3,8 +3,10 @@ import { basics, stockLimit } from '../domain/ingredients';
 import type { Basic, Stock } from '../domain/ingredients';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { stockOf } from '../domain/stock';
-import type { World } from '../domain/types';
-import { pieceBounds } from '../domain/layout';
+import type { Item, World } from '../domain/types';
+import { itemKind } from '../domain/item-kind';
+import { runOut } from '../domain/larder';
+import { fixture, fromPiece, pieceBounds } from '../domain/layout';
 import { drawShelfGoods } from './market-art';
 import { drawFridgeDrawings } from './school-art';
 
@@ -28,6 +30,24 @@ export function fridgeSpots(stock: Stock): FridgeSpot[] {
       return { id, x: place.x + depth * 3, y: place.y - depth * 3, back: depth > 0 };
     });
   });
+}
+/** The fridge's own food (lot 6F): what ran out stays in its place as a silhouette (a touch on it shows the market); each snack left
+ *  beyond the first stands just behind it, so the fridge shows how many are left without a number. Drawn beside `image`, never moved. */
+export function fridgeFood(scene: Phaser.Scene, state: World, item: Item, image: Phaser.GameObjects.Image) {
+  if (!state.larder) return;
+  if (item.spot === 'fridge' && !item.holder && runOut(state, item)) { image.setTint(0x4f443d).setAlpha(.5); return; }
+  const at = itemKind(item) === 'lanche' ? snackSpot(state, item, image) : null;
+  for (let n = 0; at && n < Math.min(stockLimit, state.larder.lanche) - 1; n++) {
+    const step = n + at.start;
+    scene.add.image(at.x + 9 * step, at.y - 5 * step, image.texture.key).setDisplaySize(image.displayWidth, image.displayHeight).setTint(0xe2d6c4).setDepth(at.depth - step * .01);
+  }
+}
+/** Where the snacks left stand: behind the one in the fridge, or, while one is in her hand, in the open fridge where it came from. */
+function snackSpot(state: World, item: Item, image: Phaser.GameObjects.Image): { x: number; y: number; start: number; depth: number } | null {
+  if (!item.holder) return item.spot === 'fridge' ? { x: image.x, y: image.y, start: 1, depth: image.depth } : null;
+  const fridge = state.home.fridge ? fixture(state, 'fridge') : undefined;
+  // Just in front of the fridge, as its own objects are (`objectDepth`).
+  return fridge?.room === state.room ? { ...fromPiece(fridge, { x: 680, y: 310 }), start: 0, depth: fridge.y + pieceBounds.fridge.height - 18 } : null;
 }
 /** The room's open fridges draw the house's pantry. */
 function drawFridgeStock(scene: Phaser.Scene, state: World, pieces: Map<number, Phaser.GameObjects.Container>, stock: Stock) {

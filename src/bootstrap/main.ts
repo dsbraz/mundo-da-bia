@@ -42,7 +42,9 @@ import { dragPreview, settleMove } from '../presentation/build-preview';
 import Phaser from 'phaser';
 import { loadFonts } from '../presentation/text-style';
 import { transition } from '../domain/world';
-import { loadDrawerOpen, loadFirstTouchSeen, loadNeighborhood, saveDrawerOpen, saveFirstTouchSeen, saveNeighborhood } from '../persistence/storage';
+import { loadCheckoutHintSeen, loadDrawerOpen, loadFirstTouchSeen, loadNeighborhood, saveCheckoutHintSeen, saveDrawerOpen, saveFirstTouchSeen, saveNeighborhood } from '../persistence/storage';
+import { foodAtHome } from '../domain/larder';
+import type { Destination, Suggestion } from '../domain/routine';
 import { firstTouch } from '../presentation/first-touch';
 import { createControls, positionContext } from '../presentation/controls';
 import { PlayScene } from '../presentation/scene';
@@ -84,7 +86,10 @@ let cancelInput = () => {};
 let cancelGame = () => {};
 let view: ReturnType<typeof viewport> | undefined;
 const shell = createShell(root, () => cancelInput(), { open: loadDrawerOpen(), remember: open => { saveDrawerOpen(open); } });
-const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected, playing: () => !building, goRoom: room => { const where = town.location; if (where.kind === 'interior') go({ ...where, room }); } }), announce = feedback.announce, progress = edgeProgress(root);
+const feedback = sceneFeedback({ root, scene, state: () => state, selected: () => selected, playing: () => !building, goRoom: room => { const where = town.location; if (where.kind === 'interior') go({ ...where, room }); },
+  food: id => foodAtHome(town, id), toMarket: () => shopping.toMarket() }), announce = feedback.announce, progress = edgeProgress(root);
+/** The Map opens with `place` marked by the suggestion's drawing (the "Ir" there takes her). */
+function openMap(place: Destination, wish: Suggestion) { root.querySelector<HTMLButtonElement>('#map-toggle')!.click(); neighborhood.mark(place, suggestionIcon(wish)); }
 function toggleWardrobe() { cancelGame(); wardrobeOpen = !wardrobeOpen; root.classList.toggle('wardrobe-open', wardrobeOpen); scene.openWardrobe(wardrobeOpen); }
 function closeWardrobe() { wardrobeOpen = false; root.classList.remove('wardrobe-open'); scene.openWardrobe(false); }
 function openLooks() { closeWardrobe(); shell.looks(); }
@@ -172,7 +177,8 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
   pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, busy: () => [games.player()].filter(id => id !== null), structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)) townActs.dispatch(action); }
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
-const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback });
+const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback, perform: action => play.perform(action), scene,
+  openMap: place => openMap(place, 'mercado'), hint: { seen: () => loadCheckoutHintSeen(), done: () => { saveCheckoutHintSeen(); } } });
 const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback });
 const staffing = staffPlay({ state: () => state, scene, school: schooling, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
@@ -190,7 +196,7 @@ const daylight = () => { scene.daylight(life.phase()); bedtime(life.phase(), tow
 const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); daylight(); },
   slept: id => townActs.sleepThrough(id), greet: () => { scene.poke(selected, 'cheer', uiText.goodMorning); announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
 routineWiring({ root, town: () => town, selected: () => selected, playing: () => !building, phase: () => life.phase(), played: () => life.played(), head: id => scene.head(id),
-  openMap: (place, wish) => { root.querySelector<HTMLButtonElement>('#map-toggle')!.click(); neighborhood.mark(place, suggestionIcon(wish)); } });
+  openMap });
 let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); daylight(); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };

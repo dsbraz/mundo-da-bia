@@ -1,16 +1,19 @@
 import { basics, stockLimit } from './ingredients';
 import type { Basic, Stock } from './ingredients';
 import type { SpecialId } from './progress';
-import type { ActorId, CropId, Layout, Piece, PieceKind, RoomId } from './types';
+import type { ActorId, CropId, Layout, Piece, PieceKind, Point, RoomId } from './types';
+import { pieceBounds } from './layout';
 import type { Building, MarketAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { consumeItem, spawnItem } from './portable';
 import { stockOf } from './stock';
+import { snacksOf } from './larder';
 
 import type { Good } from './goods';
 export type { Good, Seed } from './goods';
 export { goodIds, seedGoods } from './goods';
-/** The 3 shelf drawings (§3.4): bakery and dairy, greengrocer and oil, specials and seeds (only what has been revealed). */
-const designs: readonly (readonly Good[])[] = [['pao', 'leite', 'queijo', 'ovo', 'farinha', 'acucar'], ['batata', 'oleo', 'peixe'], []];
+/** The 3 shelf drawings (§3.4): bakery and dairy, greengrocer and oil (with the fridge's fish and snack, lot 6F), specials and seeds (only
+ *  what has been revealed). */
+const designs: readonly (readonly Good[])[] = [['pao', 'leite', 'queijo', 'ovo', 'farinha', 'acucar'], ['batata', 'oleo', 'peixe', 'lanche'], []];
 const shelves = (layout: Layout, room: RoomId) => layout.pieces.filter(p => p.room === room && p.kind === 'market-shelf').sort((a, b) => a.id - b.id);
 /** The pieces that make a market: tapped, the shelf opens its goods and the checkout beeps. */
 export const marketKinds: readonly PieceKind[] = ['market-shelf', 'checkout'];
@@ -66,6 +69,17 @@ export function checkout(town: Neighborhood, actor: ActorId): Shopped {
   const hand = heldBy(town, actor);
   return marketRoom(town, actor) && isBag(hand) ? { town: patch(town, hand.id, { paid: true }), outcome: { kind: 'paid' } } : none(town);
 }
+/** The checkout a bag or a person is let go at (lot 6F): over the counter, or on the floor in front of it or just beside it. */
+export function checkoutAt(layout: Layout, room: RoomId, point: Point): Piece | undefined {
+  const { width, height } = pieceBounds.checkout;
+  return layout.pieces.find(p => p.room === room && p.kind === 'checkout' && point.x >= p.x - 80 && point.x <= p.x + width + 80 && point.y >= p.y && point.y <= p.y + height + 100);
+}
+/** The checkout that calls `actor` (lot 6F): she is in the market room on screen with goods in an unpaid bag. */
+export function checkoutCall(town: Neighborhood, actor: ActorId): Piece | null {
+  const at = marketRoom(town, actor), hand = heldBy(town, actor), where = town.location;
+  if (!at || !isBag(hand) || hand.paid || !hand.contents.length || where.kind !== 'interior' || where.building !== at.building.id || where.room !== at.room) return null;
+  return at.building.layout.pieces.find(p => p.room === at.room && p.kind === 'checkout') ?? null;
+}
 /** Leaving the market's building with a bag that did not go through the checkout is refused: the bubble shows the checkout. */
 export function unpaidExit(town: Neighborhood, action: Extract<NeighborhoodAction, { type: 'transport' }>): Outcome | null {
   const bag = action.actor ? heldBy(town, action.actor) : town.items.find(i => i.id === action.item);
@@ -73,24 +87,27 @@ export function unpaidExit(town: Neighborhood, action: Extract<NeighborhoodActio
   const from = bag.location, to = action.location;
   return from.kind === 'interior' && to.kind === 'interior' && from.building === to.building ? null : { kind: 'missing', need: 'checkout' };
 }
-const isBasic = (good: Good): good is Basic => (basics as readonly string[]).includes(good);
-/** One more of a basic, up to 4; false when the pantry already has 4. */
-function shelve(stock: Stock, good: Basic): boolean {
+/** What is kept at home, up to 4 each: the pantry's basics and the fridge's snack. */
+type Shelf = Stock & { lanche?: number };
+const isShelved = (good: Good): good is Basic | 'lanche' => good === 'lanche' || (basics as readonly string[]).includes(good);
+/** One more of a basic or a snack, up to 4; false when home already has 4. */
+function shelve(stock: Shelf, good: Basic | 'lanche'): boolean {
   if ((stock[good] ?? 0) >= stockLimit) return false;
   stock[good] = (stock[good] ?? 0) + 1; return true;
 }
-/** Goods put away at home: basics fill the pantry up to 4 each, specials and seeds are gained for good; what did not fit comes back.
- *  Lot 5's grown-ups bring groceries home through here, without a bag. */
+/** Goods put away at home: basics fill the pantry and snacks the fridge, up to 4 each; specials and seeds are gained for good; what did
+ *  not fit comes back. Lot 5's grown-ups bring groceries home through here, without a bag. */
 export function storeGoods(town: Neighborhood, building: number, goods: readonly Good[]): { town: Neighborhood; left: Good[] } {
   const house = town.buildings.find(b => b.id === building);
   if (!house) return { town, left: [...goods] };
-  const stock = { ...stockOf(house) }, left: Good[] = [];
+  const shelf: Shelf = { ...stockOf(house), lanche: snacksOf(house) }, left: Good[] = [];
   let { specials, seeds } = town.progress, shelved = false;
   for (const good of goods) {
-    if (!isBasic(good)) { if (good.startsWith('semente-')) seeds = gain(seeds, good.slice(8) as CropId); else specials = gain(specials, good as SpecialId); continue; }
-    if (shelve(stock, good)) shelved = true; else left.push(good);
+    if (!isShelved(good)) { if (good.startsWith('semente-')) seeds = gain(seeds, good.slice(8) as CropId); else specials = gain(specials, good as SpecialId); continue; }
+    if (shelve(shelf, good)) shelved = true; else left.push(good);
   }
-  const buildings = shelved ? town.buildings.map(b => b === house ? { ...b, stock } : b) : town.buildings;
+  const { lanche = 0, ...stock } = shelf, fridge = lanche === snacksOf(house) ? {} : { snacks: lanche };
+  const buildings = shelved ? town.buildings.map(b => b === house ? { ...b, stock, ...fridge } : b) : town.buildings;
   return { town: { ...town, buildings, progress: { ...town.progress, specials, seeds } }, left };
 }
 const gain = <T>(list: readonly T[], id: T): T[] => list.includes(id) ? [...list] : [...list, id];

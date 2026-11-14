@@ -17,6 +17,8 @@
 .missing-bubble.thought.urgent{animation:thought-pulse 1.6s ease-in-out infinite alternate}
 @keyframes thought-pulse{from{transform:translate(-50%,calc(-100% - 40px)) scale(1)}to{transform:translate(-50%,calc(-100% - 40px)) scale(1.08)}}
 @media (prefers-reduced-motion:reduce){.missing-bubble.thought.urgent{animation:none}}
+/* Lot 6F: hungry with nothing at home, the thought draws the market and a touch on it shows where the market is. */
+.missing-bubble.thought.tappable{pointer-events:auto;cursor:pointer}
 button[data-actor]{position:relative}
 #app #cast img.portrait-need,.portrait-need{position:absolute;top:4px;right:4px;width:32px;height:32px;padding:3px;background:var(--bubble-bg);border:2px solid var(--outline);border-radius:50%;object-fit:fill;max-width:none;pointer-events:none}
 /* W3L-27: the routine's suggestion is the same thought cloud drawn dashed; a touch on it opens the Map with the place marked. */
