@@ -3,7 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborhood';
 import type { Neighborhood } from '../src/domain/neighborhood-types';
-import { points, readTown, swipe } from './helpers';
+import { drag, readTown, swipe } from './helpers';
 import { openPro, proTown, tapStaff } from './pro-helpers';
 import { openSchool, seatAt } from './school-helpers';
 
@@ -62,13 +62,12 @@ for (const reduced of [false, true]) test(`lote 7: nos bombeiros, tocar no bombe
   expect(errors).toEqual([]);
 });
 
-test('lote 7: levar a Bia pela borda do cômodo dos bombeiros (prévia do outro cômodo) e deslizar não quebra o bombeiro', async ({ page }) => {
+test('lote 7: levar a Bia pela porta do cômodo dos bombeiros e deslizar de volta não quebra o bombeiro', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await openPro(page, proTown('fire-station'));
   await expect(canvas(page)).toHaveAttribute('data-staff', /^firefighter:/);
-  const [a, b] = await points(page, [[420, 460], [1185, 480]]);
-  await page.mouse.move(a!.x, a!.y); await page.mouse.down(); await page.mouse.move(b!.x, b!.y, { steps: 10 });
-  await expect(page.locator('#edge-progress')).toBeVisible(); await expect(page.locator('#edge-progress')).toBeHidden(); await page.mouse.up();
+  // Grabbed 75 above her feet and let go with the feet on the right doorway's sill (1132, 412): she goes through.
+  await drag(page, [420, 460], [1132, 337]);
   await expect.poll(async () => (await readTown(page)).location).toMatchObject({ room: 'quarto' });
   await expect(canvas(page)).toHaveAttribute('data-staff', '');
   await swipe(page, 300, 700);
