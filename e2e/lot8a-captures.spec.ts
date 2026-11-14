@@ -48,9 +48,10 @@ for (const size of sizes) for (const [view, town, pan] of views) test(`lote 8A: 
 });
 for (const size of sizes) test(`lote 8A: a Bia saindo pela beirada a ${size.width}`, async ({ page }) => {
   await open(page, home(), size);
+  await page.clock.pauseAt(new Date('2026-11-13T09:01:00'));
   await drag(page, [520, 455], [1165, 455]);
   await expect(canvas(page)).toHaveAttribute('data-door', 'edge');
-  await page.clock.runFor(250);
+  await page.clock.runFor(100);
   await page.screenshot({ path: `reports/review/lot8a-saindo-pela-beirada-${size.width}.png` });
   await expect.poll(async () => { await page.clock.runFor(100); return (await readTown(page)).location; }).toMatchObject({ room: 'quarto' });
   await page.clock.runFor(350);
