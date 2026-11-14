@@ -114,6 +114,8 @@ export function marketPlay(deps: MarketDeps) {
     /** Out of the market's building with an unpaid bag: refused, the bubble shows the checkout (a touch on it goes to pay) and the arrow jumps. */
     blocks(action: NeighborhoodAction): boolean {
       if (action.type !== 'transport' || !unpaidExit(deps.town(), action)) return false;
+      // The Map closes so the bubble and the arrow are seen (she asked to leave from it).
+      deps.root.querySelector<HTMLDialogElement>('#room-dialog')?.close();
       deps.feedback.missing('checkout', { actor: action.actor ?? deps.selected(), want: 'checkout', go: goPay }); call.nudge(); return true;
     },
     /** After every refresh: the checkout calls while her goods are not paid for; the shelf closes in Create, away from its room, or when

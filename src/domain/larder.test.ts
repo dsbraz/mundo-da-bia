@@ -57,9 +57,15 @@ describe('a comida da geladeira acaba (lote 6F)', () => {
     expect(Object.hasOwn(storeWorld(town, fed).buildings[0]!, 'stock')).toBe(false);
     expect(localWorld(storeWorld(town, fed)).larder).toEqual({ lanche: 3, peixe: 4 });
   });
-  it('sem geladeira contada (a rua), o lanche não conta', () => {
-    const street = { ...home(), location: { kind: 'street' as const } };
-    expect(localWorld(street).larder).toBeUndefined();
+  it('na rua, o lanche levado de casa conta na geladeira da "Minha casa"', () => {
+    const town = home(), street = { ...town, location: { kind: 'street' as const },
+      actors: town.actors.map(a => a.id === 'bia' ? { ...a, location: { kind: 'street' as const } } : a),
+      items: town.items.map(i => i.id === '1:lanche' ? { ...i, holder: 'bia' as const, spot: 'floor' as const, location: { kind: 'street' as const } } : i) };
+    const world = localWorld(street);
+    expect(world.larder).toEqual({ lanche: 4, peixe: 4 });
+    const fed = transition(world, { type: 'feed', actor: 'bia' });
+    expect(fed.events.map(e => e.type)).toContain('fed');
+    expect(storeWorld(street, fed.state).buildings[0]!.snacks).toBe(3);
   });
   it('o mercado vende o lanche na prateleira do hortifrúti (com o peixe), e guardar enche até 4; o que não cabe volta', () => {
     const town = withMarket(), market = town.buildings.find(b => b.id === 2)!;

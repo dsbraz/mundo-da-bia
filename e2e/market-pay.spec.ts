@@ -5,7 +5,8 @@ import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborh
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { Neighborhood } from '../src/domain/neighborhood-types';
 import type { Piece } from '../src/domain/types';
-import { drag, ready, readTown, tap } from './helpers';
+import { drag, read, ready, readTown, tap } from './helpers';
+import { itemPoint } from '../src/presentation/targets';
 import { playUntilTrue } from './session';
 
 // Lot 6F: "não está claro como pagar no mercado" and "comidas na geladeira que parecem que não acabam". Every step here is a tap or a
@@ -75,30 +76,54 @@ test('lote 6F: o caixa chama, só com toques e sem ler: seta, sacola com o que t
   expect(errors).toEqual([]);
 });
 
-test('lote 6F: sair sem pagar mostra o caixa num balão que leva a pagar; arrastar a Bia até o caixa também paga', async ({ page }) => {
+test('lote 6F: sair pelo Mapa sem pagar fecha o Mapa e mostra o caixa num balão que leva a pagar', async ({ page }) => {
   test.setTimeout(120_000);
   await open(page, town('market'));
   await shop(page, ['batata']);
   await panel(page).locator('.bench-close').click();
   await goStreet(page);
   const bubble = page.locator('.missing-bubble.tappable[data-need="checkout"]');
+  await expect(page.locator('#room-dialog')).not.toHaveAttribute('open');
   await expect(bubble).toBeVisible();
+  await expect(page.locator('#checkout-call.nudge')).toBeVisible();
+  await page.screenshot({ path: 'reports/review/market-pay-refused-1024.png' });
   expect((await readTown(page)).actors[0]!.location).toEqual(hall);
-  if (await page.locator('#close-map').isVisible()) await page.locator('#close-map').click();
-  await expect(bubble).toBeVisible();
   await bubble.click();
+  await expect(page.locator('#checkout-receipt')).toHaveCount(1, { timeout: 20000 });
   await paid(page);
-  // A second bag: this time she is dragged to the checkout with it, and that pays too.
-  const [, greens] = await pieces(page, 'market-shelf'), counter = (await pieces(page, 'checkout'))[0]!;
+});
+
+/** A new bag of `good` from the greengrocer shelf, not paid yet, the shelf closed. */
+async function another(page: Page, good: string) {
+  const [, greens] = await pieces(page, 'market-shelf');
   await tap(page, greens!.x + 85, greens!.y + 120);
   await expect(panel(page)).toBeVisible({ timeout: 15000 });
-  await panel(page).locator('.market-good[data-good="oleo"]').click();
+  await panel(page).locator(`.market-good[data-good="${good}"]`).click();
   await expect.poll(async () => (await bag(page))?.paid).toBe(false);
   await panel(page).locator('.bench-close').click();
-  const bia = (await readTown(page)).actors[0]!;
-  await drag(page, [bia.x, bia.y - 80], [counter.x + 40, counter.y + 210]);
+}
+for (const [what, target] of [['a Bia no chão diante do caixa', 'floor'], ['a Bia em cima da seta do caixa', 'register'], ['a sacola no caixa', 'bag']] as const) test(`lote 6F: arrastar ${what} paga`, async ({ page }) => {
+  test.setTimeout(120_000);
+  await open(page, town('market'));
+  await another(page, 'oleo');
+  const counter = (await pieces(page, 'checkout'))[0]!, world = await read(page), bia = world.actors[0]!;
+  const held = world.items.find(i => i.kind === 'sacola')!, hand = itemPoint(world, held)!;
+  const from: [number, number] = target === 'bag' ? [hand.x, hand.y] : [bia.x, bia.y - 80];
+  const to: [number, number] = target === 'floor' ? [counter.x + 40, counter.y + 210] : [counter.x + 168, counter.y + 20];
+  await drag(page, from, to);
   await expect(page.locator('#checkout-receipt')).toHaveCount(1, { timeout: 15000 });
   await paid(page);
+  if (target === 'bag') expect(await bag(page)).toMatchObject({ holder: 'bia' });
+});
+
+test('lote 6F: sem mercado no bairro, o lanche em silhueta acende o Criar', async ({ page }) => {
+  const start = migrateNeighborhood(initialAlbum(initialWorld()));
+  await open(page, { ...start, buildings: start.buildings.map(b => ({ ...b, snacks: 0 })) });
+  await tap(page, 680, 310);
+  const bubble = page.locator('.missing-bubble.tappable[data-need="market"]');
+  await expect(bubble).toBeVisible();
+  await bubble.click();
+  await expect(page.locator('#build-toggle.wanted')).toHaveCount(1);
 });
 
 test('lote 6F: o lanche acaba depois de 4; em silhueta mostra o mercado, e com fome o balão desenha o mercado e leva ao Mapa', async ({ page }) => {
@@ -148,4 +173,16 @@ for (const size of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }])
   await tap(page, 680, 310);
   await expect(page.locator('.missing-bubble[data-need="market"]')).toBeVisible();
   await page.screenshot({ path: `reports/review/fridge-empty-${size.width}.png` });
+});
+for (const size of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }]) test(`capturas da geladeira cheia, com 2 e com um lanche na mão a ${size.width}`, async ({ page }) => {
+  await open(page, town('home', 2), size);
+  await page.screenshot({ path: `reports/review/fridge-two-${size.width}.png` });
+  await tap(page, 680, 310);
+  await expect.poll(async () => (await readTown(page)).items.find(i => i.id === '1:lanche')!.holder, { timeout: 15000 }).toBe('bia');
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `reports/review/fridge-in-hand-${size.width}.png` });
+});
+for (const size of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }]) test(`captura da geladeira cheia de um jogo novo a ${size.width}`, async ({ page }) => {
+  await open(page, town('home'), size);
+  await page.screenshot({ path: `reports/review/fridge-full-${size.width}.png` });
 });
