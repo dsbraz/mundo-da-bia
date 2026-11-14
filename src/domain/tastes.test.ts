@@ -14,6 +14,7 @@ it('cada personagem tem um prato favorito que é receita existente e um presente
     pipoca: { favorite: 'ovo-mexido', gift: 'mel', game: 'bola', pace: { sono: 1.5, fome: 0.6 } },
     daniel: { favorite: 'misto-quente', gift: 'canela', game: 'tv', pace: { tedio: 0.6 } },
     fabiana: { favorite: 'sopa-de-legumes', gift: 'colher', game: 'tv', pace: { tedio: 0.6 } },
+    laura: { favorite: 'vitamina-de-morango', gift: 'chocolate', game: 'piano', pace: { tedio: 0.8 } },
   });
   for (const id of actorIds) expect(recipeIds).toContain(tastes[id].favorite);
   expect(new Set(actorIds.map(id => tastes[id].gift)).size).toBe(actorIds.length);

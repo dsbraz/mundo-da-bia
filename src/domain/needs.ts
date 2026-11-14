@@ -15,7 +15,7 @@ const minute = 60_000, joy = 60_000, ceiling = 100, unseen = 69;
 const needs: readonly Need[] = ['fome', 'sono', 'tedio'];
 /** Breakfast hunger, a little different for each one (fixed, never random), so the morning's asks come one or two at a time: at +3/min the
  *  Bia asks at 3 min 20 s, Léo just before her, the grown-ups and the cats (×0.6) later in the morning. */
-const breakfast: Record<ActorId, number> = { bia: 30, luna: 27, leo: 32, rui: 30, mimi: 28, nino: 24, pipoca: 20, daniel: 24, fabiana: 21 };
+const breakfast: Record<ActorId, number> = { bia: 30, luna: 27, leo: 32, rui: 30, mimi: 28, nino: 24, pipoca: 20, daniel: 24, fabiana: 21, laura: 26 };
 /** Every session starts in the morning, rested: breakfast time (without `actor`, the Bia's). */
 export const initialNeeds = (actor: ActorId = 'bia'): Needs => ({ fome: breakfast[actor], sono: 0, tedio: 0, alegria: 0 });
 export const needsOf = (actor: Pick<Actor, 'needs'> & { id?: ActorId }): Needs => actor.needs ?? initialNeeds(actor.id);

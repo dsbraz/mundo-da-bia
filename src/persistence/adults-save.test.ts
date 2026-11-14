@@ -41,7 +41,7 @@ describe('os adultos no save (W3L-24, §4)', () => {
     const world = initialWorld(), old = withoutAdults(world);
     for (const version of [1, 2, 4]) {
       const loaded = savedWorld({ version, state: old })!;
-      expect(loaded.actors.filter(a => adult(a.id)).map(a => [a.id, a.room, a.seat])).toEqual([['daniel', 'sala', null], ['fabiana', 'sala', null]]);
+      expect(loaded.actors.filter(a => adult(a.id)).map(a => [a.id, a.room, a.seat])).toEqual([['daniel', 'sala', null], ['fabiana', 'sala', null], ['laura', 'sala', null]]);
     }
     const album = decodeAlbum(encodeAlbum({ active: 1, houses: [{ id: 1, name: 'Minha casa', state: old as World }] }))!;
     expect(album.houses[0]!.state.actors.map(a => a.id)).toEqual(world.actors.map(a => a.id));
@@ -58,7 +58,7 @@ describe('os adultos no save (W3L-24, §4)', () => {
   });
   it('round-trip: o save novo com os adultos volta igual', () => {
     const value = town();
-    expect(value.actors.filter(a => adult(a.id))).toHaveLength(2);
+    expect(value.actors.filter(a => adult(a.id))).toHaveLength(3);
     expect(decodeNeighborhood(encodeNeighborhood(value))).toEqual(value);
   });
 });

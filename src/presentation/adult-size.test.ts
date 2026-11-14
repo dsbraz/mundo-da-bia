@@ -33,3 +33,10 @@ it('deitado na cama, o adulto põe a cabeça no travesseiro como a criança: o c
   expect(lyingShift(lie('daniel'))).toBeCloseTo(66 * .86);
   expect(lyingShift(who('daniel'))).toBe(0);
 });
+it('lote 8B: a Laura (18 anos) fica entre criança e adulto, 1,2 vez a Bia, no desenho dos adultos sem esticar', () => {
+  const laura = who('laura');
+  expect(figureHeight(laura) / figureHeight(who('bia'))).toBeCloseTo(1.2);
+  expect(figureHeight(laura)).toBeLessThan(figureHeight(who('fabiana')));
+  expect(artHeight(laura)).toBe(264);
+  expect(figureWidth(laura) / figureHeight(laura)).toBeCloseTo(140 / 264);
+});

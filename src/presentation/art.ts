@@ -13,6 +13,8 @@ import { catTrot, gaitFrame } from './gait';
 import { addCatTail, curlLayers, curled, poseTail } from './cat-pose';
 import { expressionOf, faceParts, paintFace, type Expression } from './expression';
 import type { Actor } from '../domain/types';
+import { isAdult } from '../domain/family';
+import { partKey } from './outfit';
 
 export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, context?: VisualContext): Phaser.GameObjects.Container {
   const container = scene.add.container(actor.x, actor.y).setName(actor.id);
@@ -22,7 +24,9 @@ export function drawActor(scene: Phaser.Scene, actor: Actor, selected: boolean, 
   container.add(shadow);
   const pose = scene.add.container(0, 0).setName('pose').setScale(actorScale(actor, context));
   container.add(pose);
-  const parts = actor.kind === 'human' ? ['hair-back', 'legs', 'hands', actor.look, 'face', 'hair', ...faceParts.human] : ['tail', 'ears', 'body', ...faceParts.cat, 'curl'];
+  // A grown-up's arms (lot 8B) are drawn over its garment, the sleeve overlapping the shirt at the shoulder; a child's under it.
+  const body = isAdult(actor.id) ? [actor.look, 'hands'] : ['hands', actor.look];
+  const parts = actor.kind === 'human' ? ['hair-back', 'legs', ...body, 'face', 'hair', ...faceParts.human] : ['tail', 'ears', 'body', ...faceParts.cat, 'curl'];
   heroLayer(scene, pose, actor, 'back');
   parts.forEach(part => addPart(scene, pose, actor, part));
   heroLayer(scene, pose, actor, 'front');
@@ -85,12 +89,18 @@ function coverActor(scene: Phaser.Scene, container: Phaser.GameObjects.Container
   if (lying(actor) && actor.resting) cover(scene, container, actor);
 }
 
+const textureOf = (actor: Actor, part: string) => actor.kind === 'human' ? partKey(actor, part) : `${actor.id}-${part}`;
+/** Raised, a grown-up's arms are their own drawing (feedback's `raiseArms` swaps it in). */
+function ownArms(image: Phaser.GameObjects.Image, actor: Actor, part: string) {
+  if (part === 'hands' && isAdult(actor.id)) image.setData('arms', { down: partKey(actor, part), up: partKey(actor, 'up') });
+}
 function addPart(scene: Phaser.Scene, pose: Phaser.GameObjects.Container, actor: Actor, part: string) {
   if (actor.kind === 'cat' && part === 'tail') { addCatTail(scene, pose, actor); return; }
-  const key = `${actor.id}-${part}`;
+  const key = textureOf(actor, part);
   const height = figureHeight(actor), width = figureWidth(actor), tall = stature(actor), art = artHeight(actor) / 220;
   const image = scene.add.image(0, 0, key).setDisplaySize(width, height).setOrigin(.5, 1).setName(part);
   pose.add(image);
+  ownArms(image, actor, part);
   if (actor.kind !== 'human' || (part !== 'legs' && part !== actor.look)) return;
   // The knees bend 60 units above the feet of a child's drawing (texture rows below 320 of 440), a grown-up's in proportion (its own
   // sheet's rows for the crop, the drawn height for the bend).

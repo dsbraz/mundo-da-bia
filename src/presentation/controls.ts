@@ -14,6 +14,7 @@ import { cards } from '../content/personalities';
 import { actorIds, lookIds } from '../domain/types';
 import { isAdult, wardrobeOf } from '../domain/family';
 import { masculine } from './actor-paint';
+import { adultStyle } from './outfit';
 import type { Action, Actor, ActorId, Point, World } from '../domain/types';
 import { uiText } from '../content/ui-text';
 import { onFloor } from './floor-band';
@@ -75,7 +76,7 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
       faces[i]!.lastChild!.textContent = member.name ?? actors[member.id].name;
     });
     // Each one's own wardrobe (W3L-24): a grown-up sees its 7 looks, a child never the grown-ups' uniforms.
-    wardrobe.forEach((b, i) => { b.hidden = !wardrobeOf(id).includes(lookIds[i]!); b.querySelector('img')!.src = lookImage(lookIds[i]!, masculine(id), isAdult(id)); b.disabled = !state.actors.some(a => a.kind === 'human' && a.room === state.room); b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
+    wardrobe.forEach((b, i) => { b.hidden = !wardrobeOf(id).includes(lookIds[i]!); b.querySelector('img')!.src = lookImage(lookIds[i]!, masculine(id), isAdult(id) ? adultStyle(id) : null); b.disabled = !state.actors.some(a => a.kind === 'human' && a.room === state.room); b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
     refreshObjects();
     panel(panelButtons(state, actor));
     root.querySelector('#selected')!.textContent = actor.name ?? actors[id].name;
