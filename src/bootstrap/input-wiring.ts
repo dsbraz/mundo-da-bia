@@ -7,7 +7,8 @@ import { createBuildGesture } from '../presentation/build-gesture';
 import { neighborhoodGesture } from '../presentation/neighborhood-gesture';
 import { grabActor, sourceAt } from '../presentation/targets';
 import { outdoorAt } from '../presentation/outdoor-controls';
-import { doorBox } from '../presentation/neighborhood-doors';
+import { doorBox, doorTo } from '../presentation/neighborhood-doors';
+import { throughStep } from './place-change';
 import { screenScale, type viewport } from '../presentation/viewport';
 import type { PlayScene } from '../presentation/scene';
 import type { playActions } from './play-actions';
@@ -39,9 +40,16 @@ export function wireInput(current: Phaser.Game, deps: InputWiring) {
   const { scene, play, square, walker } = deps, canvas = current.canvas;
   /** Under automation only: how the last character drag ended. */
   const outcome = (value: string) => { if (navigator.webdriver) canvas.dataset.dropOutcome = value; };
-  /** A character dropped on a lit door: the iris closes on that door. The drop unlights the door just before it dispatches, so the light is kept until that turn ends. */
+  /** A character dropped on a lit door: the iris closes on that door. The drop unlights the door just before it dispatches, so the light is kept until that turn ends.
+   *  Dropped on a lit floor edge (lot 8A), she first walks off it, then the view slides to that room. */
   let lit: ReturnType<typeof doorBox> | null = null;
-  const crossing = (action: NeighborhoodAction) => { if (lit && action.type === 'transport') deps.place.next({ kind: 'door', at: deps.place.screen({ x: lit.x + lit.width / 2, y: lit.y + lit.height / 2 }) }); };
+  const through = (action: NeighborhoodAction) => {
+    const box = lit;
+    if (!box || action.type !== 'transport') { deps.townDispatch(action); return; }
+    const at = deps.place.screen({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
+    const go = () => { deps.place.next(throughStep(deps.town(), action.location, at, (room, from, ms) => scene.finishSlide(room, from, ms))); deps.townDispatch(action); };
+    if (action.actor && doorTo(deps.town(), action.location)?.kind === 'edge') scene.outdoor.enterDoor(action.actor, action.location, go, box.x + box.width / 2); else go();
+  };
   return bindInput(canvas, () => scene.visibleWorld(), play.select, point => deps.dispatch({ type: 'move', actor: deps.selected(), point }), {
     walk: point => { deps.view()?.resume(); const target = outdoorAt(deps.town(), point); if (target) square.touch(target); else walker.start(point); }, cancelWalk: () => walker.cancel(), hover: point => scene.hover(point), pickup: play.pickup, interact: point => deps.staff(point) || play.interact(point), dispatch: deps.dispatch, wardrobe: deps.wardrobe, toggleWardrobe: deps.toggleWardrobe, selected: deps.selected, poke: deps.poke, preview: drag => scene.preview(drag), previewActor: (id, point) => scene.previewActor(id, point, true), roll: (item, point, velocity) => scene.throwBall(item, point, velocity), outcome, choose: play.choose, settle: play.settle,
   }, { enabled: deps.building, gesture: createBuildGesture(deps.state, deps.choosePiece, deps.previewBuild, deps.dropPiece, point => scene.pickPiece(point), () => screenScale(canvas)) }, {
@@ -56,6 +64,6 @@ export function wireInput(current: Phaser.Game, deps: InputWiring) {
     pan: (room, fraction) => scene.pan(room, fraction), slide: (room, fraction) => deps.place.next({ kind: 'swipe', during: ms => scene.finishSlide(room, fraction, ms) }),
     transfer: (room, actor, item, point) => scene.previewTransfer(room, actor, item, point),
     progress: deps.progress,
-  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: action => { if (deps.blocks(action)) return; crossing(action); deps.townDispatch(action); }, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress,
+  }, base => neighborhoodGesture(base, { town: deps.town, world: () => scene.visibleWorld(), building: deps.building, dispatch: action => { if (!deps.blocks(action)) through(action); }, plot: deps.plot, drop: square.drop, enter: deps.enter, preview: deps.townActs.preview, progress: deps.progress,
     glow: door => { const box = door && doorBox(deps.town(), door); scene.glowDoor(box); if (box) lit = box; else { const was = lit; queueMicrotask(() => { if (lit === was) lit = null; }); } }, outcome }));
 }

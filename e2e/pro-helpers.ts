@@ -13,7 +13,9 @@ export const places = buildingModels.filter(model => professionOf(model));
 /** An institution on plot 1, with the Bia and the Léo standing in the room its professional works in (the view there). */
 export function proTown(model: BuildingModel, spots: Record<string, number> = { bia: 420, leo: 760 }): Neighborhood {
   const town = neighborhoodAction(migrateNeighborhood(initialAlbum(initialWorld())), { type: 'construct', plot: 1, model });
-  const room = (Object.keys(town.buildings[1]!.layout.rooms) as RoomId[]).find(id => staffAt(town, { kind: 'interior', building: 2, room: id }))!;
+  // Her work room (she also greets in the entry room, which is her work room at the fire station, the police and the stadium).
+  const entry = town.buildings[1]!.entry, staffed = (id: RoomId) => !!staffAt(town, { kind: 'interior', building: 2, room: id });
+  const room = (Object.keys(town.buildings[1]!.layout.rooms) as RoomId[]).find(id => id !== entry && staffed(id)) ?? entry;
   const where = { kind: 'interior' as const, building: 2, room };
   return { ...town, location: where, actors: town.actors.map(a => a.id in spots ? { ...a, location: where, room, seat: null, x: spots[a.id]!, y: 535 } : a) };
 }

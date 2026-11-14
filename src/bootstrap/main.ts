@@ -21,7 +21,7 @@ import { structureControls } from '../presentation/structure-controls';
 import { streetWidth } from '../domain/neighborhood-geometry';
 import { walking } from '../presentation/walking';
 import { goTo } from './go';
-import { placeChange } from './place-change';
+import { placeChange, throughStep } from './place-change';
 import { doorFront } from '../presentation/neighborhood-doors';
 import { doorWalk } from './door-walk';
 import { uiText } from '../content/ui-text';
@@ -128,7 +128,7 @@ const games = childGames(root, { world: () => state, selected: () => selected, p
 cancelGame = games.cancel;
 const place = placeChange({ root, town: () => town, state: () => state, selected: () => selected });
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
-const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (shopping.blocks(action)) return; if (action.type === 'transport') place.next({ kind: 'door', at: place.screen(doorFront(town, action.location)) }); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
+const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (shopping.blocks(action)) return; if (action.type === 'transport') place.next(throughStep(town, action.location, place.screen(doorFront(town, action.location)), (room, from, ms) => scene.finishSlide(room, from, ms))); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
 // A kicked or thrown ball came to rest: whoever is selected played ball (W3L-13).
 scene.ballRest = (item, point) => { dispatch({ type: 'place', item, point }, false); townActs.enjoy(selected, 'bola'); };
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback, enjoy: id => townActs.enjoy(id, 'regar') });

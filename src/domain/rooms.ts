@@ -47,8 +47,8 @@ export function placeRoom(state: World, options: NewRoom): World {
 }
 export function furnishRoom(state: World, template: RoomTemplate): World {
   let next = state;
-  // Along the back wall, between the doorways and stairs at its ends (kept free of furniture).
-  const wall = passages(state.layout, state.room).map(p => p.zone).filter(z => z.y + z.height <= 420);
+  // Along the back wall, past the stairwell (kept free of furniture).
+  const wall = passages(state.layout, state.room).map(p => p.zone).filter(z => z.y < 420);
   const from = Math.max(40, ...wall.filter(z => z.x < 200).map(z => z.x + z.width + 8));
   const to = Math.min(roomWidth(state) - 40, ...wall.filter(z => z.x >= 200).map(z => z.x - 8));
   furnishings[template].forEach((kind, index) => {

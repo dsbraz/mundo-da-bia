@@ -1,6 +1,7 @@
 import { upgradeNeighborhood } from './neighborhood-upgrade';
 import { decodeNeighborhood, encodeNeighborhood } from './neighborhood';
 import { migrateNeighborhood } from '../domain/neighborhood';
+import { clearStairwells } from '../domain/modules';
 import { initialAlbum, activeHouse } from '../domain/houses';
 import { decodeAlbum, encodeAlbum } from './album';
 import type { Album, World } from '../domain/types';
@@ -54,9 +55,9 @@ function loadSaved(storage?: StoragePort): import('../domain/neighborhood-types'
     const saved = decodeNeighborhood(port.getItem(neighborhoodKey));
     if (saved) return saved;
     const town = olderKeys.reduce<ReturnType<typeof decodeNeighborhood>>((found, key) => found ?? decodeNeighborhood(port.getItem(key)), null)
-      ?? upgradeNeighborhood(migrateNeighborhood(loadAlbum(port)));
+      ?? clearStairwells(upgradeNeighborhood(migrateNeighborhood(loadAlbum(port))));
     saveNeighborhood(town, port); return town;
-  } catch { return upgradeNeighborhood(migrateNeighborhood(loadAlbum(storage))); }
+  } catch { return clearStairwells(upgradeNeighborhood(migrateNeighborhood(loadAlbum(storage)))); }
 }
 export function saveNeighborhood(town: import('../domain/neighborhood-types').Neighborhood, storage?: StoragePort): boolean {
   try {
