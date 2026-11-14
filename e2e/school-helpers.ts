@@ -34,3 +34,8 @@ export async function tapBoard(page: Page) {
   // Left on the green: the selected child's action menu may float over the middle of the board.
   await tap(page, board.x + 50, board.y + 130);
 }
+/** Picks the lesson's subject on the chooser the board (or the teacher) opened (lot 8D). */
+export async function chooseSubject(page: Page, subject: 'Desenho' | 'Escrita' | 'Matemática' = 'Desenho') {
+  await page.locator('#subject-chooser').getByRole('button', { name: subject, exact: true }).click();
+  await expect(page.locator('#subject-chooser')).toBeHidden();
+}

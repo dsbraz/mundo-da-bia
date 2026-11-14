@@ -45,4 +45,10 @@ describe('a escola no save (W3L-26, §4)', () => {
     expect(loaded.progress).toEqual(taught().progress);
     expect(loaded.buildings[1]!.layout.pieces).toEqual(taught().buildings[1]!.layout.pieces.filter(p => p.kind !== 'board'));
   });
+  it('lote 8D: a folha escrita e a de conta voltam do save na ordem; folha desconhecida sai sozinha', () => {
+    const town = school(), written = lesson(lesson(town, { building: 2, room: 'quarto' }, 'escrita').town, { building: 2, room: 'quarto' }, 'matematica').town;
+    expect(written.progress.drawings).toEqual(['palavra-bia', 'conta-2-3']);
+    expect(decodeNeighborhood(encodeNeighborhood(written))).toEqual(withoutNeeds(written));
+    expect(knownProgress({ drawings: ['palavra-gato', 'palavra-dragao', 'conta-9-9', 'conta-1-4', 'sol'] }).drawings).toEqual(['palavra-gato', 'conta-1-4', 'sol']);
+  });
 });

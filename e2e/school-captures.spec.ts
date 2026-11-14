@@ -6,7 +6,7 @@ import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { drawingIds } from '../src/domain/progress';
 import type { Neighborhood } from '../src/domain/neighborhood-types';
 import { ready } from './helpers';
-import { openSchool, seatAt, tapBoard } from './school-helpers';
+import { chooseSubject, openSchool, seatAt, tapBoard } from './school-helpers';
 
 // Captures of W3L-26 for the art review, landscape only: 1024×768 and 1280×800.
 const sizes = [{ width: 1024, height: 768 }, { width: 1280, height: 800 }];
@@ -24,6 +24,7 @@ for (const size of sizes) test(`capturas da escola a ${size.width}`, async ({ pa
   await seatAt(page, 'bia', 0); await seatAt(page, 'leo', 1);
   await page.clock.runFor(3000);
   await tapBoard(page);
+  await chooseSubject(page);
   await page.clock.runFor(9000);
   await page.screenshot({ path: name('lesson-drawing', size) });
   await page.clock.runFor(11_500);

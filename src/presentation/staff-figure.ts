@@ -49,10 +49,17 @@ export function staffFigures(scene: Phaser.Scene) {
   let staff: Staff | null = null, figure: Phaser.GameObjects.Container | null = null, effects: Phaser.GameObjects.Graphics | null = null;
   let doing: Doing | null = null, side = 1;
   const mark = (key: string, value: string) => { if (navigator.webdriver && scene.game.canvas.dataset[key] !== value) scene.game.canvas.dataset[key] = value; };
-  /** Whether the trade is shown at `now`: a tap's, or the teacher's whole lesson. */
-  const busy = (now: number, teaching: boolean) => {
+  /** Whether a tap's trade is shown at `now`. */
+  const busy = (now: number) => {
     if (doing && now - doing.start >= tradeMs) doing = null;
-    return !!doing || (teaching && staff?.profession === 'teacher');
+    return !!doing;
+  };
+  /** Whether she is at the board writing the lesson: then she is not drawn at her place (and her trade shows as the teacher's). */
+  const away = (lesson: boolean) => {
+    const gone = lesson && staff?.profession === 'teacher';
+    figure?.setVisible(!gone);
+    if (gone) { mark('staffAct', 'teacher'); effects?.clear(); }
+    return gone;
   };
   return {
     at: () => staff,
@@ -67,13 +74,15 @@ export function staffFigures(scene: Phaser.Scene) {
     /** Whether `point` (scene units) touches the drawn professional. */
     hit(point: Point): boolean {
       const k = staffScale();
-      return !!staff && shown(figure) && Math.abs(point.x - figure.x) <= 52 * k && point.y <= staff.y + 8 && point.y >= staff.y - 250 * k;
+      return !!staff && shown(figure) && figure.visible && Math.abs(point.x - figure.x) <= 52 * k && point.y <= staff.y + 8 && point.y >= staff.y - 250 * k;
     },
     /** The trade begins (`target`: whom the doctor goes to); a second tap while it plays changes nothing. */
-    act(now: number, target: Point | null = null) { if (!staff || busy(now, false)) return false; doing = { start: now, target }; return true; },
-    frame(now: number, reduced: boolean, teaching: boolean) {
+    act(now: number, target: Point | null = null) { if (!staff || busy(now)) return false; doing = { start: now, target }; return true; },
+    /** `lesson`: the lesson's teacher is at the board (lot 8D), so the school's own teacher is that one, not drawn at her place. */
+    frame(now: number, reduced: boolean, lesson: boolean) {
       if (!staff || !shown(figure) || !shown(effects)) return;
-      const working = busy(now, teaching), t = elapsed(doing, now), target = doing?.target ?? null;
+      if (away(lesson)) return;
+      const working = busy(now), t = elapsed(doing, now), target = doing?.target ?? null;
       mark('staffAct', working ? staff.profession : '');
       const turned = target ? facing(staff.x, target.x) : side;
       posture(figure, working, turned, breath(now, reduced));

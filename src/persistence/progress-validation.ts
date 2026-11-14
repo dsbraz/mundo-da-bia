@@ -1,4 +1,4 @@
-import { basketLimit, drawingIds, inboxLimit, initialProgress, letterCount, plazaPlots, goalIds, recipeIds, shelfIds, specialIds } from '../domain/progress';
+import { basketLimit, keepsakeIds, inboxLimit, initialProgress, letterCount, plazaPlots, goalIds, recipeIds, shelfIds, specialIds } from '../domain/progress';
 import type { Post, Progress } from '../domain/progress';
 import { actorIds, cropIds } from '../domain/types';
 import type { Plant } from '../domain/types';
@@ -42,5 +42,5 @@ export function knownProgress(value: unknown): Progress {
     basket: basket(value.basket), plaza: plaza(value.plaza), post: post(value.post),
     revealed: known(value.revealed, recipeIds, initial.revealed), favorites: known(value.favorites, actorIds, initial.favorites),
     goals: known(value.goals, goalIds, initial.goals), shelves: known(value.shelves, shelfIds, initial.shelves),
-    drawings: known(value.drawings, drawingIds, initial.drawings) };
+    drawings: known(value.drawings, keepsakeIds, initial.drawings) };
 }

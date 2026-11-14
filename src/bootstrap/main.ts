@@ -210,7 +210,7 @@ function dropPiece(action: EditAction) {
 let stale = false;
 const { refresh: repaint, frameScene, renderControls, ui: repaintControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
-  panels: () => { bedtime(life.phase(), town.location.kind === 'interior'); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); } });
+  panels: () => { bedtime(life.phase(), town.location.kind === 'interior'); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); schooling.refresh(); } });
 const showTime = showMoment((ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); }, () => { state = endShow(state); persist(); scene.endShow(state); });
 function refresh(then?: () => void) { stale = false; showTime(state.show); place.refresh(repaint, then, repaintControls); }
 /** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
