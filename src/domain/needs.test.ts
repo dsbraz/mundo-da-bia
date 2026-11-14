@@ -70,9 +70,9 @@ describe('necessidades de uma sessão (§3.1)', () => {
     const end = run(startTown(), 50, step(60_000, { phase: 'noite', idle: ['bia'] }));
     expect(needsOf(who(end, 'bia'))).toEqual({ fome: 100, sono: 100, tedio: 100, alegria: 0 });
   });
-  it('o sono é da noite (lote 8E): cresce +12/min no entardecer e à noite, e de dia e ao amanhecer cai 5/min, sem passar de 0', () => {
+  it('o sono é da noite (lote 8E): cresce +8/min no entardecer e à noite, e de dia e ao amanhecer cai 5/min, sem passar de 0', () => {
     const sleep = (phase: LiveAction['phase'], from = 20) => needsOf(who(live(withNeeds(startTown(), 'luna', { sono: from }), step(60_000, { phase })), 'luna')).sono;
-    expect(['manha', 'tarde', 'amanhecer', 'entardecer', 'noite'].map(p => sleep(p as LiveAction['phase']))).toEqual([15, 15, 15, 32, 32]);
+    expect(['manha', 'tarde', 'amanhecer', 'entardecer', 'noite'].map(p => sleep(p as LiveAction['phase']))).toEqual([15, 15, 15, 28, 28]);
     expect(sleep('manha', 0)).toBe(0);
   });
   it('o tédio cresce +3/min só para quem está parado (W3L-13, lote 8E)', () => {
@@ -99,9 +99,9 @@ describe('necessidades de uma sessão (§3.1)', () => {
     const minute = live(startTown(), step(60_000, { phase: 'noite', idle: ['bia', 'rui', 'mimi'] }));
     expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(4.2);
     expect(needsOf(who(minute, 'rui')).fome).toBeCloseTo(30.9);
-    expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(13.2);
+    expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(8.8);
     expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(28.9);
-    expect(needsOf(who(minute, 'mimi')).sono).toBe(18);
+    expect(needsOf(who(minute, 'mimi')).sono).toBe(12);
     const bored = (id: ActorId) => Array.from({ length: 30 }, (_, n) => run(startTown(), n + 1, step(30_000, { idle: [id] })))
       .findIndex(t => bandOf(who(t, id), 'tedio') === 'pede');
     expect(bored('rui')).toBeLessThan(bored('bia'));

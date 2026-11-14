@@ -48,12 +48,12 @@ export function enjoy<T extends { actors: readonly Actor[] }>(place: T, action: 
 }
 
 /** Sleep belongs to the night (lot 8E): it only grows at dusk and at night, and by day it eases off, so a night slept lasts the whole next
- *  day and even a night awake is gone by mid-morning. */
-const sleepy: Record<Phase, number> = { manha: -5, tarde: -5, amanhecer: -5, entardecer: 12, noite: 12 };
+ *  day and even a night awake is gone early in the morning. */
+const sleepy: Record<Phase, number> = { manha: -5, tarde: -5, amanhecer: -5, entardecer: 8, noite: 8 };
 /** Per minute (lot 8E, the owner: needs came all the time): hunger +1.5, by meals (from breakfast the Bia asks at 6 min 40 s; a dish
- *  takes 60, so after one she is calm for over 25 min, a snack about 20); sleep −5 by day and at dawn, +12 at dusk and night (asking a
- *  little after night falls, falling 25 in bed and 12 elsewhere while resting); boredom +3 for the idle (standing still asks at 13 min,
- *  needs at 23). */
+ *  takes 60, so after one she is calm for over 25 min, a snack about 20); sleep −5 by day and at dawn, +8 at dusk and night (asking two
+ *  minutes into the night, needing near its end, after hunger; falling 25 in bed and 12 elsewhere while resting); boredom +3 for the
+ *  idle (standing still asks at 13 min, needs at 23). */
 function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<Need, number> {
   const pace = tastes[actor.id].pace ?? {}, of = (need: Need, base: number) => base * (pace[need] ?? 1);
   if (actor.resting) return { fome: of('fome', 1.5), sono: bed ? -25 : -12, tedio: 0 };

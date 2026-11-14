@@ -24,13 +24,15 @@ function wanted(town: Neighborhood, session: number, played: number) {
   const wish = played < 30_000 ? null : suggestion(phaseAt(session, 'calmo'), bia, placeOf(town, bia.location), false, foodAtHome(town, 'bia'));
   return { thought, wish: wish && destination(town, wish, bia.location) ? wish : null };
 }
-/** The display since lot 8E: the thought (its loop runs first) and then the wish take turns on one ask clock. */
+/** The display since lot 8E: the thought (its loop runs first) and then the wish take turns on one ask clock; a wish wanting the turn
+ *  in the same instant takes it. */
 function turns() {
   let last: Ask | null = null;
   const may = (key: string, now: number) => { last = nextAsk(last, key, now); return asking(last, key, now); };
   return (thought: ReturnType<typeof wanted>['thought'], wish: string | null, now: number) => {
-    const up = !!thought && may(`thought:${thought.actor}:${thought.need}:${thought.band}`, now);
-    return { thought: up, wish: !up && !!wish && may(`wish:bia:${wish}`, now) };
+    const asked = !!thought && may(`thought:${thought.actor}:${thought.need}:${thought.band}`, now);
+    const wished = !!wish && may(`wish:bia:${wish}`, now);
+    return { thought: asked && !wished && asking(last!, `thought:${thought!.actor}:${thought!.need}:${thought!.band}`, now), wish: wished };
   };
 }
 /** Plays `minutes` second by second (the needs' `live` every 30 s with the phase at its start, as the app's clock does). `care`: the
@@ -71,9 +73,10 @@ it('lote 8E, jogo normal (quem pede é atendido): em 30 min a casa pede 4 vezes,
   expect(report(asked)).toEqual(['5:30 leo fome', '13:30 bia fome', '21:30 rui tedio', '29:30 bia sono']);
   expect(Math.min(...gaps(asked))).toBeGreaterThanOrEqual(8 * 60);
 });
-it('lote 8E, ninguém cuida de nada e todos parados: os pedidos seguem 8 min um do outro, e a Bia ainda mostra as três necessidades', () => {
+it('lote 8E, ninguém cuida de nada e todos parados: os pedidos seguem 8 min um do outro, e a Bia ainda pede comida e brincadeira', () => {
   const asked = simulate(30, false);
-  // Before: 17 bubbles, the Bia's hunger every 40 s from 3 min 30 s, and then for good once it needed.
-  expect(report(asked)).toEqual(['5:30 leo fome', '13:30 bia fome', '21:30 bia tedio', '29:30 bia sono']);
+  // Before: 17 bubbles, the Bia's hunger every 40 s from 3 min 30 s, and then for good once it needed. Bored, her ask is the routine's
+  // dashed ball, which leads to the plaza.
+  expect(report(asked)).toEqual(['5:30 leo fome', '13:30 bia fome', '21:30 bia bola', '29:30 bia bola']);
   expect(Math.min(...gaps(asked))).toBeGreaterThanOrEqual(8 * 60);
 });

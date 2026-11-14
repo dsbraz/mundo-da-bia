@@ -28,14 +28,14 @@ async function faceContrast(page: Page) {
   return contrast(face[0]!, face[Math.floor(face.length * .9)]!);
 }
 
-test('aos 12 min de Brincar a sala está escura, o rosto da Bia segue legível (AA) e o save não guarda a fase', async ({ page }) => {
-  test.setTimeout(90_000);
+test('aos 24 min de Brincar a sala está escura, o rosto da Bia segue legível (AA) e o save não guarda a fase', async ({ page }) => {
+  test.setTimeout(180_000);
   await page.clock.install({ time: new Date('2026-11-12T10:00:00') });
   await ready(page);
   expect(await night(page)).toMatch(/^manha:0\.00:/);
   await page.screenshot({ path: `${shots}/day-room-1024.png` });
   const day = await backdrop(page), before = await readTown(page);
-  await playMinutes(page, 12);
+  await playMinutes(page, 24);
   await page.clock.runFor(1500);
   expect(await night(page)).toMatch(/^noite:/);
   await page.screenshot({ path: `${shots}/night-room-1024.png` });
@@ -50,13 +50,13 @@ test('aos 12 min de Brincar a sala está escura, o rosto da Bia segue legível (
 });
 
 for (const reduced of [false, true]) test(`à noite a rua tem lua, estrelas${reduced ? ' paradas (movimento reduzido)' : ' piscando'} e janelas acesas`, async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(180_000);
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await street(page);
   await page.clock.install({ time: new Date('2026-11-12T10:00:00') });
   await ready(page);
   await expect(page.locator('canvas')).toHaveAttribute('data-street', 'true');
-  await playMinutes(page, 12);
+  await playMinutes(page, 24);
   await page.clock.runFor(reduced ? 200 : 1500);
   expect(await night(page)).toMatch(reduced ? /^noite:0\.50:still$/ : /^noite:0\.50:twinkle$/);
   const suffix = reduced ? '-reduced' : '';

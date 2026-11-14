@@ -28,7 +28,7 @@ const apart = (a: { left: number; top: number; right: number; bottom: number }, 
   a.right <= b.x || a.left >= b.x + b.width || a.bottom <= b.y || a.top >= b.y + b.height;
 
 test('o bom-dia é legível e fica acima do nome e da estrela da Bia, sem cobrir o anel, a 1024, 1280 e 844', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   const world = initialWorld();
   world.actors = world.actors.map(a => a.id === 'bia' ? { ...a, room: 'quarto', x: 400, y: 520 } : a.id === 'leo' ? { ...a, room: 'quarto', x: 250, y: 530 } : a);
   world.room = 'quarto';
@@ -36,7 +36,7 @@ test('o bom-dia é legível e fica acima do nome e da estrela da Bia, sem cobrir
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await ready(page); await page.clock.pauseAt(new Date('2026-11-13T10:01:30'));
-  await playMinutes(page, 12);
+  await playMinutes(page, 24);
   await page.clock.runFor(1500);
   await press(page, 'Deitar');
   for (let t = 0; t < 15_000 && !(await actor(page, 'bia')).resting; t += 100) await page.clock.runFor(100);

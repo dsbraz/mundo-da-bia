@@ -51,8 +51,8 @@ test('levar o Daniel ao escritório troca a roupa, e trazê-lo de volta à tarde
   await bringHere(page);
   await expect.poll(async () => (await daniel()).look).toBe('office');
   await page.screenshot({ path: 'reports/review/adults-work-office-1024.png' });
-  // The afternoon comes (5 min of play), and Daniel goes home: the outing look comes back and he brings groceries.
-  await playMinutes(page, 5.5);
+  // The afternoon comes (10 min of play, lot 8E), and Daniel goes home: the outing look comes back and he brings groceries.
+  await playMinutes(page, 10.5);
   const home = (await readTown(page)).buildings[0]!;
   await page.locator('#map-toggle').click();
   await page.locator('#neighborhood-list').getByRole('button', { name: `Ir para ${home.name}`, exact: true }).click();

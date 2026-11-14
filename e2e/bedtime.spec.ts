@@ -9,7 +9,7 @@ import { playMinutes } from './session';
 // Lot 6B: "Todos para a cama": at night a moon in the Turma drawer sends everyone of the house to a free bed or sofa (the cats to their
 // bed, or the rug); in view they walk there; whoever is left with no place asks for a bed with the missing bubble.
 for (const size of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }]) test(`todos para a cama, à noite, pela Turma, a ${size.width}`, async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   await page.setViewportSize(size);
   await page.clock.install({ time: new Date('2026-11-13T10:00:00') });
   await page.addInitScript(value => { localStorage.setItem('mundo-da-bia:autonomy', 'off'); if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
@@ -18,8 +18,8 @@ for (const size of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }])
   // In the morning the moon is not there.
   await tray(page, 'Turma');
   await expect(page.locator('#bedtime')).toBeHidden();
-  // Dusk comes after 12 minutes of play: then it shows at the top of the Turma.
-  await playMinutes(page, 12);
+  // Night comes after 23 minutes of play (dusk at 20, lot 8E): then it shows at the top of the Turma.
+  await playMinutes(page, 24);
   const moon = page.getByRole('button', { name: 'Todos para a cama', exact: true });
   await expect(moon).toBeVisible();
   // Above the Turma cards (outside them, so the cards keep their order).
