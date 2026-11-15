@@ -108,3 +108,13 @@ it('#25: depois da noite dormida o gato que dormia também levanta, como na manh
   actions.sleepThrough(1);
   expect(current().actors.find(a => a.id === 'mimi')!.resting).toBe(false);
 });
+it('#25: depois da noite pulada, o primeiro tick da manhã não acorda de novo quem deitou logo depois do bom dia', () => {
+  const base = migrateNeighborhood(initialAlbum(initialWorld()));
+  const lying = (town: Neighborhood) => ({ ...town, actors: town.actors.map(a => a.id === 'luna' ? { ...a, seat: '2.0' as const, resting: true } : a) });
+  const { actions, deps, current } = setup(base);
+  actions.tick(30_000, { elapsed: 30_000, phase: 'noite' });
+  actions.sleepThrough(1);
+  deps.commit(lying(current()));
+  actions.tick(60_000, { elapsed: 30_000, phase: 'manha' });
+  expect(current().actors.find(a => a.id === 'luna')!.resting).toBe(true);
+});

@@ -95,6 +95,7 @@ export function townActions(deps: TownDeps) {
    *  applied in full (world and scene) under the veil. */
   function sleepThrough(building: number) {
     apply(wakeAll(neighborhoodAction(deps.town(), { type: 'morning', building })));
+    lastPhase = 'manha';
   }
   return { dispatch, undo, remember, preview, tick, apply, enjoy, sleepThrough, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }
