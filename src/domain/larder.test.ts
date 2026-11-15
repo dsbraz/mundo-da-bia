@@ -90,7 +90,7 @@ describe('a comida da geladeira acaba (lote 6F)', () => {
     const put = (t: Neighborhood, location: Neighborhood['location']) => ({ ...t, actors: t.actors.map(a => a.id === 'daniel' ? { ...a, location, room: location.kind === 'interior' ? location.room : 'sala' as const, seat: null } : a) });
     const shift = work(put(low, { kind: 'interior', building: 3, room: officeRoom as never }), 'manha');
     const back = work(put(work(put(shift, { kind: 'street' }), 'tarde'), { kind: 'interior', building: 1, room: 'sala' }), 'tarde');
-    expect(back.items.find(i => i.holder === 'daniel')!.contents).toEqual(['lanche', 'ovo', 'farinha']);
+    expect(back.items.find(i => i.holder === 'daniel')!.contents).toEqual(['lanche', 'ovo']);
     expect(stockOf(back.buildings[0]!)).toEqual(stockOf(low.buildings[0]!));
   });
 });

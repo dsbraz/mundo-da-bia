@@ -15,8 +15,8 @@ export interface Building { id: number; name: string; model: BuildingModel; colo
   /** Snacks left in the fridge (lot 6F, 0 to 4): absent until the first one is eaten, which reads as 4. */
   snacks?: number }
 export interface Resident extends Actor { location: Location;
-  /** A grown-up's shift (W3L-25): `off` once on the way home; never saved. */
-  work?: { off?: true } }
+  /** A grown-up's shift (W3L-25): `off` once on the way home, `done` once the day's groceries came (until the morning, #7); never saved. */
+  work?: { off?: true; done?: true } }
 /** A dish carries its recipe (and `fancy` when made fancy). */
 export interface NeighborhoodItem extends Item { location: Location; recipe?: RecipeId; fancy?: true;
   /** A shopping bag (W3L-22): up to 6 goods, and whether it went through the checkout. */

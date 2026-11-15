@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { initialWorld } from './world';
 import { initialAlbum } from './houses';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
-import { work } from './work';
+import { cutShort, work } from './work';
 import type { BuildingModel, Neighborhood, Resident } from './neighborhood-types';
 import type { ActorId, RoomTemplate } from './types';
 
@@ -25,7 +25,8 @@ describe('trabalho (W3L-25, §3.6)', () => {
     ['shop', true, 'market'], ['office', false, 'office'], ['hospital', false, 'consultation'],
     ['fire-station', false, 'dispatch'], ['police', false, 'dispatch'],
   ] as const)('no cômodo de trabalho de %s o adulto continua com a roupa que veio, e o turno começa', (model, market, template) => {
-    const town = withBuilding(model, market), there = work(put(town, 'daniel', roomOf(town, template)), 'manha');
+    const town = withBuilding(model, market), till = town.buildings.at(-1)!.layout.pieces.find(p => p.kind === 'checkout');
+    const placed = put(town, 'daniel', roomOf(town, template)), there = work(till ? { ...placed, actors: placed.actors.map(a => a.id === 'daniel' ? { ...a, x: till.x + 100, y: till.y + 150 } : a) } : placed, 'manha');
     expect(who(there, 'daniel').look).toBe('outing');
     expect(who(there, 'daniel').work).toEqual({});
   });
@@ -64,7 +65,7 @@ describe('trabalho (W3L-25, §3.6)', () => {
     const back = work(put(work(put(shift, 'daniel', { kind: 'street' }), 'tarde'), 'daniel', homeRoom), 'tarde');
     const bag = back.items.find(i => i.holder === 'daniel')!;
     expect(bag).toMatchObject({ kind: 'sacola', paid: true, contents: ['peixe', 'ovo', 'leite'], location: homeRoom });
-    expect(who(back, 'daniel').work).toBeUndefined();
+    expect(who(back, 'daniel').work).toEqual({ off: true, done: true });
     expect(work(back, 'tarde')).toBe(back);
     const evening = work(put(work(put(shift, 'daniel', { kind: 'street' }), 'entardecer'), 'daniel', homeRoom), 'entardecer');
     expect(evening.items.some(i => i.holder === 'daniel' && i.kind === 'sacola')).toBe(true);
@@ -80,11 +81,51 @@ describe('trabalho (W3L-25, §3.6)', () => {
   });
   it('com as mãos ocupadas, a sacola fica no chão aos pés do adulto', () => {
     const office = neighborhoodAction(withBuilding('shop', true), { type: 'construct', plot: 2, model: 'office' });
-    const shift = work(put(office, 'daniel', roomOf(office, 'office')), 'manha');
+    const low = { ...office, buildings: office.buildings.map(b => b.id === 1 ? { ...b, stock: { ovo: 1 } } : b) };
+    const shift = work(put(low, 'daniel', roomOf(low, 'office')), 'manha');
     const arrived = put(shift, 'daniel', homeRoom), daniel = who(arrived, 'daniel');
     const holding = { ...arrived, items: arrived.items.map(i => i.kind === 'ursinho' ? { ...i, holder: 'daniel' as const, location: homeRoom, room: 'sala' as const } : i) };
     const bag = work(holding, 'tarde').items.find(i => i.kind === 'sacola')!;
     expect(bag).toMatchObject({ holder: null, x: daniel.x, y: daniel.y, spot: 'floor', paid: true });
+  });
+  it('#27: fazer compras no mercado não é turno: quem só esteve no salão, ou pagou no caixa com a sacola, volta sem sacola nova', () => {
+    const town = neighborhoodAction(withBuilding('shop', true), { type: 'construct', plot: 2, model: 'office' });
+    const low = { ...town, buildings: town.buildings.map(b => b.id === 1 ? { ...b, stock: { ovo: 1 } } : b) };
+    const market = low.buildings.find(b => b.model === 'shop')!, till = market.layout.pieces.find(p => p.kind === 'checkout')!;
+    const hall = { kind: 'interior' as const, building: market.id, room: till.room };
+    const at = (t: Neighborhood, x: number, y: number) => ({ ...t, actors: t.actors.map(a => a.id === 'fabiana' ? { ...a, x, y } : a) });
+    const bought = { id: '9:sacola' as const, kind: 'sacola' as const, room: till.room, holder: 'fabiana' as const, spot: 'floor' as const, x: till.x, y: till.y + 150, location: hall, contents: ['pao' as const], paid: true };
+    const inHall = at(put(low, 'fabiana', hall), till.x - 300, 500), shopper = { ...inHall, items: [...low.items, bought] };
+    const sacolas = (t: Neighborhood) => t.items.filter(i => i.kind === 'sacola').map(i => i.id);
+    for (const visit of [inHall, shopper, at(shopper, till.x + 100, till.y + 150)]) {
+      const there = work(visit, 'tarde');
+      expect(who(there, 'fabiana').work).toBeUndefined();
+      const back = work(put(work(put(there, 'fabiana', { kind: 'street' }), 'tarde'), 'fabiana', homeRoom), 'tarde');
+      expect(sacolas(back)).toEqual(sacolas(visit));
+    }
+    // Empty-handed behind the checkout, she works the till.
+    expect(who(work(at(inHall, till.x + 100, till.y + 150), 'tarde'), 'fabiana').work).toEqual({});
+  });
+  it('#7: com a despensa cheia não vem sacola, e vai e volta do trabalho rende no máximo uma sacola por dia', () => {
+    const town = neighborhoodAction(withBuilding('shop', true), { type: 'construct', plot: 2, model: 'office' });
+    const round = (from: Neighborhood, phase: 'manha' | 'tarde') => work(put(work(put(from, 'daniel', roomOf(from, 'office')), phase), 'daniel', homeRoom), phase);
+    const bags = (t: Neighborhood) => t.items.filter(i => i.kind === 'sacola').length;
+    const full = round(town, 'tarde');
+    expect(bags(full)).toBe(0);
+    const low = { ...town, buildings: town.buildings.map(b => b.id === 1 ? { ...b, stock: { ovo: 1 } } : b) };
+    const once = round(low, 'tarde'), twice = round(once, 'tarde');
+    expect([bags(once), bags(twice)]).toEqual([1, 1]);
+    expect(work(twice, 'tarde')).toBe(twice);
+    const nextDay = round(round(work(twice, 'manha'), 'manha'), 'tarde');
+    expect(bags(nextDay)).toBe(2);
+  });
+  it('#41: voltar para casa de manhã encerra o turno sem sacola, e o adulto mostra que o turno acabou (cutShort)', () => {
+    const town = neighborhoodAction(withBuilding('shop', true), { type: 'construct', plot: 2, model: 'office' });
+    const shift = work(put(town, 'daniel', roomOf(town, 'office')), 'manha'), arrived = put(shift, 'daniel', homeRoom);
+    expect(cutShort(arrived, work(arrived, 'manha'), 'manha')).toEqual(['daniel']);
+    expect(cutShort(shift, work(shift, 'manha'), 'manha')).toEqual([]);
+    const low = { ...arrived, buildings: arrived.buildings.map(b => b.id === 1 ? { ...b, stock: { ovo: 1 } } : b) };
+    expect(cutShort(low, work(low, 'tarde'), 'tarde')).toEqual([]);
   });
   it('pela ação do bairro: { type: "work", phase }', () => {
     const town = withBuilding('office'), there = put(town, 'daniel', roomOf(town, 'office'));
