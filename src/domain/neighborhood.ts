@@ -118,8 +118,14 @@ const homeOf = <B extends { id: number }>(town: { buildings: B[] }): B => town.b
 /** What the house shown (on the street, "Minha casa") ate from its fridge goes back to it. */
 const fed = (building: Neighborhood['buildings'][number], world: World) => world.larder ? storeLarder(building, world.larder) : building;
 /** Undo and redo bring old houses back, never take a gain away: progress and the dishes stay as they are now (a dish in a house the
- *  undo removes goes with it), and item ids never go back. */
+ *  undo removes goes with it), and item ids never go back. A dish in a hand stays in that hand, where the undo puts its holder, and
+ *  what that hand held before is put down at her feet (one item per hand). */
 export function undoTo(next: Neighborhood, current: Neighborhood): Neighborhood {
-  const dishes = current.items.filter(i => i.kind === 'prato' && validLocation(next, i.location));
-  return { ...feel(next, current), buildings: keepStock(next, current), progress: current.progress, nextItem: Math.max(next.nextItem, current.nextItem), items: [...next.items.filter(i => i.kind !== 'prato'), ...dishes] };
+  const dishes = current.items.filter(i => i.kind === 'prato' && validLocation(next, i.location)).map(i => {
+    const holder = next.actors.find(a => a.id === i.holder);
+    return holder ? { ...i, location: holder.location, room: holder.room, x: holder.x, y: holder.y } : i;
+  });
+  const hands = new Set(dishes.map(i => i.holder).filter(Boolean));
+  const items = next.items.filter(i => i.kind !== 'prato').map(i => i.holder && hands.has(i.holder) ? { ...i, holder: null } : i);
+  return { ...feel(next, current), buildings: keepStock(next, current), progress: current.progress, nextItem: Math.max(next.nextItem, current.nextItem), items: [...items, ...dishes] };
 }
