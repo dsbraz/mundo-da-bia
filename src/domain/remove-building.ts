@@ -1,5 +1,5 @@
 import type { Location, Neighborhood } from './neighborhood-types';
-import { plotStart } from './neighborhood-geometry';
+import { plotStart, streetWidth } from './neighborhood-geometry';
 
 export function removeBuilding(town: Neighborhood, id: number): Neighborhood {
   const building = town.buildings.find(b => b.id === id);
@@ -7,7 +7,7 @@ export function removeBuilding(town: Neighborhood, id: number): Neighborhood {
   const inside = (location: Location) => location.kind === 'interior' && location.building === id;
   const outside = { location: { kind: 'street' as const }, room: 'sala' as const, x: plotStart(building.plot) + 220, y: 520 };
   const actors = town.actors.map((a, index) => inside(a.location)
-    ? { ...a, ...outside, x: outside.x - 90 + index * 30, resting: false, seat: null } : a);
+    ? { ...a, ...outside, x: Math.min(outside.x - 90 + index * 30, streetWidth(town.plots) - 60), resting: false, seat: null } : a);
   const items = town.items.map(i => {
     if (!inside(i.location)) return i;
     const holder = actors.find(a => a.id === i.holder);
