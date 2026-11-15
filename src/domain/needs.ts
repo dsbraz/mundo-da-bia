@@ -1,6 +1,6 @@
 import type { Actor, ActorId, Needs } from './types';
 import type { EnjoyAction, LiveAction, MorningAction, Neighborhood, NeighborhoodAction, Resident } from './neighborhood-types';
-import type { Phase } from './clock';
+import type { Phase, TownEvent } from './clock';
 import { sameLocation } from './location';
 import { tastes, type Game } from './tastes';
 import { parseSeat } from './seats';
@@ -51,14 +51,16 @@ export function enjoy<T extends { actors: readonly Actor[] }>(place: T, action: 
 /** Sleep belongs to the night (lot 8E): it only grows at dusk and at night, and by day it eases off, so a night slept lasts the whole next
  *  day and even a night awake is gone early in the morning. */
 const sleepy: Record<Phase, number> = { manha: -5, tarde: -5, amanhecer: -5, entardecer: 8, noite: 8 };
+/** On a night of stars (twice as long) the night's +8 is halved, so a night awake there weighs no more than an ordinary one (#40). */
+const sleepRate = (phase: Phase, event?: TownEvent) => phase === 'noite' && event === 'estrelas' ? sleepy.noite / 2 : sleepy[phase];
 /** Per minute (lot 8E, the owner: needs came all the time): hunger +1.5, by meals (from breakfast the Bia asks at 6 min 40 s; a dish
  *  takes 60, so after one she is calm for over 25 min, a snack about 20); sleep −5 by day and at dawn, +8 at dusk and night (asking two
  *  minutes into the night, needing near its end, after hunger; falling 25 in bed and 12 elsewhere while resting); boredom +3 for the
  *  idle (standing still asks at 13 min, needs at 23). */
-function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean): Record<Need, number> {
+function rates(actor: Actor, phase: Phase, idle: boolean, bed: boolean, event?: TownEvent): Record<Need, number> {
   const pace = tastes[actor.id].pace ?? {}, of = (need: Need, base: number) => base * (pace[need] ?? 1);
   if (actor.resting) return { fome: of('fome', 1.5), sono: bed ? -25 : -12, tedio: 0 };
-  return { fome: of('fome', 1.5), sono: of('sono', sleepy[phase]), tedio: idle ? of('tedio', 3) : 0 };
+  return { fome: of('fome', 1.5), sono: of('sono', sleepRate(phase, event)), tedio: idle ? of('tedio', 3) : 0 };
 }
 /** The piece `actor` sits on (W3L-06: the seat names a piece of the building it is in), if any. */
 function seatKind(town: Neighborhood, actor: Resident) {
@@ -68,8 +70,8 @@ function seatKind(town: Neighborhood, actor: Resident) {
   return building?.layout.pieces.find(p => p.id === ref.piece && p.room === actor.room)?.kind;
 }
 const inBed = (town: Neighborhood, actor: Resident) => seatKind(town, actor) === 'bed';
-function grow(actor: Actor, elapsed: number, phase: Phase, idle: boolean, shown: boolean, bed: boolean): Needs {
-  const current = needsOf(actor), rate = rates(actor, phase, idle, bed), top = shown ? ceiling : unseen;
+function grow(actor: Actor, elapsed: number, phase: Phase, idle: boolean, shown: boolean, bed: boolean, event?: TownEvent): Needs {
+  const current = needsOf(actor), rate = rates(actor, phase, idle, bed, event), top = shown ? ceiling : unseen;
   const next = { ...current, alegria: Math.max(0, current.alegria - elapsed) };
   for (const need of needs) next[need] = Math.min(top, Math.max(0, current[need] + rate[need] * elapsed / minute));
   return next;
@@ -81,7 +83,7 @@ export function live(town: Neighborhood, action: LiveAction): Neighborhood {
   if (elapsed <= 0) return town;
   const idle: readonly ActorId[] = action.idle ?? [];
   return { ...town, actors: town.actors.map(a => ({ ...a,
-    needs: grow(a, elapsed, action.phase, idle.includes(a.id), sameLocation(a.location, town.location), inBed(town, a)) })) };
+    needs: grow(a, elapsed, action.phase, idle.includes(a.id), sameLocation(a.location, town.location), inBed(town, a), action.event) })) };
 }
 /** The needs of `from` copied into `world`'s characters (the local copy, or an undone neighborhood: time never goes back). */
 export function feel<W extends { actors: readonly Actor[] }>(world: W, from: { actors: readonly Actor[] }): W {
