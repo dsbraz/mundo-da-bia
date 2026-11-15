@@ -5,7 +5,7 @@ import type { ActorId, Layout, RoomId } from './types';
 import { adultIds } from './family';
 import { checkoutAt, hasMarket, isMarket } from './market';
 import { familyHome, stockOf } from './stock';
-import { snacksOf } from './larder';
+import { larderOf, snacksOf, storeLarder } from './larder';
 import { spawnItem } from './portable';
 
 /** A place is what it holds: the room `adult` stands in is a workplace (the market's checkout, the office, the consultation room, the
@@ -33,7 +33,14 @@ const homeOf = (town: Neighborhood) => familyHome(town).id;
  *  brings a paid bag of the 3 basics the home lacks most, once a day (#7); home in the morning, the shift is cut short. The clothes never change here (lot 8B): everybody keeps the look it wears
  *  everywhere, and only the wardrobe changes it. */
 export function work(town: Neighborhood, phase: Phase): Neighborhood {
-  return adultIds.reduce((current, id) => shift(current, current.actors.find(a => a.id === id)!, phase), town);
+  return adultIds.reduce((current, id) => shift(current, current.actors.find(a => a.id === id)!, phase), morningFood(town, phase));
+}
+/** Never a dead end (decision #32): with no market in the neighborhood, the snack and the cats' fish the family home ran out of come back
+ *  in the morning, 4 of each, like a new house. */
+function morningFood(town: Neighborhood, phase: Phase): Neighborhood {
+  if (phase !== 'manha' || hasMarket(town)) return town;
+  const home = familyHome(town), larder = larderOf(home), next = storeLarder(home, { lanche: larder.lanche || stockLimit, peixe: larder.peixe || stockLimit });
+  return next === home ? town : { ...town, buildings: town.buildings.map(b => b === home ? next : b) };
 }
 function shift(town: Neighborhood, adult: Resident, phase: Phase): Neighborhood {
   // The day's groceries came (#7): no other shift until the next morning.

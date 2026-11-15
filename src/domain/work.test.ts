@@ -127,6 +127,16 @@ describe('trabalho (W3L-25, §3.6)', () => {
     const low = { ...arrived, buildings: arrived.buildings.map(b => b.id === 1 ? { ...b, stock: { ovo: 1 } } : b) };
     expect(cutShort(low, work(low, 'tarde'), 'tarde')).toEqual([]);
   });
+  it('decisão #32: sem mercado, o lanche e o peixe que acabaram em casa voltam de manhã (4 de cada); com mercado, ou de tarde, não', () => {
+    const empty = (town: Neighborhood, snacks: number, peixe?: number): Neighborhood =>
+      ({ ...town, buildings: town.buildings.map(b => b.id === 1 ? { ...b, snacks, stock: { ovo: 1, ...(peixe ? { peixe } : {}) } } : b) });
+    const morning = work(empty(home(), 0), 'manha').buildings[0]!;
+    expect(morning).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 4 } });
+    expect(work(empty(home(), 0, 2), 'manha').buildings[0]).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 2 } });
+    for (const town of [empty(home(), 2, 3), empty(withBuilding('shop', true), 0)]) expect(work(town, 'manha')).toBe(town);
+    const afternoon = empty(home(), 0);
+    expect(work(afternoon, 'tarde')).toBe(afternoon);
+  });
   it('pela ação do bairro: { type: "work", phase }', () => {
     const town = withBuilding('office'), there = put(town, 'daniel', roomOf(town, 'office'));
     expect(neighborhoodAction(there, { type: 'work', phase: 'manha' })).toEqual(work(there, 'manha'));
