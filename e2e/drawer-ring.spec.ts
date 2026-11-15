@@ -10,6 +10,7 @@ const sceneShare = async (page: Page) => (await page.locator('#world').boundingB
 const view = (page: Page) => page.locator('canvas').evaluate(c => ({ x: c.dataset.viewX, y: c.dataset.viewY, width: c.dataset.viewWidth }));
 
 test('a 1024 com alguém escolhido a cena tem 95% da largura; a gaveta abre por cima, escolhe o Léo, fecha e o estado volta ao recarregar', async ({ page }) => {
+  test.setTimeout(90_000); // three full page loads (goto + two reloads) take 7–10 s each on a loaded CI runner
   await page.setViewportSize({ width: 1024, height: 768 }); await ready(page);
   await tap(page, 520, 440);
   await expect(page.locator('#actor-context')).toBeVisible();
