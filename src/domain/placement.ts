@@ -36,6 +36,7 @@ export function canPlace(world: World, piece: Piece) {
   if (!validPlacement(piece, roomWidth(world))) return false;
   if (onFloorPiece(piece) !== piece || !keepsPassagesFree(world, piece)) return false;
   const area = footprint(piece); if (!area) return true;
+  if (trodden(world, piece, area)) return false;
   const others = world.layout.pieces.filter(p => p.room === piece.room && p.id !== piece.id).map(footprint).filter((p): p is Footprint => !!p);
   const room = world.layout.rooms[piece.room]!;
   if (room.cell === 0) { const d = doorway.interior; others.push({ left: d.x - 12, right: d.x + d.width + 12, top: d.y + d.height - 90, bottom: d.y + d.height + 100 }); }
@@ -43,6 +44,9 @@ export function canPlace(world: World, piece: Piece) {
   const old = before && footprint(before);
   return others.every(other => overlap(area, other) === 0 || (!!old && overlap(area, other) < overlap(old, other)));
 }
+/** Someone standing (not seated) has her feet on the footprint (W3L-17): the piece does not go over her. */
+const trodden = (world: World, piece: Piece, area: Footprint) =>
+  world.actors.some(a => a.room === piece.room && !a.seat && a.x >= area.left && a.x <= area.right && a.y >= area.top && a.y <= area.bottom);
 const rows = Array.from({ length: 23 }, (_, i) => 80 + i * 20);
 /** The nearest spot where `piece` can stand (and that `fits`, when given), on a 20-unit grid over `ys` (by default the whole floor and wall). */
 export function freePlacement(world: World, piece: Piece, ys: readonly number[] = rows, fits: (piece: Piece) => boolean = () => true) {

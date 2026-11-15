@@ -71,3 +71,14 @@ it('duplica casas independentes, troca, renomeia e preserva a original', () => {
   expect(renameHouse(edited, '   ')).toBe(edited);
   expect(duplicateHouse(album, true).houses[1]?.state.layout.pieces).toHaveLength(0);
 });
+
+it('#16: no Criar, uma peça não é posta nem movida sobre alguém em pé: a mudança é recusada e ninguém fica dentro do móvel', () => {
+  const empty = editWorld(initialWorld(), { type: 'clear' });
+  const world = transition(empty, { type: 'move', actor: 'bia', point: { x: 300, y: 520 } }).state;
+  expect(editWorld(world, { type: 'add', kind: 'armchair', point: { x: 300, y: 470 } })).toBe(world);
+  const beside = editWorld(world, { type: 'add', kind: 'armchair', point: { x: 1000, y: 470 } }), armchair = beside.layout.pieces.at(-1)!;
+  expect(armchair.kind).toBe('armchair');
+  expect(editWorld(beside, { type: 'move', id: armchair.id, point: { x: 218, y: armchair.y } })).toBe(beside);
+  // A catalog tap (no spot) still adds it, where nobody stands.
+  expect(editWorld(world, { type: 'add', kind: 'armchair' }).layout.pieces.at(-1)?.kind).toBe('armchair');
+});
