@@ -167,6 +167,7 @@ test('um segundo dedo não pula outra casa', async ({ page }) => {
 });
 
 test('quintal pronto permite corda e amarelinha sem retirar a mobília', async ({ page }) => {
+  test.setTimeout(90_000); // builds a room, then plays two games: 21–30 s locally with two workers, more on a loaded CI runner
   await ready(page); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#add-room').click();
   await page.getByRole('button', { name: 'Criar Quintal de brincadeiras', exact: true }).click();
   await page.getByRole('button', { name: 'Construir cômodo', exact: true }).click();
