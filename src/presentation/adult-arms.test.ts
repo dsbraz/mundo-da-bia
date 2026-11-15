@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import type Phaser from 'phaser';
 import { applyReaction } from './feedback';
 import { artHeight, figureHeight, handAnchor, raisedHand } from './pose';
-import { inside, outlines } from './svg-outline.test-kit';
+import { inside, outlines, type P } from './svg-outline.test-kit';
 
 const sheet = readFileSync('public/art/adult.svg', 'utf8');
 /** The `d` of every path in the layer `id`. */
@@ -25,9 +25,44 @@ it('lote 8B: o braço do adulto é desenhado sobre a roupa, com a manga, e nasce
     const shoulders = [...new Map(circles(`${outfit}-arms`).filter(c => c.y < 120).map(c => [`${c.x},${c.y}`, c])).values()];
     expect(shoulders.length, outfit).toBe(2);
     for (const s of shoulders) expect(torso.some(g => inside(s, g)), `${outfit} ${s.x},${s.y}`).toBe(true);
-    // The torso has no sleeves of its own any more: nothing of it reaches out past the shoulders.
-    expect(Math.min(...torso.flat().filter(p => p.y < 160).map(p => p.x)), outfit).toBeGreaterThanOrEqual(38);
+    // The torso has no sleeves of its own: nothing of it reaches out past the sleeve's round shoulder.
+    expect(Math.min(...torso.flat().filter(p => p.y < 160).map(p => p.x)), outfit).toBeGreaterThanOrEqual(35);
   }
+});
+
+type Part = Record<string, string>;
+/** Every element of the layer `id` with its attributes. */
+const elements = (id: string): Part[] => {
+  const start = sheet.indexOf(`<g id="${id}"`), end = sheet.indexOf('</g>', start);
+  return [...sheet.slice(start, end).matchAll(/<(path|circle) ([^>]+)\/>/g)].map(m => Object.fromEntries([...m[2]!.matchAll(/([a-z-]+)="([^"]+)"/g)].map(a => [a[1]!, a[2]!])));
+};
+const poses = ['arms', 'up', 'belly', 'cheek'];
+const inGarment = (torso: P[][], p: P, label: string) => expect(torso.some(g => inside(p, g)), `${label} ${p.x},${p.y}`).toBe(true);
+/** One shoulder of `layer`: the torso is as wide and as high as the sleeve's round shoulder (its top and outer side lie inside the
+ *  garment), and the sleeve's outline near it is painted over in the sleeve's color, inside the garment. */
+function fitsShoulder(torso: P[][], layer: string, parts: Part[], s: Part) {
+  const c = { x: Number(s.cx), y: Number(s.cy) }, r = Number(s.r), out = c.x < 70 ? -1 : 1;
+  for (const p of [{ x: c.x + out * (r - .5), y: c.y }, { x: c.x, y: c.y - r + .5 }]) inGarment(torso, p, layer);
+  const near = (d: string) => outlines(d)[0]!.every(p => Math.hypot(p.x - c.x, p.y - c.y) < 24);
+  const hidden = parts.filter(e => e.d && e.stroke === s.fill && Number(e['stroke-width']) < 4 && near(e.d));
+  // (Hanging, the market shirt's sleeve runs along the apron's bib, which already hides its inner edge.)
+  if (layer !== 'adult-market-arms') expect(hidden.length, layer).toBeGreaterThan(0);
+  hidden.flatMap(e => outlines(e.d!)[0]!).forEach(p => inGarment(torso, p, layer));
+}
+it('a roupa do adulto veste: o ombro do tronco cobre o topo do braço e a manga sai dele sem contorno por dentro da roupa, em toda roupa e pose', () => {
+  for (const outfit of outfits) for (const pose of poses) {
+    const torso = paths(outfit).flatMap(outlines), layer = `${outfit}-${pose}`, parts = elements(layer);
+    // One round shoulder per arm, in the sleeve's color: no outlined ring stamped over the chest.
+    const shoulders = parts.filter(e => e.r && Number(e.cy) < 120);
+    expect(shoulders.length, layer).toBe(pose === 'arms' || pose === 'up' ? 2 : 1);
+    shoulders.forEach(s => fitsShoulder(torso, layer, parts, s));
+  }
+});
+
+it('a manga do vestido da Fabiana é uma manga de verdade, e a camisa do mercado não cobre o avental', () => {
+  const tube = (layer: string) => elements(layer).find(e => e['stroke-linecap'] === 'butt')!.d!;
+  for (const pose of poses) expect(tube(`adult-sol-${pose}`), pose).toBe(tube(`adult-sol-m-${pose}`));
+  for (const s of elements('adult-market-arms').filter(e => e.r && e.fill !== '#715e58')) expect(Math.abs(Number(s.cx) - 70) + Number(s.r)).toBeLessThanOrEqual(32);
 });
 
 it('lote 8B: cada braço fica do seu lado (o gesto e o abraço cortam a imagem ao meio) e a mão pende à altura da coxa', () => {
