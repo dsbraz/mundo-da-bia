@@ -68,6 +68,14 @@ describe('a escola (W3L-26)', () => {
     expect(lesson(withLuna, { ...here, grownUps: ['luna'], staffed: true }).outcome).toMatchObject({ kind: 'lesson', pupils: ['bia'], teacher: 'teacher' });
     expect(lesson(school(), { ...here, staffed: true }).outcome).toEqual({ kind: 'missing', need: 'seat', want: 'school-desk' });
   });
+  it('#30: sem a professora da escola, quem escreve é a criança selecionada que está de pé; sentada numa carteira, ela continua aluna', () => {
+    const town = seated(school(), 'leo');
+    expect(lesson(town, { ...here, writer: 'bia' }).outcome).toMatchObject({ kind: 'lesson', pupils: ['leo'], teacher: 'bia' });
+    expect(lesson(town, { ...here, writer: 'leo' }).outcome).toMatchObject({ kind: 'lesson', pupils: ['leo'], teacher: undefined });
+    expect(lesson(town, { ...here, writer: 'mimi' }).outcome).toMatchObject({ kind: 'lesson', pupils: ['leo'], teacher: undefined });
+    expect(lesson(town, { ...here, writer: 'luna' }).outcome).toMatchObject({ kind: 'lesson', teacher: undefined });
+    expect(lesson(town, { ...here, writer: 'bia', staffed: true }).outcome).toMatchObject({ kind: 'lesson', pupils: ['leo'], teacher: 'teacher' });
+  });
   it('o tema roda e não se repete até os 12 saírem; depois volta o mais antigo', () => {
     let town = seated(school(), 'bia');
     const seen: DrawingId[] = [];

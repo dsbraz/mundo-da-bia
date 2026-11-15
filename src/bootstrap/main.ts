@@ -62,7 +62,7 @@ import '../presentation/place-transition.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { marketPlay } from './market';
-import { schoolPlay } from './school';
+import { boardSide, schoolPlay } from './school';
 import { libraryPlay } from './library';
 import { readers } from '../domain/library';
 import { staffPlay } from './staff';
@@ -182,7 +182,8 @@ function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback, perform: action => play.perform(action), scene,
   openMap: place => openMap(place, 'mercado'), hint: { seen: () => loadCheckoutHintSeen(), done: () => { saveCheckoutHintSeen(); } } });
-const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback });
+const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback,
+  walkToBoard: (piece, done) => { const point = boardSide(state, selected, piece); if (point) walker.start(point, done); return !!point; } });
 const books = libraryPlay({ town: () => town, selected: () => selected, apply: next => townActs.apply(next), feedback });
 const staffing = staffPlay({ state: () => state, scene, school: schooling, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
