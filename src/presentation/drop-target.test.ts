@@ -3,7 +3,8 @@ import { initialWorld, transition } from '../domain/world';
 import { seatPoint, seatPiece } from '../domain/seats';
 import type { Piece, World } from '../domain/types';
 import { visualPiecePoint } from './furniture-scale';
-import { actorDropTarget, drawnBox, personTarget, targetName } from './drop-target';
+import { actorDropTarget, drawnBox, personTarget, targetName, trayDrop } from './drop-target';
+import { footprint } from '../domain/placement';
 import { glassOf } from './mirror-glass';
 import { noteFrame, waveFrame } from './play-effects';
 
@@ -38,4 +39,17 @@ it('as notas sobem e somem uma após a outra, as ondas da TV crescem; com movime
   expect(noteFrame(1599, false)[0]!.alpha).toBeLessThan(.01);
   waveFrame(0, false).forEach((w, i) => expect(w.radius).toBeCloseTo(10 + i * 26 / 3));
   expect(waveFrame(0, true)).toEqual(waveFrame(9999, true));
+});
+
+it('#15: o retrato solto da bandeja segue as regras do cenário: senta no assento, nunca fica em pé dentro de um móvel', () => {
+  const world = transition(initialWorld(), { type: 'travel', actor: 'daniel', room: 'sala' }).state;
+  expect(trayDrop(world, 'daniel', feetOn(world, '2.0'))).toEqual({ type: 'sit', actor: 'daniel', seat: '2.0' });
+  const drop = trayDrop(world, 'daniel', { x: 280, y: 515 });
+  const point = drop.type === 'move' ? drop.point : { x: NaN, y: NaN };
+  const inside = world.layout.pieces.filter(p => p.room === 'sala').map(footprint)
+    .some(f => !!f && point.x >= f.left && point.x <= f.right && point.y >= f.top && point.y <= f.bottom);
+  expect(drop.type).toBe('move');
+  expect(inside).toBe(false);
+  // Free floor: she stands where she was let go (on the painted floor).
+  expect(trayDrop(world, 'daniel', { x: 700, y: 560 })).toEqual({ type: 'move', actor: 'daniel', point: { x: 700, y: 540 } });
 });

@@ -1,7 +1,9 @@
 import type Phaser from 'phaser';
 import { pieceBounds } from '../domain/layout';
 import { occupant, seatPiece, seatPoint } from '../domain/seats';
-import type { Actor, ActorId, Piece, Point, World } from '../domain/types';
+import type { Action, Actor, ActorId, Piece, Point, World } from '../domain/types';
+import { onFloor } from './floor-band';
+import { standingSpot } from './walking-path';
 import { visualPiecePoint } from './furniture-scale';
 import { seatAt } from './furniture-targets';
 import { glassOf } from './mirror-glass';
@@ -23,6 +25,12 @@ export function drawnBox(piece: Piece): Rect {
 export function hugTarget(world: World, mover: ActorId, feet: Point): Actor | undefined {
   const near = world.actors.filter(a => a.id !== mover && a.room === world.room && Math.abs(a.x - feet.x) <= 35 && Math.abs(a.y - feet.y) <= 45);
   return near.sort((a, b) => Math.abs(a.x - feet.x) - Math.abs(b.x - feet.x))[0];
+}
+/** A portrait let go from the Turma tray at `p`, once `actor` is in the room: the same rules as a drop in the scene (W3L-01, W3L-17),
+ *  a seat there sits, otherwise she stands there, or beside the solid piece it falls on. */
+export function trayDrop(world: World, actor: ActorId, p: Point): Action {
+  const seat = seatAt(world, p, world.actors.find(a => a.id === actor));
+  return seat ? { type: 'sit', actor, seat } : { type: 'move', actor, point: standingSpot(world, onFloor(world, p)) };
 }
 /** Under the feet of `mover`, dragged to `feet`: the seat a drop sits on, else someone to hug, else the mirror she would stand in front of. */
 export function actorDropTarget(world: World, mover: ActorId, feet: Point): DropTarget | null {
