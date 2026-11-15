@@ -130,5 +130,9 @@ describe('as compras (W3L-22)', () => {
       const upstairs = { ...hall, room: 'quarto' as const }, inside = from(shop(town(), 'pao'), upstairs, calls[0]);
       expect(bag(inside)).toMatchObject({ location: upstairs, paid: false });
     });
+    it('quem não saiu do lugar não larga a sacola (um save antigo com a sacola sem pagar na rua)', () => {
+      const street = { kind: 'street' as const }, stuck = carried(shop(town(), 'pao'), street as never);
+      expect(bag(storeWorld(stuck, localWorld(stuck)))).toMatchObject({ location: street, paid: false });
+    });
   });
 });

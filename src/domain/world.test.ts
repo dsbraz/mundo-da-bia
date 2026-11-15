@@ -124,6 +124,12 @@ describe('reunir todo mundo (#1, #22)', () => {
     const state = transition(transition(initialWorld(), { type: 'room', room: 'quarto' }).state, { type: 'summon' }).state;
     for (const a of state.actors) expect(onAPiece(state, a)).toBe(false);
   });
+  it('quem cai na pegada da cama sai pelo lado livre mais perto: logo à frente dela', () => {
+    const world: World = { ...initialWorld(), room: 'quarto' }, bed = footprint(world.layout.pieces.find(p => p.room === 'quarto' && p.kind === 'bed')!)!;
+    const x = Math.round((bed.left + bed.right) / 2), y = bed.bottom - 10;
+    const moved = { ...world, actors: world.actors.map(a => a.id === 'daniel' ? { ...a, x, y } : a) };
+    expect(transition(moved, { type: 'summon' }).state.actors.find(a => a.id === 'daniel')).toMatchObject({ x, y: bed.bottom + 1 });
+  });
   it('na rua, ninguém fica acima do chão da calçada nem dormindo', () => {
     const resting = transition(initialWorld(), { type: 'rest', actor: 'luna' }).state;
     const state = transition({ ...resting, streetWidth: 2420, layout: { ...resting.layout, pieces: [] } }, { type: 'summon' }).state;

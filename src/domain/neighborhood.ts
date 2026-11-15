@@ -104,7 +104,7 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
     const updated = world.items.find(p => p.id === i.id);
     const holder = actors.find(a => a.id === (updated ?? i).holder);
     // Called home or dragged from the drawer (#10, #23), she leaves an unpaid bag on the market floor where she stood (W3L-22).
-    if (holder && unpaidExit(town, { type: 'transport', actor: holder.id, location: holder.location, point: holder })) return { ...i, holder: null, spot: 'floor' as const };
+    if (holder && !sameLocation(i.location, holder.location) && unpaidExit(town, { type: 'transport', actor: holder.id, location: holder.location, point: holder })) return { ...i, holder: null, spot: 'floor' as const };
     if (holder) return { ...(updated ?? i), room: holder.room, x: holder.x, y: holder.y, location: holder.location };
     return updated ? { ...updated, location: location(updated.room) } : i;
   });
