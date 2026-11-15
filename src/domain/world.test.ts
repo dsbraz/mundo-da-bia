@@ -32,8 +32,15 @@ describe('brincadeira', () => {
     for (const look of ['sol', 'jardim', 'estrela', 'mar', 'festa', 'pijama'] as const) {
       const before = initialWorld();
       expect(transition(before, { type: 'dress', actor: 'bia', look }).state.actors[0]).toEqual({ ...before.actors[0], look });
-      expect(transition(before, { type: 'dress', actor: 'mimi', look }).state).toEqual(before);
+      expect(transition(before, { type: 'dress', actor: 'mimi', look })).toEqual({ state: before, events: [{ type: 'missing', actor: 'mimi', need: 'place' }] });
     }
+  });
+  it('um look que a pessoa não veste é recusado com a bolha de que falta (nunca em silêncio): adultos, gatos e crianças', () => {
+    const quarto = { ...initialWorld(), room: 'quarto' as const }, sala = initialWorld();
+    expect(transition(quarto, { type: 'dress', actor: 'daniel', look: 'estrela' })).toEqual({ state: quarto, events: [{ type: 'missing', actor: 'daniel', need: 'place' }] });
+    expect(transition(quarto, { type: 'dress', actor: 'fabiana', look: 'festa' })).toEqual({ state: quarto, events: [{ type: 'missing', actor: 'fabiana', need: 'place' }] });
+    expect(transition(sala, { type: 'dress', actor: 'mimi', look: 'festa' })).toEqual({ state: sala, events: [{ type: 'missing', actor: 'mimi', need: 'place' }] });
+    expect(transition(sala, { type: 'dress', actor: 'bia', look: 'market' })).toEqual({ state: sala, events: [{ type: 'missing', actor: 'bia', need: 'place' }] });
   });
   it('pega uma única vez, carrega para outro cômodo e solta junto ao personagem', () => {
     let state = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'ursinho' }).state;
