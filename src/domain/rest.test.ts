@@ -4,7 +4,7 @@ import { restSeat } from './care';
 import { seatPoint } from './seats';
 import { initialAlbum } from './houses';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
-import { needsOf, wakeAll } from './needs';
+import { needsOf, newSession, wakeAll } from './needs';
 import type { ActorId, Piece, World } from './types';
 import type { Neighborhood, Resident } from './neighborhood-types';
 
@@ -129,5 +129,18 @@ describe('a manhã chega sozinha (#25): todo mundo que dorme levanta', () => {
   it('ninguém dormindo: o mesmo bairro', () => {
     const start = town();
     expect(wakeAll(start)).toBe(start);
+  });
+});
+
+describe('#26, #35, #38: toda sessão começa de manhã com todos descansados', () => {
+  it('quem foi salvo dormindo abre acordado (da cama, de pé na frente dela) e ninguém volta de barriga cheia; os assentos de quem não dormia ficam', () => {
+    const start = migrateNeighborhood(initialAlbum(initialWorld())), inside = start.actors[0]!.location as Extract<Resident['location'], { kind: 'interior' }>;
+    const saved = { ...start, actors: start.actors.map(a => a.id === 'leo' ? { ...a, resting: true, fed: true, seat: '8.0' as const, room: 'quarto' as const, location: { ...inside, room: 'quarto' as const } }
+      : a.id === 'mimi' ? { ...a, resting: true, seat: '2.0' as const } : a.id === 'luna' ? { ...a, fed: true, seat: '2.1' as const } : a) };
+    const session = newSession(saved), who = (id: ActorId) => session.actors.find(a => a.id === id)!;
+    expect(who('leo')).toMatchObject({ resting: false, fed: false, seat: null, y: 530 });
+    expect(who('mimi')).toMatchObject({ resting: false, seat: '2.0' });
+    expect(who('luna')).toMatchObject({ fed: false, seat: '2.1' });
+    expect(newSession(start)).toBe(start);
   });
 });

@@ -102,6 +102,12 @@ function up(town: Neighborhood, actor: Resident): Partial<Resident> { return ris
 export function wakeAll(town: Neighborhood): Neighborhood {
   return town.actors.some(a => a.resting) ? { ...town, actors: town.actors.map(a => a.resting ? { ...a, ...up(town, a) } : a) } : town;
 }
+/** A session's start (#26, #35, #38): like the needs, sleep and a full belly are the session's, so whatever the save kept, every session
+ *  starts in the morning with everyone up and ready to eat. */
+export function newSession(town: Neighborhood): Neighborhood {
+  const awake = wakeAll(town);
+  return awake.actors.some(a => a.fed) ? { ...awake, actors: awake.actors.map(a => a.fed ? { ...a, fed: false } : a) } : awake;
+}
 /** Getting up, the same for the Acordar button and the morning: ready to eat again and, from a bed, standing in front of it. */
 export const risen = (bed: boolean): Partial<Actor> => ({ resting: false, fed: false, ...(bed ? { seat: null, y: 530 } : {}) });
 /** The session's needs move: time goes by, a game is played, a night is slept through. */
