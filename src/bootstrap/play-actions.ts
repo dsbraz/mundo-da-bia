@@ -37,8 +37,8 @@ export function playActions(deps: PlayActions) {
     const point = approach(deps.state(), deps.selected(), target);
     if (!point) { deps.refuse('path', blockedMessage); return; }
     const kind = target.type === 'use' ? deps.state().layout.pieces.find(p => p.id === target.id)?.kind : undefined;
-    // The mirror (W3L-08): the Looks open at once while she walks there.
-    if (kind === 'mirror') deps.looks();
+    // The mirror (W3L-08): the Looks open at once while she walks there; a cat only goes to look (only people dress, W3L-24).
+    if (kind === 'mirror' && deps.state().actors.find(a => a.id === deps.selected())?.kind === 'human') deps.looks();
     walker.start(point, () => arrived(action, kind, target));
   }
   /** Where an action is done (a piece to walk to first), or null when it applies where she is. Resting walks to the bed or sofa seat she
