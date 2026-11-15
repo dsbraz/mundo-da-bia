@@ -18,7 +18,15 @@ export function plaza(deps: Plaza) {
   function drop(actor: ActorId, point: Point) {
     const target = outdoorAt(deps.town(), point); if (!target) return false;
     if (target.target === 'plot' || target.target === 'water') return deps.garden.drop(actor, target.plot ?? null);
-    play(actor, target as Equipment); return true;
+    if (!taken(target, actor)) play(actor, target as Equipment);
+    return true;
+  }
+  /** A bench or swing someone else sits on: refused with the bubble of who is there (W3L-02). */
+  function taken(target: OutdoorTarget, actor: ActorId) {
+    const occupant = target.target === 'bench' || target.target === 'swing' ? deps.town().outdoor[target.target] : null;
+    if (!occupant || occupant === actor) return false;
+    deps.refuse('seat', refusal('outdoor', nameOf(deps.town().actors.find(a => a.id === occupant)!)), { x: target.point.x, y: target.point.y - 60 }, occupant);
+    return true;
   }
   /** `keyboard`: used through its invisible button, so whatever opens takes the focus. */
   function use(target: OutdoorTarget, keyboard = true) {
@@ -26,11 +34,8 @@ export function plaza(deps: Plaza) {
     if (target.target === 'water') { deps.garden.can(); return; }
     deps.walker.cancel();
     const selected = deps.selected();
-    if (target.target === 'bench' || target.target === 'swing') {
-      const occupant = deps.town().outdoor[target.target];
-      if (occupant === selected) { getDown(selected); return; }
-      if (occupant && occupant !== selected) { deps.refuse('seat', refusal('outdoor', nameOf(deps.town().actors.find(a => a.id === occupant)!)), { x: target.point.x, y: target.point.y - 60 }, occupant); return; }
-    }
+    if ((target.target === 'bench' || target.target === 'swing') && deps.town().outdoor[target.target] === selected) { getDown(selected); return; }
+    if (taken(target, selected)) return;
     deps.walker.start({ x: target.point.x, y: 510 }, () => play(selected, target as Equipment));
   }
   /** In the drawing, a tap on the swing its rider sits on pushes it; anything else is used as by its button. */
