@@ -21,3 +21,12 @@ it('quando o turno abre, o desejo da rotina passa à frente do pensamento que pe
   const wish = nextAsk(null, 'wish:bia:prato', 1000);
   expect(nextAsk(wish, 'thought:bia:fome:pede', 1000)).toBe(wish);
 });
+it('#28: o pedido de sono não espera o intervalo inteiro (a noite é mais curta que ele): passa assim que o anterior sai, uma vez só', () => {
+  const play = nextAsk(null, 'thought:rui:tedio:pede', 1000);
+  expect(nextAsk(play, 'thought:bia:sono:pede', 1000 + askShow - 1)).toBe(play);
+  const sleep = nextAsk(play, 'thought:bia:sono:pede', 1000 + askShow);
+  expect(sleep).toEqual({ key: 'thought:bia:sono:pede', at: 1000 + askShow });
+  expect(nextAsk(play, 'wish:bia:travesseiro', 1000 + askShow)).toEqual({ key: 'wish:bia:travesseiro', at: 1000 + askShow });
+  // After a sleep ask the gap holds again, for any ask: another one's sleep, the same sleep needing more, or the routine's pillow.
+  for (const key of ['thought:leo:sono:pede', 'thought:bia:sono:precisa', 'wish:bia:travesseiro', 'thought:bia:fome:pede']) expect(nextAsk(sleep, key, sleep.at + askShow)).toBe(sleep);
+});

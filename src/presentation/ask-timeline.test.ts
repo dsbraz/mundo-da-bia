@@ -12,7 +12,7 @@ import { thoughtOf } from './need-bubble';
 import { asking, nextAsk, type Ask } from '../domain/asks';
 
 /** One bubble that came up on screen: when (s of play), whose, and what (a need's thought, or a routine wish). */
-interface Asked { at: number; actor: ActorId; what: string; wish: boolean }
+interface Asked { at: number; actor: ActorId; what: string; wish: boolean; phase: string }
 const everyone: readonly ActorId[] = ['bia', 'luna', 'leo', 'rui', 'mimi', 'nino', 'pipoca'];
 const patch = (town: Neighborhood, id: ActorId, need: Need) =>
   ({ ...town, actors: town.actors.map(a => a.id === id ? { ...a, needs: relieve(needsOf(a), need === 'fome' ? 'prato' : 'brincar') } : a) });
@@ -46,10 +46,10 @@ function simulate(minutes: number, care: boolean): Asked[] {
     if (s > 0 && s % 30 === 0) ({ town, session } = tick(town, session, care));
     const want = wanted(town, session, s * 1000), now = display(want.thought, want.wish, s * 1000);
     if (now.thought && !shown.thought) {
-      asked.push({ at: s, actor: want.thought!.actor, what: want.thought!.need, wish: false });
+      asked.push({ at: s, actor: want.thought!.actor, what: want.thought!.need, wish: false, phase: phaseAt(session, 'calmo') });
       if (care) pending.push({ at: s + 20, actor: want.thought!.actor, need: want.thought!.need });
     }
-    if (now.wish && !shown.wish) asked.push({ at: s, actor: 'bia', what: want.wish!, wish: true });
+    if (now.wish && !shown.wish) asked.push({ at: s, actor: 'bia', what: want.wish!, wish: true, phase: phaseAt(session, 'calmo') });
     shown = now;
     for (const job of pending.filter(p => p.at === s)) ({ town, session } = answer(town, session, job));
   }
@@ -67,11 +67,12 @@ function answer(town: Neighborhood, session: number, job: { actor: ActorId; need
 const report = (asked: Asked[]) => asked.map(a => `${Math.floor(a.at / 60)}:${String(a.at % 60).padStart(2, '0')} ${a.actor} ${a.what}`);
 const gaps = (asked: Asked[]) => asked.slice(1).map((a, n) => a.at - asked[n]!.at);
 
-it('lote 8E, jogo normal (quem pede é atendido): em 30 min a casa pede 4 vezes, 8 min uma da outra; a Bia, fome e depois sono', () => {
+it('lote 8E, jogo normal (quem pede é atendido): em 30 min a casa pede 4 vezes, 8 min uma da outra (o sono, à noite, só espera a anterior sair); a Bia, fome e depois sono', () => {
   const asked = simulate(30, true);
   // Before lot 8E the same 30 min drew 56 bubbles (24 of them the Bia's): a thought every 40 s, or the wish between two of them.
-  expect(report(asked)).toEqual(['5:30 leo fome', '13:30 bia fome', '21:30 rui tedio', '29:30 bia sono']);
-  expect(Math.min(...gaps(asked))).toBeGreaterThanOrEqual(8 * 60);
+  // #28: the sleep ask no longer waits for the 8 min after Rui's (29:30, at dawn): it comes 2 min into the night.
+  expect(report(asked)).toEqual(['5:30 leo fome', '13:30 bia fome', '21:30 rui tedio', '25:00 bia sono']);
+  expect(Math.min(...gaps(asked.filter(a => a.what !== 'sono')))).toBeGreaterThanOrEqual(8 * 60);
 });
 it('lote 8E, ninguém cuida de nada e todos parados: os pedidos seguem 8 min um do outro, e a Bia ainda pede comida e brincadeira', () => {
   const asked = simulate(30, false);
@@ -79,4 +80,9 @@ it('lote 8E, ninguém cuida de nada e todos parados: os pedidos seguem 8 min um 
   // dashed ball, which leads to the plaza.
   expect(report(asked)).toEqual(['5:30 leo fome', '13:30 bia fome', '21:30 bia bola', '29:30 bia bola']);
   expect(Math.min(...gaps(asked))).toBeGreaterThanOrEqual(8 * 60);
+});
+it('#28: o pedido de sono chega de noite (entardecer ou noite), quando deitar ainda pula para a manhã; o turno curto vale uma vez', () => {
+  const asked = simulate(30, true), sleep = asked.filter(a => a.what === 'sono' || a.what === 'travesseiro');
+  expect(sleep.length).toBeGreaterThan(0);
+  expect(sleep.every(a => ['entardecer', 'noite'].includes(a.phase))).toBe(true);
 });
