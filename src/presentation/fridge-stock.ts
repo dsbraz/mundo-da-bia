@@ -62,14 +62,17 @@ function drawFridgeStock(scene: Phaser.Scene, state: World, pieces: Map<number, 
     });
   });
 }
+/** The pantry an open fridge shows (decision #11): the family home's, the only one; the market's fridge keeps the market's. */
+function shownPantry(town: Neighborhood | null): Stock {
+  const where = town?.location, house = where?.kind === 'interior' ? town!.buildings.find(b => b.id === where.building) : undefined;
+  if (!house || where?.kind !== 'interior') return {};
+  return stockOf(isMarket(house.layout, where.room) ? house : familyHome(town!));
+}
 /** What the room shows of the market (§3.4): the shelves' goods, and in an open fridge the house's pantry; the school's drawings
  *  on the fridge door (W3L-26); and the books each bookcase has left (lot 8C). */
 export function drawPantries(scene: Phaser.Scene, state: World, pieces: Map<number, Phaser.GameObjects.Container>, town: Neighborhood | null) {
-  const where = town?.location, house = where?.kind === 'interior' ? town!.buildings.find(b => b.id === where.building) : undefined;
   drawShelfGoods(scene, state, pieces, town?.progress.shelves ?? []);
-  // Decision #11: a fridge shows the family home's pantry, the only one; the market's fridge is the market's.
-  const pantry = house && where?.kind === 'interior' && !isMarket(house.layout, where.room) ? familyHome(town!) : house;
-  drawFridgeStock(scene, state, pieces, pantry ? stockOf(pantry) : {});
+  drawFridgeStock(scene, state, pieces, shownPantry(town));
   drawFridgeDrawings(scene, state, pieces, town?.progress.drawings ?? []);
   drawBookcases(scene, state, pieces, town);
 }

@@ -5,7 +5,7 @@ import type { ActorId, CropId, Layout, Piece, PieceKind, Point, RoomId } from '.
 import { pieceBounds } from './layout';
 import type { Building, MarketAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { consumeItem, spawnItem } from './portable';
-import { stockOf } from './stock';
+import { familyHome, stockOf } from './stock';
 import { snacksOf } from './larder';
 
 import type { Good } from './goods';
@@ -111,12 +111,12 @@ export function storeGoods(town: Neighborhood, building: number, goods: readonly
   return { town: { ...town, buildings, progress: { ...town.progress, specials, seeds } }, left };
 }
 const gain = <T>(list: readonly T[], id: T): T[] => list.includes(id) ? [...list] : [...list, id];
-/** The bag into the fridge at home: what fits goes in, the rest stays in the bag in her hand; an empty bag is gone. Unpaid, the checkout first. */
+/** The bag into a fridge (any fridge stores into the family home's, the only one, decision #11): what fits goes in, the rest stays in the bag in her hand; an empty bag is gone. Unpaid, the checkout first. */
 export function stockUp(town: Neighborhood, actor: ActorId): Shopped {
   const at = standing(town, actor), hand = heldBy(town, actor);
   if (!at || !isBag(hand) || isMarket(at.building.layout, at.room) || !at.building.layout.pieces.some(p => p.room === at.room && p.kind === 'fridge')) return none(town);
   if (!hand.paid) return { town, outcome: { kind: 'missing', need: 'checkout' } };
-  const stored = storeGoods(town, at.building.id, hand.contents);
+  const stored = storeGoods(town, familyHome(town).id, hand.contents);
   return { town: stored.left.length ? patch(stored.town, hand.id, { contents: stored.left }) : consumeItem(stored.town, hand.id), outcome: { kind: 'stored', left: stored.left.length } };
 }
 export const marketActions: readonly NeighborhoodAction['type'][] = ['buy', 'checkout', 'stock-up'];
