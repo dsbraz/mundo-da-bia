@@ -1,4 +1,5 @@
-import type { ActorId, Need, Point } from '../domain/types';
+import type { Action, ActorId, Need, Point } from '../domain/types';
+import { benchMeal, outdoorPoints } from '../domain/outdoor';
 import type { Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { outdoorAt } from '../presentation/outdoor-controls';
 import type { OutdoorTarget } from '../presentation/outdoor-controls';
@@ -11,6 +12,8 @@ interface Plaza {
   /** A push on the swing, drawn only. */
   push: (rider: ActorId) => void;
   garden: Pick<ReturnType<typeof gardenPlay>, 'touch' | 'can' | 'drop'>;
+  /** Performs a play action without walking first (the meal, once she sits on the bench). */
+  serve: (action: Action) => void;
 }
 type Equipment = OutdoorTarget & { target: Exclude<OutdoorTarget['target'], 'plot'> };
 export function plaza(deps: Plaza) {
@@ -46,5 +49,12 @@ export function plaza(deps: Plaza) {
     return true;
   }
   function getDown(actor: ActorId) { deps.dispatch({ type: 'outdoor', actor, target: 'leave' }); }
-  return { drop, use, touch, leave };
+  /** A dish for the selected child on the plaza with the bench free (#34): she walks to the bench, sits and eats there. */
+  function sitToEat(action: Action): boolean {
+    const actor = benchMeal(deps.town(), action);
+    if (!actor || actor !== deps.selected()) return false;
+    deps.walker.start({ x: outdoorPoints.bench.x, y: 510 }, () => { deps.dispatch({ type: 'outdoor', actor, target: 'bench' }); deps.serve(action); });
+    return true;
+  }
+  return { drop, use, touch, leave, sitToEat };
 }
