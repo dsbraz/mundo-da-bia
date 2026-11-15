@@ -24,9 +24,9 @@ async function start(page: Page, size: { width: number; height: number }, spots:
   await ready(page); await page.clock.pauseAt(new Date('2026-11-13T10:01:30'));
   await page.clock.runFor(300);
 }
-async function crop(page: Page, id: string, name: string, prefix = `adult-fit-${label}-`) {
+async function crop(page: Page, id: string, name: string) {
   const actor = await who(page, id), top = await point(page, actor.x - 110, actor.y - 330), bottom = await point(page, actor.x + 110, actor.y + 20);
-  await page.screenshot({ path: `reports/review/${prefix}${name}.png`, clip: { x: top.x, y: top.y, width: bottom.x - top.x, height: bottom.y - top.y } });
+  await page.screenshot({ path: `reports/review/adult-fit-${label}-${name}.png`, clip: { x: top.x, y: top.y, width: bottom.x - top.x, height: bottom.y - top.y } });
 }
 
 for (const size of [{ width: 1024, height: 768 }, { width: 1280, height: 800 }]) test(`adultos: a roupa veste, a ${size.width}`, async ({ page }) => {
@@ -67,7 +67,7 @@ test('adultos: a Fabiana veste a mesma roupa em casa, na rua e no mercado', asyn
   await page.addInitScript(value => { localStorage.setItem('mundo-da-bia:autonomy', 'off'); if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); }, encodeNeighborhood(town));
   await ready(page);
   const market = town.buildings.find(b => b.model === 'shop')!, looks: string[] = [];
-  const shot = async (place: string) => { looks.push((await who(page, 'fabiana')).look); await crop(page, 'fabiana', place, 'adult-fit-places-'); };
+  const shot = async (place: string) => { looks.push((await who(page, 'fabiana')).look); await page.screenshot({ path: `reports/review/adult-fit-places-${place}.png` }); };
   const fabiana = await who(page, 'fabiana');
   await tap(page, fabiana.x, fabiana.y - 150);
   await expect(page.locator('#selected')).toHaveText('Fabiana');
@@ -76,13 +76,16 @@ test('adultos: a Fabiana veste a mesma roupa em casa, na rua e no mercado', asyn
   await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
   await expect.poll(async () => (await who(page, 'fabiana')).location.kind).toBe('street');
   if (await page.locator('#close-map').isVisible()) await page.locator('#close-map').click();
-  await page.waitForTimeout(800);
+  // She comes out at the edge of the view: a tap walks her into sight.
+  await tap(page, 600, 560);
+  await expect.poll(async () => (await who(page, 'fabiana')).x, { timeout: 15000 }).toBeLessThan(700);
+  await page.waitForTimeout(1500);
   await shot('street');
   await page.locator('#map-toggle').click();
   await page.locator('#neighborhood-list').getByRole('button', { name: `Ir para ${market.name}`, exact: true }).click();
   await expect.poll(async () => (await who(page, 'fabiana')).location).toMatchObject({ kind: 'interior', building: market.id });
   if (await page.locator('#close-map').isVisible()) await page.locator('#close-map').click();
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(2500);
   await shot('market');
   expect(looks).toEqual(['outing', 'outing', 'outing']);
 });
