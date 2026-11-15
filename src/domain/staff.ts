@@ -25,14 +25,15 @@ const keyKinds: readonly PieceKind[] = ['board', 'counter', 'checkout'];
 /** Nor in front of a seat: whoever sits there (a pupil at her desk) stays in sight. */
 const hidden = (kind: PieceKind) => keyKinds.includes(kind) || !!seatSlots[kind];
 const box = (r: { x: number; y: number; width: number; height: number }): Footprint => ({ left: r.x, right: r.x + r.width, top: r.y, bottom: r.y + r.height });
-/** The professional of the room shown at `where`, standing at its spot, or null (a home, the street, another room). She works in her
- *  room and greets whoever arrives in the building's entry room (lot 8A: the Map opens there, and a building older than its plan has no
- *  work room at all). */
+/** The professional of the room shown at `where`, standing at its spot, or null (a home, the street, another room). She is in one place
+ *  only (#37): her work room (the first, if there are two), else the building's entry room (lot 8A: a building older than its plan has
+ *  no work room at all). */
 export function staffAt(town: Neighborhood, where: Location): Staff | null {
   if (where.kind !== 'interior') return null;
   const building = town.buildings.find(b => b.id === where.building), work = building && workplaces[building.model];
-  const room = building?.layout.rooms[where.room];
-  if (!work || !room || (room.template !== work.template && where.room !== building.entry)) return null;
+  if (!work || !building.layout.rooms[where.room]) return null;
+  const place = (Object.keys(building.layout.rooms) as RoomId[]).find(id => building.layout.rooms[id]!.template === work.template) ?? building.entry;
+  if (where.room !== place) return null;
   return { profession: work.profession, building: where.building, room: where.room, ...spot(building.layout, where.room) };
 }
 /** Where to stand: beside the room's key piece (else the middle), never in a passage, the street door, in front of a key piece or a seat,
