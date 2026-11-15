@@ -1,7 +1,9 @@
 import { isAdult } from './family';
 import { describe, expect, it } from 'vitest';
 import { initialWorld, transition } from './world';
-import type { Action } from './types';
+import type { Action, World } from './types';
+import { footprint } from './placement';
+import { floorTop, roomWidth, validPoint } from './geometry';
 
 describe('brincadeira', () => {
   it('tem quatro crianças, três adultos (os pais e a Laura) e três gatos, sem estado compartilhado', () => {
@@ -101,5 +103,30 @@ describe('posições iniciais de saves novos', () => {
     expect(standing.some(a => a.kind === 'human' && a.x >= stage.x)).toBe(true);
     const food = world.items.filter(i => i.spot === 'fridge').map(i => i.x);
     expect(standing.filter(a => food.some(x => Math.abs(a.x - x) <= 50))).toEqual([]);
+  });
+});
+describe('reunir todo mundo (#1, #22)', () => {
+  const onAPiece = (world: World, a: World['actors'][number]) => world.layout.pieces.some(p => {
+    const area = p.room === world.room && footprint(p);
+    return !!area && a.x >= area.left && a.x <= area.right && a.y >= area.top && a.y <= area.bottom;
+  });
+  it('quem dormia na cama acorda e chega em pé no chão, fora dos móveis, numa altura válida', () => {
+    let state: World = { ...initialWorld(), room: 'quarto' };
+    state = transition(state, { type: 'rest', actor: 'daniel' }).state;
+    state = transition({ ...state, room: 'sala' }, { type: 'summon' }).state;
+    expect(state.actors.find(a => a.id === 'daniel')).toMatchObject({ room: 'sala', seat: null, resting: false });
+    for (const a of state.actors) {
+      expect(validPoint(a, roomWidth(state)) && a.y >= floorTop(state)).toBe(true);
+      expect(onAPiece(state, a)).toBe(false);
+    }
+  });
+  it('no quarto, ninguém fica dentro da cama nem de outro móvel', () => {
+    const state = transition(transition(initialWorld(), { type: 'room', room: 'quarto' }).state, { type: 'summon' }).state;
+    for (const a of state.actors) expect(onAPiece(state, a)).toBe(false);
+  });
+  it('na rua, ninguém fica acima do chão da calçada nem dormindo', () => {
+    const resting = transition(initialWorld(), { type: 'rest', actor: 'luna' }).state;
+    const state = transition({ ...resting, streetWidth: 2420, layout: { ...resting.layout, pieces: [] } }, { type: 'summon' }).state;
+    expect(state.actors.every(a => a.y >= floorTop(state) && !a.resting)).toBe(true);
   });
 });
