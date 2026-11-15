@@ -48,6 +48,12 @@ describe('dormir só em cama ou sofá (W3L-15)', () => {
     expect(who(state, 'bia')).toMatchObject({ resting: false, fed: false });
     expect(events).toEqual([{ type: 'rested', actor: 'bia' }]);
   });
+  it('Acordar na cama a tira da cama como o bom dia: de pé no chão na frente dela (y 530); no sofá ela só senta', () => {
+    const asleep = rest(bedroom(initialWorld()), 'bia').state, up = who(rest(asleep, 'bia').state, 'bia');
+    expect(up).toMatchObject({ resting: false, fed: false, seat: null, x: who(asleep, 'bia').x, y: 530 });
+    const napping = rest(sala(() => true), 'bia').state;
+    expect(who(rest(napping, 'bia').state, 'bia')).toMatchObject({ resting: false, seat: '2.0' });
+  });
   it('o gato prefere a caminha, depois o sofá e a cama, e nunca a caminha de outro', () => {
     const world = bedroom(initialWorld());
     expect(who(rest(world, 'mimi').state, 'mimi')).toMatchObject({ seat: '10.0', resting: true });

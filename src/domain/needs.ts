@@ -97,9 +97,9 @@ export function morning(town: Neighborhood, action: MorningAction): Neighborhood
   return { ...town, actors: town.actors.map(a => slept(a) ? { ...a, needs: { ...needsOf(a), sono: 0 }, ...(a.resting ? up(town, a) : {}) } : a) };
 }
 /** Waking from a night's sleep: out of a bed she stands on the floor in front of it (the front row, y 530); on a sofa she sits up. */
-function up(town: Neighborhood, actor: Resident): Partial<Resident> {
-  return { resting: false, fed: false, ...(inBed(town, actor) ? { seat: null, y: 530 } : {}) };
-}
+function up(town: Neighborhood, actor: Resident): Partial<Resident> { return risen(inBed(town, actor)); }
+/** Getting up, the same for the Acordar button and the morning: ready to eat again and, from a bed, standing in front of it. */
+export const risen = (bed: boolean): Partial<Actor> => ({ resting: false, fed: false, ...(bed ? { seat: null, y: 530 } : {}) });
 /** The session's needs move: time goes by, a game is played, a night is slept through. */
 export const lifeActions: readonly NeighborhoodAction['type'][] = ['live', 'enjoy', 'morning'];
 export function life(town: Neighborhood, action: LiveAction | EnjoyAction | MorningAction): Neighborhood {
