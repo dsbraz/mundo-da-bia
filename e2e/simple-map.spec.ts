@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { ready, read, create, tray, closeTray, tap, bringHere } from './helpers';
 test('piano, televisão e aquário mantêm brincadeiras e persistência', async ({ page }) => {
+  test.setTimeout(90_000); // real-time waits plus a slow page load on a busy runner went past the default 30 s
   await ready(page); await create(page); await bringHere(page);
   for (const [index, name] of ['Piano', 'Televisão', 'Aquário'].entries()) {
     await page.locator('#build-toggle').click(); await tray(page, 'Todos'); await page.getByRole('button', { name: `Adicionar ${name}`, exact: true }).click(); await closeTray(page);

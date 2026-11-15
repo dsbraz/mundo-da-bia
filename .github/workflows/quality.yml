@@ -43,10 +43,11 @@ jobs:
           if-no-files-found: error
   e2e:
     runs-on: ubuntu-24.04
+    # Public repositories run at most 20 jobs at once: checks + 12 e2e shards + 7 mutation shards.
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,11 +55,34 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
-      - name: E2E shard ${{ matrix.shard }}/4
+      # The browser download is cached; its system packages are installed every time.
+      - id: browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('package-lock.json') }}
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      # Last run's test durations (saved by the ci job) balance the shards; see scripts/e2e-shards.mjs.
+      - uses: actions/cache/restore@v4
+        with:
+          path: reports/e2e-durations.json
+          key: e2e-durations-${{ github.sha }}
+          restore-keys: e2e-durations-
+      - name: Tests of shard ${{ matrix.shard }}/12
+        run: node scripts/e2e-shards.mjs shard
+        env:
+          E2E_SHARD: ${{ matrix.shard }}/12
+      # --fully-parallel lets both workers share a spec file's tests.
+      - name: E2E shard ${{ matrix.shard }}/12
         env:
           PLAYWRIGHT_BLOB_OUTPUT_DIR: blob
-        run: npx playwright test --shard=${{ matrix.shard }}/4 --reporter=list,blob
+        run: npx playwright test --fully-parallel --test-list reports/e2e-shard.txt --reporter=list,blob
+      # After the run: the blob reporter empties its folder when it starts.
+      - if: always()
+        run: cp reports/e2e-plan-${{ matrix.shard }}.json blob/
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -76,19 +100,25 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - uses: actions/download-artifact@v4
-        with:
-          name: quality-checks
-          path: reports
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: blob-*
-          path: reports/blob
-          merge-multiple: true
+      # Newest upload of each artifact, so a re-run of failed jobs counts (scripts/artifacts.mjs).
+      - name: Download checks and shard reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/artifacts.mjs quality-checks reports && node scripts/artifacts.mjs blob- reports/blob
       - name: Merge shards into the ci report
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: reports/e2e.json
         run: npm run quality:ci-merge
+      - name: Every planned test ran exactly once
+        run: node scripts/e2e-shards.mjs check reports/blob reports/e2e.json
+      # Durations balance the next run's shards, also after a failing test (not from a cancelled run).
+      - if: ${{ !cancelled() && hashFiles('reports/e2e.json') != '' }}
+        run: node scripts/e2e-shards.mjs durations reports/e2e.json
+      - uses: actions/cache/save@v4
+        if: ${{ !cancelled() && hashFiles('reports/e2e-durations.json') != '' }}
+        with:
+          path: reports/e2e-durations.json
+          key: e2e-durations-${{ github.sha }}
       - name: Every shard must have finished
         run: test "${{ needs.e2e.result }}" = success
       - uses: actions/upload-artifact@v4
@@ -97,7 +127,44 @@ jobs:
           name: quality-ci
           path: reports/
           if-no-files-found: error
+  mutation-shard:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # Every branch restores main's last results: they balance the shards (scripts/mutation-shards.mjs).
+      # Delivery branches also reuse them and only re-test mutants whose code or tests changed; main
+      # re-tests everything (--force) and saves the merged cache in the mutation job.
+      - uses: actions/cache/restore@v4
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.sha }}
+          restore-keys: stryker-incremental-
+      - name: Mutation shard ${{ matrix.shard }}/7
+        run: node scripts/mutation-shards.mjs run
+        env:
+          MUTATION_SHARD: ${{ matrix.shard }}/7
+          STRYKER_INCREMENTAL: ${{ github.ref == 'refs/heads/main' && 'force' || 'reuse' }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-shard-${{ matrix.shard }}
+          path: |
+            reports/mutation-shard.json
+            reports/stryker-incremental.json
+            reports/mutation/
+          if-no-files-found: error
   mutation:
+    if: always()
+    needs: [mutation-shard]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -106,17 +173,14 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      # Delivery branches reuse main's last results and only re-test mutants whose
-      # code or tests changed; main re-tests everything (--force) and saves the cache.
-      - uses: actions/cache/restore@v4
-        if: github.ref != 'refs/heads/main'
-        with:
-          path: reports/stryker-incremental.json
-          key: stryker-incremental-${{ github.sha }}
-          restore-keys: stryker-incremental-
-      - run: npm run quality:mutation
+      - name: Download shard reports
         env:
-          STRYKER_INCREMENTAL: ${{ github.ref == 'refs/heads/main' && 'force' || 'reuse' }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/artifacts.mjs mutation-shard- reports/shards dirs
+      - name: Merge shards into the mutation report
+        run: npm run quality:mutation-merge
+      - name: Every shard must have finished
+        run: test "${{ needs.mutation-shard.result }}" = success
       - uses: actions/cache/save@v4
         if: always() && github.ref == 'refs/heads/main'
         with:
@@ -126,7 +190,11 @@ jobs:
         if: always()
         with:
           name: quality-mutation
-          path: reports/
+          path: |
+            reports/mutation.json
+            reports/mutation.md
+            reports/mutation/
+            reports/stryker-incremental.json
           if-no-files-found: error
   quality-gate:
     if: always()
@@ -142,11 +210,10 @@ jobs:
           CI_RESULT: ${{ needs.ci.result }}
           MUTATION_RESULT: ${{ needs.mutation.result }}
         run: test "$CI_RESULT" = success && test "$MUTATION_RESULT" = success
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: quality-*
-          path: reports
-          merge-multiple: true
+      - name: Download quality reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/artifacts.mjs quality- reports
       - run: node scripts/quality-gate.mjs
       - name: Publish summaries
         if: always()

@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { coverageMetrics, mutationMetrics } from './metrics.mjs';
 const policy = JSON.parse(readFileSync('quality.policy.json'));
 const mode = process.argv[2];
-if (!['fast', 'ci', 'ci-checks', 'ci-merge', 'mutation', 'all'].includes(mode)) throw new Error('Modo inválido');
+if (!['fast', 'ci', 'ci-checks', 'ci-merge', 'mutation', 'mutation-merge', 'all'].includes(mode)) throw new Error('Modo inválido');
 const sha = (await execute('git', ['rev-parse', 'HEAD'])).stdout.trim();
 mkdirSync('reports', { recursive: true });
 const fast = [
@@ -73,4 +73,6 @@ if (mode === 'fast') await run('fast', fast);
 if (['ci', 'all'].includes(mode)) await run('ci', ci);
 if (mode === 'ci-checks') await run('ci', ciChecks, { file: 'ci-checks' });
 if (mode === 'ci-merge') await run('ci', e2eMerge, { base: read('reports/ci-checks.json') });
+// CI runs Stryker in shards (scripts/mutation-shards.mjs run); mutation-merge folds them into the mutation report.
+if (mode === 'mutation-merge') await run('mutation', [['mutation', 'node', 'scripts/mutation-shards.mjs', 'merge']]);
 if (['mutation', 'all'].includes(mode)) await run('mutation', [['mutation', 'npx', '--no-install', 'stryker', 'run', ...mutationArgs]]);

@@ -22,6 +22,7 @@ async function skyBand(page: Page) {
 }
 
 test('em 20 s a rua mostra nuvens derivando, copas oscilando e um pássaro de passagem', async ({ page }) => {
+  test.setTimeout(90_000); // real-time waits plus a slow page load on a busy runner went past the default 30 s
   await street(page);
   await page.clock.runFor(100); const start = await sky(page);
   await page.screenshot({ path: 'reports/sky-street-0s.png' });
@@ -39,6 +40,7 @@ test('em 20 s a rua mostra nuvens derivando, copas oscilando e um pássaro de pa
 });
 
 test('com movimento reduzido o céu da rua fica parado', async ({ page }) => {
+  test.setTimeout(90_000); // real-time waits plus a slow page load on a busy runner went past the default 30 s
   await page.emulateMedia({ reducedMotion: 'reduce' }); await street(page);
   await page.clock.runFor(100);
   const band = await skyBand(page), before = await page.screenshot({ clip: band });

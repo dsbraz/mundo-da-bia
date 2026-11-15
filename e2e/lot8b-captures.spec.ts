@@ -90,7 +90,8 @@ for (const size of sizes) test(`lote 8B: pai e mãe com a mesma roupa em casa e 
   await shot(page, 'parents-home', size.width);
   await page.clock.resume();
   const daniel = await who(page, 'daniel');
-  await tap(page, daniel.x, daniel.y - 150);
+  // On his shirt: the neck/collar seam (y - 150) opens a gap for a few frames as his head breathes, and a tap there falls on the floor.
+  await tap(page, daniel.x, daniel.y - 120);
   await expect(page.locator('#selected')).toHaveText('Daniel');
   await toOffice(page, 'daniel');
   await page.waitForTimeout(600);
