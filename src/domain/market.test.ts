@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { bagLimit, buy, checkout, storeGoods, stockUp, unpaidExit } from './market';
-import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
+import { localWorld, migrateNeighborhood, neighborhoodAction, storeWorld } from './neighborhood';
 import { initialAlbum } from './houses';
-import { initialWorld } from './world';
+import { initialWorld, transition } from './world';
 import { fullStock, stockOf } from './stock';
 import type { Neighborhood, NeighborhoodItem } from './neighborhood-types';
 import type { ActorId, RoomId } from './types';
@@ -110,5 +110,25 @@ describe('as compras (W3L-22)', () => {
     expect((paid.items.find(i => i.kind === 'sacola') as NeighborhoodItem).paid).toBe(true);
     const stored = neighborhoodAction(carried(paid), { type: 'stock-up', actor: 'bia' });
     expect(stored).toEqual(stockUp(carried(paid), 'bia').town);
+  });
+  describe('a sacola sem pagar nunca sai do mercado, nem por Reunir todo mundo nem pela gaveta da Turma (#10, #23)', () => {
+    const calls = [{ type: 'summon' }, { type: 'travel', actor: 'bia', room: 'sala' }] as const;
+    const from = (t: Neighborhood, view: Neighborhood['location'], action: typeof calls[number]) => {
+      const seen = { ...t, location: view };
+      return storeWorld(seen, transition(localWorld(seen), action).state);
+    };
+    it.each(calls.flatMap(action => [home, { kind: 'street' as const }].map(view => [action.type, view.kind, action, view] as const)))(
+      '%s vista de %s: a Bia chega de mãos livres e a sacola fica no chão do mercado, onde ela estava', (_type, _kind, action, view) => {
+        const bagged = shop(town(), 'pao'), after = from(bagged, view, action);
+        expect(after.actors.find(a => a.id === 'bia')!.location).toEqual(view);
+        expect(bag(after)).toBeUndefined();
+        expect(after.items.find(i => i.kind === 'sacola')).toMatchObject({ holder: null, spot: 'floor', location: hall, x: 500, y: 500, contents: ['pao'], paid: false });
+      });
+    it('paga, a sacola vem junto; dentro do prédio do mercado, a sacola sem pagar também vem', () => {
+      const paid = from(checkout(shop(town(), 'pao'), 'bia').town, home, calls[0]);
+      expect(bag(paid)).toMatchObject({ location: home, paid: true });
+      const upstairs = { ...hall, room: 'quarto' as const }, inside = from(shop(town(), 'pao'), upstairs, calls[0]);
+      expect(bag(inside)).toMatchObject({ location: upstairs, paid: false });
+    });
   });
 });
