@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { actorSource, portraitParts } from './actor-paint';
+import { actorSource, lookSource, outfitOf, portraitParts } from './actor-paint';
 import { actors, looks } from '../content/catalog';
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 
@@ -15,4 +15,10 @@ it('the portrait uses the same layers the scene draws for the current look', () 
   expect(portraitParts('luna', 'superman')).toEqual(['cape-superman', 'hair-back', 'legs', 'hands', 'body-superman', 'face', 'hair-luna', 'brows', 'eyes', 'mouth']);
   expect(portraitParts('bia', 'spiderman').at(-1)).toBe('mask-spiderman');
   expect(portraitParts('pipoca', 'sol')).toEqual(['tail', 'ears', 'body', 'eyes']);
+});
+it('the t-shirt cut carries the look emblem too, not the sun of "Dia de sol" (#20)', () => {
+  const layer = (source: string, id: string) => source.slice(source.indexOf(`<g id="${id}"`)).split('</g>')[0];
+  const mar = layer(lookSource('mar'), 'body-casual');
+  expect(mar).toContain('href="#pattern-mar"'); expect(mar).not.toContain('#pattern-sol');
+  expect(layer(actorSource('leo', 'estrela'), outfitOf('leo', 'estrela'))).toContain('href="#pattern-estrela"');
 });

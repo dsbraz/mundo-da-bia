@@ -43,7 +43,7 @@ export function paintRoles(source: string, kind: keyof typeof roles, colors: Par
   return source.replace(new RegExp([...byHex.keys()].join('|'), 'g'), hex => colors[byHex.get(hex)!] ?? hex);
 }
 export function lookSource(look: LookId, source = human) {
-  return paintRoles(source, 'human', { outfit: color(looks[look].color) }).replace('href="#pattern-sol"', `href="#pattern-${look}"`);
+  return paintRoles(source, 'human', { outfit: color(looks[look].color) }).replaceAll('href="#pattern-sol"', `href="#pattern-${look}"`);
 }
 export function actorSource(id: ActorId, look?: LookId) {
   const palette = actors[id], colors = { skin: color(palette.skin), hair: color(palette.hair) };
