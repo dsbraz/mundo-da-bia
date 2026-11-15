@@ -2,7 +2,7 @@ import { benchUtensils, cook, pantry, utensilPiece } from '../domain/recipes';
 import type { Outcome } from '../domain/recipes';
 import { basics } from '../domain/ingredients';
 import type { Ingredient, Utensil } from '../domain/ingredients';
-import { stockOf } from '../domain/stock';
+import { familyHome, stockOf } from '../domain/stock';
 import { hasMarket } from '../domain/market';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { pieceBounds } from '../domain/layout';
@@ -32,10 +32,9 @@ export function kitchen(deps: KitchenDeps) {
     const where = deps.town().location;
     return where.kind === 'interior' ? deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.id === piece && p.room === where.room) : undefined;
   };
-  /** The house's pantry (W3L-20, a basic it ran out of as a silhouette) and the basket, each drawn as a pile of up to 4 or 6 icons. */
+  /** The family home's pantry (W3L-20, decision #11: every bench cooks from it; a basic it ran out of as a silhouette) and the basket, each drawn as a pile of up to 4 or 6 icons. */
   const stock = () => {
-    const town = deps.town(), where = town.location, house = where.kind === 'interior' ? town.buildings.find(b => b.id === where.building) : undefined;
-    const shelf = house ? stockOf(house) : {};
+    const town = deps.town(), shelf = town.location.kind === 'interior' ? stockOf(familyHome(town)) : {};
     return [...basics.map(id => ({ id, pile: shelf[id], empty: !shelf[id] })), ...pantry(town.progress, {}).map(id => ({ id, pile: town.progress.basket[id as CropId] }))];
   };
   /** Once the town has a market, the Mercado card stops glowing. */

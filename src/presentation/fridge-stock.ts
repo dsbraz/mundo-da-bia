@@ -2,7 +2,8 @@ import type Phaser from 'phaser';
 import { basics, stockLimit } from '../domain/ingredients';
 import type { Basic, Stock } from '../domain/ingredients';
 import type { Neighborhood } from '../domain/neighborhood-types';
-import { stockOf } from '../domain/stock';
+import { familyHome, stockOf } from '../domain/stock';
+import { isMarket } from '../domain/market';
 import type { Item, World } from '../domain/types';
 import { itemKind } from '../domain/item-kind';
 import { runOut } from '../domain/larder';
@@ -66,7 +67,9 @@ function drawFridgeStock(scene: Phaser.Scene, state: World, pieces: Map<number, 
 export function drawPantries(scene: Phaser.Scene, state: World, pieces: Map<number, Phaser.GameObjects.Container>, town: Neighborhood | null) {
   const where = town?.location, house = where?.kind === 'interior' ? town!.buildings.find(b => b.id === where.building) : undefined;
   drawShelfGoods(scene, state, pieces, town?.progress.shelves ?? []);
-  drawFridgeStock(scene, state, pieces, house ? stockOf(house) : {});
+  // Decision #11: a fridge shows the family home's pantry, the only one; the market's fridge is the market's.
+  const pantry = house && where?.kind === 'interior' && !isMarket(house.layout, where.room) ? familyHome(town!) : house;
+  drawFridgeStock(scene, state, pieces, pantry ? stockOf(pantry) : {});
   drawFridgeDrawings(scene, state, pieces, town?.progress.drawings ?? []);
   drawBookcases(scene, state, pieces, town);
 }

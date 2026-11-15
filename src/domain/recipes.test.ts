@@ -221,3 +221,25 @@ it('a ação cook do bairro aplica a mesma regra', () => {
   expect(neighborhoodAction(town, action)).toEqual(cook(town, input(['farinha', 'queijo', 'ovo'], 'forno')).town);
   expect(neighborhoodAction(town, { ...action, ingredients: ['kiwi' as Ingredient] })).toBe(town);
 });
+
+describe('decisão #11: a copa e a recepção usam a despensa da casa da família (a primeira casa)', () => {
+  /** A school on plot 1 with Bia at its reception counter; the family's home (the first house) has `stock`. */
+  function school(stock: NonNullable<Neighborhood['buildings'][number]['stock']>) {
+    const built = neighborhoodAction(kitchen(), { type: 'construct', plot: 1, model: 'school' }), building = built.buildings.at(-1)!;
+    const counter = building.layout.pieces.find(p => p.kind === 'counter')!, at = { kind: 'interior' as const, building: building.id, room: counter.room };
+    const town = { ...built, buildings: built.buildings.map(b => b.id === 1 ? { ...b, stock } : b),
+      actors: built.actors.map(a => a.id === 'bia' ? { ...a, location: at, room: counter.room, seat: null } : a) };
+    return { town, sandwich: input(['pao', 'queijo'], 'tabua', { building: building.id, piece: counter.id }), id: building.id };
+  }
+  it('com a despensa de casa vazia, o balcão da escola não inventa pão nem queijo', () => {
+    const { town, sandwich } = school({});
+    expect(cook(town, sandwich).outcome).toEqual({ kind: 'none' });
+  });
+  it('o que a escola usa sai da despensa de casa, e a escola não ganha despensa', () => {
+    const { town, sandwich, id } = school({ pao: 2, queijo: 1 });
+    const result = cook(town, sandwich);
+    expect(result.outcome).toMatchObject({ kind: 'dish', recipe: 'sanduiche' });
+    expect(result.town.buildings.find(b => b.id === 1)!.stock).toEqual({ pao: 1 });
+    expect(Object.hasOwn(result.town.buildings.find(b => b.id === id)!, 'stock')).toBe(false);
+  });
+});
