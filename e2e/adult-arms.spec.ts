@@ -21,7 +21,7 @@ async function start(page: Page, size: typeof sizes[number], world: World) {
 function family(room: 'sala' | 'quarto', spots: Record<string, Partial<Actor>>): World {
   const world = initialWorld(), away = room === 'sala' ? 'quarto' : 'sala';
   world.room = room;
-  world.actors = world.actors.map((a, n) => spots[a.id] ? { ...a, room, y: 530, seat: null, ...spots[a.id] } as Actor : { ...a, room: away, x: 160 + n * 90, y: 530, seat: null });
+  world.actors = world.actors.map((a, n) => spots[a.id] ? { ...a, room, y: 530, seat: null, ...spots[a.id] } as Actor : { ...a, room: away, x: 160 + n * 80, y: 530, seat: null });
   return world;
 }
 const who = async (page: Page, id: string) => (await readTown(page)).actors.find(a => a.id === id)!;

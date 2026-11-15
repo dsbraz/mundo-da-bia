@@ -25,10 +25,11 @@ const actor = async (page: Page, id: string) => (await readTown(page)).actors.fi
 async function chooseLuna(page: Page) { await tray(page); await page.locator('#cast [data-actor=luna]').click(); await closeTray(page); }
 
 for (const autonomy of [true, false]) test(`com fome (pede) e um prato no cômodo, a Bia ${autonomy ? 'pega o prato e senta para comer' : 'fica quieta com o interruptor desligado'}`, async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(150_000);
   await seed(page, { dish: true, autonomy });
   await chooseLuna(page);
-  await playMinutes(page, 4);
+  // Lot 8E: hunger +1.5/min, `pede` at 6 min 40 s.
+  await playMinutes(page, 7);
   await page.clock.runFor(4000);
   const dishes = (await readTown(page)).items.filter(i => i.kind === 'prato');
   if (autonomy) {
@@ -42,10 +43,10 @@ for (const autonomy of [true, false]) test(`com fome (pede) e um prato no cômod
 });
 
 for (const autonomy of [true, false]) test(`com a Mimi triste, a Luna ${autonomy ? 'vai até ela e abraça' : 'não sai do sofá com o interruptor desligado'}`, async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   await seed(page, { autonomy });
-  // The cats turn sad at 14:00 (sleep from 12:30, then hunger and boredom: lot 3 tuning); the Luna cares on that tick.
-  await playMinutes(page, 13);
+  // The cats turn sad at 26:00 (boredom from 23:20, then the night's sleep: lot 8E); the Luna cares on that tick.
+  await playMinutes(page, 25.5);
   if (autonomy) await playUntilTrue(page, async () => (await actor(page, 'luna')).seat === null, 1.5); else await playMinutes(page, 1.5);
   await page.clock.runFor(1500);
   const luna = await actor(page, 'luna'), mimi = await actor(page, 'mimi');

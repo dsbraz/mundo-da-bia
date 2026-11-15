@@ -44,7 +44,7 @@ describe('turma tolerante no save (W3L-18, §4)', () => {
     const loaded = decodeNeighborhood(v3({ ...saved, actors: [...saved.actors].reverse() }))!;
     expect(loaded).toEqual(before);
     expect(loaded.actors.map(a => [a.id, a.kind])).toEqual(actorIds.map(id => [id, actorKinds[id]]));
-    expect(Object.values(actorKinds).filter(k => k === 'human')).toHaveLength(6);
+    expect(Object.values(actorKinds).filter(k => k === 'human')).toHaveLength(7);
   });
   it('um tipo trocado no save é corrigido pela tabela', () => {
     const saved = plain(town());

@@ -23,9 +23,9 @@ function manualClock() {
 }
 it('o tempo de Brincar chega ao live em passos de no máximo 60 s, com a fase do dia no começo de cada passo', () => {
   const clock = manualClock(), life = playTime(clock.port);
-  const steps = Array.from({ length: 21 }, () => life.take(clock.wait(30_000)));
+  const steps = Array.from({ length: 41 }, () => life.take(clock.wait(30_000)));
   expect(steps.every(s => s.elapsed === 30_000)).toBe(true);
-  expect([steps[0]!.phase, steps[19]!.phase, steps[20]!.phase]).toEqual(['manha', 'tarde', 'entardecer']);
+  expect([steps[0]!.phase, steps[39]!.phase, steps[40]!.phase]).toEqual(['manha', 'tarde', 'entardecer']);
   expect(life.take(clock.wait(3 * 24 * 3600_000)).elapsed).toBe(60_000);
   expect(life.take(clock.port.now()).elapsed).toBe(0);
 });
@@ -37,10 +37,10 @@ it('o tempo em Criar não conta: a vida pausa e volta de onde parou', () => {
   life.mode(false); life.mode(false);
   expect(life.take(clock.wait(30_000)).elapsed).toBe(0);
 });
-it('a fase mostrada (W3L-11) é a do tempo de Brincar já jogado: noite aos 12 min, e Criar não a avança', () => {
+it('a fase mostrada (W3L-11) é a do tempo de Brincar já jogado: noite aos 24 min, e Criar não a avança', () => {
   const clock = manualClock(), life = playTime(clock.port);
   expect(life.phase()).toBe('manha');
-  for (let n = 0; n < 24; n++) life.take(clock.wait(30_000));
+  for (let n = 0; n < 48; n++) life.take(clock.wait(30_000));
   expect(life.phase()).toBe('noite');
   life.mode(false); life.take(clock.wait(10 * 60_000));
   expect(life.phase()).toBe('noite');
@@ -55,9 +55,9 @@ it('uma aba escondida não acumula vida a cada tick: uma hora fora conta 60 s na
 });
 it('dormir a noite (W3L-15) leva à manhã seguinte: a fase volta a manha e o dia segue dali', () => {
   const clock = manualClock(), life = playTime(clock.port);
-  for (let n = 0; n < 24; n++) life.take(clock.wait(30_000));
+  for (let n = 0; n < 48; n++) life.take(clock.wait(30_000));
   life.morning();
-  // 2026-11-12 is a night of stars: the day lasts 19 min.
-  expect([life.phase(), life.played()]).toEqual(['manha', 19 * 60_000]);
+  // 2026-11-12 is a night of stars: the day lasts 38 min.
+  expect([life.phase(), life.played()]).toEqual(['manha', 38 * 60_000]);
   expect(life.take(clock.wait(30_000))).toEqual({ elapsed: 30_000, phase: 'manha' });
 });

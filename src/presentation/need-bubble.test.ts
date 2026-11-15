@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
 import type { ActorId, Needs, World } from '../domain/types';
-import { besideMenu, portraitNeed, thoughtIcon, thoughtOf, thoughtShown } from './need-bubble';
+import { besideMenu, portraitNeed, thoughtIcon, thoughtOf } from './need-bubble';
 
 const needs = (fome: number, sono = 0, tedio = 0): Needs => ({ fome, sono, tedio, alegria: 0 });
 const feeling = (world: World, patch: Partial<Record<ActorId, Needs>>): World =>
@@ -20,10 +20,6 @@ it('cada personagem pensa na sua necessidade mais alta; quem dorme ou está nout
   expect(thoughtOf(world, 'bia')).toEqual({ actor: 'bia', need: 'sono', band: 'precisa' });
   const away = { ...world, actors: world.actors.map(a => a.id === 'luna' ? { ...a, room: 'quarto' as const } : a.id === 'bia' ? { ...a, resting: true } : a) };
   expect(thoughtOf(away, 'bia')).toBeNull();
-});
-it('em pede a bolha fica 4 s e volta a cada 40 s; em precisa fica fixa', () => {
-  expect([0, 3999, 4000, 39_999, 40_000, 43_999, 44_000].map(t => thoughtShown('pede', 1000, 1000 + t))).toEqual([true, true, false, false, true, true, false]);
-  expect([0, 5000, 20_000].every(t => thoughtShown('precisa', 0, t))).toBe(true);
 });
 it('a bolha desenha um prato, um travesseiro ou uma bola, nunca texto', () => {
   expect(thoughtIcon('fome')).toBe('/art/needs.svg#food');

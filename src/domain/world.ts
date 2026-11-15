@@ -15,6 +15,7 @@ import { usePiece } from './use';
 import { refuse } from './missing';
 import { bedtime } from './bedtime';
 import { eatOne, runOut } from './larder';
+import { startReading } from './library';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -23,12 +24,14 @@ const start: readonly Pick<Actor, 'x' | 'y' | 'seat'>[] = [
   { x: 330, y: 540, seat: null }, { x: 740, y: 540, seat: null }, { x: 610, y: 540, seat: null },
   // The grown-ups (W3L-24) start in the bedroom, in front of the dresser and the bed, leaving the living room to the children.
   { x: 620, y: 530, seat: null }, { x: 420, y: 530, seat: null },
+  // Laura (lot 8B), the big sister, by the bedroom door.
+  { x: 220, y: 530, seat: null },
 ];
 export function initialWorld(): World {
   return {
     room: 'sala', show: false, layout: initialLayout(), home: { lamp: true, fridge: true, drawer: false },
     actors: actorIds.map((id, index) => ({
-      id, kind: actorKinds[id], room: isAdult(id) ? 'quarto' : 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol', 'outing', 'sol'] as const)[index]!,
+      id, kind: actorKinds[id], room: isAdult(id) ? 'quarto' : 'sala', look: (['sol', 'estrela', 'mar', 'jardim', 'sol', 'sol', 'sol', 'outing', 'sol', 'sol'] as const)[index]!,
       ...start[index]!, fed: false, resting: false,
     })),
     items: itemIds.map((id, index) => ({ id, room: 'sala', holder: null, spot: index < 2 ? 'fridge' : 'floor',
@@ -84,7 +87,7 @@ function actorAction(state: World, actor: Actor, action: Action): Transition {
 }
 
 export function transition(state: World, action: Action): Transition {
-  return action.type === 'name' ? nameActor(state, action.actor, action.name) : micDown(state, playTransition(state, action));
+  return action.type === 'name' ? nameActor(state, action.actor, action.name) : startReading(state, micDown(state, playTransition(state, action)));
 }
 type HouseWide = Extract<Action, { type: 'show' | 'summon' | 'bedtime' }>;
 const isHouseWide = (action: Action): action is HouseWide => ['show', 'summon', 'bedtime'].includes(action.type);

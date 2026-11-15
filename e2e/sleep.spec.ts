@@ -27,14 +27,14 @@ async function press(page: Page, name: string) {
 const night = (page: Page) => page.locator('canvas').getAttribute('data-night');
 
 for (const reduced of [false, true]) test(`à noite, deitar a Bia leva à manhã em até 3 s de cena e zera o sono de quem está deitado${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(240_000);
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   const world = initialWorld();
   // The Bia and the Léo in the bedroom, the Luna on the living-room sofa (she sleeps through too), the Rui standing (he does not).
   world.actors = world.actors.map(a => a.id === 'bia' ? { ...a, room: 'quarto', x: 400, y: 520 } : a.id === 'leo' ? { ...a, room: 'quarto', x: 250, y: 530 } : a);
   world.room = 'quarto';
   await seed(page, world);
-  await playMinutes(page, 12);
+  await playMinutes(page, 24);
   await page.clock.runFor(1500);
   expect(await night(page)).toMatch(/^noite:/);
   await press(page, 'Deitar');
@@ -53,7 +53,7 @@ for (const reduced of [false, true]) test(`à noite, deitar a Bia leva à manhã
   await expect(page.locator('canvas')).toHaveAttribute('data-reaction', 'bia:Bom dia! Já é de manhã.');
   const after = await sleep(page);
   expect([after.bia, after.luna]).toEqual(['0', '0']);
-  expect(Number(after.rui)).toBeGreaterThan(40);
+  expect(Number(after.rui)).toBeGreaterThan(20);
   const suffix = reduced ? '-reduced' : '';
   await page.screenshot({ path: `${shots}/sleep-morning-bed-1024${suffix}.png` });
   await page.setViewportSize({ width: 844, height: 390 }); await page.clock.runFor(300);

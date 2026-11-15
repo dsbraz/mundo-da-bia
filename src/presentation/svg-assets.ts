@@ -3,14 +3,14 @@ import { architectureKey, buildingFacadeKey, buildingFacadeSvg, roomArchitecture
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { roomTemplates } from '../domain/types';
 import { loadSvg } from './rendering';
-import { outfitLayer } from './outfit';
+import { armParts, outfitLayer, partKey } from './outfit';
 import { loadPieces } from './piece-assets';
 import { svgFragment } from './svg-source';
 import { dishBox, dishOf, dishParts, itemTexture, keepDishes, sheetPart } from './art-sheet';
 import type Phaser from 'phaser';
 import { actorIds, lookIds } from '../domain/types';
 import type { ActorId, LookId, World } from '../domain/types';
-import { actorSource, adultArtReady, isCat, keepAdult, lookSource, masculine, outfitOf } from './actor-paint';
+import { actorSource, adultArtReady, armLayer, backHair, isCat, keepAdult, lookSource, outfitOf } from './actor-paint';
 import { isAdult } from '../domain/family';
 import { faceParts } from './expression';
 import { loadGarden } from './plaza-garden';
@@ -33,12 +33,13 @@ function loadActor(scene: Phaser.Scene, id: ActorId, current: LookId) {
     return;
   }
   const source = actorSource(id);
-  humanLayers.forEach(part => loadSvg(scene, `${id}-${part}`, layer(source, part === 'hair-back' && masculine(id) ? 'hair-back-short' : part)));
+  humanLayers.forEach(part => loadSvg(scene, `${id}-${part}`, layer(source, part === 'hair-back' ? backHair(id) : part)));
   for (const part of ['mask-spiderman', 'cape-superman']) loadSvg(scene, `${id}-${part}`, layer(source, part));
   loadSvg(scene, `${id}-hair`, layer(source, `hair-${id}`));
   [current].forEach(look => {
     const outfit = lookSource(look, source);
     loadSvg(scene, `${id}-${look}`, layer(outfit, outfitOf(id, look)));
+    if (isAdult(id)) armParts.forEach(part => loadSvg(scene, partKey({ id, look }, part), layer(outfit, armLayer(id, look, part))));
   });
 }
 /** Whether the grown-ups' sheet is read (kept for the DOM too). */

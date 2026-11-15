@@ -30,13 +30,13 @@ async function flick(page: Page) {
 }
 
 for (const reduced of [false, true]) test(`o Rui com a bola (a favorita): quando ela para, o rosto dele fica feliz${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(180_000);
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1280, height: 800 });
   await ruiOnStreet(page);
   await tray(page); await page.locator('#cast [data-actor=rui]').click(); await closeTray(page);
-  // Hunger in `pede` after 4 min: no longer the happy face of the morning.
-  await playMinutes(page, 4);
+  // Hunger in `pede` after 11 min (his ×0.6 of +1.5/min, lot 8E): no longer the happy face of the morning.
+  await playMinutes(page, 11.5);
   await expect.poll(() => face(page, 'rui')).not.toBe('happy');
   await flick(page);
   for (let t = 0; t < 6000 && await face(page, 'rui') !== 'happy'; t += 100) await page.clock.runFor(100);

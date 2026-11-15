@@ -29,6 +29,14 @@ it('espera 500ms, mostra prévia e só transfere uma vez ao soltar um objeto', (
   vi.advanceTimersByTime(1); expect(preview).toHaveBeenCalledWith(expect.objectContaining({ type: 'transport', item: '1:ursinho' }));
   gesture.end(1, { x: 550, y: 335 }); gesture.end(1, { x: 550, y: 335 }); expect(dispatch).toHaveBeenCalledTimes(1);
 });
+it('lote 8A: um objeto levado à beirada do chão não usa a espera da porta; a personagem com os pés ali vai para o quarto', () => {
+  const { gesture, dispatch, preview } = setup();
+  gesture.start(1, { x: 350, y: 382 }); gesture.update(1, { x: 1170, y: 500 });
+  vi.advanceTimersByTime(600); expect(preview).not.toHaveBeenCalled();
+  gesture.cancel(); expect(dispatch).not.toHaveBeenCalled();
+  gesture.start(2, { x: 520, y: 440 }); gesture.update(2, { x: 1170, y: 440 }); gesture.end(2, { x: 1170, y: 440 });
+  expect(dispatch).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ type: 'transport', actor: 'bia', location: { kind: 'interior', building: 1, room: 'quarto' }, point: { x: 150, y: 500 } }));
+});
 it('soltar a personagem com os pés na porta atravessa na hora, sem espera, e uma vez só', () => {
   const { gesture, dispatch, preview, base } = setup(), glow = vi.fn(), outcome = vi.fn();
   const town = migrateNeighborhood(initialAlbum(initialWorld())), world = localWorld(town);
@@ -97,12 +105,12 @@ it('um equipamento visível diante da porta recebe o clique em Brincar', () => {
   expect(base.start).toHaveBeenCalledExactlyOnceWith(1, point);
   expect(base.end).toHaveBeenCalledExactlyOnceWith(1, point); expect(dispatch).not.toHaveBeenCalled();
 });
-it('a porta do fim da parede, desenhada diante do que fica atrás dela, recebe o toque; o que está na frente dela, não', () => {
+it('lote 8A: a beirada do chão que leva ao quarto recebe o toque; uma peça desenhada na frente dela, não', () => {
   const { gesture, world, base, dispatch } = setup(), enter = vi.fn(() => false);
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
   const door = neighborhoodGesture(base, { town: () => town, world: () => world, building: () => false, dispatch, preview: vi.fn(), progress: vi.fn(), plot: vi.fn(), enter });
   Object.assign(world, { occludingDepth: () => 400 });
-  const point = { x: 1132, y: 300 }; door.start(1, point); door.end(1, point);
+  const point = { x: 1170, y: 500 }; door.start(1, point); door.end(1, point);
   expect(base.start).not.toHaveBeenCalled(); expect(enter).toHaveBeenCalledExactlyOnceWith({ kind: 'interior', building: 1, room: 'quarto' });
   Object.assign(world, { occludingDepth: () => 410 });
   gesture.start(2, point); gesture.end(2, point);

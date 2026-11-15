@@ -21,7 +21,7 @@ import { structureControls } from '../presentation/structure-controls';
 import { streetWidth } from '../domain/neighborhood-geometry';
 import { walking } from '../presentation/walking';
 import { goTo } from './go';
-import { placeChange } from './place-change';
+import { placeChange, throughStep } from './place-change';
 import { doorFront } from '../presentation/neighborhood-doors';
 import { doorWalk } from './door-walk';
 import { uiText } from '../content/ui-text';
@@ -48,6 +48,7 @@ import type { Destination, Suggestion } from '../domain/routine';
 import { firstTouch } from '../presentation/first-touch';
 import { createControls, positionContext } from '../presentation/controls';
 import { PlayScene } from '../presentation/scene';
+import { speaking } from '../presentation/feedback';
 import '../presentation/style.css';
 import '../presentation/immersive.css';
 import '../presentation/home-menu.css';
@@ -62,6 +63,8 @@ import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { marketPlay } from './market';
 import { schoolPlay } from './school';
+import { libraryPlay } from './library';
+import { readers } from '../domain/library';
 import { staffPlay } from './staff';
 import { routineWiring } from './routine';
 import { suggestionIcon } from '../presentation/routine-bubble';
@@ -126,7 +129,7 @@ const games = childGames(root, { world: () => state, selected: () => selected, p
 cancelGame = games.cancel;
 const place = placeChange({ root, town: () => town, state: () => state, selected: () => selected });
 const go = goTo({ town: () => town, selected: () => selected, building: () => building, townDispatch });
-const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (shopping.blocks(action)) return; if (action.type === 'transport') place.next({ kind: 'door', at: place.screen(doorFront(town, action.location)) }); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
+const enterDoor = doorWalk({ town: () => town, selected: () => selected, building: () => building, walker, dispatch: action => { if (shopping.blocks(action)) return; if (action.type === 'transport') place.next(throughStep(town, action.location, place.screen(doorFront(town, action.location)), (room, from, ms) => scene.finishSlide(room, from, ms))); townDispatch(action); }, enterDoor: (id, where, done) => scene.outdoor.enterDoor(id, where, done) });
 // A kicked or thrown ball came to rest: whoever is selected played ball (W3L-13).
 scene.ballRest = (item, point) => { dispatch({ type: 'place', item, point }, false); townActs.enjoy(selected, 'bola'); };
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback, enjoy: id => townActs.enjoy(id, 'regar') });
@@ -174,12 +177,13 @@ const townActs = townActions({ town: () => town, selected: () => selected, camer
   quiet: next => { town = next; saved = saveNeighborhood(town); scene.neighborhood(town); scene.outdoor.garden.redraw(); },
   feel: next => { town = next; state = feel(state, town); scene.feel(state); },
   interrupt: () => { scene.balls.settle(); cancelGame(); closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); },
-  pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, busy: () => [games.player()].filter(id => id !== null), structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
+  pause: () => { cancelGame(); walker.cancel(); cancelInput(); }, busy: () => [games.player(), ...readers(state)].filter(id => id !== null), structure: { open: id => structure.open(id), refresh: () => structure.refresh() } });
 function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)) townActs.dispatch(action); }
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback, perform: action => play.perform(action), scene,
   openMap: place => openMap(place, 'mercado'), hint: { seen: () => loadCheckoutHintSeen(), done: () => { saveCheckoutHintSeen(); } } });
 const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback });
+const books = libraryPlay({ town: () => town, selected: () => selected, apply: next => townActs.apply(next), feedback });
 const staffing = staffPlay({ state: () => state, scene, school: schooling, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
 /** Ticks counted on #app only under automation (`navigator.webdriver`), for the E2E clock. */
@@ -196,7 +200,7 @@ const daylight = () => { scene.daylight(life.phase()); bedtime(life.phase(), tow
 const nights = nightSleep({ root, town: () => town, state: () => state, selected: () => selected, phase: () => life.phase(), morning: () => { life.morning(); daylight(); },
   slept: id => townActs.sleepThrough(id), greet: () => { scene.poke(selected, 'cheer', uiText.goodMorning); announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
 routineWiring({ root, town: () => town, selected: () => selected, playing: () => !building, phase: () => life.phase(), played: () => life.played(), head: id => scene.head(id),
-  openMap });
+  speaking: id => speaking(scene, id), openMap });
 let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); daylight(); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
@@ -210,7 +214,7 @@ function dropPiece(action: EditAction) {
 let stale = false;
 const { refresh: repaint, frameScene, renderControls, ui: repaintControls } = sceneRefresh({ root, scene, view: () => view, townActs: () => townActs, town: () => town, state: () => state, selected: () => selected, building: () => building, constructing: () => constructing,
   piece: () => selectedPiece, saved: () => saved, edits: () => edits, album: albumView, camera: () => camera, setCamera: x => { camera = x; }, controls, mode: shell.mode, editor,
-  panels: () => { bedtime(life.phase(), town.location.kind === 'interior'); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); } });
+  panels: () => { bedtime(life.phase(), town.location.kind === 'interior'); rooms(state); accessibleScene(state, selected, building); neighborhood.refresh(building); navigationBar(); illustratedChoices(root); outside(town, selected, camera, building); cooking.refresh(); garden.refresh(); shopping.refresh(); schooling.refresh(); } });
 const showTime = showMoment((ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); }, () => { state = endShow(state); persist(); scene.endShow(state); });
 function refresh(then?: () => void) { stale = false; showTime(state.show); place.refresh(repaint, then, repaintControls); }
 /** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
@@ -219,8 +223,8 @@ function walksFirst(action: Action, interrupt: boolean): boolean {
   if (play.sitToEat(action)) return true;
   cancelGame(); walker.cancel(); return false;
 }
-/** The market and the school take some taps over (a shelf, the checkout, the fridge with a bag, a board). */
-const takenOver = (action: Action) => shopping.intercept(action) || schooling.intercept(action);
+/** The market, the school and the bookcases take some taps over (a shelf, the checkout, the fridge with a bag, a board, a bookcase). */
+const takenOver = (action: Action) => shopping.intercept(action) || schooling.intercept(action) || books.intercept(action);
 function dispatch(action: Action, interrupt = true) {
   if (walksFirst(action, interrupt) || takenOver(action)) return;
   if ('actor' in action) root.classList.add('actor-chosen');

@@ -9,6 +9,7 @@ export const actors: Record<ActorId, { name: string; skin: number; hair: number 
   pipoca: { name: 'Pipoca', skin: 0xfff6dc, hair: 0xb09d85 },
   daniel: { name: 'Daniel', skin: 0xe6b48e, hair: 0x4a3a33 },
   fabiana: { name: 'Fabiana', skin: 0xf1cdb0, hair: 0x7a4a2e },
+  laura: { name: 'Laura', skin: 0xf3d5bf, hair: 0xe3bd5e },
 };
 export const looks: Record<LookId, { name: string; color: number }> = {
   nurse: { name: 'Enfermagem', color: 0x76aaa6 }, police: { name: 'Polícia', color: 0x687f9e },
@@ -42,5 +43,5 @@ export const items: Record<ItemKind, { name: string }> = {
   lanche: { name: 'Lanche' }, peixe: { name: 'Comidinha de gato' },
   microfone: { name: 'Microfone' }, ursinho: { name: 'Ursinho' },
   prato: { name: 'Prato' }, estetoscopio: { name: 'Estetoscópio' }, curativo: { name: 'Curativo' }, regador: { name: 'Regador' },
-  lanterna: { name: 'Lanterna' }, colher: { name: 'Colher de pau' }, cesta: { name: 'Cesta' }, sacola: { name: 'Sacola' },
+  lanterna: { name: 'Lanterna' }, colher: { name: 'Colher de pau' }, cesta: { name: 'Cesta' }, sacola: { name: 'Sacola' }, livro: { name: 'Livro' },
 };

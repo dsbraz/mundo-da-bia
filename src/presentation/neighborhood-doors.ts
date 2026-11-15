@@ -4,10 +4,10 @@ import type { Location, Neighborhood } from '../domain/neighborhood-types';
 import type { Point } from '../domain/types';
 import { sameLocation } from '../domain/location';
 import { streetArrival } from './street-opening';
-import { passageDepth, passages, stairsDepth, type PassageKind, type Rect } from './room-passages';
-/** A way out of the place shown: a facade door, the "Rua" door, a side doorway or stairs. `box`: drawn and touched there;
+import { edges, passageDepth, passages, stairsDepth, type PassageKind, type Rect } from './room-passages';
+/** A way out of the place shown: a facade door, the "Rua" door, the floor's edge toward a side room, or stairs. `box`: drawn and touched there;
  *  `front`: where one stands to go through it; `sill`: where one vanishes into it and comes out of it. */
-export interface Door { location: Location; name: string; point: Point; box: Rect; kind: 'door' | PassageKind; front: Point; sill: Point }
+export interface Door { location: Location; name: string; point: Point; box: Rect; kind: 'door' | 'edge' | PassageKind; front: Point; sill: Point }
 const interiorDoor = doorway.interior.x + doorway.interior.width / 2, facadeDoor = doorway.facade.x + doorway.facade.width / 2;
 const center = (box: Rect): Point => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
 export function doors(town: Neighborhood): Door[] {
@@ -18,10 +18,10 @@ export function doors(town: Neighborhood): Door[] {
   });
   const building = town.buildings.find(b => b.id === location.building)!;
   const street: Door[] = location.room === building.entry ? [{ location: { kind: 'street' }, name: 'Rua', point: center(doorway.interior), box: doorway.interior, kind: 'door', front: { x: interiorDoor, y: doorway.interior.y + doorway.interior.height + 22 }, sill: { x: interiorDoor, y: doorway.interior.y + doorway.interior.height + 2 } }] : [];
-  return street.concat(passages(building.layout, location.room).map(p => ({ location: { ...location, room: p.room }, name: building.layout.rooms[p.room]!.name, point: center(p.box), box: p.box, kind: p.kind, front: p.front, sill: p.sill })));
+  return street.concat([...edges(building.layout, location.room), ...passages(building.layout, location.room)].map(p => ({ location: { ...location, room: p.room }, name: building.layout.rooms[p.room]!.name, point: center(p.box), box: p.box, kind: p.kind, front: p.front, sill: p.sill })));
 }
 /** The door of the place `town` shows that leads to `to` (on the street, the facade of `to`'s building, whichever its room). */
-const doorTo = (town: Neighborhood, to: Location) => doors(town).find(d => town.location.kind === 'street' ? d.location.kind === 'interior' && to.kind === 'interior' && d.location.building === to.building : sameLocation(d.location, to));
+export const doorTo = (town: Neighborhood, to: Location): Door | undefined => doors(town).find(d => town.location.kind === 'street' ? d.location.kind === 'interior' && to.kind === 'interior' && d.location.building === to.building : sameLocation(d.location, to));
 /** Whoever enters a place comes out of the door that leads back where they were: the "Rua" door from the street, the matching doorway
  *  or stairs from another room. Without one (the Map), a house opens by its "Rua" door and another room by its left side. */
 export function destinationPoint(town: Neighborhood, destination: Location): Point {

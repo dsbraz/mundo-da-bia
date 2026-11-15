@@ -4,7 +4,7 @@ import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import { readTown, ready, tap } from './helpers';
-import { playMinutes } from './session';
+import { playMinutes, playUntilTrue } from './session';
 
 // Lot 6B: when the thought bubble would sit under the open action ring, it stands beside the head of who thinks it, its tail toward it.
 const sizes = [{ width: 1024, height: 768 }, { width: 1280, height: 800 }];
@@ -20,16 +20,20 @@ const thought = (page: Page) => page.locator('.missing-bubble.thought');
 for (const size of sizes) test(`ao lado do anel de ações, a cauda da bolha aponta para a cabeça da Bia, a ${size.width}`, async ({ page }) => {
   test.setTimeout(180_000);
   await seed(page, size);
-  // 13 min 30 s without eating: hunger is `precisa` (13 min 20 s) and her thought stays up (needs are never saved, so they are played).
-  await playMinutes(page, 13.5);
+  // Léo's hunger takes the room's first turn (about 5 min 30 s, after however long the page took to open), and asks are 8 min apart
+  // (lot 8E): she asks from 6 min 40 s, so her thought's turn is the next one. Needs are never saved, so they are played.
+  await playUntilTrue(page, async () => { await page.clock.runFor(100); return await page.locator('.missing-bubble.thought[data-actor=leo]').count() > 0; }, 8);
+  // Half a minute before her turn.
+  await playMinutes(page, 7.5);
   // Choosing the Bia opens her ring above her head, where her thought would be: the thought stands beside it.
   const bia = (await readTown(page)).actors.find(a => a.id === 'bia')!;
   await tap(page, bia.x, bia.y - 120);
-  // While she says her line, the thought waits: the two never cover each other; then it comes back.
+  // While she says her line, the thought waits: the two never cover each other; then, on its turn, it comes.
   await page.clock.runFor(300);
   await expect(page.locator('canvas')).toHaveAttribute('data-said', /./);
   await expect(thought(page)).toHaveCount(0);
   await page.clock.runFor(5000);
+  await playMinutes(page, .5); await page.clock.runFor(100);
   await expect(thought(page)).toHaveAttribute('data-actor', 'bia');
   const geometry = await page.evaluate(() => {
     const bubble = document.querySelector<HTMLElement>('.missing-bubble.thought')!, box = bubble.getBoundingClientRect(), ring = document.querySelector('#actor-context')!.getBoundingClientRect();

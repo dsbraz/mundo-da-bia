@@ -1,7 +1,7 @@
 import type { ActorId, PresentationEvent } from '../domain/types';
 
 /** The events a character speaks about (W3-02). `cooked`, `ate`, `harvested`, `served`, `letter` and `hint` come with the wave 3 systems. */
-export const spokenEvents = ['named', 'dressed', 'picked', 'dropped', 'fed', 'rested', 'cooked', 'ate', 'harvested', 'served', 'letter', 'hint'] as const;
+export const spokenEvents = ['named', 'dressed', 'picked', 'dropped', 'fed', 'rested', 'cooked', 'ate', 'harvested', 'served', 'letter', 'hint', 'read'] as const;
 export type SpokenEvent = typeof spokenEvents[number];
 type Pools = Record<SpokenEvent, string[]>;
 
@@ -19,6 +19,7 @@ const human: Pools = {
   served: ['{nome} serviu! Bom apetite!', 'Pedido entregue por {nome}!', '{nome} atendeu com carinho!'],
   letter: ['{nome} achou uma carta!', 'Carta nova para {nome}!', 'Quem escreveu, {nome}? Vamos ver!'],
   hint: ['{nome} acha que falta algo.', 'Hmm… {nome} teve um palpite!', 'E se trocar, {nome}?'],
+  read: ['Era uma vez… {nome} lê.', '{nome} virou a página!', 'Que história boa, {nome}!'],
 };
 const cat: Pools = {
   named: ['Miau! ({nome} gostou do nome)', 'Miau? ({nome} virou a orelha)', 'Prrr… ({nome} aprovou o nome)'],
@@ -33,6 +34,7 @@ const cat: Pools = {
   served: ['Miau! ({nome} trouxe o prato)', 'Prrr… ({nome} serviu com estilo)', 'Miau? ({nome} esperou o carinho)'],
   letter: ['Miau! ({nome} sentou na carta)', 'Prrr… ({nome} trouxe o correio)', 'Miau? ({nome} cheirou o envelope)'],
   hint: ['Miau? ({nome} olhou a tigela)', 'Prrr… ({nome} tem uma ideia)', '({nome} apontou com a pata)'],
+  read: ['Miau? ({nome} sentou no livro)', 'Prrr… ({nome} cheirou a página)', '({nome} empurrou o livro)'],
 };
 /** Each character's own lines, over the shared ones. The Bia (family, 11/2026): curious, clever, independent and affectionate, never
  *  babyish; batata frita and pastel are her favourites. */
@@ -78,6 +80,7 @@ const loved: Record<ActorId, string[]> = {
   pipoca: ['Miau! ({nome} ama ovinho)', 'Prrr… ({nome} ronrona de alegria)', 'Rrrron… ({nome} feliz da vida)'],
   daniel: ['Misto-quente! {nome} amou!', 'Hum! {nome} pediu bis!', '{nome} sorriu: que delícia!'],
   fabiana: ['Sopa de legumes! {nome} amou!', 'Quentinha! {nome} sorriu!', '{nome} adorou a sopinha!'],
+  laura: ['Vitamina de morango! {nome} amou!', 'Geladinha! {nome} pediu bis!', '{nome} sorriu: que delícia!'],
 };
 /** A cat offered a dish it does not eat sniffs it (§3.2): never disgust, it just prefers fish. Cats only. */
 const sniffed = ['Miau? ({nome}: prefiro peixinho)', 'Sniff… ({nome} quer peixinho)', 'Miau! ({nome} sonha com peixinho)'];

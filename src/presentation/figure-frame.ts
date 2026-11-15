@@ -2,12 +2,13 @@ import type Phaser from 'phaser';
 import type { Actor, ActorId, World } from '../domain/types';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { animateActor, gazePose, walkPose } from './art';
-import { contextScale, handAnchor, visualContext } from './pose';
+import { contextScale, handAnchor, raisedHand, visualContext } from './pose';
 import { glanceDirection, lifePose } from './life-pose';
 import { phaseOf, yawning } from './idle-life';
 import { expressionOf, type Expression, type faces } from './expression';
 import { plazaSeat, posed as posedIn, sitting } from './posture';
 import type { weightFigures } from './weight-figures';
+import { followBook } from './book-art';
 
 type Container = Phaser.GameObjects.Container;
 /** What one frame of a figure needs from the scene. */
@@ -38,9 +39,15 @@ export function animateFigure(ctx: FrameContext, figure: Container, actor: Actor
   ctx.life.mark([...(face.blinked ? ['blink'] : []), ...(face.glance ? ['glance'] : []), ...lifePose(pose, posed, time, reduced, !walking && !seated)]);
   moveLayers(ctx, figure, actor, walking, reduced);
   animateSwing(ctx, pose, actor);
-  const hand = handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
-  ctx.world.items.filter(i => i.holder === actor.id).forEach(i => ctx.objects.find(o => o.name === i.id)?.setPosition(p.x, p.y).setRotation(pose.rotation));
+  hold(ctx, pose, actor, posed);
   return face.expression;
+}
+/** What `actor` holds follows its hand (a grown-up's raised hand when its arms are up). */
+function hold(ctx: FrameContext, pose: Container, actor: Actor, posed: Actor) {
+  const arms = pose.getByName<Phaser.GameObjects.Image>('hands'), own = arms?.getData('arms') as { up: string } | undefined;
+  const up = !!own && arms!.texture.key === own.up;
+  const hand = up ? raisedHand(posed) : handAnchor(posed), p = pose.getWorldTransformMatrix().transformPoint(hand.x, hand.y);
+  ctx.world.items.filter(i => i.holder === actor.id).forEach(i => { const o = ctx.objects.find(x => x.name === i.id); if (o) followBook(o.setPosition(p.x, p.y).setRotation(pose.rotation)); });
 }
 /** Carried, just let go, walking or trotting: layers it on the pose and lists it in `ctx.gaits`. */
 function moveLayers(ctx: FrameContext, figure: Container, actor: Actor, walking: boolean, reduced: boolean) {

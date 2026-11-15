@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handUp, lessonMs, lessonProgress } from './lesson';
+import { handUp, lessonMs } from './lesson';
 import { fridgeDrawings } from './school-art';
 import { schoolBells } from './day-night';
 import { suggestionIcon } from './routine-bubble';
@@ -10,21 +10,17 @@ import { migrateNeighborhood, neighborhoodAction } from '../domain/neighborhood'
 import type { World } from '../domain/types';
 
 describe('a aula no quadro (W3L-26)', () => {
-  it('o desenho aparece da esquerda para a direita em 20 s; com movimento reduzido já pronto', () => {
-    expect(lessonProgress(1000, 1000, false)).toBe(0);
-    expect(lessonProgress(1000, 1000 + lessonMs / 2, false)).toBe(.5);
-    expect(lessonProgress(1000, 1000 + lessonMs * 2, false)).toBe(1);
-    expect(lessonProgress(1000, 500, false)).toBe(0);
-    expect(lessonProgress(1000, 1000, true)).toBe(1);
-  });
-  it('as mãos levantam alternadas a cada 1,2 s; com movimento reduzido todas ficam levantadas', () => {
-    expect([handUp(0, 0, false), handUp(1, 0, false)]).toEqual([true, false]);
-    expect([handUp(0, 1200, false), handUp(1, 1200, false)]).toEqual([false, true]);
-    expect([handUp(0, 1200, true), handUp(1, 0, true)]).toEqual([true, true]);
+  it('entre os trechos de copiar no caderno, uma criança por vez levanta a mão; com movimento reduzido ninguém se mexe', () => {
+    expect([0, 1, 2].map(n => handUp(n, 0, false))).toEqual([false, false, false]);
+    expect([0, 1, 2].map(n => handUp(n, 6000, false))).toEqual([true, false, false]);
+    expect([0, 1, 2].map(n => handUp(n, 7200, false))).toEqual([false, true, false]);
+    expect([0, 1].map(n => handUp(n, 6000, true))).toEqual([false, false]);
+    expect(lessonMs).toBe(20_000);
   });
   it('a porta da geladeira de casa mostra os 4 desenhos mais novos; sem geladeira, ou no mercado, nenhum', () => {
     const home = initialWorld();
     expect(fridgeDrawings(home, ['sol', 'gato', 'casa', 'flor', 'lua'])).toEqual(['gato', 'casa', 'flor', 'lua']);
+    expect(fridgeDrawings(home, ['sol', 'palavra-gato', 'conta-2-3'])).toEqual(['sol', 'palavra-gato', 'conta-2-3']);
     const bare: World = { ...home, layout: { ...home.layout, pieces: home.layout.pieces.filter(p => p.kind !== 'fridge') } };
     expect(fridgeDrawings(bare, ['sol'])).toEqual([]);
   });

@@ -3,6 +3,7 @@ import type { NeighborhoodItem } from '../domain/neighborhood-types';
 import type { RecipeId } from '../domain/progress';
 import { itemKind } from '../domain/item-kind';
 import { palette } from './palette';
+import { bookTexture } from './book-art';
 
 /** The new art lives in `public/art/*.svg` sheets: each drawing is a `<g id>` in its own box, cut out here (never bundled with ?raw). */
 export interface Box { width: number; height: number }
@@ -32,10 +33,11 @@ export function dishOf(item: Item): { recipe: RecipeId; fancy: boolean } | null 
   return itemKind(item) === 'prato' && recipe ? { recipe, fancy: fancy === true } : null;
 }
 export const dishParts = (recipe: RecipeId, fancy: boolean) => fancy ? [recipe, 'garnish'] : [recipe];
-/** The texture an object is drawn with: its kind, or for a dish its recipe (and the garnish when fancy). */
+/** The texture an object is drawn with: its kind, for a dish its recipe (and the garnish when fancy), for a book its cover. */
 export function itemTexture(item: Item): string {
   const dish = dishOf(item);
   if (dish) return `dish-${dish.recipe}${dish.fancy ? '-fancy' : ''}`;
+  if (itemKind(item) === 'livro') return bookTexture(item);
   return itemKind(item) === 'sacola' && (item as Partial<NeighborhoodItem>).paid ? 'sacola-paga' : itemKind(item);
 }
 let dishSource: string | null = null;

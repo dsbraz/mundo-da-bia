@@ -29,13 +29,13 @@ export function facadeSvg(model: BuildingModel, floors = ['apartment', 'hospital
 
 const outdoors: RoomTemplate[] = ['garden', 'playground'];
 /** A room with stairs up keeps its back wall's left end for the stair hall: the wall's art (windows, curtains, shelves) is drawn in
- *  the rest of it, narrowed into x ≥ 200 (`hallShift`), so the stairs never stand over a window. */
+ *  the rest of it, narrowed into x ≥ 250 (`hallShift`), so the stairwell column never stands over a window. */
 export function roomArchitecture(template: RoomTemplate, stairs = false): string {
   const content = outdoors.includes(template) ? garden() : interior(template, stairs);
   return wrap(content, 1000, 600);
 }
 /** Where a point of the wall's art (art units) lands in a room with stairs. */
-export const hallShift = (x: number) => 200 + x * .8;
+export const hallShift = (x: number) => 250 + x * .75;
 /** The texture key of the room's architecture: the stair hall variant when the room has stairs up. */
 export function architectureKey(state: World) {
   const template = state.layout.rooms[state.room]!.template;
@@ -57,7 +57,7 @@ function interior(template: RoomTemplate, stairs: boolean) {
   };
   const wall = institutionInterior(template) ?? art[template] ?? '';
   // The window's sunlight on the floor follows the window.
-  const hall = (art: string) => stairs ? `<g transform="translate(200 0) scale(.8 1)">${art}</g>` : art;
+  const hall = (art: string) => stairs ? `<g transform="translate(250 0) scale(.75 1)">${art}</g>` : art;
   return ceiling + hall(wall) + `<rect y="380" width="1000" height="12" fill="#f9f1e2" stroke="#b7aa97" stroke-width="1.5"/>` + hall(`<path d="M100 390h160l165 175H205Z" fill="#fff7d5" opacity=".12"/>`);
 }
 /** The market hall (W3L-21): green-and-cream tiles, a striped awning along the ceiling, a wide window and a hanging basket sign. */

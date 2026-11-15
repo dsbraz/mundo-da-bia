@@ -17,9 +17,9 @@ it('na casa nova: a cama de um, o sofá de dois e a caminha de um gato; quem sob
   expect(who(next, 'luna')).toMatchObject({ room: 'sala', seat: '2.1', resting: true });
   expect(who(next, 'leo')).toMatchObject({ room: 'sala', seat: '2.0', resting: true });
   // No place left for Rui and the grown-ups: they stay up and ask for a bed, the one in view (Rui) last.
-  for (const id of ['rui', 'daniel', 'fabiana'] as const) expect(who(next, id)).toEqual(who(world, id));
+  for (const id of ['rui', 'daniel', 'fabiana', 'laura'] as const) expect(who(next, id)).toEqual(who(world, id));
   const missing = result.events.filter(e => e.type === 'missing');
-  expect(missing.map(e => e.actor).sort()).toEqual(['daniel', 'fabiana', 'rui']);
+  expect(missing.map(e => e.actor).sort()).toEqual(['daniel', 'fabiana', 'laura', 'rui']);
   expect(missing.every(e => e.need === 'bed' && e.want === 'bed')).toBe(true);
   expect(result.events.at(-1)).toMatchObject({ type: 'missing', actor: 'rui' });
   // The cats: one in the cat bed (in the bedroom), the others on the living-room rug; nobody of them on a sofa or a bed.

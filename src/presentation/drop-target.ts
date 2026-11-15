@@ -4,7 +4,7 @@ import { occupant, seatPiece, seatPoint } from '../domain/seats';
 import type { Actor, ActorId, Piece, Point, World } from '../domain/types';
 import { visualPiecePoint } from './furniture-scale';
 import { seatAt } from './furniture-targets';
-import { glassOf } from './mirror-reflection';
+import { glassOf } from './mirror-glass';
 import { pieceDepth } from './piece-art';
 
 type Rect = { x: number; y: number; width: number; height: number };

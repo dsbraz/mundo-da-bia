@@ -6,6 +6,7 @@ import { plotStart } from '../domain/neighborhood-geometry';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import type { RoomId } from '../domain/types';
 import { destinationPoint, doorAt, doorBox, doorDropAt, doorFront, doorStep, doors } from './neighborhood-doors';
+import { passages } from '../domain/passages';
 
 const home = (): Neighborhood => migrateNeighborhood(initialAlbum(initialWorld()));
 const street = (town: Neighborhood): Neighborhood => neighborhoodAction(town, { type: 'visit', location: { kind: 'street' } });
@@ -48,35 +49,41 @@ describe('passagens entre cômodos', () => {
   const at = (town: Neighborhood, room: RoomId): Neighborhood => neighborhoodAction(town, { type: 'visit', location: { kind: 'interior', building: town.buildings[0]!.id, room } });
   const upstairs = (): Neighborhood => neighborhoodAction(sala(), { type: 'add-floor', building: sala().buildings[0]!.id });
   const where = (town: Neighborhood, room: RoomId) => ({ kind: 'interior' as const, building: town.buildings[0]!.id, room });
-  it('a sala tem a porta da rua e uma porta no fim da parede, à direita, para o quarto; o quarto, uma à esquerda de volta', () => {
+  it('lote 8A: sem portas entre cômodos; a sala leva ao quarto pela beirada direita do chão, o quarto volta pela esquerda', () => {
     const town = sala(), quarto = at(town, 'quarto');
-    expect(doors(town).map(d => [d.name, d.kind])).toEqual([['Rua', 'door'], ['Quarto dos sonhos', 'passage']]);
-    expect(doors(town)[1]!.box).toEqual({ x: 1080, y: 182, width: 104, height: 228 });
-    expect(doors(quarto).map(d => [d.location, d.box.x])).toEqual([[where(town, 'sala'), 16]]);
-    expect(doorAt(town, { x: 1130, y: 300 })?.location).toEqual(where(town, 'quarto'));
-    expect(doorAt(town, { x: 1070, y: 300 })).toBeUndefined();
-    expect(doorDropAt(town, { x: 1130, y: 430 })?.location).toEqual(where(town, 'quarto'));
-    expect(doorBox(town, doors(town)[1]!)).toEqual({ x: 1080, y: 182, width: 104, height: 228, depth: 406 });
+    expect(doors(town).map(d => [d.name, d.kind])).toEqual([['Rua', 'door'], ['Quarto dos sonhos', 'edge']]);
+    expect(doors(town)[1]!.box).toEqual({ x: 1136, y: 400, width: 64, height: 200 });
+    expect(doors(quarto).map(d => [d.location, d.box.x])).toEqual([[where(town, 'sala'), 0]]);
+    // Only the floor's edge: the wall above it and the floor before it are no way through.
+    expect(doorDropAt(town, { x: 1170, y: 520 })?.location).toEqual(where(town, 'quarto'));
+    expect(doorDropAt(town, { x: 1130, y: 520 })).toBeUndefined();
+    expect(doorAt(town, { x: 1170, y: 300 })).toBeUndefined();
+    expect(doorDropAt(quarto, { x: 30, y: 480 })?.location).toEqual(where(town, 'sala'));
   });
-  it('anda até a passagem, sai por ela e chega diante da passagem correspondente do outro cômodo', () => {
+  it('lote 8A: sai andando pela beirada, para fora do cômodo, e entra andando pela beirada oposta do vizinho', () => {
     const town = sala(), quarto = at(town, 'quarto');
-    expect(doorFront(town, where(town, 'quarto'))).toEqual({ x: 1132, y: 432 });
-    expect(destinationPoint(town, where(town, 'quarto'))).toEqual({ x: 68, y: 480 });
-    expect(destinationPoint(quarto, where(town, 'sala'))).toEqual({ x: 1132, y: 480 });
-    expect(doorStep(quarto, where(town, 'sala'))).toEqual({ x: 68, y: 412 });
-    // Back in the living room from the bedroom: out of the right doorway, not the street door.
-    expect(doorStep(town, where(town, 'quarto'))).toEqual({ x: 1132, y: 412 });
+    expect(doorFront(town, where(town, 'quarto'))).toEqual({ x: 1050, y: 500 });
+    expect(doors(town)[1]!.sill).toEqual({ x: 1270, y: 500 });
+    expect(destinationPoint(town, where(town, 'quarto'))).toEqual({ x: 150, y: 500 });
+    expect(destinationPoint(quarto, where(town, 'sala'))).toEqual({ x: 1050, y: 500 });
+    expect(doorStep(quarto, where(town, 'sala'))).toEqual({ x: -70, y: 500 });
+    expect(doorStep(town, where(town, 'quarto'))).toEqual({ x: 1270, y: 500 });
     expect(doorFront(town, { kind: 'street' })).toEqual({ x: 550, y: 432 });
   });
-  it('o primeiro cômodo de cada andar tem escada: sobe no fim esquerdo da parede e desce por um vão no chão', () => {
-    const town = upstairs(), top = at(town, 'room-3');
-    expect(doors(town).find(d => d.kind === 'up')).toMatchObject({ location: where(town, 'room-3'), box: { x: 16, y: 150, width: 170, height: 260 } });
-    expect(doors(top).find(d => d.kind === 'down')).toMatchObject({ location: where(town, 'sala'), box: { x: 40, y: 516, width: 210, height: 84 } });
-    expect(destinationPoint(town, where(town, 'room-3'))).toEqual({ x: 145, y: 505 });
-    expect(destinationPoint(top, where(town, 'sala'))).toEqual({ x: 101, y: 480 });
-    expect(doorFront(top, where(town, 'sala'))).toEqual({ x: 145, y: 505 });
-    expect(doorStep(town, where(town, 'room-3'))).toEqual({ x: 101, y: 412 });
-    expect(doorStep(top, where(town, 'sala'))).toEqual({ x: 145, y: 560 });
+  it('lote 8A: o primeiro cômodo de cada andar tem o vão da escada na ponta esquerda: sobe até o teto; em cima, chega por um vão no chão', () => {
+    const town = upstairs(), top = at(town, 'room-3'), column = { x: 0, y: 0, width: 240, height: 600 };
+    expect(doors(town).find(d => d.kind === 'up')).toMatchObject({ location: where(town, 'room-3'), box: { x: 0, y: 20, width: 240, height: 430 } });
+    expect(doors(top).find(d => d.kind === 'down')).toMatchObject({ location: where(town, 'sala'), box: { x: 16, y: 478, width: 214, height: 122 } });
+    expect(passages(town.buildings[0]!.layout, 'sala')[0]!.zone).toEqual(column);
+    expect(passages(town.buildings[0]!.layout, 'room-3')[0]!.zone).toEqual(column);
+    expect(destinationPoint(town, where(town, 'room-3'))).toEqual({ x: 262, y: 520 });
+    expect(destinationPoint(top, where(town, 'sala'))).toEqual({ x: 228, y: 480 });
+    expect(doorFront(top, where(town, 'sala'))).toEqual({ x: 262, y: 520 });
+    expect(doorStep(town, where(town, 'room-3'))).toEqual({ x: 110, y: 200 });
+    expect(doorStep(top, where(town, 'sala'))).toEqual({ x: 110, y: 585 });
     expect(doorDropAt(top, { x: 150, y: 540 })?.kind).toBe('down');
+    // The flight takes whoever is dropped on its steps or at its foot.
+    expect(doorDropAt(town, { x: 200, y: 460 })?.kind).toBe('up');
+    expect(doorDropAt(town, { x: 260, y: 460 })).toBeUndefined();
   });
 });

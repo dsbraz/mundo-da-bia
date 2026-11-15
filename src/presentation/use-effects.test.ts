@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { bookFrame, bubbleFrame, drawnUse, drumAngle, sproutAngle, steamFrame } from './use-effects';
+import { bubbleFrame, drawnUse, drumAngle, sproutAngle, steamFrame } from './use-effects';
 
 describe('efeitos de usar móveis', () => {
   it('todo móvel que liga tem efeito desenhado (W3L-09: também TV, banheira, piano, caixa de som, aquário, escrivaninha e luminária); bancada e espelho não', () => {
-    for (const kind of ['sink', 'washer', 'planter', 'bookcase', 'picnic-table', 'piano', 'tv', 'speaker', 'aquarium', 'bath', 'desk', 'reading-lamp'] as const) expect(drawnUse(kind)).toBe(true);
-    for (const kind of ['stove', 'kitchen-cart', 'mirror', 'sofa'] as const) expect(drawnUse(kind)).toBe(false);
+    for (const kind of ['sink', 'washer', 'planter', 'picnic-table', 'piano', 'tv', 'speaker', 'aquarium', 'bath', 'desk', 'reading-lamp'] as const) expect(drawnUse(kind)).toBe(true);
+    // The bookcase lends real books (lot 8C): an old saved `active` draws nothing.
+    for (const kind of ['stove', 'kitchen-cart', 'mirror', 'sofa', 'bookcase'] as const) expect(drawnUse(kind)).toBe(false);
   });
   it('as bolhas da pia sobem da cuba e somem no alto; com movimento reduzido ficam paradas', () => {
     const start = bubbleFrame(0, false), later = bubbleFrame(300, false);
@@ -30,13 +31,5 @@ describe('efeitos de usar móveis', () => {
     expect(a).toHaveLength(3);
     expect(b[0]!.rise).not.toBe(a[0]!.rise);
     expect(steamFrame(0, true)).toEqual(steamFrame(900, true));
-  });
-  it('o livro aparece na mão, fica e some; com movimento reduzido só por fade', () => {
-    expect(bookFrame(0, false)).toMatchObject({ alpha: 1, lift: 18 });
-    expect(bookFrame(200, false)).toMatchObject({ alpha: 1, lift: 0 });
-    expect(bookFrame(1400, false).alpha).toBe(0);
-    expect(bookFrame(0, true)).toEqual({ alpha: 0, lift: 0 });
-    expect(bookFrame(120, true)).toEqual({ alpha: 1, lift: 0 });
-    expect(bookFrame(1400, true)).toEqual({ alpha: 0, lift: 0 });
   });
 });

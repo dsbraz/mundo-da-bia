@@ -2,6 +2,7 @@ import type { ActorId, Point } from '../domain/types';
 import type { Suggestion } from '../domain/routine';
 import { besideMenu, bubblePlace, placeBubble } from './missing-bubble';
 import { worldToScreen } from './viewport';
+import { mayAsk } from './ask-gate';
 
 /** The drawing of each suggestion of the day (W3L-27): the backpack, the briefcase, the ball, the plate and the pillow. */
 const icons: Record<Suggestion, string> = { mochila: '/art/school.svg#mochila', pasta: '/art/school.svg#pasta', bola: '/icons/bola.svg',
@@ -12,11 +13,14 @@ interface Deps<W extends Wish> {
   /** What the selected character's day suggests now, or null (Criar, the first 30 s, nowhere to go, someone else's bubble up). */
   wish: () => W | null;
   head: (id: ActorId) => Point | null; canvas: () => HTMLCanvasElement | null;
+  /** Whether `actor` is saying a line: the bubble waits for it (lot 8C: "Era uma vez… lê." was under it), without taking its turn. */
+  speaking?: (actor: ActorId) => boolean;
   /** A touch on the bubble: the Map opens with the place marked. */
   go: (wish: W) => void;
 }
 /** The dashed thought bubble of the routine: the same cloud as a need's, drawn dashed, and a touch on it opens the Map. It gives way to
- *  any other bubble (a need's thought or a refusal), so a need always wins. Ignoring it changes nothing. */
+ *  any other bubble (a need's thought or a refusal), so a need always wins, and it takes its turn with the thoughts (lot 8E: up 8 s,
+ *  then nothing asks for a while). Ignoring it changes nothing. */
 export function routineBubble<W extends Wish>(host: HTMLElement, deps: Deps<W>) {
   const bubble = document.createElement('div'), image = document.createElement('img');
   bubble.className = 'missing-bubble wish'; bubble.setAttribute('role', 'button'); bubble.tabIndex = 0;
@@ -25,10 +29,11 @@ export function routineBubble<W extends Wish>(host: HTMLElement, deps: Deps<W>) 
   const press = (event: Event) => { event.preventDefault(); event.stopPropagation(); if (shown) deps.go(shown); };
   bubble.addEventListener('click', press);
   bubble.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') press(event); });
-  function place(wish: W | null): Point | null {
-    if (!wish || host.querySelector('.missing-bubble:not(.wish)')) return null;
+  function place(wish: W | null, now: number): Point | null {
+    if (!wish || deps.speaking?.(wish.actor) || host.querySelector('.missing-bubble:not(.wish)')) return null;
     const head = deps.head(wish.actor), canvas = deps.canvas();
-    return head && canvas ? bubblePlace(worldToScreen(canvas, head), canvas.getBoundingClientRect()) : null;
+    if (!head || !canvas || !mayAsk(`wish:${wish.actor}:${wish.suggestion}`, now)) return null;
+    return bubblePlace(worldToScreen(canvas, head), canvas.getBoundingClientRect());
   }
   function show(wish: W, at: Point) {
     if (!bubble.isConnected) host.append(bubble);
@@ -38,8 +43,8 @@ export function routineBubble<W extends Wish>(host: HTMLElement, deps: Deps<W>) 
     bubble.setAttribute('aria-label', wish.label);
     if (navigator.webdriver) Object.assign(bubble.dataset, { actor: wish.actor, suggestion: wish.suggestion });
   }
-  function frame() {
-    const wish = deps.wish(), at = place(wish);
+  function frame(now: number) {
+    const wish = deps.wish(), at = place(wish, now);
     shown = at ? wish : null;
     if (at && wish) show(wish, at); else bubble.remove();
     requestAnimationFrame(frame);

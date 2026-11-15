@@ -1,6 +1,6 @@
 import human from './assets/human.svg?raw';
 import cat from './assets/cat.svg?raw';
-import { outfitLayer, adultOutfit } from './outfit';
+import { outfitLayer, adultOutfit, adultArms, adultStyle } from './outfit';
 import { isAdult } from '../domain/family';
 import { actorKinds } from '../domain/types';
 import { actors, looks } from '../content/catalog';
@@ -16,7 +16,11 @@ const color = (value: number) => `#${value.toString(16).padStart(6, '0')}`;
 export const isCat = (id: ActorId) => actorKinds[id] === 'cat';
 export const masculine = (id: ActorId) => id === 'leo' || id === 'rui' || id === 'daniel';
 /** The garment layer `id` wears for `look` (a grown-up has its own drawings, W3L-24). */
-export const outfitOf = (id: ActorId, look: LookId) => isAdult(id) ? adultOutfit(look, masculine(id)) : outfitLayer(look, masculine(id));
+export const outfitOf = (id: ActorId, look: LookId) => isAdult(id) ? adultOutfit(look, adultStyle(id)) : outfitLayer(look, masculine(id));
+/** The hair behind the head: short for the boys and Daniel, Laura's ponytail (lot 8B), the long one for the others. */
+export const backHair = (id: ActorId) => masculine(id) ? 'hair-back-short' : id === 'laura' ? 'hair-back-laura' : 'hair-back';
+/** The sheet layer of a grown-up's arm `part` in `look`. */
+export const armLayer = (id: ActorId, look: LookId, part: string) => `${outfitOf(id, look)}-${adultArms[part]}`;
 
 let adultSheet: string | null = null;
 /** Keeps the grown-ups' drawings (`public/art/adult.svg`, read in the scene's preload or fetched by the DOM). */
@@ -49,5 +53,6 @@ export function actorSource(id: ActorId, look?: LookId) {
 }
 export function portraitParts(id: ActorId, look: LookId): string[] {
   if (isCat(id)) return ['tail', 'ears', 'body', 'eyes'];
-  return [...(look === 'superman' ? ['cape-superman'] : []), masculine(id) ? 'hair-back-short' : 'hair-back', 'legs', 'hands', outfitOf(id, look), 'face', `hair-${id}`, 'brows', 'eyes', 'mouth', ...(look === 'spiderman' ? ['mask-spiderman'] : [])];
+  const body = isAdult(id) ? [outfitOf(id, look), armLayer(id, look, 'hands')] : ['hands', outfitOf(id, look)];
+  return [...(look === 'superman' ? ['cape-superman'] : []), backHair(id), 'legs', ...body, 'face', `hair-${id}`, 'brows', 'eyes', 'mouth', ...(look === 'spiderman' ? ['mask-spiderman'] : [])];
 }

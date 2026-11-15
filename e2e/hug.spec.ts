@@ -29,10 +29,11 @@ test('soltar a Bia sobre o Léo: os dois se abraçam e o save só registra a pos
 });
 
 for (const reduced of [false, true]) test(`com o Léo triste, o abraço da Bia devolve o rosto dele${reduced ? ' (movimento reduzido)' : ''}`, async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   await start(page);
-  await playMinutes(page, 13);
+  // Lot 8E: Léo is sad (hungry and sleepy) from 28 min of play.
+  await playMinutes(page, 27.5);
   await playUntilTrue(page, async () => await face(page, 'leo') === 'sad', 1.5);
   await page.setViewportSize({ width: 844, height: 390 }); await page.clock.runFor(200);
   await page.screenshot({ path: `${shots}/hug-leo-sad-844${reduced ? '-reduced' : ''}.png` });

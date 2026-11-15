@@ -1,4 +1,4 @@
-import type { Actor, ActorId, CropId, Item, ItemId, Layout, LookId, Palette, Point, RoomId, RoomTemplate } from './types';
+import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
 import type { PlazaPlot, Progress, RecipeId } from './progress';
 import type { Ingredient, Stock, Utensil } from './ingredients';
 import type { Phase } from './clock';
@@ -15,12 +15,16 @@ export interface Building { id: number; name: string; model: BuildingModel; colo
   /** Snacks left in the fridge (lot 6F, 0 to 4): absent until the first one is eaten, which reads as 4. */
   snacks?: number }
 export interface Resident extends Actor { location: Location;
-  /** A grown-up's shift (W3L-25): the look it came to work in, and `off` once on the way home; never saved. */
-  work?: { look: LookId; off?: true } }
+  /** A grown-up's shift (W3L-25): `off` once on the way home; never saved. */
+  work?: { off?: true } }
 /** A dish carries its recipe (and `fancy` when made fancy). */
 export interface NeighborhoodItem extends Item { location: Location; recipe?: RecipeId; fancy?: true;
   /** A shopping bag (W3L-22): up to 6 goods, and whether it went through the checkout. */
-  contents?: Good[]; paid?: boolean }
+  contents?: Good[]; paid?: boolean;
+  /** A book (lot 8C): the bookcase it was lent from and its cover there. */
+  loan?: Loan }
+/** Where a book belongs: a bookcase (`piece`) of `building`, and its place on the shelf (0 to 2), which is also its cover. */
+export interface Loan { building: number; piece: number; slot: number }
 export interface Neighborhood { outdoor: Outdoor; buildings: Building[]; actors: Resident[]; items: NeighborhoodItem[]; location: Location; plots: number; nextBuilding: number;
   /** What the child has gained (save v3). */
   progress: Progress;

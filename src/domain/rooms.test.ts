@@ -5,7 +5,6 @@ import { editWorld, history, recordEdit, undo } from './design';
 import { decode, encode } from '../persistence/save';
 import { pieceBounds } from './layout';
 import { institutionWorld } from './institution-plans';
-import { passages } from './passages';
 it('cria um estúdio amplo, nomeia, posiciona e recupera após salvar', () => {
   const original = initialWorld();
   const state = addRoom(original, { name: '  Estúdio Aurora  ', template: 'studio', size: 'large', cell: 4 });
@@ -93,21 +92,21 @@ it('o jardim e o pátio espalham as peças em colunas fixas, a terceira mais ao 
   for (const template of ['garden', 'playground'] as const) {
     const state = addRoom(initialWorld(), { name: template, template, size: 'medium', cell: 2 });
     const pieces = state.layout.pieces.filter(p => p.room === state.room);
-    // Cell 2 opens onto the bedroom through a doorway at the left end (frame up to x 129): the columns start past it.
-    expect(pieces.map(p => p.x)).toEqual([140, 320, 140]);
+    // Lot 8A: no doorway to the bedroom on the left any more, so the columns start at their own place.
+    expect(pieces.map(p => p.x)).toEqual([60, 320, 60]);
     const [bottom, , third] = pieces.map(p => p.y + pieceBounds[p.kind].height);
     expect(third!).toBeLessThan(bottom! - 30);
   }
   const studio = addRoom(initialWorld(), { name: 'Estúdio', template: 'studio', size: 'medium', cell: 2 });
   const pieces = studio.layout.pieces.filter(p => p.room === studio.room);
-  expect(pieces.map(p => p.x)).toEqual([140, 460, 680, 1000]);
+  expect(pieces.map(p => p.x)).toEqual([40, 400, 660, 1000]);
   expect(pieces.every(p => p.y + pieceBounds[p.kind].height >= 440)).toBe(true);
 });
-it('a sala de aula da escola tem as três carteiras numa fileira sob a lousa, entre as portas dos dois lados', () => {
+it('a sala de aula da escola tem as três carteiras numa fileira sob a lousa, de frente para ela', () => {
   const school = institutionWorld('school')!;
   const pieces = school.layout.pieces.filter(p => p.room === 'quarto'), desks = pieces.filter(p => p.kind === 'school-desk');
   expect(new Set(desks.map(p => p.y)).size).toBe(1);
-  const zones = passages(school.layout, 'quarto').map(p => p.zone);
-  expect(zones).toHaveLength(2);
-  for (const p of pieces) expect(zones.every(z => p.x + pieceBounds[p.kind].width <= z.x || p.x >= z.x + z.width), p.kind).toBe(true);
+  const board = pieces.find(p => p.kind === 'board')!, middle = board.x + pieceBounds.board.width / 2;
+  const left = Math.min(...desks.map(p => p.x)), right = Math.max(...desks.map(p => p.x + pieceBounds['school-desk'].width));
+  expect(Math.abs((left + right) / 2 - middle)).toBeLessThan(40);
 });

@@ -85,9 +85,11 @@ export async function onPiece(page: Page, kind: PieceKind, x: number, y: number)
   const point = visualPiecePoint(piece, { x, y });
   return [point.x, point.y];
 }
-/** W3L-03: "Jogar" is behind the action ring's "mais" button. */
+/** W3L-03: "Jogar" is behind the action ring's "mais" button. The ring can be hidden for a moment (e.g. right after ending a game)
+ * and "mais" stays expanded once opened, so wait for the ring and read "mais"'s state instead of a racy visibility check. */
 export async function openPlay(page: Page) {
-  const play = page.getByRole('button', { name: 'Jogar', exact: true });
-  if (!await play.isVisible()) await page.getByRole('button', { name: 'Mais ações', exact: true }).click();
-  await play.click();
+  const more = page.getByRole('button', { name: 'Mais ações', exact: true });
+  await expect(more).toBeVisible();
+  if (await more.getAttribute('aria-expanded') !== 'true') await more.click();
+  await page.getByRole('button', { name: 'Jogar', exact: true }).click();
 }

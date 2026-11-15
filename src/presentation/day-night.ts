@@ -47,7 +47,7 @@ function windows(g: Graphics, state: World, town: Neighborhood | null, light: Li
   }
   const template = state.layout.rooms[state.room]!.template, scale = roomWidth(state) / 1000, { key, stairs } = architectureKey(state);
   const glass = light.stars ? nightGlass : duskGlass;
-  panes(key, () => roomArchitecture(template, stairs)).map(r => stairs ? { ...r, x: hallShift(r.x), width: r.width * .8 } : r).forEach(r => {
+  panes(key, () => roomArchitecture(template, stairs)).map(r => stairs ? { ...r, x: hallShift(r.x), width: r.width * .75 } : r).forEach(r => {
     g.fillStyle(glass, .82).fillRect(r.x * scale, r.y, r.width * scale, r.height);
     if (light.stars) [[.2, .25], [.7, .18], [.45, .6], [.85, .7]].forEach(([u, v]) => g.fillStyle(0xfffbe8, .9).fillCircle((r.x + r.width * u!) * scale, r.y + r.height * v!, 2.2));
   });

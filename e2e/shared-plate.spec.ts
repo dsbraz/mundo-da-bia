@@ -5,7 +5,7 @@ import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { World } from '../src/domain/types';
 import { closeTray, readTown, ready, tray } from './helpers';
-import { playMinutes, playUntilTrue } from './session';
+import { playMinutes } from './session';
 
 // Lot 6B: one dish shared by two people seated at the same table: one plate on the table, both eat, both stop being hungry.
 const sizes = [{ width: 1024, height: 768 }, { width: 1280, height: 800 }];
@@ -27,9 +27,11 @@ for (const size of sizes) test(`um prato, dois à mesa: os dois comem e matam a 
   await page.addInitScript(value => { localStorage.setItem('mundo-da-bia:autonomy', 'off'); if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood({ ...town, nextItem: 21, items: [...town.items, dish] }));
   await ready(page); await page.clock.pauseAt(new Date('2026-11-13T10:01:30'));
-  // Without eating, hunger (+3/min) reaches `precisa` at 12 min 40 s for Léo and 13 min 20 s for the Bia: both hungry, before Léo's sleep (14 min).
-  await playMinutes(page, 12);
-  await playUntilTrue(page, async () => { const now = await faces(page); return now.bia === 'hungry' && now.leo === 'hungry'; }, 1.5);
+  // Without eating, both ask for food at 14 min (hunger +1.5/min: Léo from 5 min 20 s, the Bia from 6 min 40 s), and neither face is
+  // happy (lot 8E: the hungry face itself only comes at 25 min, when sitting still has already bored them).
+  await playMinutes(page, 14);
+  expect(await faces(page)).not.toMatchObject({ bia: 'happy' });
+  expect(await faces(page)).not.toMatchObject({ leo: 'happy' });
   await tray(page); await page.locator('#cast [data-actor=bia]').click(); await closeTray(page);
   await page.getByRole('button', { name: 'Comer', exact: true }).click();
   await page.clock.runFor(1200);

@@ -55,8 +55,16 @@ describe('os profissionais de cada instituição (lote 7)', () => {
     expect(after.x).not.toBe(teacher.x);
     expect(overlap(box(after), rect({ ...pieceBounds.board, x: 160, y: board.y }))).toBe(0);
   });
+  it('lote 8A: ela recebe quem chega no cômodo de entrada, mesmo numa escola antiga de cômodos sem modelo', () => {
+    const town = built('school'), entry = town.buildings[1]!.entry;
+    expect(staffAt(town, at(town, entry))).toMatchObject({ profession: 'teacher', room: entry });
+    const b = town.buildings[1]!, bare = Object.fromEntries(Object.entries(b.layout.rooms).map(([id, r]) => [id, { ...r, template: 'empty' as const }])) as typeof b.layout.rooms;
+    const old = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, rooms: bare, pieces: [] } } : x) };
+    expect(staffAt(old, at(old, entry))).toMatchObject({ profession: 'teacher', room: entry });
+    expect(staffAt(old, at(old, roomOf(town, 'classroom')))).toBeNull();
+  });
   it('trocado o cômodo de trabalho por outro, o profissional vai embora; sem a sala, também', () => {
-    const town = built('fire-station'), room = roomOf(town, 'dispatch'), b = town.buildings[1]!;
+    const town = built('school'), room = roomOf(town, 'classroom'), b = town.buildings[1]!;
     const replaced = neighborhoodAction(town, { type: 'replace-module', building: 2, room, template: 'kitchen' });
     expect(staffAt(replaced, at(replaced, room))).toBeNull();
     const gone = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, rooms: {} as typeof b.layout.rooms } } : x) };

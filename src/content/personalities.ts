@@ -49,6 +49,11 @@ export const personalities: Record<ActorId, Reaction[]> = {
     { pose: 'wiggle', line: 'Escola hoje? {nome} quer ouvir!', cue: 'poke' },
     { pose: 'stretch', line: 'Sopinha hoje? {nome} faz!', cue: 'poke' },
   ],
+  laura: [
+    { pose: 'hop', line: 'Oi, maninha! {nome} chegou!', cue: 'cheer' },
+    { pose: 'wiggle', line: 'Cosquinha? {nome} riu alto!', cue: 'poke' },
+    { pose: 'stretch', line: 'Pausa! {nome} vai tocar piano.', cue: 'poke' },
+  ],
 };
 /** The Turma card: a motto of up to 4 words, the social gesture (drawn in W3-08), the voice (pitch of the touch sound) and the favourite
  *  crop. Gesture, voice and crop of the six others are proposals still to be watched with the child. */
@@ -63,6 +68,7 @@ export const cards: Record<ActorId, Card> = {
   pipoca: { motto: 'Prrr… Ovinho e soneca!', gesture: 'abraco', voice: 1.3, crop: 'milho' },
   daniel: { motto: 'Pai da turma toda!', gesture: 'toca-aqui', voice: .75, crop: 'tomate' },
   fabiana: { motto: 'Mãe da turma toda!', gesture: 'abraco', voice: .95, crop: 'abobora' },
+  laura: { motto: 'Maninha, conta comigo!', gesture: 'abraco', voice: 1.05, crop: 'morango' },
 };
 
 /** Lines during a game, about the child who plays ({nome}): a spectator claps, the child celebrates or makes a funny face on a miss. */
@@ -74,4 +80,4 @@ export function pickReaction(size: number, previous: number | undefined, random:
   return (previous + offset) % size;
 }
 /** The face each one pulls at the mirror (W3L-08): Bia and Rui goof, Luna wiggles, Léo stretches, the cats purr. */
-export const mirrorFaces: Record<ActorId, ReactionPose> = { bia: 'goof', luna: 'wiggle', leo: 'stretch', rui: 'goof', mimi: 'purr', nino: 'purr', pipoca: 'purr', daniel: 'goof', fabiana: 'wiggle' };
+export const mirrorFaces: Record<ActorId, ReactionPose> = { bia: 'goof', luna: 'wiggle', leo: 'stretch', rui: 'goof', mimi: 'purr', nino: 'purr', pipoca: 'purr', daniel: 'goof', fabiana: 'wiggle', laura: 'goof' };

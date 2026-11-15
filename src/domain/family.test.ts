@@ -2,16 +2,16 @@ import { expect, it } from 'vitest';
 import { initialWorld, transition } from './world';
 import { initialAlbum } from './houses';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
-import { adultIds, isAdult, wardrobeOf } from './family';
+import { adultIds, isAdult, parentIds, wardrobeOf } from './family';
 import { tastes } from './tastes';
 import { needsOf } from './needs';
 import { actorIds, actorKinds } from './types';
 
-it('os pais da turma, Daniel e Fabiana, são pessoas da turma e os únicos adultos (W3L-24)', () => {
-  expect(adultIds).toEqual(['daniel', 'fabiana']);
+it('os pais da turma, Daniel e Fabiana, são pessoas da turma; com a Laura (lote 8B), os únicos adultos (W3L-24)', () => {
+  expect(parentIds).toEqual(['daniel', 'fabiana']);
   expect(actorIds).toEqual(expect.arrayContaining([...adultIds]));
-  expect(adultIds.map(id => actorKinds[id])).toEqual(['human', 'human']);
-  expect(actorIds.filter(isAdult)).toEqual(['daniel', 'fabiana']);
+  expect(adultIds.map(id => actorKinds[id])).toEqual(['human', 'human', 'human']);
+  expect(actorIds.filter(isAdult)).toEqual(['daniel', 'fabiana', 'laura']);
 });
 
 it('um jogo novo começa com os dois em pé no quarto da casa, sem segurar nada', () => {
@@ -24,7 +24,7 @@ it('um jogo novo começa com os dois em pé no quarto da casa, sem segurar nada'
 });
 
 it('adulto se entedia mais devagar: tédio ×0,6 (§3.6)', () => {
-  for (const id of adultIds) expect(tastes[id].pace).toEqual({ tedio: 0.6 });
+  for (const id of parentIds) expect(tastes[id].pace).toEqual({ tedio: 0.6 });
   const town = migrateNeighborhood(initialAlbum(initialWorld()));
   const after = neighborhoodAction(town, { type: 'live', elapsed: 60_000, phase: 'manha', idle: ['bia', 'daniel'] });
   const boredom = (id: 'bia' | 'daniel') => needsOf(after.actors.find(a => a.id === id)!).tedio;

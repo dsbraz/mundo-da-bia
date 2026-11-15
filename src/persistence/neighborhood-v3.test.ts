@@ -9,12 +9,14 @@ import { initialProgress } from '../domain/progress';
 import { initialAlbum } from '../domain/houses';
 import { initialWorld } from '../domain/world';
 import { migrateNeighborhood } from '../domain/neighborhood';
+import { clearStairwells } from '../domain/modules';
 import type { Neighborhood } from '../domain/neighborhood-types';
 
 const v1 = 'mundo-da-bia:neighborhood:v1', v2 = 'mundo-da-bia:neighborhood:v2', v3 = 'mundo-da-bia:neighborhood:v3', recovery = `${v3}:recovery`;
 const rich = readFileSync(new URL('./fixtures/rich-save-v2.json', import.meta.url), 'utf8');
-/** The rich v2 neighborhood as this build reads it: the same, with the grown-ups standing in "Minha casa" (W3L-24). */
-const richTown = knownCast(JSON.parse(rich).town) as Neighborhood;
+/** The rich v2 neighborhood as this build reads it: the same, with the grown-ups standing in "Minha casa" (W3L-24) and no piece in a
+ *  stairwell (lot 8A). */
+const richTown = clearStairwells(knownCast(JSON.parse(rich).town) as Neighborhood);
 /** A storage that refuses any write to the v1 and v2 keys, so a test fails if they are ever rewritten. */
 function storage(entries: [string, string][] = [], failing: string[] = []) {
   const map = new Map(entries);

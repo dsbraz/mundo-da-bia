@@ -4,9 +4,9 @@ import { initialWorld, transition } from './world';
 import type { Action } from './types';
 
 describe('brincadeira', () => {
-  it('tem quatro crianças, dois adultos e três gatos, sem estado compartilhado', () => {
+  it('tem quatro crianças, três adultos (os pais e a Laura) e três gatos, sem estado compartilhado', () => {
     const a = initialWorld();
-    expect(a.actors.filter(x => x.kind === 'human')).toHaveLength(6);
+    expect(a.actors.filter(x => x.kind === 'human')).toHaveLength(7);
     expect(a.actors.filter(x => x.kind === 'cat')).toHaveLength(3);
     a.actors[0]!.fed = true;
     expect(initialWorld().actors[0]!.fed).toBe(false);
@@ -89,12 +89,12 @@ describe('posições iniciais de saves novos', () => {
     const world = initialWorld(), standing = world.actors.filter(a => !a.seat);
     expect(world.actors.map(a => [a.id, a.x, a.y, a.seat])).toEqual([
       ['bia', 520, 530, null], ['luna', 245, 405, '2.1'], ['leo', 420, 530, null], ['rui', 830, 530, null],
-      ['mimi', 330, 540, null], ['nino', 740, 540, null], ['pipoca', 610, 540, null], ['daniel', 620, 530, null], ['fabiana', 420, 530, null],
+      ['mimi', 330, 540, null], ['nino', 740, 540, null], ['pipoca', 610, 540, null], ['daniel', 620, 530, null], ['fabiana', 420, 530, null], ['laura', 220, 530, null],
     ]);
     // Compact enough for one opening at 768 px (about 790 logical units visible): the living room's group fits with room to spare; the
     // grown-ups (W3L-24) start in the bedroom.
     const half = (a: typeof world.actors[number]) => a.kind === 'cat' ? 35 : 42, group = world.actors.filter(a => a.room === 'sala');
-    expect(world.actors.filter(a => isAdult(a.id)).map(a => a.room)).toEqual(['quarto', 'quarto']);
+    expect(world.actors.filter(a => isAdult(a.id)).map(a => a.room)).toEqual(['quarto', 'quarto', 'quarto']);
     expect(Math.max(...group.map(a => a.x + half(a))) - Math.min(...group.map(a => a.x - half(a)))).toBeLessThanOrEqual(765);
     for (const a of standing) for (const b of standing) if (a !== b && a.room === b.room) expect(Math.abs(a.x - b.x)).toBeGreaterThanOrEqual(90);
     const stage = world.layout.pieces.find(p => p.kind === 'stage')!;

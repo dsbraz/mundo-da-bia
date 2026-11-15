@@ -3,7 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
-import { glassOf } from '../src/presentation/mirror-reflection';
+import { glassOf } from '../src/presentation/mirror-glass';
 import type { Piece, World } from '../src/domain/types';
 import { onPiece, point, read, ready, tap } from './helpers';
 

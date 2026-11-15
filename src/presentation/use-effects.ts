@@ -1,15 +1,14 @@
 import type Phaser from 'phaser';
 import { pieceBounds } from '../domain/layout';
-import type { Piece, PieceKind, Point } from '../domain/types';
+import type { Piece, PieceKind } from '../domain/types';
 import { reducedFadeMs, reducedMotion } from './motion';
 import { hex } from './palette';
 import { playPainters } from './play-effects';
 
 type Container = Phaser.GameObjects.Container;
 type Graphics = Phaser.GameObjects.Graphics;
-const drawn: readonly PieceKind[] = ['sink', 'washer', 'planter', 'bookcase', 'picnic-table'];
+const drawn: readonly PieceKind[] = ['sink', 'washer', 'planter', 'picnic-table'];
 const paint = (kind: PieceKind) => painters[kind] ?? playPainters[kind];
-const clamp = (v: number) => Math.max(0, Math.min(1, v));
 /** Every piece that is on answers with a drawn, moving effect (W3L-09: the playroom and workshop ones too, no text sign left). */
 export const drawnUse = (kind: PieceKind) => drawn.includes(kind) || !!playPainters[kind];
 
@@ -31,13 +30,6 @@ export function steamFrame(time: number, reduced: boolean) {
     return { dx: (i - 1) * 8, rise: k * 26, alpha: reduced ? .6 : .8 * (1 - k) };
   });
 }
-export const bookDuration = 1400;
-/** The book in the reader's hand: slides up into the hand in 200 ms, stays and fades; only a 120 ms fade in and out with reduced motion. */
-export function bookFrame(t: number, reduced: boolean) {
-  if (reduced) return { alpha: clamp(Math.min(t, bookDuration - t) / reducedFadeMs), lift: 0 };
-  return { alpha: t < 1100 ? 1 : clamp((bookDuration - t) / 300), lift: 18 * (1 - clamp(t / 200)) };
-}
-
 /** The effect layer of an active everyday piece, mirrored with the art. */
 export function drawUse(scene: Phaser.Scene, piece: Piece): Container {
   const box = pieceBounds[piece.kind];
@@ -62,12 +54,6 @@ const painters: Partial<Record<PieceKind, (g: Graphics, time: number, reduced: b
     colors.forEach((color, i) => { const a = angle + i * Math.PI * 2 / 3; g.fillStyle(color).fillCircle(65 + Math.cos(a) * 17, 91 + Math.sin(a) * 17, 7); });
   },
   planter() {},
-  bookcase(g, time, reduced) {
-    const y = -22 + (reduced ? 0 : Math.sin(time / 400) * 3);
-    g.fillStyle(hex('cobalt')).fillPoints([{ x: 46, y: y - 14 }, { x: 80, y: y - 8 }, { x: 114, y: y - 14 }, { x: 114, y: y + 8 }, { x: 80, y: y + 14 }, { x: 46, y: y + 8 }], true);
-    g.fillStyle(0xfffdf7).fillPoints([{ x: 50, y: y - 16 }, { x: 80, y: y - 10 }, { x: 80, y: y + 10 }, { x: 50, y: y + 4 }], true).fillPoints([{ x: 110, y: y - 16 }, { x: 80, y: y - 10 }, { x: 80, y: y + 10 }, { x: 110, y: y + 4 }], true);
-    g.lineStyle(1.5, hex('outline'), .7).lineBetween(80, y - 10, 80, y + 10);
-  },
   'picnic-table'(g, time, reduced) { g.fillStyle(hex('coral')).fillCircle(60, 30, 7).fillStyle(hex('leaf')).fillCircle(72, 31, 6); steam(g, 92, 20, time, reduced); },
 };
 /** Three white wisps over `x`, `y` (also the bench's cooking steam). */
@@ -89,15 +75,6 @@ export function animatePieces(pieces: Map<number, Container>, time: number, redu
     shown.push(kind);
   });
   return shown.join(' ');
-}
-/** A drawn book in the reader's hand after touching the bookcase; it never stays. */
-export function showBook(scene: Phaser.Scene, hand: Point) {
-  const book = scene.add.graphics().setDepth(1080).setPosition(hand.x, hand.y);
-  book.fillStyle(hex('cobalt')).fillRoundedRect(-11, -14, 22, 16, 3).fillStyle(0xfffdf7).fillRect(-8, -12, 7, 12).fillRect(1, -12, 7, 12);
-  const reduced = reducedMotion(), clock = { t: 0 }, dataset = scene.game.canvas.dataset;
-  const place = () => { const f = bookFrame(clock.t, reduced); book.setAlpha(f.alpha).setY(hand.y + f.lift); };
-  place(); dataset.book = 'hand';
-  scene.tweens.add({ targets: clock, t: bookDuration, duration: bookDuration, onUpdate: place, onComplete: () => { book.destroy(); dataset.book = ''; } });
 }
 /** The piece blinks three times so the child finds it (one short fade with reduced motion). */
 export function blinkPiece(scene: Phaser.Scene, target: Container) {

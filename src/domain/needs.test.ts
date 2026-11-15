@@ -20,24 +20,24 @@ describe('necessidades de uma sessão (§3.1)', () => {
     expect(initialNeeds('bia')).toEqual({ fome: 30, sono: 0, tedio: 0, alegria: 0 });
     expect(initialNeeds()).toEqual(initialNeeds('bia'));
     expect(startTown().actors.map(a => [a.id, initialNeeds(a.id).fome])).toEqual([['bia', 30], ['luna', 27], ['leo', 32], ['rui', 30], ['mimi', 28],
-      ['nino', 24], ['pipoca', 20], ['daniel', 24], ['fabiana', 21]]);
+      ['nino', 24], ['pipoca', 20], ['daniel', 24], ['fabiana', 21], ['laura', 26]]);
     for (const a of startTown().actors) expect(needsOf(a)).toEqual(initialNeeds(a.id));
     expect(who(startTown(), 'bia').needs).toBeUndefined();
   });
   it('faixas: bem até 39, pede de 40 a 69, precisa de 70 a 100', () => {
     expect([0, 39.99, 40, 69.99, 70, 100].map(band)).toEqual(['bem', 'bem', 'pede', 'pede', 'precisa', 'precisa']);
   });
-  it('a fome passa de bem a pede exatamente em 3 min e 20 s de sessão, em qualquer divisão dos ticks', () => {
+  it('a fome passa de bem a pede exatamente em 6 min e 40 s de sessão (lote 8E), em qualquer divisão dos ticks', () => {
     const town = startTown();
-    const fifty = run(town, 3, step(50_000));
+    const fifty = run(town, 7, step(50_000));
     expect(bandOf(who(live(fifty, step(49_999)), 'bia'), 'fome')).toBe('bem');
     expect(bandOf(who(live(fifty, step(50_000)), 'bia'), 'fome')).toBe('pede');
-    const ticks = run(town, 6, step(30_000));
-    expect(bandOf(who(live(ticks, step(19_000)), 'bia'), 'fome')).toBe('bem');
-    expect(bandOf(who(live(ticks, step(20_000)), 'bia'), 'fome')).toBe('pede');
-    expect(needsOf(who(live(ticks, step(20_000)), 'bia')).fome).toBe(40);
+    const ticks = run(town, 13, step(30_000));
+    expect(bandOf(who(live(ticks, step(9_999)), 'bia'), 'fome')).toBe('bem');
+    expect(bandOf(who(live(ticks, step(10_000)), 'bia'), 'fome')).toBe('pede');
+    expect(needsOf(who(live(ticks, step(10_000)), 'bia')).fome).toBe(40);
   });
-  it('a fome é de refeição (+3/min): depois de um prato no fim de `pede` (69 → 9) ela só volta a pedir em 10 min e a precisar em 20; do zero, 13 min 20 s e 23 min 20 s', () => {
+  it('a fome é de refeição (+1,5/min, lote 8E): depois de um prato no fim de `pede` (69 → 9) ela só volta a pedir em 20 min 40 s e a precisar em 40 min 40 s; do zero, 26 min 40 s e 46 min 40 s', () => {
     const minutesTo = (from: number, target: 'pede' | 'precisa') => {
       let town = withNeeds(startTown(), 'bia', { fome: from }), at = 0;
       while (bandOf(who(town, 'bia'), 'fome') !== target) { town = live(town, step(10_000)); at += 10; }
@@ -45,9 +45,9 @@ describe('necessidades de uma sessão (§3.1)', () => {
     };
     const plate = relieve(needs({ fome: 69 }), 'prato').fome;
     expect(plate).toBe(9);
-    expect(minutesTo(plate, 'pede')).toBeCloseTo(31 / 3, 1);
-    expect(minutesTo(plate, 'precisa')).toBeCloseTo(61 / 3, 1);
-    expect([minutesTo(0, 'pede'), minutesTo(0, 'precisa')]).toEqual([40 / 3, 70 / 3]);
+    expect(minutesTo(plate, 'pede')).toBeCloseTo(62 / 3, 1);
+    expect(minutesTo(plate, 'precisa')).toBeCloseTo(122 / 3, 1);
+    expect([minutesTo(0, 'pede'), minutesTo(0, 'precisa')]).toEqual([80 / 3, 140 / 3]);
   });
   it('numa sessão de 25 min todos ainda pedem comida, mas os primeiros pedidos se espalham: nunca mais de dois no mesmo minuto', () => {
     const first: Partial<Record<ActorId, number>> = {};
@@ -63,25 +63,26 @@ describe('necessidades de uma sessão (§3.1)', () => {
   it('um live de 30 dias vale 60 s; tempo inválido, negativo ou zero não muda nada', () => {
     const town = startTown();
     expect(live(town, step(30 * 24 * 3600_000))).toEqual(live(town, step(60_000)));
-    expect(needsOf(who(live(town, step(60_000)), 'bia')).fome).toBe(33);
+    expect(needsOf(who(live(town, step(60_000)), 'bia')).fome).toBe(31.5);
     for (const elapsed of [NaN, -5000, 0, Infinity]) expect(live(town, step(elapsed))).toBe(town);
   });
   it('o teto é 100: depois disso nada piora', () => {
-    const end = run(startTown(), 40, step(60_000, { phase: 'noite', idle: ['bia'] }));
+    const end = run(startTown(), 50, step(60_000, { phase: 'noite', idle: ['bia'] }));
     expect(needsOf(who(end, 'bia'))).toEqual({ fome: 100, sono: 100, tedio: 100, alegria: 0 });
   });
-  it('o sono cresce +2/min de dia e ao amanhecer, +12/min no entardecer e à noite', () => {
-    const sleep = (phase: LiveAction['phase']) => needsOf(who(live(startTown(), step(60_000, { phase })), 'luna')).sono;
-    expect(['manha', 'tarde', 'amanhecer', 'entardecer', 'noite'].map(p => sleep(p as LiveAction['phase']))).toEqual([2, 2, 2, 12, 12]);
+  it('o sono é da noite (lote 8E): cresce +8/min no entardecer e à noite, e de dia e ao amanhecer cai 5/min, sem passar de 0', () => {
+    const sleep = (phase: LiveAction['phase'], from = 20) => needsOf(who(live(withNeeds(startTown(), 'luna', { sono: from }), step(60_000, { phase })), 'luna')).sono;
+    expect(['manha', 'tarde', 'amanhecer', 'entardecer', 'noite'].map(p => sleep(p as LiveAction['phase']))).toEqual([15, 15, 15, 28, 28]);
+    expect(sleep('manha', 0)).toBe(0);
   });
-  it('o tédio cresce +5/min só para quem está parado (W3L-13, ajuste do lote 3)', () => {
+  it('o tédio cresce +3/min só para quem está parado (W3L-13, lote 8E)', () => {
     const town = live(startTown(), step(60_000, { idle: ['bia'] }));
-    expect([needsOf(who(town, 'bia')).tedio, needsOf(who(town, 'luna')).tedio]).toEqual([5, 0]);
+    expect([needsOf(who(town, 'bia')).tedio, needsOf(who(town, 'luna')).tedio]).toEqual([3, 0]);
     expect(needsOf(who(live(startTown(), step(60_000)), 'bia')).tedio).toBe(0);
   });
   it('quem está fora do lugar mostrado nunca passa de 69, e quem sai do cômodo volta a 69', () => {
     const away = (town: Neighborhood) => ({ ...town, actors: town.actors.map(a => a.id === 'luna' ? { ...a, location: { kind: 'street' as const } } : a) });
-    const end = run(away(startTown()), 30, step(60_000, { phase: 'noite', idle: ['luna'] }));
+    const end = run(away(startTown()), 50, step(60_000, { phase: 'noite', idle: ['luna'] }));
     expect(needsOf(who(end, 'luna'))).toEqual({ fome: 69, sono: 69, tedio: 69, alegria: 0 });
     expect(mood(who(end, 'luna'))).toBe('normal');
     expect(needsOf(who(end, 'bia')).fome).toBe(100);
@@ -96,20 +97,20 @@ describe('necessidades de uma sessão (§3.1)', () => {
   });
   it('Rui (tédio ×1,4, fome ×0,6) fica entediado antes da Bia; Léo tem sono ×1,1; os gatos sono ×1,5 e fome ×0,6', () => {
     const minute = live(startTown(), step(60_000, { phase: 'noite', idle: ['bia', 'rui', 'mimi'] }));
-    expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(7);
-    expect(needsOf(who(minute, 'rui')).fome).toBeCloseTo(31.8);
-    expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(13.2);
-    expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(29.8);
-    expect(needsOf(who(minute, 'mimi')).sono).toBe(18);
+    expect(needsOf(who(minute, 'rui')).tedio).toBeCloseTo(4.2);
+    expect(needsOf(who(minute, 'rui')).fome).toBeCloseTo(30.9);
+    expect(needsOf(who(minute, 'leo')).sono).toBeCloseTo(8.8);
+    expect(needsOf(who(minute, 'mimi')).fome).toBeCloseTo(28.9);
+    expect(needsOf(who(minute, 'mimi')).sono).toBe(12);
     const bored = (id: ActorId) => Array.from({ length: 30 }, (_, n) => run(startTown(), n + 1, step(30_000, { idle: [id] })))
       .findIndex(t => bandOf(who(t, id), 'tedio') === 'pede');
     expect(bored('rui')).toBeLessThan(bored('bia'));
-    expect([bored('rui'), bored('bia')]).toEqual([11, 15]);
+    expect([bored('rui'), bored('bia')]).toEqual([19, 26]);
   });
   it('as taxas por personalidade moram em tastes.ts', () => {
     expect(Object.fromEntries(Object.entries(tastes).filter(([, t]) => t.pace).map(([id, t]) => [id, t.pace]))).toEqual({
       leo: { sono: 1.1 }, rui: { tedio: 1.4, fome: 0.6 }, mimi: { sono: 1.5, fome: 0.6 }, nino: { sono: 1.5, fome: 0.6 }, pipoca: { sono: 1.5, fome: 0.6 },
-      daniel: { tedio: 0.6 }, fabiana: { tedio: 0.6 } });
+      daniel: { tedio: 0.6 }, fabiana: { tedio: 0.6 }, laura: { tedio: 0.8 } });
   });
 });
 
@@ -188,7 +189,7 @@ describe('as necessidades acompanham o mundo', () => {
     const hungry = withNeeds(startTown(), 'bia', { fome: 60 });
     let world = transition(localWorld(hungry), { type: 'pick', actor: 'bia', item: '1:lanche' }).state;
     world = transition(world, { type: 'feed', actor: 'bia' }).state;
-    expect(needsOf(who(live(storeWorld(hungry, world), step(10_000)), 'bia')).fome).toBe(30.5);
+    expect(needsOf(who(live(storeWorld(hungry, world), step(10_000)), 'bia')).fome).toBe(30.25);
   });
   it('desfazer volta as casas, nunca as necessidades', () => {
     const before = startTown(), now = live(before, step(60_000, { idle: ['bia'] }));

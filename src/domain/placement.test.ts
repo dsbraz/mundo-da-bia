@@ -64,22 +64,24 @@ it('móveis de chão ficam com o pé no chão: mover a cama para a parede a enco
   const pot = added.layout.pieces.at(-1)!; expect(pot.kind).toBe('plant'); expect(pot.y + 105).toBeGreaterThanOrEqual(floorBase);
   expect(onFloorPiece({ ...bed, y: 300 })).toEqual({ ...bed, y: 300 });
 });
-it('nada se põe nas passagens: portas do fim da parede, escada e vão da escada; o que já estava lá só pode sair', () => {
+it('lote 8A: nada se põe no vão da escada, do chão ao teto; as pontas das salas sem escada ficam livres para os móveis', () => {
   const world = editWorld(initialWorld(), { type: 'clear' });
-  // The living room's doorway to the bedroom spans x 1080-1184 (frame 1071-1193), up to the sill at 410.
-  expect(canPlace(world, plant({ x: 1100, y: 300 }))).toBe(false);
-  expect(canPlace(world, plant({ kind: 'picture', x: 1100, y: 200 }))).toBe(false);
-  expect(canPlace(world, plant({ x: 980, y: 300 }))).toBe(true);
-  expect(canPlace(world, plant({ x: 1100, y: 430 }))).toBe(true);
-  expect(canPlace(world, plant({ kind: 'rug', x: 0, y: 440 }))).toBe(true);
+  // No doorway at the ends of the wall any more: the living room's right end takes furniture.
+  expect(canPlace(world, plant({ x: 1100, y: 300 }))).toBe(true);
+  expect(canPlace(world, plant({ kind: 'picture', x: 1100, y: 200 }))).toBe(true);
   expect(canPlace(world, plant({ x: 60, y: 300 }))).toBe(true);
   const upstairs = addRoom(world, { name: 'Sótão', template: 'empty', size: 'small', cell: 4 });
   const below = { ...upstairs, room: 'sala' as const }, above = { ...upstairs, room: 'room-3' as const };
+  // The stairwell column spans x 0-240 on the wall and the floor.
   expect(canPlace(below, plant({ x: 60, y: 300 }))).toBe(false);
+  expect(canPlace(below, plant({ x: 200, y: 450 }))).toBe(false);
+  expect(canPlace(below, plant({ kind: 'picture', x: 60, y: 120 }))).toBe(false);
+  expect(canPlace(below, plant({ x: 250, y: 300 }))).toBe(true);
+  expect(canPlace(below, plant({ kind: 'rug', x: 0, y: 440 }))).toBe(true);
   expect(canPlace(above, plant({ room: 'room-3', x: 100, y: 450 }))).toBe(false);
   expect(canPlace(above, plant({ room: 'room-3', x: 300, y: 450 }))).toBe(true);
-  // A piece of an older save already standing there may move out, or less in, never further in.
+  // A piece already standing there may move out, or less in, never further in.
   below.layout.pieces.push(plant({ x: 60, y: 300 }));
-  expect(canPlace(below, plant({ x: 120, y: 300 }))).toBe(true);
+  expect(canPlace(below, plant({ x: 160, y: 300 }))).toBe(true);
   expect(canPlace(below, plant({ x: 20, y: 300 }))).toBe(false);
 });
