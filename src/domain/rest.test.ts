@@ -93,6 +93,15 @@ describe('dormir até de manhã (W3L-15)', () => {
     expect(who('luna')).toMatchObject({ resting: false, seat: '2.1' });
     expect([who('mimi').resting, who('leo').resting, who('rui').resting]).toEqual([true, true, true]);
   });
+  it('quem já estava deitado com o sono em 0 (minutos na cama antes dela) acorda também', () => {
+    const start = town(), inside = start.actors[0]!.location as Extract<Resident['location'], { kind: 'interior' }>;
+    let night = lying(start, 'leo', { seat: '8.0', room: 'quarto', location: { ...inside, room: 'quarto' }, needs: { fome: 50, sono: 0, tedio: 0, alegria: 0 } });
+    night = lying(night, 'bia', { seat: '2.0', needs: { fome: 50, sono: 30, tedio: 0, alegria: 0 } });
+    night = lying(night, 'luna', { seat: '2.1' });
+    const morning = neighborhoodAction(night, { type: 'morning', building: inside.building }), who = (id: ActorId) => morning.actors.find(a => a.id === id)!;
+    expect(who('leo')).toMatchObject({ resting: false, seat: null, y: 530 });
+    expect([who('bia'), who('luna')]).toMatchObject([{ resting: false, seat: '2.0' }, { resting: false, seat: '2.1' }]);
+  });
   it('ninguém deitado: nada muda', () => {
     const start = town();
     expect(neighborhoodAction(start, { type: 'morning', building: 1 })).toEqual(start);

@@ -91,9 +91,9 @@ export function feel<W extends { actors: readonly Actor[] }>(world: W, from: { a
   }) };
 }
 /** Morning after the night slept through (W3L-15): every person in a bed or on a sofa of `building` slept too, so her sleep goes to 0, and
- *  she wakes up (like the Acordar button, ready to eat again): out of bed onto the floor in front of it, or sitting up on the sofa. */
+ *  she wakes up (even when her sleep had already reached 0 lying there) (like the Acordar button, ready to eat again): out of bed onto the floor in front of it, or sitting up on the sofa. */
 export function morning(town: Neighborhood, action: MorningAction): Neighborhood {
-  const slept = (a: Resident) => a.kind === 'human' && a.location.kind === 'interior' && a.location.building === action.building && ['bed', 'sofa'].includes(seatKind(town, a) ?? '') && needsOf(a).sono > 0;
+  const slept = (a: Resident) => a.kind === 'human' && a.location.kind === 'interior' && a.location.building === action.building && ['bed', 'sofa'].includes(seatKind(town, a) ?? '') && (a.resting || needsOf(a).sono > 0);
   return { ...town, actors: town.actors.map(a => slept(a) ? { ...a, needs: { ...needsOf(a), sono: 0 }, ...(a.resting ? up(town, a) : {}) } : a) };
 }
 /** Waking from a night's sleep: out of a bed she stands on the floor in front of it (the front row, y 530); on a sofa she sits up. */
