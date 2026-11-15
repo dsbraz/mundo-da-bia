@@ -100,15 +100,11 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - uses: actions/download-artifact@v4
-        with:
-          name: quality-checks
-          path: reports
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: blob-*
-          path: reports/blob
-          merge-multiple: true
+      # Newest upload of each artifact, so a re-run of failed jobs counts (scripts/artifacts.mjs).
+      - name: Download checks and shard reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/artifacts.mjs quality-checks reports && node scripts/artifacts.mjs blob- reports/blob
       - name: Merge shards into the ci report
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: reports/e2e.json
@@ -177,10 +173,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: mutation-shard-*
-          path: reports/shards
+      - name: Download shard reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/artifacts.mjs mutation-shard- reports/shards dirs
       - name: Merge shards into the mutation report
         run: npm run quality:mutation-merge
       - name: Every shard must have finished
@@ -214,11 +210,10 @@ jobs:
           CI_RESULT: ${{ needs.ci.result }}
           MUTATION_RESULT: ${{ needs.mutation.result }}
         run: test "$CI_RESULT" = success && test "$MUTATION_RESULT" = success
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: quality-*
-          path: reports
-          merge-multiple: true
+      - name: Download quality reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/artifacts.mjs quality- reports
       - run: node scripts/quality-gate.mjs
       - name: Publish summaries
         if: always()
