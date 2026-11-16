@@ -22,4 +22,4 @@ Use `.agents/skills/bia-tdd/SKILL.md` for behavior changes and bug fixes. Use `.
 
 ## Delivery workflow
 
-The owner has authorized delivery without PRs. Use GitButler for local commits and branches, native `git push` for transport, and `gh` for GitHub operations. Push a working branch for CI, then fast-forward `main` to the same SHA only after `quality-gate` passes. Keep required checks, no bypass, no force-push and no deletion on `main`. PRs are optional.
+The owner has authorized delivery without PRs. Use plain git for local commits, branches and transport, and `gh` for GitHub operations. Push a working branch for CI, then fast-forward `main` to the same SHA only after `quality-gate` passes. Keep required checks, no bypass, no force-push and no deletion on `main`. PRs are optional.
