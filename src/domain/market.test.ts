@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bagLimit, buy, checkout, storeGoods, stockUp, unpaidExit } from './market';
+import { bagLimit, buy, checkout, morningFood, storeGoods, stockUp, unpaidExit } from './market';
 import { localWorld, migrateNeighborhood, neighborhoodAction, storeWorld } from './neighborhood';
 import { initialAlbum } from './houses';
 import { initialWorld, transition } from './world';
@@ -77,6 +77,22 @@ describe('as compras (W3L-22)', () => {
     expect(stockOf(result.town.buildings[0]!).ovo).toBe(4);
     expect(bag(result.town)).toMatchObject({ contents: ['ovo', 'ovo'], paid: true });
   });
+  it('#9: a sacola solta na geladeira guarda, esteja no chão da cozinha ou na mão de outra pessoa', () => {
+    const t = town(), low = { ...t, buildings: t.buildings.map(b => b.id === 1 ? { ...b, stock: { ...fullStock(), ovo: 2 } } : b) };
+    const paid = carried(checkout(shop(low, 'ovo'), 'bia').town), id = bag(paid)!.id;
+    const onFloor = { ...paid, items: paid.items.map(i => i.id === id ? { ...i, holder: null } : i) };
+    const byDaniel = { ...paid, items: paid.items.map(i => i.id === id ? { ...i, holder: 'daniel' as const } : i),
+      actors: paid.actors.map(a => a.id === 'daniel' ? { ...a, location: home, room: 'sala' as const } : a) };
+    for (const where of [onFloor, byDaniel]) {
+      const result = stockUp(where, 'bia', id);
+      expect(result.outcome).toEqual({ kind: 'stored', left: 0 });
+      expect(stockOf(result.town.buildings[0]!).ovo).toBe(3);
+      expect(result.town.items.some(i => i.id === id)).toBe(false);
+    }
+    const unpaid = carried(shop(low, 'ovo')), loose = { ...unpaid, items: unpaid.items.map(i => i.kind === 'sacola' ? { ...i, holder: null } : i) };
+    expect(stockUp(loose, 'bia', bag(unpaid)!.id).outcome).toEqual({ kind: 'missing', need: 'checkout' });
+    expect(stockUp(onFloor, 'bia', 'nada' as never).outcome).toEqual({ kind: 'none' });
+  });
   it('guardar tudo some com a sacola; especiais e sementes viram conquista; sacola sem pagar pede o caixa', () => {
     const t = town(), atHome = { ...t, buildings: t.buildings.map(b => b.id === 1 ? { ...b, stock: { leite: 1 } } : b), progress: { ...t.progress, shelves: ['chocolate' as const, 'semente-milho' as const] } };
     const goods = shop(atHome, 'leite', 'pao');
@@ -135,4 +151,13 @@ describe('as compras (W3L-22)', () => {
       expect(bag(storeWorld(stuck, localWorld(stuck)))).toMatchObject({ location: street, paid: false });
     });
   });
+});
+
+it('decisão #32: sem mercado, o lanche e o peixe que acabaram na casa da família voltam na manhã nova (4 de cada); com mercado, não', () => {
+  const plain = migrateNeighborhood(initialAlbum(initialWorld()));
+  const empty = (t: Neighborhood, snacks: number, peixe?: number): Neighborhood =>
+    ({ ...t, buildings: t.buildings.map(b => b.id === 1 ? { ...b, snacks, stock: { ovo: 1, ...(peixe ? { peixe } : {}) } } : b) });
+  expect(morningFood(empty(plain, 0)).buildings[0]).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 4 } });
+  expect(morningFood(empty(plain, 0, 2)).buildings[0]).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 2 } });
+  for (const t of [empty(plain, 2, 3), empty(town(), 0)]) expect(morningFood(t)).toBe(t);
 });

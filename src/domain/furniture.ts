@@ -48,8 +48,10 @@ export function foodHome(state: World, item: Item, actor: Actor, feeding: boolea
   if (!feeding) return { holder: null, room: actor.room, spot: 'floor', x: actor.x, y: actor.y };
   const fridge = fixture(state, 'fridge');
   if (!fridge) return { holder: null, room: actor.room, spot: 'floor', x: actor.x, y: actor.y };
-  return { holder: null, room: fridge.room, spot: 'fridge', ...fromPiece(fridge, { x: 680, y: itemKind(item) === 'lanche' ? 310 : 360 }) };
+  return { holder: null, room: fridge.room, spot: 'fridge', ...inFridge(fridge, item) };
 }
+/** Where the fridge food `item` rests on the `fridge`'s shelves: the snack above, the fish below. */
+export const inFridge = (fridge: Piece, item: Item) => fromPiece(fridge, { x: 680, y: itemKind(item) === 'lanche' ? 310 : 360 });
 export function put(state: World, id: ItemId, spot: Exclude<Spot, 'floor'>): Transition {
   const item = state.items.find(i => i.id === id);
   if (!availableSpot(state, spot)) return refuse(state, 'place', undefined, undefined, spotKind(spot));

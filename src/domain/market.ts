@@ -1,12 +1,12 @@
 import { basics, stockLimit } from './ingredients';
 import type { Basic, Stock } from './ingredients';
 import type { SpecialId } from './progress';
-import type { ActorId, CropId, Layout, Piece, PieceKind, Point, RoomId } from './types';
+import type { ActorId, CropId, ItemId, Layout, Piece, PieceKind, Point, RoomId } from './types';
 import { pieceBounds } from './layout';
-import type { Building, MarketAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
+import type { Building, Location, MarketAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { consumeItem, spawnItem } from './portable';
-import { stockOf } from './stock';
-import { snacksOf } from './larder';
+import { familyHome, stockOf } from './stock';
+import { larderOf, snacksOf, storeLarder } from './larder';
 
 import type { Good } from './goods';
 export type { Good, Seed } from './goods';
@@ -44,11 +44,12 @@ const none = (town: Neighborhood): Shopped => ({ town, outcome: { kind: 'none' }
 const isBag = (item: NeighborhoodItem | undefined): item is Bag => item?.kind === 'sacola';
 const heldBy = (town: Neighborhood, actor: ActorId) => town.items.find(i => i.holder === actor);
 const patch = (town: Neighborhood, id: string, change: Partial<Bag>): Neighborhood => ({ ...town, items: town.items.map(i => i.id === id ? { ...i, ...change } : i) });
-/** Where `actor` stands, as a building and room, or nothing out on the street. */
-function standing(town: Neighborhood, actor: ActorId): { building: Building; room: RoomId } | null {
-  const where = town.actors.find(a => a.id === actor)?.location;
+/** A location as a building and room, or nothing out on the street. */
+function inside(town: Neighborhood, where: Location | undefined): { building: Building; room: RoomId } | null {
   return where?.kind === 'interior' ? { building: town.buildings.find(b => b.id === where.building)!, room: where.room } : null;
 }
+/** Where `actor` stands. */
+const standing = (town: Neighborhood, actor: ActorId) => inside(town, town.actors.find(a => a.id === actor)?.location);
 function marketRoom(town: Neighborhood, actor: ActorId) {
   const at = standing(town, actor);
   return at && isMarket(at.building.layout, at.room) ? at : null;
@@ -111,13 +112,21 @@ export function storeGoods(town: Neighborhood, building: number, goods: readonly
   return { town: { ...town, buildings, progress: { ...town.progress, specials, seeds } }, left };
 }
 const gain = <T>(list: readonly T[], id: T): T[] => list.includes(id) ? [...list] : [...list, id];
-/** The bag into the fridge at home: what fits goes in, the rest stays in the bag in her hand; an empty bag is gone. Unpaid, the checkout first. */
-export function stockUp(town: Neighborhood, actor: ActorId): Shopped {
-  const at = standing(town, actor), hand = heldBy(town, actor);
+/** The bag into a fridge (any fridge stores into the family home's, the only one, decision #11): what fits goes in, the rest stays in the bag in her hand; an empty bag is gone. Unpaid, the checkout first. The `item` bag dropped on the
+ *  fridge (#9) is stored wherever it lies or whoever holds it. */
+export function stockUp(town: Neighborhood, actor: ActorId, item?: ItemId): Shopped {
+  const hand = item ? town.items.find(i => i.id === item) : heldBy(town, actor), at = item ? inside(town, hand?.location) : standing(town, actor);
   if (!at || !isBag(hand) || isMarket(at.building.layout, at.room) || !at.building.layout.pieces.some(p => p.room === at.room && p.kind === 'fridge')) return none(town);
   if (!hand.paid) return { town, outcome: { kind: 'missing', need: 'checkout' } };
-  const stored = storeGoods(town, at.building.id, hand.contents);
+  const stored = storeGoods(town, familyHome(town).id, hand.contents);
   return { town: stored.left.length ? patch(stored.town, hand.id, { contents: stored.left }) : consumeItem(stored.town, hand.id), outcome: { kind: 'stored', left: stored.left.length } };
+}
+/** Never a dead end (decision #32): in a new morning with no market in the neighborhood, the snack and the cats' fish the family home ran
+ *  out of come back, 4 of each, like a new house. */
+export function morningFood(town: Neighborhood): Neighborhood {
+  if (hasMarket(town)) return town;
+  const home = familyHome(town), larder = larderOf(home), next = storeLarder(home, { lanche: larder.lanche || stockLimit, peixe: larder.peixe || stockLimit });
+  return next === home ? town : { ...town, buildings: town.buildings.map(b => b === home ? next : b) };
 }
 export const marketActions: readonly NeighborhoodAction['type'][] = ['buy', 'checkout', 'stock-up'];
 export function shop(town: Neighborhood, action: MarketAction): Shopped {

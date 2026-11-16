@@ -109,7 +109,7 @@ export function marketPlay(deps: MarketDeps) {
       if (action.type === 'use' && kindOf(action.id) === 'checkout') { pay(); return true; }
       if (atRegister(deps, action) && calling(deps.town(), deps.selected())) { pay(); return action.type === 'place'; }
       if (!toFridge(action)) return false;
-      const outcome = settle(stockUp(deps.town(), deps.selected()));
+      const outcome = settle(stockUp(deps.town(), deps.selected(), action.type === 'put' ? action.item : undefined));
       if (outcome === 'stored') deps.feedback.sound.cue('clink');
       // Nothing to put away here (the market's own fridge): the fridge just opens.
       return outcome !== 'none';

@@ -2,7 +2,8 @@ import type Phaser from 'phaser';
 import { basics, stockLimit } from '../domain/ingredients';
 import type { Basic, Stock } from '../domain/ingredients';
 import type { Neighborhood } from '../domain/neighborhood-types';
-import { stockOf } from '../domain/stock';
+import { familyHome, stockOf } from '../domain/stock';
+import { isMarket } from '../domain/market';
 import type { Item, World } from '../domain/types';
 import { itemKind } from '../domain/item-kind';
 import { runOut } from '../domain/larder';
@@ -61,12 +62,17 @@ function drawFridgeStock(scene: Phaser.Scene, state: World, pieces: Map<number, 
     });
   });
 }
+/** The pantry an open fridge shows (decision #11): the family home's, the only one; the market's fridge keeps the market's. */
+function shownPantry(town: Neighborhood | null): Stock {
+  const where = town?.location, house = where?.kind === 'interior' ? town!.buildings.find(b => b.id === where.building) : undefined;
+  if (!house || where?.kind !== 'interior') return {};
+  return stockOf(isMarket(house.layout, where.room) ? house : familyHome(town!));
+}
 /** What the room shows of the market (§3.4): the shelves' goods, and in an open fridge the house's pantry; the school's drawings
  *  on the fridge door (W3L-26); and the books each bookcase has left (lot 8C). */
 export function drawPantries(scene: Phaser.Scene, state: World, pieces: Map<number, Phaser.GameObjects.Container>, town: Neighborhood | null) {
-  const where = town?.location, house = where?.kind === 'interior' ? town!.buildings.find(b => b.id === where.building) : undefined;
   drawShelfGoods(scene, state, pieces, town?.progress.shelves ?? []);
-  drawFridgeStock(scene, state, pieces, house ? stockOf(house) : {});
+  drawFridgeStock(scene, state, pieces, shownPantry(town));
   drawFridgeDrawings(scene, state, pieces, town?.progress.drawings ?? []);
   drawBookcases(scene, state, pieces, town);
 }

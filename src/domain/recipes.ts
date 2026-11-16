@@ -5,7 +5,7 @@ import { cropIds } from './types';
 import type { ActorId, ItemId, Piece, PieceKind, Point } from './types';
 import { basics, utensils } from './ingredients';
 import type { Ingredient, Stock, Utensil } from './ingredients';
-import { fullStock, stockOf, takeStock } from './stock';
+import { familyHome, fullStock, stockOf, takeStock } from './stock';
 import { pieceBounds } from './layout';
 import { roomWidths } from './geometry';
 import { spawnItem } from './portable';
@@ -95,7 +95,7 @@ function serveDish(town: Neighborhood, input: CookInput, piece: Piece, recipe: R
   const progress = revealShelves({ ...town.progress, basket: useCrops(town.progress, input.ingredients),
     recipes: add(town.progress.recipes, recipe.id, discovered), fancy: add(town.progress.fancy, recipe.id, fancy) }, false);
   const item = (spawned.items.at(-1) as NeighborhoodItem).id;
-  const buildings = spawned.buildings.map(b => b.id === input.building ? { ...b, stock: takeStock(b.stock, input.ingredients) } : b);
+  const home = familyHome(spawned), buildings = spawned.buildings.map(b => b === home ? { ...b, stock: takeStock(b.stock, input.ingredients) } : b);
   return { town: { ...handed(spawned, input.cook, item), buildings, progress }, outcome: { kind: 'dish', recipe: recipe.id, item, fancy, discovered } };
 }
 /** The ready dish goes to the cook's hand (W3L-07) when it is free; otherwise it stays on the floor by the bench. */
@@ -107,8 +107,7 @@ function handed(town: Neighborhood, cook: ActorId, item: ItemId): Neighborhood {
 /** The cook at the bench: a dish for an exact set and utensil, otherwise a hint that changes nothing (§3.2). */
 export function cook(town: Neighborhood, input: CookInput): Cooked {
   const piece = bench(town, input);
-  const house = town.buildings.find(b => b.id === input.building);
-  if (!piece || !validBowl(town.progress, stockOf(house!), input.ingredients, input.utensil)) return { town, outcome: { kind: 'none' } };
+  if (!piece || !validBowl(town.progress, stockOf(familyHome(town)), input.ingredients, input.utensil)) return { town, outcome: { kind: 'none' } };
   if (!benchUtensils[piece.kind as BenchKind].includes(input.utensil)) return { town, outcome: { kind: 'missing', want: utensilPiece(input.utensil) } };
   const recipe = recipes.find(r => r.utensil === input.utensil && sameSet(r, input.ingredients));
   return recipe ? serveDish(town, input, piece, recipe) : { town, outcome: hint(town.progress, input.ingredients, input.utensil) };

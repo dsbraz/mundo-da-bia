@@ -3,12 +3,12 @@ import { foodAtHome, larderOf, snacksOf } from './larder';
 import { localWorld, migrateNeighborhood, neighborhoodAction, storeWorld, undoTo } from './neighborhood';
 import { initialAlbum } from './houses';
 import { initialWorld, transition } from './world';
-import { marketGoods, storeGoods } from './market';
+import { marketGoods, stockUp, storeGoods } from './market';
 import { work } from './work';
 import { destination, suggestion } from './routine';
 import { fullStock, stockOf } from './stock';
 import type { Building, Neighborhood } from './neighborhood-types';
-import type { ActorId, World } from './types';
+import type { ActorId, RoomId, World } from './types';
 
 const home = (): Neighborhood => migrateNeighborhood(initialAlbum(initialWorld()));
 const house = (patch: Partial<Building>): Neighborhood => ({ ...home(), buildings: home().buildings.map(b => b.id === 1 ? { ...b, ...patch } : b) });
@@ -90,7 +90,7 @@ describe('a comida da geladeira acaba (lote 6F)', () => {
     const put = (t: Neighborhood, location: Neighborhood['location']) => ({ ...t, actors: t.actors.map(a => a.id === 'daniel' ? { ...a, location, room: location.kind === 'interior' ? location.room : 'sala' as const, seat: null } : a) });
     const shift = work(put(low, { kind: 'interior', building: 3, room: officeRoom as never }), 'manha');
     const back = work(put(work(put(shift, { kind: 'street' }), 'tarde'), { kind: 'interior', building: 1, room: 'sala' }), 'tarde');
-    expect(back.items.find(i => i.holder === 'daniel')!.contents).toEqual(['lanche', 'ovo', 'farinha']);
+    expect(back.items.find(i => i.holder === 'daniel')!.contents).toEqual(['lanche', 'ovo']);
     expect(stockOf(back.buildings[0]!)).toEqual(stockOf(low.buildings[0]!));
   });
 });
@@ -118,5 +118,53 @@ describe('com fome e a geladeira vazia, o mercado (lote 6F)', () => {
     expect(destination(withMarket(), 'mercado', at)).toEqual({ kind: 'building', building: 2 });
     expect(destination(home(), 'mercado', at)).toBeNull();
     expect(destination(withMarket(), 'mercado', { kind: 'interior', building: 2, room: 'sala' })).toBeNull();
+  });
+});
+
+describe('uma só despensa: a da casa da família (#8, #12, #13)', () => {
+  /** Bia, with the home's snack in hand, in `room` of building `id`, which is on screen. */
+  function carrying(town: Neighborhood, id: number, room: RoomId): Neighborhood {
+    const at = { kind: 'interior' as const, building: id, room };
+    return { ...town, location: at, actors: town.actors.map(a => a.id === 'bia' ? { ...a, location: at, room, seat: null } : a),
+      items: town.items.map(i => i.id === '1:lanche' ? { ...i, holder: 'bia' as const, spot: 'floor' as const, room, location: at } : i) };
+  }
+  const feedThere = (town: Neighborhood) => storeWorld(town, transition(localWorld(town), { type: 'feed', actor: 'bia' }).state);
+  const inHomeFridge = { holder: null, spot: 'fridge', room: 'sala', location: { kind: 'interior', building: 1, room: 'sala' } };
+  it('#8: o lanche de casa comido na escola sai da contagem de casa e volta para a geladeira de casa; a escola não ganha geladeira', () => {
+    const built = neighborhoodAction(home(), { type: 'construct', plot: 1, model: 'school' }), school = built.buildings.at(-1)!;
+    const fed = feedThere(carrying(built, school.id, school.entry));
+    expect(snacksOf(fed.buildings[0]!)).toBe(3);
+    expect(Object.hasOwn(fed.buildings.find(b => b.id === school.id)!, 'snacks')).toBe(false);
+    expect(fed.items.find(i => i.id === '1:lanche')).toMatchObject(inHomeFridge);
+  });
+  it('#13: o lanche comido no quarto volta para a geladeira da sala, e não fica no chão', () => {
+    const fed = feedThere(carrying(home(), 1, 'quarto'));
+    expect(snacksOf(fed.buildings[0]!)).toBe(3);
+    expect(fed.items.find(i => i.id === '1:lanche')).toMatchObject(inHomeFridge);
+    const dropped = storeWorld(carrying(home(), 1, 'quarto'), transition(localWorld(carrying(home(), 1, 'quarto')), { type: 'drop', actor: 'bia' }).state);
+    expect(dropped.items.find(i => i.id === '1:lanche')).toMatchObject({ holder: null, spot: 'floor', room: 'quarto' });
+    // Given from the bedroom floor, it is eaten all the same.
+    const onFloor = { ...dropped, location: dropped.location, items: dropped.items.map(i => i.id === '1:lanche' ? { ...i, x: 700, y: 540 } : i) };
+    const given = storeWorld(onFloor, transition(localWorld(onFloor), { type: 'give', actor: 'bia', item: '1:lanche' }).state);
+    expect(snacksOf(given.buildings[0]!)).toBe(3);
+    expect(given.items.find(i => i.id === '1:lanche')).toMatchObject(inHomeFridge);
+  });
+  it('numa casa da família sem geladeira, o lanche comido fica onde estava (conta um a menos)', () => {
+    const bare = { ...home(), buildings: home().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.filter(p => p.kind !== 'fridge') } })) };
+    const fed = feedThere(carrying(bare, 1, 'quarto'));
+    expect(snacksOf(fed.buildings[0]!)).toBe(3);
+    expect(fed.items.find(i => i.id === '1:lanche')).toMatchObject({ holder: null, spot: 'floor', room: 'quarto' });
+  });
+  it('#12: uma casa nova não tem lanche nem peixe próprios: conta a geladeira da casa da família', () => {
+    const built = neighborhoodAction(house({ snacks: 0, stock: {} }), { type: 'construct', plot: 1, model: 'house' }), second = built.buildings.at(-1)!;
+    const inside = { kind: 'interior' as const, building: second.id, room: 'sala' as const };
+    const there = { ...built, location: inside, actors: built.actors.map(a => a.id === 'bia' ? { ...a, location: inside, room: 'sala' as const, seat: null } : a) };
+    expect(foodAtHome(there, 'bia')).toBe(false);
+    expect(localWorld(there).larder).toEqual({ lanche: 0, peixe: 0 });
+    const bag = { id: '9:sacola' as const, kind: 'sacola' as const, room: 'sala' as const, holder: 'bia' as const, spot: 'floor' as const, x: 400, y: 500, location: inside, contents: ['lanche' as const], paid: true };
+    const stored = stockUp({ ...there, items: [...there.items, bag] }, 'bia');
+    expect(stored.outcome).toEqual({ kind: 'stored', left: 0 });
+    expect(stored.town.buildings[0]!.snacks).toBe(1);
+    expect(Object.hasOwn(stored.town.buildings.find(b => b.id === second.id)!, 'snacks')).toBe(false);
   });
 });

@@ -26,11 +26,46 @@ async function open(page: Page, size: typeof sizes[number]) {
   await ready(page);
 }
 
-/** W3L-25: the family's living room, an office on plot 1 and a market on plot 2. */
+/** W3L-25: the family's living room, an office on plot 1 and a market on plot 2; the pantry is short of eggs (#7: groceries bring only
+ *  what is lacking). */
 function workTown(): Neighborhood {
   const office = neighborhoodAction(migrateNeighborhood(initialAlbum(family())), { type: 'construct', plot: 1, model: 'office' });
-  return neighborhoodAction(office, { type: 'construct', plot: 2, model: 'shop', plan: 'market' });
+  const town = neighborhoodAction(office, { type: 'construct', plot: 2, model: 'shop', plan: 'market' });
+  return { ...town, buildings: town.buildings.map(b => b.id === 1 ? { ...b, stock: { ovo: 1 } } : b) };
 }
+/** Daniel selected and taken to the office's desk room (his shift starts). */
+async function toTheDesk(page: Page) {
+  const daniel = async () => (await readTown(page)).actors.find(a => a.id === 'daniel')!;
+  const start = await daniel();
+  await tap(page, start.x, start.y - 150);
+  await expect(page.locator('#selected')).toHaveText('Daniel');
+  const office = (await readTown(page)).buildings.find(b => b.model === 'office')!, desk = Object.values(office.layout.rooms).find(r => r.template === 'office')!;
+  await page.locator('#map-toggle').click();
+  await page.locator('#neighborhood-list').getByRole('button', { name: `Ir para ${office.name}`, exact: true }).click();
+  await expect.poll(async () => (await daniel()).location).toMatchObject({ kind: 'interior', building: office.id });
+  await page.locator('#map-toggle').click();
+  await page.locator('#room-map').getByRole('button', { name: `Ir para ${desk.name}`, exact: true }).click();
+  await bringHere(page);
+  await expect.poll(async () => (await daniel()).location).toMatchObject({ kind: 'interior', building: office.id, room: Object.entries(office.layout.rooms).find(([, r]) => r === desk)![0] });
+  return daniel;
+}
+test('#41: trazido para casa ainda de manhã, o Daniel não traz compras e diz por quê', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.clock.install();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
+    encodeNeighborhood(workTown()));
+  await ready(page);
+  const daniel = await toTheDesk(page), home = (await readTown(page)).buildings[0]!;
+  // Every line said, kept: the arrival's own line follows his at once.
+  await page.evaluate(() => { const said: string[] = (window as unknown as { said: string[] }).said = [], status = document.querySelector('#announcement')!;
+    new MutationObserver(() => said.push(status.textContent ?? '')).observe(status, { childList: true, characterData: true, subtree: true }); });
+  await page.locator('#map-toggle').click();
+  await page.locator('#neighborhood-list').getByRole('button', { name: `Ir para ${home.name}`, exact: true }).click();
+  await expect.poll(async () => (await daniel()).location).toMatchObject({ kind: 'interior', building: home.id });
+  await expect.poll(() => page.evaluate(() => (window as unknown as { said: string[] }).said)).toContain('Daniel saiu cedo do trabalho. Compras, só voltando à tarde!');
+  expect((await readTown(page)).items.some(i => i.kind === 'sacola')).toBe(false);
+});
 test('levar o Daniel ao escritório não troca a roupa (lot 8B), e trazê-lo de volta à tarde mostra a sacola paga (W3L-25)', async ({ page }) => {
   test.setTimeout(120_000);
   await page.clock.install();
