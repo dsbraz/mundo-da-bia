@@ -11,6 +11,7 @@ import type { BagView } from '../presentation/market-play';
 import { checkoutCall } from '../presentation/checkout-call';
 import type { PlayScene } from '../presentation/scene';
 import type { sceneFeedback } from './scene-feedback';
+import { marketText } from '../content/kitchen';
 
 interface MarketDeps {
   root: HTMLElement; town: () => Neighborhood; selected: () => ActorId; building: () => boolean;
@@ -43,6 +44,11 @@ function toMarket(deps: MarketDeps) {
   const place = destination(deps.town(), 'mercado');
   if (place) { deps.openMap(place); return; }
   deps.root.dataset.wantMarket = 'true'; deps.root.querySelector('#build-toggle')?.classList.add('wanted');
+}
+/** The checkout tapped with nothing to pay for: she shrugs and the bubble draws the market; a touch on it takes her to this room's shelf. */
+function shelfFirst(deps: MarketDeps) {
+  const town = deps.town(), room = town.location, shelf = room.kind === 'interior' ? hereOf(town)?.layout.pieces.find(p => p.room === room.room && p.kind === 'market-shelf') : undefined;
+  deps.feedback.missing('market', { actor: deps.selected(), text: marketText.shelfFirst, go: () => { if (shelf) deps.perform({ type: 'use', id: shelf.id }); } });
 }
 /** What her bag shows: up to 6 goods and the paid ribbon. */
 function bagOf(deps: MarketDeps): BagView {
@@ -82,7 +88,8 @@ export function marketPlay(deps: MarketDeps) {
   /** Beep, beep: the bag gets its ribbon, the receipt pops out of the register and she cheers (whoever works there waves). */
   function pay() {
     const piece = calling(deps.town(), deps.selected());
-    if (!piece || settle(checkout(deps.town(), deps.selected())) !== 'paid') return;
+    if (!piece) { shelfFirst(deps); return; }
+    if (settle(checkout(deps.town(), deps.selected())) !== 'paid') return;
     deps.feedback.sound.cue('beep'); call.paid(register(piece)); cheer(deps);
     if (panel.isOpen()) panel.show(bagView(), false);
   }

@@ -68,9 +68,9 @@ function release(state: World, actor: Actor, feeding: boolean): Transition {
     ? { ...i, ...foodHome(state, i, actor, feeding) } : i) } };
 }
 
-/** Only people change clothes, and only into their own wardrobe's looks (W3L-24). */
+/** Only people change clothes, and only into their own wardrobe's looks (W3L-24); anyone else shrugs at it (the missing bubble). */
 function dress(state: World, actor: Actor, look: Extract<Action, { type: 'dress' }>['look']): Transition {
-  return actor.kind === 'human' && wardrobeOf(actor.id).includes(look) ? changeActor(state, actor, { look }, 'dressed') : { state, events: [] };
+  return actor.kind === 'human' && wardrobeOf(actor.id).includes(look) ? changeActor(state, actor, { look }, 'dressed') : refuse(state, 'place', actor.id);
 }
 function actorAction(state: World, actor: Actor, action: Action): Transition {
   switch (action.type) {

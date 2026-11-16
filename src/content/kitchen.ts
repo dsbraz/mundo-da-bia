@@ -27,5 +27,5 @@ export const bookText = { region: 'Livro de receitas', toggle: 'Receitas', open:
 export const goodNames: Record<Good, string> = { ...ingredientNames, 'semente-alface': 'Sementes de alface', 'semente-tomate': 'Sementes de tomate',
   'semente-cenoura': 'Sementes de cenoura', 'semente-milho': 'Sementes de milho', 'semente-morango': 'Sementes de morango', 'semente-abobora': 'Sementes de abóbora', lanche: 'Lanche' };
 export const marketText = { region: 'Prateleira do mercado', close: 'Fechar a prateleira', pay: 'Pagar no caixa',
-  call: 'O caixa está chamando: toque para pagar',
+  call: 'O caixa está chamando: toque para pagar', shelfFirst: 'Primeiro, pega as compras na prateleira.',
   bag: (goods: string[]) => goods.length ? `Sacola com ${goods.join(', ')}` : 'Sacola vazia' };

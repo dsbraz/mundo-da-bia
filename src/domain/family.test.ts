@@ -38,7 +38,7 @@ it('o guarda-roupa do adulto tem 7 looks: 2 do dia a dia e 5 uniformes; as crian
   expect(wardrobeOf('bia')).toContain('spiderman');
   const home = { ...initialWorld(), room: 'quarto' as const };
   expect(transition(home, { type: 'dress', actor: 'daniel', look: 'office' }).state.actors.find(a => a.id === 'daniel')!.look).toBe('office');
-  expect(transition(home, { type: 'dress', actor: 'daniel', look: 'spiderman' })).toEqual({ state: home, events: [] });
+  expect(transition(home, { type: 'dress', actor: 'daniel', look: 'spiderman' })).toEqual({ state: home, events: [{ type: 'missing', actor: 'daniel', need: 'place' }] });
   const sala = initialWorld();
-  expect(transition(sala, { type: 'dress', actor: 'bia', look: 'firefighter' })).toEqual({ state: sala, events: [] });
+  expect(transition(sala, { type: 'dress', actor: 'bia', look: 'firefighter' })).toEqual({ state: sala, events: [{ type: 'missing', actor: 'bia', need: 'place' }] });
 });
