@@ -1,8 +1,8 @@
 import { adultIds } from '../domain/family';
-import { lesson, type Classroom, type Subject } from '../domain/school';
+import { handPaper, lesson, pinPaper, type Classroom, type Subject } from '../domain/school';
 import { staffAt } from '../domain/staff';
 import type { Neighborhood } from '../domain/neighborhood-types';
-import type { Action, ActorId, Point, World } from '../domain/types';
+import type { Action, ActorId, ItemId, Point, World } from '../domain/types';
 import { pieceBounds } from '../domain/layout';
 import { nearestApproach } from '../presentation/equipment-interaction';
 import type { PlayScene } from '../presentation/scene';
@@ -27,11 +27,26 @@ export function boardSide(world: World, actor: ActorId, piece: number): Point | 
   if (!board || !resident) return null;
   return nearestApproach(world, resident, { x: board.x + pieceBounds.board.width + 40, y: board.y + pieceBounds.board.height + 40 });
 }
+/** The fridge of the room on screen under a let-go point (its drawing, down to the floor in front of it): a closed fridge is no slot. */
+function fridgeUnder(town: Neighborhood, point: Point) {
+  const where = town.location, { width, height } = pieceBounds.fridge;
+  const pieces = where.kind === 'interior' ? town.buildings.find(b => b.id === where.building)?.layout.pieces ?? [] : [];
+  return pieces.some(p => where.kind === 'interior' && p.room === where.room && p.kind === 'fridge' && point.x >= p.x && point.x <= p.x + width && point.y >= p.y && point.y <= p.y + height + 40);
+}
+/** A paper let go on a fridge (into the open one, or over the closed door), Bia's request: the only way it gets pinned. */
+function paperOnFridge(town: Neighborhood, action: Action): ItemId | null {
+  const paper = (action.type === 'put' || action.type === 'place') && town.items.some(i => i.id === action.item && i.kind === 'papel');
+  if (!paper) return null;
+  return action.type === 'put' ? (action.spot === 'fridge' ? action.item : null) : fridgeUnder(town, action.point) ? action.item : null;
+}
 /** The school in play (W3L-26): the board tapped, with children at the desks, offers the subject (lot 8D: drawing, writing or math)
  *  and the chosen one starts the lesson; nobody at a desk shows the desk missing (Daniel and Fabiana never count as pupils). */
 export function schoolPlay(deps: SchoolDeps) {
   let board: number | null = null;
-  deps.scene.lessons.finished = pupils => { pupils.forEach(id => deps.scene.poke(id, 'cheer', '')); deps.feedback.sound.cue('cheer'); };
+  deps.scene.lessons.finished = (pupils, theme) => {
+    pupils.forEach(id => deps.scene.poke(id, 'cheer', '')); deps.feedback.sound.cue('cheer');
+    deps.apply(handPaper(deps.town(), pupils, theme, deps.selected()));
+  };
   const boardAt = (id: number): Classroom | null => {
     const where = deps.town().location;
     if (where.kind !== 'interior') return null;
@@ -57,8 +72,11 @@ export function schoolPlay(deps: SchoolDeps) {
   return {
     /** The teacher tapped (lot 7): the same as tapping her board. */
     teach(): boolean { const piece = roomBoard(); return !!piece && this.intercept({ type: 'use', id: piece.id }); },
-    /** A tap on a board: the subjects are offered (a tap while they are, or while the lesson is written, changes nothing). */
+    /** A tap on a board: the subjects are offered (a tap while they are, or while the lesson is written, changes nothing). A lesson's
+     *  paper let go on a fridge at home is pinned on its door. */
     intercept(action: Action): boolean {
+      const paper = paperOnFridge(deps.town(), action), pinned = paper ? pinPaper(deps.town(), paper) : null;
+      if (pinned?.outcome === 'pinned') { deps.apply(pinned.town); deps.feedback.sound.cue('clink'); deps.scene.poke(deps.selected(), 'cheer', ''); return true; }
       const room = action.type === 'use' ? boardAt(action.id) : null;
       if (!room || action.type !== 'use') return false;
       if (deps.scene.lessons.active()) return true;
