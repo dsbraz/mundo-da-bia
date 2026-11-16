@@ -51,8 +51,13 @@ for (const size of sizes) test(`um adulto deitado na cama e sentado à mesa, sem
   test.setTimeout(90_000);
   const world = living();
   world.room = 'quarto';
-  world.actors = world.actors.map(a => a.id === 'daniel' ? { ...a, room: 'quarto', seat: '8.0', x: 790, y: 350, resting: true } : a.id === 'fabiana' ? { ...a, room: 'quarto', x: 420, y: 530 } : a.id === 'bia' ? { ...a, room: 'quarto', x: 300, y: 530 } : a.room === 'quarto' ? { ...a, room: 'sala' } : a);
+  world.actors = world.actors.map(a => a.id === 'daniel' ? { ...a, room: 'quarto', seat: null, x: 600, y: 530 } : a.id === 'fabiana' ? { ...a, room: 'quarto', x: 420, y: 530 } : a.id === 'bia' ? { ...a, room: 'quarto', x: 300, y: 530 } : a.room === 'quarto' ? { ...a, room: 'sala' } : a);
   await open(page, size, world);
+  // A session starts with everyone up (#26): the Daniel lies down in the bed with the button.
+  await tap(page, 600, 530 - 205);
+  await expect(page.locator('#selected')).toHaveText('Daniel');
+  await page.getByRole('button', { name: 'Deitar', exact: true }).click();
+  await expect.poll(async () => (await read(page)).actors.find(a => a.id === 'daniel')).toMatchObject({ seat: '8.0', resting: true });
   await page.waitForTimeout(300);
   await page.screenshot({ path: `reports/review/lot6b-adults-bed-${size.width}.png` });
 });

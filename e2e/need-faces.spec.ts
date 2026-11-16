@@ -13,10 +13,10 @@ async function seed(page: Page) {
   world.actors = world.actors.map(a => a.id === 'luna' ? { ...a, room: 'quarto', seat: null, x: 400, y: 520 } : a);
   const town = migrateNeighborhood(initialAlbum(world)), bia = town.actors.find(a => a.id === 'bia')!;
   const dish = { id: '20:prato' as const, kind: 'prato' as const, recipe: 'ovo-mexido', room: 'sala' as const, location: bia.location, x: bia.x, y: bia.y, holder: 'bia' as const, spot: 'floor' as const };
-  await page.clock.install({ time: new Date('2026-11-12T10:00:00') });
+  await page.clock.install({ time: new Date('2026-11-13T10:00:00') });
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
     encodeNeighborhood({ ...town, nextItem: 21, items: [...town.items, dish] }));
-  await ready(page); await page.clock.pauseAt(new Date('2026-11-12T10:00:30'));
+  await ready(page); await page.clock.pauseAt(new Date('2026-11-13T10:00:30'));
 }
 /** Plays `minutes` with the Bia taking a step every tick, so she is never idle: her sadness here comes from hunger and sleep, not from
  *  standing still (lot 8E: boredom reaches `precisa` at 23 min 20 s for whoever stands still). */
