@@ -10,7 +10,7 @@ import type { Neighborhood } from '../domain/neighborhood-types';
 function setup(selected: 'bia' | 'leo' = 'bia') {
   const base = migrateNeighborhood(initialAlbum(initialWorld()));
   const town: Neighborhood = { ...base, location: { kind: 'street' }, outdoor: { ...base.outdoor, bench: 'bia' } };
-  const deps = { town: () => town, selected: () => selected, walker: { cancel: vi.fn(), start: vi.fn() } as never, dispatch: vi.fn(), refuse: vi.fn(), push: vi.fn(),
+  const deps = { town: () => town, selected: () => selected, walker: { cancel: vi.fn(), start: vi.fn() } as never, dispatch: vi.fn(), refuse: vi.fn(), push: vi.fn(), serve: vi.fn(),
     garden: { touch: vi.fn(), can: vi.fn(), drop: vi.fn() } };
   return { actions: plaza(deps), deps };
 }
