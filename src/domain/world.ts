@@ -16,6 +16,7 @@ import { refuse } from './missing';
 import { bedtime } from './bedtime';
 import { eatOne, runOut } from './larder';
 import { startReading } from './library';
+import { footprint, type Footprint } from './placement';
 
 // New saves only: spread out, one on the sofa, one by the stage microphone, nobody in front of the fridge, cats apart,
 // and compact enough (x 203-872) for the whole group to open in view at 768 px.
@@ -96,8 +97,18 @@ function houseWide(state: World, type: HouseWide['type']): Transition {
   if (type === 'show') return { state: { ...state, show: !state.show }, events: [{ type: 'show' }] };
   if (type === 'bedtime') return bedtime(state);
   return {
-    state: { ...state, actors: state.actors.map(a => ({ ...a, x: Math.min(a.x, roomWidth(state) - 60), room: state.room, seat: null })) }, events: [{ type: 'summoned' }],
+    state: { ...state, actors: state.actors.map(a => ({ ...a, ...wake(a), ...standHere(state, a), room: state.room, seat: null })) }, events: [{ type: 'summoned' }],
   };
+}
+/** Where someone called here stands (#1, #22): awake (above), on the floor and never up the wall, and out of a piece's footprint on its
+ *  nearest free side, like a drop in the scene. */
+function standHere(state: World, actor: Actor): Point {
+  const width = roomWidth(state), top = floorTop(state), at = { x: Math.min(actor.x, width - 60), y: Math.min(540, Math.max(actor.y, top)) };
+  const areas = state.layout.pieces.filter(p => p.room === state.room).map(footprint).filter((f): f is Footprint => !!f);
+  const inside = (p: Point) => areas.filter(f => p.x >= f.left && p.x <= f.right && p.y >= f.top && p.y <= f.bottom);
+  const exits = inside(at).flatMap(f => [{ x: at.x, y: f.bottom + 1 }, { x: f.left - 1, y: at.y }, { x: f.right + 1, y: at.y }, { x: at.x, y: f.top - 1 }])
+    .filter(p => validPoint(p, width) && p.y >= top && !inside(p).length);
+  return exits.sort((a, b) => Math.hypot(a.x - at.x, a.y - at.y) - Math.hypot(b.x - at.x, b.y - at.y))[0] ?? at;
 }
 function playTransition(state: World, action: Exclude<Action, { type: 'name' }>): Transition {
   if (action.type === 'cross') return cross(state, action);
