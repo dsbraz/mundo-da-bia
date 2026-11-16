@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ready, read, tray, closeTray, clear, drag, create, choice } from './helpers';
+import { ready, read, tray, closeTray, clear, drag, create, choice, points } from './helpers';
 test('esvaziar exige confirmação, desfaz, refaz e permite colorir e espelhar', async ({ page }) => {
   await ready(page); const original = await read(page); await page.locator('#build-toggle').click();
   await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click(); await page.locator('#room-options summary').click(); await page.locator('#clear-room').click();
@@ -22,7 +22,11 @@ test('acabamentos e cópias de casas permanecem independentes', async ({ page })
   expect((await read(page)).layout.pieces.filter(p => p.room === 'sala')).toHaveLength(0);
 });
 test('mover móveis não navega nem ativa brincadeiras; teclado, cancelar e guardar', async ({ page }) => {
-  await ready(page); await page.locator('#build-toggle').click(); await clear(page); await tray(page); await page.getByRole('button', { name: 'Adicionar Sofá aconchego', exact: true }).click(); await closeTray(page); const before = await read(page);
+  await ready(page); await page.locator('#build-toggle').click(); await clear(page); await tray(page);
+  // Dropped on the free floor at the front left (nobody stands there; the inspector docks on the right).
+  const button = (await page.getByRole('button', { name: 'Adicionar Sofá aconchego', exact: true }).boundingBox())!, [spot] = await points(page, [[160, 470]]);
+  await page.mouse.move(button.x + button.width / 2, button.y + button.height / 2); await page.mouse.down(); await page.mouse.move(spot!.x, spot!.y, { steps: 10 }); await page.mouse.up();
+  await closeTray(page); const before = await read(page);
   const sofa = before.layout.pieces.find(p => p.kind === 'sofa')!; const from: [number, number] = [sofa.x + 100, sofa.y + 60], to: [number, number] = [sofa.x + 120, sofa.y + 60];
   await drag(page, from, to, true); expect(await read(page)).toEqual(before);
   await drag(page, from, to); expect((await read(page)).layout.pieces.find(p => p.kind === 'sofa')!.x).toBeCloseTo(sofa.x + 20);
