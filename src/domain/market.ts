@@ -6,7 +6,7 @@ import { pieceBounds } from './layout';
 import type { Building, Location, MarketAction, Neighborhood, NeighborhoodAction, NeighborhoodItem } from './neighborhood-types';
 import { consumeItem, spawnItem } from './portable';
 import { familyHome, stockOf } from './stock';
-import { snacksOf } from './larder';
+import { larderOf, snacksOf, storeLarder } from './larder';
 
 import type { Good } from './goods';
 export type { Good, Seed } from './goods';
@@ -120,6 +120,13 @@ export function stockUp(town: Neighborhood, actor: ActorId, item?: ItemId): Shop
   if (!hand.paid) return { town, outcome: { kind: 'missing', need: 'checkout' } };
   const stored = storeGoods(town, familyHome(town).id, hand.contents);
   return { town: stored.left.length ? patch(stored.town, hand.id, { contents: stored.left }) : consumeItem(stored.town, hand.id), outcome: { kind: 'stored', left: stored.left.length } };
+}
+/** Never a dead end (decision #32): in a new morning with no market in the neighborhood, the snack and the cats' fish the family home ran
+ *  out of come back, 4 of each, like a new house. */
+export function morningFood(town: Neighborhood): Neighborhood {
+  if (hasMarket(town)) return town;
+  const home = familyHome(town), larder = larderOf(home), next = storeLarder(home, { lanche: larder.lanche || stockLimit, peixe: larder.peixe || stockLimit });
+  return next === home ? town : { ...town, buildings: town.buildings.map(b => b === home ? next : b) };
 }
 export const marketActions: readonly NeighborhoodAction['type'][] = ['buy', 'checkout', 'stock-up'];
 export function shop(town: Neighborhood, action: MarketAction): Shopped {

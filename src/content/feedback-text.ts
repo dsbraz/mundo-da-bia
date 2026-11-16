@@ -34,8 +34,9 @@ const refusals: Record<Refusal, string> = {
   edit: 'Aqui não cabe. Tenta outro cantinho?',
 };
 export const refusal = (kind: Refusal, name: string) => say(refusals[kind], name);
-/** A grown-up brought home from work in the morning (#41): the shift is over, and groceries only come home from work in the afternoon. */
-export const shiftCutLine = (name: string) => say('{nome} saiu cedo do trabalho. Compras, só voltando à tarde!', name);
+/** A grown-up home from work with no groceries (#41): brought home in the morning (they only come in the afternoon), or nothing lacking. */
+export const shiftCutLine = (why: 'early' | 'full', name: string) =>
+  say(why === 'early' ? '{nome} saiu cedo do trabalho. Compras, só voltando à tarde!' : '{nome} voltou do trabalho. A despensa já está cheia!', name);
 /** What a missing bubble means, for screen readers only (W3L-02): the bubble itself is a drawing. */
 const needLines: Record<Need, string> = {
   seat: 'Falta um lugar para sentar.', place: 'Aqui não tem lugar.', hands: 'As mãos estão cheias.', food: 'Essa comida não serve.', path: 'Por aqui não passa.', table: 'Falta uma mesa com cadeira.', bed: 'Falta uma cama para dormir.',

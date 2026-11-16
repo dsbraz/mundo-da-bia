@@ -5,7 +5,7 @@ import type { ActorId, Layout, RoomId } from './types';
 import { adultIds } from './family';
 import { checkoutAt, hasMarket, isMarket } from './market';
 import { familyHome, stockOf } from './stock';
-import { larderOf, snacksOf, storeLarder } from './larder';
+import { snacksOf } from './larder';
 import { spawnItem } from './portable';
 
 /** A place is what it holds: the room `adult` stands in is a workplace (the market's checkout, the office, the consultation room, the
@@ -33,14 +33,7 @@ const homeOf = (town: Neighborhood) => familyHome(town).id;
  *  brings a paid bag of the 3 basics the home lacks most, once a day (#7); home in the morning, the shift is cut short. The clothes never change here (lot 8B): everybody keeps the look it wears
  *  everywhere, and only the wardrobe changes it. */
 export function work(town: Neighborhood, phase: Phase): Neighborhood {
-  return adultIds.reduce((current, id) => shift(current, current.actors.find(a => a.id === id)!, phase), morningFood(town, phase));
-}
-/** Never a dead end (decision #32): with no market in the neighborhood, the snack and the cats' fish the family home ran out of come back
- *  in the morning, 4 of each, like a new house. */
-function morningFood(town: Neighborhood, phase: Phase): Neighborhood {
-  if (phase !== 'manha' || hasMarket(town)) return town;
-  const home = familyHome(town), larder = larderOf(home), next = storeLarder(home, { lanche: larder.lanche || stockLimit, peixe: larder.peixe || stockLimit });
-  return next === home ? town : { ...town, buildings: town.buildings.map(b => b === home ? next : b) };
+  return adultIds.reduce((current, id) => shift(current, current.actors.find(a => a.id === id)!, phase), town);
 }
 function shift(town: Neighborhood, adult: Resident, phase: Phase): Neighborhood {
   // The day's groceries came (#7): no other shift until the next morning.
@@ -54,10 +47,16 @@ function offWork(town: Neighborhood, adult: Resident, shift: NonNullable<Residen
   if ((phase !== 'tarde' && phase !== 'entardecer') || !hasMarket(town)) return home(town, adult);
   return groceries(change(town, adult, { work: { off: true, done: true } }), adult);
 }
-/** The grown-ups a trip home in the morning took off their shift with no groceries (#41): the scene shows it, never silently. */
-export function cutShort(before: Neighborhood, after: Neighborhood, phase: Phase): ActorId[] {
-  if (phase !== 'manha') return [];
-  return adultIds.filter(id => { const was = before.actors.find(a => a.id === id)?.work; return !!was && !was.done && !after.actors.find(a => a.id === id)?.work; });
+/** The grown-ups whose shift ended at home with no groceries (#41): brought home in the morning (`early`), or nothing lacking at home
+ *  (`full`). The scene shows why, never silently. */
+type ShiftEnd = { id: ActorId; why: 'early' | 'full' };
+export function cutShort(before: Neighborhood, after: Neighborhood, phase: Phase): ShiftEnd[] {
+  return adultIds.flatMap((id): ShiftEnd[] => {
+    const was = before.actors.find(a => a.id === id)?.work, now = after.actors.find(a => a.id === id)?.work;
+    if (!was || was.done) return [];
+    if (!now) return phase === 'manha' ? [{ id, why: 'early' }] : [];
+    return now.done && after.items.length === before.items.length ? [{ id, why: 'full' }] : [];
+  });
 }
 /** A paid bag of the 3 goods the home has least of (the basics of the pantry and the fridge's snack), in the grown-up's hand (at its
  *  feet when the hand is full); only what is short of 4, and no bag when the home lacks nothing (#7). */

@@ -122,20 +122,16 @@ describe('trabalho (W3L-25, §3.6)', () => {
   it('#41: voltar para casa de manhã encerra o turno sem sacola, e o adulto mostra que o turno acabou (cutShort)', () => {
     const town = neighborhoodAction(withBuilding('shop', true), { type: 'construct', plot: 2, model: 'office' });
     const shift = work(put(town, 'daniel', roomOf(town, 'office')), 'manha'), arrived = put(shift, 'daniel', homeRoom);
-    expect(cutShort(arrived, work(arrived, 'manha'), 'manha')).toEqual(['daniel']);
+    expect(cutShort(arrived, work(arrived, 'manha'), 'manha')).toEqual([{ id: 'daniel', why: 'early' }]);
     expect(cutShort(shift, work(shift, 'manha'), 'manha')).toEqual([]);
     const low = { ...arrived, buildings: arrived.buildings.map(b => b.id === 1 ? { ...b, stock: { ovo: 1 } } : b) };
     expect(cutShort(low, work(low, 'tarde'), 'tarde')).toEqual([]);
+    // With nothing lacking at home, the return from work is not silent either.
+    expect(cutShort(arrived, work(arrived, 'tarde'), 'tarde')).toEqual([{ id: 'daniel', why: 'full' }]);
   });
-  it('decisão #32: sem mercado, o lanche e o peixe que acabaram em casa voltam de manhã (4 de cada); com mercado, ou de tarde, não', () => {
-    const empty = (town: Neighborhood, snacks: number, peixe?: number): Neighborhood =>
-      ({ ...town, buildings: town.buildings.map(b => b.id === 1 ? { ...b, snacks, stock: { ovo: 1, ...(peixe ? { peixe } : {}) } } : b) });
-    const morning = work(empty(home(), 0), 'manha').buildings[0]!;
-    expect(morning).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 4 } });
-    expect(work(empty(home(), 0, 2), 'manha').buildings[0]).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 2 } });
-    for (const town of [empty(home(), 2, 3), empty(withBuilding('shop', true), 0)]) expect(work(town, 'manha')).toBe(town);
-    const afternoon = empty(home(), 0);
-    expect(work(afternoon, 'tarde')).toBe(afternoon);
+  it('decisão #32: o lanche e o peixe continuam finitos durante a manhã; o turno não os repõe', () => {
+    const empty = { ...home(), buildings: home().buildings.map(b => b.id === 1 ? { ...b, snacks: 0, stock: { ovo: 1 } } : b) };
+    expect(work(empty, 'manha')).toBe(empty);
   });
   it('pela ação do bairro: { type: "work", phase }', () => {
     const town = withBuilding('office'), there = put(town, 'daniel', roomOf(town, 'office'));

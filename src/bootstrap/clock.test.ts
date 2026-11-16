@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { playTime, startTicks, type ClockPort } from './clock';
+import { morningStarts, playTime, startTicks, type ClockPort } from './clock';
 
 function fakeClock() {
   let now = 1000, timer: (() => void) | null = null, visible: (() => void) | null = null, period = 0;
@@ -60,4 +60,8 @@ it('dormir a noite (W3L-15) leva à manhã seguinte: a fase volta a manha e o di
   // 2026-11-12 is a night of stars: the day lasts 38 min.
   expect([life.phase(), life.played()]).toEqual(['manha', 38 * 60_000]);
   expect(life.take(clock.wait(30_000))).toEqual({ elapsed: 30_000, phase: 'manha' });
+});
+it('decisão #32: uma manhã começa na sessão nova, depois da noite e quando o dia dá a volta, uma vez só', () => {
+  const starts = morningStarts();
+  expect(['manha', 'manha', 'tarde', 'noite', 'manha', 'manha', 'amanhecer', 'manha'].map(phase => starts(phase as never))).toEqual([true, false, false, false, true, false, false, true]);
 });

@@ -11,6 +11,12 @@ export const realClock: ClockPort = {
     document.addEventListener('visibilitychange', listener); return () => document.removeEventListener('visibilitychange', listener);
   },
 };
+/** Whether a morning begins at this look at the clock (decision #32): the session's first, or the phase turning to morning (after a night
+ *  slept through, or the day coming round). */
+export function morningStarts() {
+  let last: Phase | null = null;
+  return (phase: Phase) => { const starts = phase === 'manha' && last !== 'manha'; last = phase; return starts; };
+}
 /** A `tick` with the time every 30 s of session and whenever the tab comes back into view; returns how to stop. */
 export function startTicks(clock: ClockPort, tick: (now: number) => void): () => void {
   const stops = [clock.every(30_000, () => tick(clock.now())), clock.onVisible(() => tick(clock.now()))];

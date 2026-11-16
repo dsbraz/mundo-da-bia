@@ -7,7 +7,7 @@ import { mirrorSpan } from '../presentation/mirror-reflection';
 import { wireInput } from './input-wiring';
 import { sceneRefresh } from './refresh';
 import { townActions } from './town-actions';
-import { playTime, realClock, startTicks } from './clock';
+import { morningStarts, playTime, realClock, startTicks } from './clock';
 import { showMoment } from './show-moment';
 import { feel } from '../domain/needs';
 import { sceneFeedback } from './scene-feedback';
@@ -28,6 +28,7 @@ import { uiText } from '../content/ui-text';
 import { mirrorFaces } from '../content/personalities';
 import { localWorld, neighborhoodAction, storeWorld } from '../domain/neighborhood';
 import { cutShort } from '../domain/work';
+import { morningFood } from '../domain/market';
 import type { Neighborhood, NeighborhoodAction } from '../domain/neighborhood-types';
 import { neighborhoodControls } from '../presentation/neighborhood-controls';
 import { buttonArt } from '../presentation/button-art';
@@ -144,11 +145,13 @@ root.querySelector('#construct-mode')!.addEventListener('click', () => { if (!bu
 root.querySelector('#construct-plot')!.addEventListener('click', newBuilding);
 root.querySelector('#construct-structure')!.addEventListener('click', () => structure.open());
 root.querySelector('#play-mode')!.addEventListener('click', () => { if (building) toggleBuild(); });
-function persist() { town = storeWorld(town, state); const worked = atWork(town); if (worked !== town) { early(town, worked); town = worked; state = localWorld(town); edits = history(state); } saved = saveNeighborhood(town); }
+function persist() { town = storeWorld(town, state); const worked = atWork(town); if (worked !== town) { town = worked; state = localWorld(town); edits = history(state); } saved = saveNeighborhood(town); }
 /** W3L-25: whoever moved, the grown-ups dress for where they are and come home from work with groceries. */
-function atWork(next: Neighborhood) { return neighborhoodAction(next, { type: 'work', phase: life.phase() }); }
-/** #41: a grown-up brought home in the morning shrugs and says why no groceries came. */
-function early(before: Neighborhood, after: Neighborhood) { cutShort(before, after, life.phase()).forEach(id => { const line = shiftCutLine(nameOf(after.actors.find(a => a.id === id)!)); scene.poke(id, 'shrug', line); feedback.announce(line); }); }
+function atWork(next: Neighborhood) { const worked = neighborhoodAction(next, { type: 'work', phase: life.phase() }); early(next, worked); return worked; }
+/** Decision #32: a new morning brings back the snack and the fish the family home ran out of, when there is no market. */
+function newMorning(starts: boolean) { const next = starts ? morningFood(town) : town; if (next !== town) townActs.apply(next); }
+/** #41: a grown-up home from work with no groceries shrugs and says why. */
+function early(before: Neighborhood, after: Neighborhood) { cutShort(before, after, life.phase()).forEach(({ id, why }) => { const line = shiftCutLine(why, nameOf(after.actors.find(a => a.id === id)!)); scene.poke(id, 'shrug', line); feedback.announce(line); }); }
 function toggleBuild() {
   cancelGame();
   constructing = false;
@@ -204,7 +207,7 @@ const nights = nightSleep({ root, town: () => town, state: () => state, selected
   slept: id => townActs.sleepThrough(id), greet: () => { scene.poke(selected, 'cheer', uiText.goodMorning); announce(uiText.goodMorning); feedback.sound.cue('cheer'); } });
 routineWiring({ root, town: () => town, selected: () => selected, playing: () => !building, phase: () => life.phase(), played: () => life.played(), head: id => scene.head(id),
   speaking: id => speaking(scene, id), openMap });
-let ticks = 0; startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); daylight(); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
+let ticks = 0; const dawn = morningStarts(); startTicks(realClock, now => { townActs.tick(now, building ? undefined : life.take(now)); daylight(); newMorning(dawn(life.phase())); if (!building) selfCare(life.played()); if (navigator.webdriver) root.dataset.ticks = String(++ticks); });
 function previewBuild(action: EditAction | null) {
   const preview = action ? dragPreview(state, action) : { world: state, invalid: false };
   scene.previewLayout(preview.world); scene.placementHint(action?.type === 'move' ? action.id : null, preview.invalid);

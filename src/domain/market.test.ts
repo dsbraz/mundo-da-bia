@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bagLimit, buy, checkout, storeGoods, stockUp, unpaidExit } from './market';
+import { bagLimit, buy, checkout, morningFood, storeGoods, stockUp, unpaidExit } from './market';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
 import { initialAlbum } from './houses';
 import { initialWorld } from './world';
@@ -127,4 +127,13 @@ describe('as compras (W3L-22)', () => {
     const stored = neighborhoodAction(carried(paid), { type: 'stock-up', actor: 'bia' });
     expect(stored).toEqual(stockUp(carried(paid), 'bia').town);
   });
+});
+
+it('decisão #32: sem mercado, o lanche e o peixe que acabaram na casa da família voltam na manhã nova (4 de cada); com mercado, não', () => {
+  const plain = migrateNeighborhood(initialAlbum(initialWorld()));
+  const empty = (t: Neighborhood, snacks: number, peixe?: number): Neighborhood =>
+    ({ ...t, buildings: t.buildings.map(b => b.id === 1 ? { ...b, snacks, stock: { ovo: 1, ...(peixe ? { peixe } : {}) } } : b) });
+  expect(morningFood(empty(plain, 0)).buildings[0]).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 4 } });
+  expect(morningFood(empty(plain, 0, 2)).buildings[0]).toMatchObject({ snacks: 4, stock: { ovo: 1, peixe: 2 } });
+  for (const t of [empty(plain, 2, 3), empty(town(), 0)]) expect(morningFood(t)).toBe(t);
 });
