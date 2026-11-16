@@ -118,12 +118,13 @@ export function storeWorld(town: Neighborhood, world: World): Neighborhood {
   town.actors.forEach(a => { const next = actors.find(n => n.id === a.id)!; if (!sameLocation(next.location, a.location) || next.x !== a.x || next.y !== a.y) outdoor = releaseOutdoor(outdoor, a.id); });
   return { ...town, outdoor, buildings, actors, items, location: location(world.room) };
 }
-/** Fridge food someone held a moment ago and ate (the family home counts one less of it), wherever it was eaten. */
+/** Fridge food just eaten (fed or given; the family home counts one less of it), wherever it was eaten: it was let go or moved. */
 function ateFood(town: Neighborhood, world: World, home: Building, item: NeighborhoodItem): boolean {
-  const food = item.kind === 'lanche' || item.kind === 'peixe' ? item.kind : null;
-  if (!food || item.holder || !town.items.find(i => i.id === item.id)?.holder) return false;
+  const food = item.kind === 'lanche' || item.kind === 'peixe' ? item.kind : null, was = town.items.find(i => i.id === item.id);
+  if (!food || !was || item.holder || untouched(was, item)) return false;
   return !!world.larder && world.larder[food] < larderOf(home)[food];
 }
+const untouched = (was: NeighborhoodItem, now: NeighborhoodItem) => !was.holder && was.x === now.x && was.y === now.y && was.spot === now.spot;
 /** An eaten snack or fish goes back to the family home's fridge (it shows there, or as a silhouette when none is left), never on the
  *  floor where it was eaten (#8, #13); a home without a fridge leaves it where it is. */
 function backHome(home: Building, item: NeighborhoodItem): NeighborhoodItem {

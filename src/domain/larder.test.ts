@@ -143,6 +143,17 @@ describe('uma só despensa: a da casa da família (#8, #12, #13)', () => {
     expect(fed.items.find(i => i.id === '1:lanche')).toMatchObject(inHomeFridge);
     const dropped = storeWorld(carrying(home(), 1, 'quarto'), transition(localWorld(carrying(home(), 1, 'quarto')), { type: 'drop', actor: 'bia' }).state);
     expect(dropped.items.find(i => i.id === '1:lanche')).toMatchObject({ holder: null, spot: 'floor', room: 'quarto' });
+    // Given from the bedroom floor, it is eaten all the same.
+    const onFloor = { ...dropped, location: dropped.location, items: dropped.items.map(i => i.id === '1:lanche' ? { ...i, x: 700, y: 540 } : i) };
+    const given = storeWorld(onFloor, transition(localWorld(onFloor), { type: 'give', actor: 'bia', item: '1:lanche' }).state);
+    expect(snacksOf(given.buildings[0]!)).toBe(3);
+    expect(given.items.find(i => i.id === '1:lanche')).toMatchObject(inHomeFridge);
+  });
+  it('numa casa da família sem geladeira, o lanche comido fica onde estava (conta um a menos)', () => {
+    const bare = { ...home(), buildings: home().buildings.map(b => ({ ...b, layout: { ...b.layout, pieces: b.layout.pieces.filter(p => p.kind !== 'fridge') } })) };
+    const fed = feedThere(carrying(bare, 1, 'quarto'));
+    expect(snacksOf(fed.buildings[0]!)).toBe(3);
+    expect(fed.items.find(i => i.id === '1:lanche')).toMatchObject({ holder: null, spot: 'floor', room: 'quarto' });
   });
   it('#12: uma casa nova não tem lanche nem peixe próprios: conta a geladeira da casa da família', () => {
     const built = neighborhoodAction(house({ snacks: 0, stock: {} }), { type: 'construct', plot: 1, model: 'house' }), second = built.buildings.at(-1)!;

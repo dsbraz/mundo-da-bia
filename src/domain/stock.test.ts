@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { basics, stockLimit } from './ingredients';
-import { fullStock, stockOf, takeStock } from './stock';
+import { familyHome, fullStock, stockOf, takeStock } from './stock';
 import { cook, pantry } from './recipes';
 import type { CookInput, Ingredient, Utensil } from './recipes';
 import { localWorld, migrateNeighborhood, neighborhoodAction, undoTo } from './neighborhood';
@@ -77,4 +77,10 @@ describe('a despensa da casa (W3L-20)', () => {
     const town = kitchen({ ovo: 2 });
     expect(stockIn(neighborhoodAction(town, { type: 'cook', ...input(['ovo'], 'panela') }))).toEqual({ ovo: 1 });
   });
+});
+
+it('decisão #11: a casa da família é a primeira casa (menor id entre casas e prédios de morar), mesmo com outro prédio de id menor; sem casa, o primeiro prédio', () => {
+  const b = (id: number, model: Neighborhood['buildings'][number]['model']) => ({ id, model });
+  expect(familyHome({ buildings: [b(3, 'house'), b(1, 'school'), b(2, 'apartment')] })).toEqual(b(2, 'apartment'));
+  expect(familyHome({ buildings: [b(4, 'shop'), b(2, 'office')] })).toEqual(b(2, 'office'));
 });
