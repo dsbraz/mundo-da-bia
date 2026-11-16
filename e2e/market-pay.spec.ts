@@ -93,6 +93,18 @@ test('lote 6F: sair pelo Mapa sem pagar fecha o Mapa e mostra o caixa num balão
   await paid(page);
 });
 
+test('tocar no caixa sem sacola: ela chega lá, dá de ombros e o balão desenha o mercado; um toque no balão a leva à prateleira', async ({ page }) => {
+  test.setTimeout(120_000);
+  await open(page, town('market'));
+  const counter = (await pieces(page, 'checkout'))[0]!;
+  await tap(page, counter.x + 100, counter.y + 70);
+  const bubble = page.locator('.missing-bubble.tappable[data-need="market"]');
+  await expect(bubble).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('#room-dialog')).not.toHaveAttribute('open');
+  await bubble.click();
+  await expect(panel(page)).toBeVisible({ timeout: 15000 });
+});
+
 /** A new bag of `good` from the greengrocer shelf, not paid yet, the shelf closed. */
 async function another(page: Page, good: string) {
   const [, greens] = await pieces(page, 'market-shelf');
