@@ -107,6 +107,9 @@ it('#34: na rua, quem come um prato perto do banco livre (na praça) senta nele 
   expect(benchMeal({ ...fed, outdoor: { ...fed.outdoor, bench: 'luna' } }, { type: 'feed', actor: 'bia' })).toBeNull();
   expect(benchMeal(t, { type: 'feed', actor: 'bia' })).toBeNull();
   expect(benchMeal(onFloor, { type: 'give', actor: 'mimi', item: dish.id })).toBeNull();
+  const treat = { ...onFloor, items: onFloor.items.map(i => i.id === dish.id ? { ...i, recipe: 'petisco-de-gato' as const } : i) };
+  expect(benchMeal(treat, { type: 'give', actor: 'mimi', item: dish.id })).toBeNull();
+  expect(benchMeal(fed, { type: 'drop', actor: 'bia' })).toBeNull();
   expect(benchMeal({ ...fed, location: { kind: 'interior', building: 1, room: 'sala' } }, { type: 'feed', actor: 'bia' })).toBeNull();
   // Seated on the bench, she eats there and the bench stays hers.
   const seated = neighborhoodAction(fed, { type: 'outdoor', actor: 'bia', target: 'bench' });

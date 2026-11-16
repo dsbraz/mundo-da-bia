@@ -26,9 +26,9 @@ export function interactOutdoor(town: Neighborhood, action: OutdoorAction): Neig
  *  on the street, near the bench (on the plaza) and with it free. Anywhere else on the street, or with it taken, she eats standing. */
 export function benchMeal(town: Neighborhood, action: Action): ActorId | null {
   if ((action.type !== 'give' && action.type !== 'feed') || town.location.kind !== 'street' || town.outdoor.bench) return null;
-  const actor = town.actors.find(a => a.id === action.actor && a.location.kind === 'street' && a.x < plazaWidth);
+  const actor = town.actors.find(a => a.id === action.actor && a.kind === 'human' && a.location.kind === 'street' && a.x < plazaWidth);
   const item = town.items.find(i => action.type === 'give' ? i.id === action.item : i.holder === action.actor);
-  return actor && item && edible(actor, item as Item) && item.kind === 'prato' ? actor.id : null;
+  return actor && item && edible(actor, item as Item) ? actor.id : null;
 }
 /** The swing is a game (W3L-13); the bench is only a seat. */
 const swung = (actor: Resident, target: 'bench' | 'swing') => target === 'swing' ? { needs: relieve(needsOf(actor), played(actor.id, 'balanco')) } : {};
