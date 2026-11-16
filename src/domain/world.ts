@@ -148,7 +148,7 @@ function cross(state: World, action: Extract<Action, { type: 'cross' }>): Transi
 }
 
 function nameActor(state: World, id: import('./types').ActorId, value: string): Transition {
-  const name = Array.from(value.trim()).slice(0, 24).join('');
+  const name = Array.from(value.trim()).slice(0, 24).join('').trimEnd();
   return { state: { ...state, actors: state.actors.map(a => {
     if (a.id !== id) return a;
     const next = { ...a }; delete next.name;
