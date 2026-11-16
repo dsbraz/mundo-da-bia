@@ -88,3 +88,11 @@ it('a manhã depois da noite dormida (W3L-15) acorda quem dormiu: o bairro é ap
   expect(current().actors[0]).toMatchObject({ resting: false, needs: { sono: 0 } });
   expect(deps.commit).toHaveBeenCalledTimes(1); expect(deps.refresh).toHaveBeenCalledTimes(1); expect(deps.feel).not.toHaveBeenCalled();
 });
+it('trocar de modo esquece o desfazer do bairro: um snapshot de Criar não rebobina o que se brincou depois (#3, #31)', () => {
+  const { actions } = setup(migrateNeighborhood(initialAlbum(initialWorld())));
+  actions.dispatch({ type: 'facade', building: 1, name: 'Casinha' }); actions.remember();
+  actions.undo(false);
+  expect([actions.canUndo(), actions.canRedo()]).toEqual([true, true]);
+  actions.forget();
+  expect([actions.canUndo(), actions.canRedo()]).toEqual([false, false]);
+});

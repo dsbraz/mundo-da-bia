@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ready, read, readTown, create, closeTray, point, tray } from './helpers';
+import { ready, read, readTown, create, closeTray, point, tray, bringHere } from './helpers';
 
 test('brincadeira tem três entradas e edição abre o catálogo sem outra procura', async ({ page }) => {
   await ready(page);
@@ -20,13 +20,19 @@ test('brincadeira tem três entradas e edição abre o catálogo sem outra procu
   await page.screenshot({ path: 'reports/header-create.png' });
 });
 
-test('desfazer continua disponível depois de terminar a edição', async ({ page }) => {
+test('desfazer é de Criar: some em Brincar e, de volta a Criar, não rebobina a roupa trocada nem a obra (#3)', async ({ page }) => {
   await ready(page); await create(page); await page.locator('#build-toggle').click();
-  const before = await read(page);
   await page.getByRole('button', { name: 'Adicionar Sofá aconchego', exact: true }).click();
+  const edited = await read(page);
   await page.locator('#play-mode').click();
-  await expect(page.locator('#undo')).toBeVisible(); await page.locator('#undo').click();
-  expect((await read(page)).layout.pieces).toEqual(before.layout.pieces);
+  await expect(page.locator('#build-history')).toBeHidden();
+  await bringHere(page); await tray(page, 'Looks'); await page.getByRole('button', { name: 'Rumi', exact: false }).click(); await closeTray(page);
+  const played = await readTown(page);
+  expect(played.actors[0]!.look).toBe('rumi');
+  await page.locator('#build-toggle').click();
+  await expect(page.locator('#undo')).toBeVisible(); await expect(page.locator('#undo')).toBeDisabled();
+  expect((await readTown(page)).actors).toEqual(played.actors);
+  expect((await read(page)).layout.pieces).toEqual(edited.layout.pieces);
 });
 
 test('mapa reúne navegação e transporte sem um segundo menu Explorar', async ({ page }) => {

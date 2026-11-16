@@ -149,7 +149,7 @@ function atWork(next: Neighborhood) { return neighborhoodAction(next, { type: 'w
 function toggleBuild() {
   cancelGame();
   constructing = false;
-  closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; life.mode(!building); selectedPiece = null; edits = history(state);
+  closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; life.mode(!building); selectedPiece = null; edits = history(state); townActs.forget(); root.querySelector('#undo-toast')?.remove();
   shell.close();
   refresh();
   announceMode();

@@ -37,6 +37,8 @@ export function townActions(deps: TownDeps) {
   let opening: ReturnType<typeof streetExit> = { camera: 0, spans: [], people: [] };
   let stood = new Map<ActorId, string>();
   function remember() { past = [...past.slice(-49), deps.town()]; future = []; }
+  /** Changing mode starts a new history: undo is a Criar tool and never rewinds what was played (looks, places, hands, bags). */
+  function forget() { past = []; future = []; }
   function streetCamera(previous: Neighborhood) {
     const where = previous.location;
     if (where.kind === 'street') return deps.camera();
@@ -90,5 +92,5 @@ export function townActions(deps: TownDeps) {
   function sleepThrough(building: number) {
     apply(neighborhoodAction(deps.town(), { type: 'morning', building }));
   }
-  return { dispatch, undo, remember, preview, tick, apply, enjoy, sleepThrough, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
+  return { dispatch, undo, remember, forget, preview, tick, apply, enjoy, sleepThrough, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

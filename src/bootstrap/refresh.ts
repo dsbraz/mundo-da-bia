@@ -55,7 +55,6 @@ export function sceneRefresh(deps: RefreshDeps) {
     root.classList.toggle('selection-on-right', focus.x > 500);
     deps.controls(state, deps.selected(), deps.saved());
     deps.editor(deps.album(), deps.edits(), deps.building(), piece); deps.panels();
-    root.querySelector<HTMLElement>('#build-history')!.hidden = !deps.building() && !deps.townActs().canUndo() && !deps.townActs().canRedo();
     root.querySelector<HTMLButtonElement>('#undo')!.disabled = !deps.townActs().canUndo(); root.querySelector<HTMLButtonElement>('#redo')!.disabled = !deps.townActs().canRedo();
   }
   return { refresh, frameScene, renderControls, ui };
