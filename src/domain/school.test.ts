@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { isSchool, lesson, nextKeepsake, nextTheme, pupilsOf } from './school';
-import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
+import { handPaper, isSchool, lesson, nextKeepsake, nextTheme, pinPaper, pupilsOf } from './school';
+import { localWorld, migrateNeighborhood, neighborhoodAction, storeWorld } from './neighborhood';
 import { initialAlbum } from './houses';
-import { initialWorld } from './world';
+import { initialWorld, transition } from './world';
 import { drawingIds, sumIds, wordIds, type DrawingId, type Keepsake } from './progress';
 import { needsOf } from './needs';
 import type { ActorId } from './types';
@@ -48,7 +48,7 @@ describe('a escola (W3L-26)', () => {
     const town = { ...bored, actors: bored.actors.map(a => ({ ...a, needs: { fome: 20, sono: 0, tedio: 60, alegria: 0 } })) };
     const { town: after, outcome } = lesson(town, here);
     expect(outcome).toEqual({ kind: 'lesson', subject: 'desenho', theme: drawingIds[0], pupils: ['bia', 'leo'] });
-    expect(after.progress.drawings).toEqual([drawingIds[0]]);
+    expect(after.progress.papers).toEqual([drawingIds[0]]);
     for (const id of ['bia', 'leo']) expect(needsOf(after.actors.find(a => a.id === id)!)).toMatchObject({ tedio: 20, alegria: 60_000 });
     expect(needsOf(after.actors.find(a => a.id === 'luna')!).tedio).toBe(60);
   });
@@ -81,10 +81,10 @@ describe('a escola (W3L-26)', () => {
     const seen: DrawingId[] = [];
     for (let n = 0; n < 12; n++) { const result = lesson(town, here); town = result.town; seen.push((result.outcome as { theme: DrawingId }).theme); }
     expect(new Set(seen).size).toBe(12);
-    expect(town.progress.drawings).toEqual(seen);
+    expect(town.progress.papers).toEqual(seen);
     const thirteenth = lesson(town, here);
     expect(thirteenth.outcome).toMatchObject({ theme: seen[0] });
-    expect(thirteenth.town.progress.drawings).toEqual([...seen.slice(1), seen[0]]);
+    expect(thirteenth.town.progress.papers).toEqual([...seen.slice(1), seen[0]]);
   });
   it('nextTheme: o primeiro que ainda não saiu, ou o mais antigo quando todos saíram', () => {
     expect(nextTheme([])).toBe(drawingIds[0]);
@@ -93,7 +93,7 @@ describe('a escola (W3L-26)', () => {
   });
 });
 describe('a matéria da aula (lote 8D)', () => {
-  it('escrita dá uma folha com palavra e matemática uma folha com conta; cada matéria roda as suas, na mesma lista da geladeira', () => {
+  it('escrita dá uma folha com palavra e matemática uma folha com conta; cada matéria roda as suas, na mesma coleção', () => {
     let town = seated(school(), 'bia');
     const kept: Keepsake[] = [];
     for (const subject of ['escrita', 'matematica', 'desenho', 'escrita'] as const) {
@@ -102,7 +102,7 @@ describe('a matéria da aula (lote 8D)', () => {
       kept.push((result.outcome as { theme: Keepsake }).theme);
     }
     expect(kept).toEqual([wordIds[0], sumIds[0], drawingIds[0], wordIds[1]]);
-    expect(town.progress.drawings).toEqual(kept);
+    expect(town.progress.papers).toEqual(kept);
   });
   it('nextKeepsake: só olha a própria matéria; quando todas saíram volta a mais antiga dela, nunca a de outra', () => {
     expect(nextKeepsake([], 'matematica')).toBe(sumIds[0]);
@@ -117,3 +117,46 @@ describe('a matéria da aula (lote 8D)', () => {
   });
 });
 
+const home = { kind: 'interior' as const, building: 1, room: 'sala' as const };
+const papers = (town: Neighborhood) => town.items.filter(i => i.kind === 'papel');
+/** The town with `paper` lying on the floor of the family home's living room, where the fridge is. */
+const atHome = (town: Neighborhood, id: string): Neighborhood => ({ ...town,
+  items: town.items.map(i => i.id === id ? { ...i, holder: null, location: home, room: 'sala' as const, x: 600, y: 520 } : i) });
+describe('a folha da aula na mão (pedido da Bia)', () => {
+  it('a aula não pendura nada na geladeira: a folha vai para a coleção e, no fim, para a mão da criança selecionada', () => {
+    const { town } = lesson(seated(school(), 'bia', 'leo'), here, 'escrita');
+    expect(town.progress.drawings).toEqual([]);
+    expect(town.progress.papers).toEqual([wordIds[0]]);
+    const handed = handPaper(town, ['bia', 'leo'], wordIds[0], 'leo');
+    expect(papers(handed)).toEqual([expect.objectContaining({ kind: 'papel', paper: wordIds[0], holder: 'leo', location: classroom, spot: 'floor' })]);
+    expect(handed.progress).toEqual(town.progress);
+  });
+  it('a criança selecionada fora das carteiras (#30, ela escreveu) não leva a folha: vai para o primeiro aluno', () => {
+    expect(papers(handPaper(seated(school(), 'leo'), ['leo'], 'sol', 'bia'))[0]).toMatchObject({ holder: 'leo' });
+    expect(handPaper(school(), [], 'sol', 'bia')).toEqual(school());
+  });
+  it('com as mãos ocupadas (um livro), a folha fica no chão aos pés dela, nunca se perde', () => {
+    const town = seated(school(), 'bia'), bia = town.actors.find(a => a.id === 'bia')!;
+    const busy = { ...town, items: [...town.items, { id: '90:livro' as const, kind: 'livro' as const, room: 'quarto' as const, location: classroom, x: 0, y: 0, holder: 'bia' as const, spot: 'floor' as const }] };
+    expect(papers(handPaper(busy, ['bia'], 'sol', 'bia'))[0]).toMatchObject({ holder: null, spot: 'floor', x: bia.x, y: bia.y, location: classroom });
+  });
+  it('a folha levada à geladeira de casa é pendurada (a mais nova por último, cada uma uma vez) e sai da mão', () => {
+    const handed = handPaper(lesson(seated(school(), 'bia'), here).town, ['bia'], 'sol', 'bia'), id = papers(handed)[0]!.id;
+    const before = { ...handed, progress: { ...handed.progress, drawings: ['sol', 'gato'] as Keepsake[] } };
+    const pinned = pinPaper(atHome(before, id), id);
+    expect(pinned.outcome).toBe('pinned');
+    expect(pinned.town.progress.drawings).toEqual(['gato', 'sol']);
+    expect(pinned.town.progress.papers).toEqual(['sol']);
+    expect(papers(pinned.town)).toEqual([]);
+  });
+  it('largada em outro lugar a folha continua na coleção, fora da geladeira; sem geladeira ali (a escola) nada é pendurado', () => {
+    const handed = handPaper(lesson(seated(school(), 'bia'), here).town, ['bia'], 'sol', 'bia'), id = papers(handed)[0]!.id;
+    const there = { ...handed, location: classroom }, dropped = storeWorld(there, transition(localWorld(there), { type: 'drop', actor: 'bia' }).state);
+    expect(pinPaper(handed, id)).toEqual({ town: handed, outcome: 'none' });
+    expect(pinPaper(handed, '1:bola')).toEqual({ town: handed, outcome: 'none' });
+    const street = { ...handed, items: handed.items.map(i => i.id === id ? { ...i, holder: null, location: { kind: 'street' as const } } : i) };
+    expect(pinPaper(street, id)).toEqual({ town: street, outcome: 'none' });
+    expect(dropped.progress).toMatchObject({ drawings: [], papers: ['sol'] });
+    expect(papers(dropped)).toEqual([expect.objectContaining({ paper: 'sol', holder: null })]);
+  });
+});

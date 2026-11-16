@@ -41,7 +41,7 @@ test('lote 7: tocar na professora com a Bia e o Léo sentados começa a aula, e 
   await tapStaff(page);
   await chooseSubject(page);
   await expect.poll(() => canvas(page).getAttribute('data-lesson')).toBe('sol:drawing');
-  expect((await readTown(page)).progress.drawings).toEqual(['sol']);
+  expect((await readTown(page)).progress).toMatchObject({ drawings: [], papers: ['sol'] });
   await page.clock.runFor(5000);
   await expect(canvas(page)).toHaveAttribute('data-staff-act', 'teacher');
 });

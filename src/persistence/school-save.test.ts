@@ -6,7 +6,7 @@ import { unfelt } from './neighborhood-v3';
 import { migrateNeighborhood, neighborhoodAction } from '../domain/neighborhood';
 import { initialAlbum } from '../domain/houses';
 import { initialWorld } from '../domain/world';
-import { lesson } from '../domain/school';
+import { handPaper, lesson, pinPaper } from '../domain/school';
 import type { Neighborhood } from '../domain/neighborhood-types';
 import { fromPiece } from '../domain/layout';
 import { seatSlots } from '../domain/seats';
@@ -25,11 +25,11 @@ describe('a escola no save (W3L-26, §4)', () => {
   it('saves antigos (v2, v3 rico e um v3 sem desenhos) carregam com drawings vazio', () => {
     const v2 = readFileSync(new URL('./fixtures/rich-save-v2.json', import.meta.url), 'utf8');
     const v3 = readFileSync(new URL('./fixtures/rich-save-v3.json', import.meta.url), 'utf8');
-    for (const raw of [v2, v3, encodeNeighborhood(migrateNeighborhood(initialAlbum(initialWorld())))]) expect(decodeNeighborhood(raw)!.progress.drawings).toEqual([]);
+    for (const raw of [v2, v3, encodeNeighborhood(migrateNeighborhood(initialAlbum(initialWorld())))]) expect(decodeNeighborhood(raw)!.progress).toMatchObject({ drawings: [], papers: [] });
   });
   it('aplicar a aula, fazer encode e depois decode devolve o mesmo bairro (as necessidades nunca vão para o save)', () => {
     const after = taught();
-    expect(after.progress.drawings).toEqual(['sol']);
+    expect(after.progress).toMatchObject({ drawings: [], papers: ['sol'] });
     expect(decodeNeighborhood(encodeNeighborhood(after))).toEqual(withoutNeeds(after));
   });
   it('desenho desconhecido ou repetido sai sozinho; o que não é lista volta ao inicial', () => {
@@ -47,8 +47,27 @@ describe('a escola no save (W3L-26, §4)', () => {
   });
   it('lote 8D: a folha escrita e a de conta voltam do save na ordem; folha desconhecida sai sozinha', () => {
     const town = school(), written = lesson(lesson(town, { building: 2, room: 'quarto' }, 'escrita').town, { building: 2, room: 'quarto' }, 'matematica').town;
-    expect(written.progress.drawings).toEqual(['palavra-bia', 'conta-2-3']);
+    expect(written.progress.papers).toEqual(['palavra-bia', 'conta-2-3']);
     expect(decodeNeighborhood(encodeNeighborhood(written))).toEqual(withoutNeeds(written));
     expect(knownProgress({ drawings: ['palavra-gato', 'palavra-dragao', 'conta-9-9', 'conta-1-4', 'sol'] }).drawings).toEqual(['palavra-gato', 'conta-1-4', 'sol']);
+  });
+  it('pedido da Bia: a folha na mão e a pendurada voltam do save; um save de antes guarda suas folhas na geladeira e na coleção', () => {
+    const handed = handPaper(taught(), ['bia'], 'sol', 'bia'), id = handed.items.find(i => i.kind === 'papel')!.id;
+    expect(decodeNeighborhood(encodeNeighborhood(handed))).toEqual(withoutNeeds(handed));
+    const home = { kind: 'interior' as const, building: 1, room: 'sala' as const };
+    const pinned = pinPaper({ ...handed, items: handed.items.map(i => i.id === id ? { ...i, holder: null, location: home, room: 'sala' as const } : i) }, id).town;
+    expect(decodeNeighborhood(encodeNeighborhood(pinned))!.progress).toMatchObject({ drawings: ['sol'], papers: ['sol'] });
+    expect(knownProgress({ drawings: ['gato', 'lua'] })).toMatchObject({ drawings: ['gato', 'lua'], papers: ['gato', 'lua'] });
+    expect(knownProgress({ drawings: ['gato'], papers: [] })).toMatchObject({ drawings: ['gato'], papers: [] });
+    expect(knownProgress({ drawings: ['gato'], papers: ['dragao', 'sol', 'sol'] }).papers).toEqual(['sol']);
+  });
+  it('uma folha sem tema conhecido sai sozinha, e o bairro carrega; só a folha tem tema', () => {
+    const handed = handPaper(taught(), ['bia'], 'sol', 'bia');
+    const raw = JSON.parse(encodeNeighborhood(handed)) as { town: { items: Record<string, unknown>[] } };
+    raw.town.items.forEach(i => { if (i.kind === 'papel') i.paper = 'dragao'; else i.paper = 'sol'; });
+    const loaded = decodeNeighborhood(JSON.stringify(raw))!;
+    expect(loaded.items.some(i => i.kind === 'papel')).toBe(false);
+    expect(loaded.items.every(i => i.paper === undefined)).toBe(true);
+    expect(loaded.actors.find(a => a.id === 'bia')).toBeDefined();
   });
 });

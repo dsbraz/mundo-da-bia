@@ -44,13 +44,14 @@ export interface Progress {
   revealed: RecipeId[]; favorites: ActorId[]; goals: GoalId[];
   /** What has appeared on the market's shelves (W3L-23); it only grows. */
   shelves: ShelfUnlock[];
-  /** The school's papers (W3L-26, lot 8D: drawings, written pages and math sheets), oldest first and each once: the newest 4 hang on
-   *  the fridge door. */
+  /** The papers she chose to pin on the fridge (W3L-26, Bia's request), oldest first and each once: the newest 4 hang on the door. */
   drawings: Keepsake[];
+  /** Every paper the lessons gave (lot 8D: drawings, written pages and math sheets), oldest first and each once: the next one rotates on it. */
+  papers: Keepsake[];
 }
 export function initialProgress(): Progress {
   return { recipes: [], fancy: [], seeds: ['alface', 'tomate', 'cenoura'], specials: [], basket: {}, plaza: {},
-    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [], drawings: [] };
+    post: { day: null, next: 0, inbox: [] }, revealed: [], favorites: [], goals: [], shelves: [], drawings: [], papers: [] };
 }
 /** When each appears (§3.4): the first harvest brings corn seeds; discovered recipes bring the specials, and after a harvest more seeds. */
 const reveals: readonly [ShelfUnlock, (recipes: number, harvested: boolean) => boolean][] = [

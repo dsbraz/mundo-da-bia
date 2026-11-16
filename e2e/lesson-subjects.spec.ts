@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { readTown } from './helpers';
+import { drag, read, readTown } from './helpers';
+import { itemPoint } from '../src/presentation/targets';
 import { chooseSubject, openSchool, schoolTown, seatAt, tapBoard } from './school-helpers';
 import type { Neighborhood } from '../src/domain/neighborhood-types';
 import { fromPiece } from '../src/domain/layout';
@@ -15,17 +16,18 @@ function withoutTeacher(): Neighborhood {
   return { ...town, buildings: town.buildings.map(b => b === school ? { ...b, layout: { ...b.layout, rooms: { ...b.layout.rooms, quarto: { ...room, template: 'bedroom' as typeof room.template } } } } : b) };
 }
 
-for (const subject of subjects) test(`lote 8D: a matéria ${subject.name}: a professora escreve no quadro com o giz e a folha vai para a geladeira`, async ({ page }) => {
+for (const subject of subjects) test(`lote 8D: a matéria ${subject.name}: a professora escreve no quadro com o giz e a folha fica na mão da Bia; largada no chão, não vai para a geladeira`, async ({ page }) => {
   // 20 s of chalk strokes repainted every frame, then the walk home: slow to render in CI's software GL.
   test.setTimeout(150_000);
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.clock.install({ time: new Date('2026-11-13T09:00:00') });
   await openSchool(page);
-  await seatAt(page, 'bia', 0); await seatAt(page, 'leo', 1);
+  // The last one dragged is the selected one: the Bia, who gets the paper.
+  await seatAt(page, 'leo', 1); await seatAt(page, 'bia', 0);
   await tapBoard(page);
   // Three drawn buttons; nothing is kept until one is chosen.
   await expect(page.locator('#subject-chooser .subject-choice')).toHaveCount(3);
-  expect((await readTown(page)).progress.drawings).toEqual([]);
+  expect((await readTown(page)).progress.papers).toEqual([]);
   await chooseSubject(page, subject.name);
   await expect.poll(() => canvas(page).getAttribute('data-lesson')).toBe(`${subject.paper}:drawing`);
   // The school's teacher left her place for the board, and writes there.
@@ -36,11 +38,25 @@ for (const subject of subjects) test(`lote 8D: a matéria ${subject.name}: a pro
   await expect(canvas(page)).toHaveAttribute('data-lesson', `${subject.paper}:done`);
   await page.clock.runFor(1000);
   await expect(canvas(page)).toHaveAttribute('data-lesson-writer', '');
-  expect((await readTown(page)).progress.drawings).toEqual([subject.paper]);
-  // Home: the lesson's paper hangs on the fridge door.
+  // Bia's request: the paper is in her hand, kept in the collection and not on the fridge.
+  await expect.poll(async () => (await readTown(page)).items.find(i => i.kind === 'papel')).toMatchObject({ paper: subject.paper, holder: 'bia' });
+  expect((await readTown(page)).progress).toMatchObject({ drawings: [], papers: [subject.paper] });
+  // Home: let go on the floor, away from the fridge, it lies there and the fridge door stays empty.
   await page.locator('#map-toggle').click();
   await page.locator('#neighborhood-list').getByRole('button', { name: 'Ir para Minha casa', exact: true }).click();
-  await expect(canvas(page)).toHaveAttribute('data-fridge-drawings', subject.paper);
+  await expect.poll(async () => (await readTown(page)).location).toMatchObject({ kind: 'interior', building: 1 });
+  if (await page.locator('#close-map').isVisible()) await page.locator('#close-map').click();
+  // The arrival may still be settling under the paused clock: let it run and drag again until the paper is let go.
+  await expect(async () => {
+    await page.clock.runFor(1000);
+    const world = await read(page), hand = itemPoint(world, world.items.find(i => i.kind === 'papel')!)!;
+    // A bare spot of floor: nobody stands there (a drop on someone hands it over) and it is far from the fridge.
+    const floor = [150, 250, 350, 450, 550, 900, 950].find(x => world.actors.every(a => a.room !== world.room || Math.abs(a.x - x) > 60))!;
+    await drag(page, [hand.x, hand.y], [floor, 470]);
+    await expect.poll(async () => (await readTown(page)).items.find(i => i.kind === 'papel'), { timeout: 3000 }).toMatchObject({ paper: subject.paper, holder: null, spot: 'floor' });
+  }).toPass({ timeout: 30_000 });
+  await expect(canvas(page)).toHaveAttribute('data-fridge-drawings', '');
+  expect((await readTown(page)).progress).toMatchObject({ drawings: [], papers: [subject.paper] });
   expect(errors).toEqual([]);
 });
 
@@ -58,7 +74,7 @@ test('lote 8D, #30: num quadro sem professora (um quarto), a Bia selecionada vai
   await tapBoard(page);
   await page.locator('#subject-chooser').getByRole('button', { name: 'Fechar', exact: true }).click();
   await expect(page.locator('#subject-chooser')).toBeHidden();
-  expect((await readTown(page)).progress.drawings).toEqual([]);
+  expect((await readTown(page)).progress.papers).toEqual([]);
   await tapBoard(page);
   await chooseSubject(page, 'Matemática');
   // She walks to the side of the board and writes there: the school's teacher never comes.
@@ -74,6 +90,8 @@ test('lote 8D, #30: num quadro sem professora (um quarto), a Bia selecionada vai
   await page.clock.runFor(10_500);
   await expect(canvas(page)).toHaveAttribute('data-lesson', 'conta-2-3:done');
   await expect(canvas(page)).toHaveAttribute('data-staff', '');
-  expect((await readTown(page)).progress.drawings).toEqual(['conta-2-3']);
+  // The Bia wrote it at the board: the paper goes into the pupil's hand, the Léo's.
+  await expect.poll(async () => (await readTown(page)).items.find(i => i.kind === 'papel')).toMatchObject({ paper: 'conta-2-3', holder: 'leo' });
+  expect((await readTown(page)).progress).toMatchObject({ drawings: [], papers: ['conta-2-3'] });
   expect(errors).toEqual([]);
 });

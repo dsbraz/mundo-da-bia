@@ -25,8 +25,8 @@ export function lessonArt(scene: Phaser.Scene) {
   /** A lesson left unfinished clears its mark; a finished one keeps `<theme>:done` (it is over, whatever the teacher's walk back takes). */
   const end = (finished = false) => { current = null; if (!finished) mark('lesson', ''); mark('lessonWriter', ''); };
   return {
-    /** Called when the lesson is over: the pupils cheer. */
-    finished: (() => {}) as (pupils: ActorId[]) => void,
+    /** Called when the lesson is over: the pupils cheer, and its paper goes into a hand. */
+    finished: (() => {}) as (pupils: ActorId[], theme: Keepsake) => void,
     active: () => !!current && !current.done,
     /** Whether the teacher is at the board (from her first step there until she is back): the school's teacher is not drawn twice. */
     away: () => !!current,
@@ -66,7 +66,7 @@ export function lessonArt(scene: Phaser.Scene) {
     },
     /** At 20 s the lesson is over (the pupils cheer); she walks back to her place, then the lesson is gone. */
     close(cur: Current, elapsed: number, reduced: boolean) {
-      if (!cur.done && elapsed >= lessonMs) { cur.done = true; mark('lesson', `${cur.theme}:done`); this.finished(cur.pupils); }
+      if (!cur.done && elapsed >= lessonMs) { cur.done = true; mark('lesson', `${cur.theme}:done`); this.finished(cur.pupils, cur.theme); }
       if (cur.done && elapsed >= lessonMs + (reduced ? 0 : leaveMs)) { end(true); writer.frame(null); notes?.clear(); }
     },
   };

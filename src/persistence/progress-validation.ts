@@ -33,14 +33,16 @@ function post(value: unknown): Post {
   const inbox = Array.isArray(value.inbox) ? [...new Set(value.inbox.filter(i => count(i) && i < letterCount))].slice(0, inboxLimit) : [];
   return { day: count(value.day) ? value.day : null, next: count(value.next) ? value.next : 0, inbox };
 }
-/** Save v3 progress: unknown or repeated ids, bad amounts, plants and letters drop out alone; a missing progress starts over. */
+/** Save v3 progress: unknown or repeated ids, bad amounts, plants and letters drop out alone; a missing progress starts over. A save
+ *  from before the papers went into the hand (no `papers`) collected exactly what hangs on its fridge. */
 export function knownProgress(value: unknown): Progress {
   const initial = initialProgress();
   if (!record(value)) return initial;
+  const drawings = known(value.drawings, keepsakeIds, initial.drawings);
   return { recipes: known(value.recipes, recipeIds, initial.recipes), fancy: known(value.fancy, recipeIds, initial.fancy),
     seeds: known(value.seeds, cropIds, initial.seeds), specials: known(value.specials, specialIds, initial.specials),
     basket: basket(value.basket), plaza: plaza(value.plaza), post: post(value.post),
     revealed: known(value.revealed, recipeIds, initial.revealed), favorites: known(value.favorites, actorIds, initial.favorites),
     goals: known(value.goals, goalIds, initial.goals), shelves: known(value.shelves, shelfIds, initial.shelves),
-    drawings: known(value.drawings, keepsakeIds, initial.drawings) };
+    drawings, papers: known(value.papers, keepsakeIds, drawings) };
 }

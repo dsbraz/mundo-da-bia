@@ -1,5 +1,5 @@
 import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
-import type { PlazaPlot, Progress, RecipeId } from './progress';
+import type { Keepsake, PlazaPlot, Progress, RecipeId } from './progress';
 import type { Ingredient, Stock, Utensil } from './ingredients';
 import type { Phase, TownEvent } from './clock';
 import type { Good } from './goods';
@@ -22,7 +22,9 @@ export interface NeighborhoodItem extends Item { location: Location; recipe?: Re
   /** A shopping bag (W3L-22): up to 6 goods, and whether it went through the checkout. */
   contents?: Good[]; paid?: boolean;
   /** A book (lot 8C): the bookcase it was lent from and its cover there. */
-  loan?: Loan }
+  loan?: Loan;
+  /** A lesson's paper in the hand (Bia's request): which one it is, until it is pinned on the fridge. */
+  paper?: Keepsake }
 /** Where a book belongs: a bookcase (`piece`) of `building`, and its place on the shelf (0 to 2), which is also its cover. */
 export interface Loan { building: number; piece: number; slot: number }
 export interface Neighborhood { outdoor: Outdoor; buildings: Building[]; actors: Resident[]; items: NeighborhoodItem[]; location: Location; plots: number; nextBuilding: number;
