@@ -20,9 +20,9 @@ test('pega roupa no armário e brinquedo na gaveta e entrega no colo', async ({ 
   await drag(page, await onPiece(page, 'wardrobe', 466, 364), [150, 350]);
   expect((await read(page)).items[3]!.holder).toBe('bia');
   await page.screenshot({ path: 'reports/care-lap.png' });
-  // #26, #35: a new session starts in the morning with everyone up: out of the bed, standing in front of it; the rest stays.
+  // #38: a new session starts ready to eat; Bia, sitting on the sofa (not lying), stays where she is, like the rest.
   const state = await read(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
-  expect(await read(page)).toEqual({ ...state, actors: state.actors.map(a => a.id === 'bia' ? { ...a, resting: false, fed: false, seat: null, y: 530 } : a) });
+  expect(await read(page)).toEqual({ ...state, actors: state.actors.map(a => a.fed ? { ...a, fed: false } : a) });
 });
 test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar (acordada: a sessão nova começa de manhã)', async ({ page }) => {
   let world = initialWorld(); world.actors[1]!.room = 'quarto'; world.actors[1]!.seat = null;

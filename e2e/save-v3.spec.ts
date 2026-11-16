@@ -14,7 +14,9 @@ test('o save v2 rico carrega igual, o jogo grava só no v3 e a chave v2 fica byt
   const { progress, nextItem: _next, ...town } = await readTown(page);
   // W3L-24: the grown-ups, missing from this old save, arrive in the living room; lot 8A: no piece stays in a stairwell; everything else
   // loads as saved.
-  expect(town).toEqual(clearStairwells(knownCast(JSON.parse(raw).town) as Neighborhood));
+  // #38: a full belly is the session's, so it opens ready to eat.
+  const saved = clearStairwells(knownCast(JSON.parse(raw).town) as Neighborhood);
+  expect(town).toEqual({ ...saved, actors: saved.actors.map(a => a.fed ? { ...a, fed: false } : a) });
   expect(progress.seeds).toEqual(['alface', 'tomate', 'cenoura']);
   await page.locator('#world').focus(); await page.keyboard.press('ArrowRight');
   await expect.poll(async () => (await readTown(page)).actors[0]!.x).toBe(540);
