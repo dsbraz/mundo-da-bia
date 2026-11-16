@@ -61,6 +61,16 @@ test('os 16 looks da Bia e roupas arrastadas para outro humano funcionam', async
   expect((await read(page)).actors[1]!.look).toBe('sol');
   await closeTray(page); await page.screenshot({ path: 'reports/atelier-bia.png' });
 });
+test('a aba Looks não fica ativa para um gato nem para quem está em outro cômodo (como o Vestir do painel)', async ({ page }) => {
+  await ready(page);
+  const looks = page.locator('#looks button:not([hidden])');
+  for (const who of ['Mimi', 'Daniel']) {
+    await tray(page, 'Turma'); await page.getByRole('button', { name: who, exact: true }).click(); await tray(page, 'Looks');
+    for (const button of await looks.all()) await expect(button).toBeDisabled();
+  }
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Bia', exact: true }).click(); await tray(page, 'Looks');
+  await expect(looks.first()).toBeEnabled();
+});
 test('o painel tem cinco botões de ícone fixos que não mudam de lugar ao pegar e soltar', async ({ page }) => {
   await ready(page); await tap(page, 520, 420);
   const panel = page.locator('#actions button');

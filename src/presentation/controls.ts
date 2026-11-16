@@ -75,8 +75,8 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
       if (image.getAttribute('src') !== picture) { image.src = picture; faces[i]!.querySelector('img')!.src = picture; }
       faces[i]!.lastChild!.textContent = member.name ?? actors[member.id].name;
     });
-    // Each one's own wardrobe (W3L-24): a grown-up sees its 7 looks, a child never the grown-ups' uniforms.
-    wardrobe.forEach((b, i) => { b.hidden = !wardrobeOf(id).includes(lookIds[i]!); b.querySelector('img')!.src = lookImage(lookIds[i]!, masculine(id), isAdult(id) ? adultStyle(id) : null); b.disabled = !state.actors.some(a => a.kind === 'human' && a.room === state.room); b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
+    // Each one's own wardrobe (W3L-24): a grown-up sees its 7 looks, a child never the grown-ups' uniforms; off for a cat or someone elsewhere (as Vestir).
+    wardrobe.forEach((b, i) => { b.hidden = !wardrobeOf(id).includes(lookIds[i]!); b.querySelector('img')!.src = lookImage(lookIds[i]!, masculine(id), isAdult(id) ? adultStyle(id) : null); b.disabled = !(actor.kind === 'human' && actor.room === state.room); b.setAttribute('aria-pressed', String(lookIds[i] === actor.look)); });
     refreshObjects();
     panel(panelButtons(state, actor));
     root.querySelector('#selected')!.textContent = actor.name ?? actors[id].name;
