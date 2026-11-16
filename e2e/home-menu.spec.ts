@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ready, readTown } from './helpers';
+import { ready, readTown, closeTray } from './helpers';
 
 test('Minha casa abre mapa limpo, separa organização e permite excluir com confirmação', async ({ page }) => {
   await ready(page); await page.locator('#map-toggle').click();
@@ -96,4 +96,19 @@ test('segurar o dedo no botão de excluir por 2 s exclui a casa no tablet', asyn
   await expect.poll(async () => (await readTown(page)).buildings.length).toBe(1);
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await session.detach();
   await expect(page.locator('#undo-toast')).toBeVisible();
+});
+
+test('o aviso de desfazer da exclusão some ao trocar de modo: depois dele o Desfazer não tocaria em nada (#3)', async ({ page }) => {
+  await ready(page); await page.locator('#map-toggle').click(); await page.getByRole('button', { name: 'Organizar', exact: true }).click();
+  await page.locator('#copy-house').click(); await expect.poll(async () => (await readTown(page)).buildings.length).toBe(2);
+  await page.locator('#close-map').click(); await page.locator('#map-toggle').click();
+  await page.getByRole('button', { name: 'Ir para Rua', exact: true }).click();
+  await page.locator('#build-toggle').click(); await page.setViewportSize({ width: 1440, height: 800 }); await closeTray(page);
+  await page.getByRole('button', { name: 'Mover Minha casa', exact: true }).click();
+  await page.getByRole('button', { name: 'Excluir Minha casa…', exact: true }).click();
+  await page.getByRole('button', { name: 'Segure para excluir', exact: true }).click({ delay: 2100 });
+  await expect.poll(async () => (await readTown(page)).buildings.length).toBe(1);
+  await expect(page.locator('#undo-toast')).toBeVisible();
+  await page.locator('#play-mode').click();
+  await expect(page.locator('#undo-toast')).toHaveCount(0);
 });
