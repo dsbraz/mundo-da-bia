@@ -4,7 +4,7 @@ import { restSeat } from './care';
 import { seatPoint } from './seats';
 import { initialAlbum } from './houses';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
-import { needsOf } from './needs';
+import { needsOf, newSession, wakeAll } from './needs';
 import type { ActorId, Piece, World } from './types';
 import type { Neighborhood, Resident } from './neighborhood-types';
 
@@ -47,6 +47,12 @@ describe('dormir só em cama ou sofá (W3L-15)', () => {
     const asleep = rest(sala(() => true), 'bia').state, { state, events } = rest(asleep, 'bia');
     expect(who(state, 'bia')).toMatchObject({ resting: false, fed: false });
     expect(events).toEqual([{ type: 'rested', actor: 'bia' }]);
+  });
+  it('Acordar na cama a tira da cama como o bom dia: de pé no chão na frente dela (y 530); no sofá ela só senta', () => {
+    const asleep = rest(bedroom(initialWorld()), 'bia').state, up = who(rest(asleep, 'bia').state, 'bia');
+    expect(up).toMatchObject({ resting: false, fed: false, seat: null, x: who(asleep, 'bia').x, y: 530 });
+    const napping = rest(sala(() => true), 'bia').state;
+    expect(who(rest(napping, 'bia').state, 'bia')).toMatchObject({ resting: false, seat: '2.0' });
   });
   it('o gato prefere a caminha, depois o sofá e a cama, e nunca a caminha de outro', () => {
     const world = bedroom(initialWorld());
@@ -93,8 +99,48 @@ describe('dormir até de manhã (W3L-15)', () => {
     expect(who('luna')).toMatchObject({ resting: false, seat: '2.1' });
     expect([who('mimi').resting, who('leo').resting, who('rui').resting]).toEqual([true, true, true]);
   });
+  it('quem já estava deitado com o sono em 0 (minutos na cama antes dela) acorda também', () => {
+    const start = town(), inside = start.actors[0]!.location as Extract<Resident['location'], { kind: 'interior' }>;
+    let night = lying(start, 'leo', { seat: '8.0', room: 'quarto', location: { ...inside, room: 'quarto' }, needs: { fome: 50, sono: 0, tedio: 0, alegria: 0 } });
+    night = lying(night, 'bia', { seat: '2.0', needs: { fome: 50, sono: 30, tedio: 0, alegria: 0 } });
+    night = lying(night, 'luna', { seat: '2.1' });
+    const morning = neighborhoodAction(night, { type: 'morning', building: inside.building }), who = (id: ActorId) => morning.actors.find(a => a.id === id)!;
+    expect(who('leo')).toMatchObject({ resting: false, seat: null, y: 530 });
+    expect([who('bia'), who('luna')]).toMatchObject([{ resting: false, seat: '2.0' }, { resting: false, seat: '2.1' }]);
+  });
   it('ninguém deitado: nada muda', () => {
     const start = town();
     expect(neighborhoodAction(start, { type: 'morning', building: 1 })).toEqual(start);
+  });
+});
+
+describe('a manhã chega sozinha (#25): todo mundo que dorme levanta', () => {
+  const town = (): Neighborhood => migrateNeighborhood(initialAlbum(initialWorld()));
+  it('quem descansa em qualquer lugar acorda: da cama de pé na frente dela, o gato na caminha, quem está na rua', () => {
+    const start = town(), inside = start.actors[0]!.location as Extract<Resident['location'], { kind: 'interior' }>;
+    const night = { ...start, actors: start.actors.map(a => a.id === 'leo' ? { ...a, resting: true, seat: '8.0' as const, room: 'quarto' as const, location: { ...inside, room: 'quarto' as const } }
+      : a.id === 'mimi' ? { ...a, resting: true, seat: '10.0' as const, room: 'quarto' as const, location: { ...inside, room: 'quarto' as const } }
+      : a.id === 'rui' ? { ...a, resting: true, seat: null, location: { kind: 'street' as const } } : a) };
+    const day = wakeAll(night), who = (id: ActorId) => day.actors.find(a => a.id === id)!;
+    expect(who('leo')).toMatchObject({ resting: false, fed: false, seat: null, y: 530 });
+    expect(who('mimi')).toMatchObject({ resting: false, seat: '10.0' });
+    expect(who('rui')).toMatchObject({ resting: false });
+  });
+  it('ninguém dormindo: o mesmo bairro', () => {
+    const start = town();
+    expect(wakeAll(start)).toBe(start);
+  });
+});
+
+describe('#26, #35, #38: toda sessão começa de manhã com todos descansados', () => {
+  it('quem foi salvo dormindo abre acordado (da cama, de pé na frente dela) e ninguém volta de barriga cheia; os assentos de quem não dormia ficam', () => {
+    const start = migrateNeighborhood(initialAlbum(initialWorld())), inside = start.actors[0]!.location as Extract<Resident['location'], { kind: 'interior' }>;
+    const saved = { ...start, actors: start.actors.map(a => a.id === 'leo' ? { ...a, resting: true, fed: true, seat: '8.0' as const, room: 'quarto' as const, location: { ...inside, room: 'quarto' as const } }
+      : a.id === 'mimi' ? { ...a, resting: true, seat: '2.0' as const } : a.id === 'luna' ? { ...a, fed: true, seat: '2.1' as const } : a) };
+    const session = newSession(saved), who = (id: ActorId) => session.actors.find(a => a.id === id)!;
+    expect(who('leo')).toMatchObject({ resting: false, fed: false, seat: null, y: 530 });
+    expect(who('mimi')).toMatchObject({ resting: false, seat: '2.0' });
+    expect(who('luna')).toMatchObject({ fed: false, seat: '2.1' });
+    expect(newSession(start)).toBe(start);
   });
 });

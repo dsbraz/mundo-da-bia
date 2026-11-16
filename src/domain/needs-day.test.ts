@@ -118,3 +118,16 @@ it('lote 8E: uma noite dormida dura o dia seguinte inteiro; uma noite em claro p
   play(awake, 20 * 60, [], (current, at) => { if (bandOf(who(current, 'luna'), 'sono') !== 'bem') easing.push(at); });
   expect(easing.at(-1)).toBe(180);
 });
+it('#40: a noite de estrelas (12 min) em claro pesa como uma noite comum: o sono volta a bem 3 min 30 s depois da manhã', () => {
+  const stars = (town: Neighborhood, from: number, seconds: number, each?: (town: Neighborhood, at: number) => void) => {
+    let current = town;
+    for (let at = from; at < from + seconds; at += 30) {
+      current = neighborhoodAction(current, { type: 'live', elapsed: 30_000, phase: phaseAt(at * 1000, 'estrelas'), event: 'estrelas' });
+      each?.(current, at + 30 - from);
+    }
+    return current;
+  };
+  const awake = stars(startTown(), 0, 38 * 60), easing: number[] = [];
+  stars(awake, 38 * 60, 20 * 60, (current, at) => { if (bandOf(who(current, 'luna'), 'sono') !== 'bem') easing.push(at); });
+  expect(easing.at(-1)).toBe(180);
+});

@@ -9,7 +9,7 @@ import { sceneRefresh } from './refresh';
 import { townActions } from './town-actions';
 import { playTime, realClock, startTicks } from './clock';
 import { showMoment } from './show-moment';
-import { feel } from '../domain/needs';
+import { feel, newSession } from '../domain/needs';
 import { sceneFeedback } from './scene-feedback';
 import { modeLine, refusal, welcomeLine, nameOf } from '../content/feedback-text';
 import { plaza } from './plaza';
@@ -73,7 +73,7 @@ import { nightSleep } from './night-sleep';
 import { bedtimeButton, bedtimeMoves } from '../presentation/bedtime-button';
 import { endShow } from '../domain/show';
 
-let town = loadNeighborhood();
+let town = newSession(loadNeighborhood());
 let state = localWorld(town);
 let camera = 0;
 function albumView(): Album { return { active: town.location.kind === 'interior' ? town.location.building : town.buildings[0]!.id, houses: town.buildings.map(b => ({ id: b.id, name: b.name, state: localWorld({ ...town, location: { kind: 'interior', building: b.id, room: b.entry } }) })) }; }

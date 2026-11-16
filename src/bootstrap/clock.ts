@@ -1,4 +1,4 @@
-import { dayIndex, eventOfDay, phaseAt, untilMorning, type Phase } from '../domain/clock';
+import { dayIndex, eventOfDay, phaseAt, untilMorning, type Phase, type TownEvent } from '../domain/clock';
 /** The real clock, as a port the app can replace: the domain only ever gets the time through actions. */
 export interface ClockPort { hidden?(): boolean; now(): number; today(): { y: number; m: number; d: number }; every(ms: number, fn: () => void): () => void; onVisible(fn: () => void): () => void }
 export const realClock: ClockPort = {
@@ -17,20 +17,20 @@ export function startTicks(clock: ClockPort, tick: (now: number) => void): () =>
   return () => stops.forEach(stop => stop());
 }
 /** Session time in Brincar for the needs' `live` (§3.1): `mode(false)` pauses it in Criar; `take` hands over what was played since the last
- *  take (at most 60 s, so a hidden tab or days away count one minute) with the day phase at its start. */
+ *  take (at most 60 s, so a hidden tab or days away count one minute) with the day phase at its start and the day's event. */
 export function playTime(clock: ClockPort) {
   const event = eventOfDay(dayIndex(clock.today()));
   let since = clock.now(), playing = true, pending = 0, session = 0;
   const settle = (now: number) => { if (playing) pending += Math.max(0, now - since); since = now; };
   return {
     mode(next: boolean) { settle(clock.now()); playing = next; },
-    take(now: number): { elapsed: number; phase: Phase } {
+    take(now: number): { elapsed: number; phase: Phase; event: TownEvent } {
       settle(now);
       // A hidden tab's throttled timer still ticks: its time waits and counts at most 60 s on the way back.
-      if (clock.hidden?.()) return { elapsed: 0, phase: phaseAt(session, event) };
+      if (clock.hidden?.()) return { elapsed: 0, phase: phaseAt(session, event), event };
       const elapsed = Math.min(pending, 60_000), phase = phaseAt(session, event);
       pending = 0; session += elapsed;
-      return { elapsed, phase };
+      return { elapsed, phase, event };
     },
     /** The phase shown now (W3L-11): that of the play time already taken. */
     phase: (): Phase => phaseAt(session, event),

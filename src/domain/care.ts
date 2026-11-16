@@ -2,7 +2,7 @@ import type { Actor, ActorId, Item, PieceKind, SeatRef, Transition, World } from
 import type { RecipeId } from './progress';
 import type { NeighborhoodItem } from './neighborhood-types';
 import { tastes } from './tastes';
-import { needsOf, relieve } from './needs';
+import { needsOf, relieve, risen } from './needs';
 import { freeSeat, mealSeat, seatPiece, seatPoint, tableOf } from './seats';
 import { fromPiece, pieceBounds } from './layout';
 import { refuse } from './missing';
@@ -26,10 +26,10 @@ export function restSeat(state: World, actor: Actor, alone = false): SeatRef | u
   if (own && kinds.includes(own.kind)) return actor.seat!;
   return kinds.flatMap(kind => state.layout.pieces.filter(p => p.room === state.room && p.kind === kind)).map(p => freeSeat(state, p, actor)).find(Boolean);
 }
-/** Resting (the button, the autonomy): whoever rests wakes; otherwise she lies on a bed or naps on a sofa seat, and a cat curls up on a
+/** Resting (the button, the autonomy): whoever rests wakes (out of a bed, standing in front of it, like the morning); otherwise she lies on a bed or naps on a sofa seat, and a cat curls up on a
  *  rug if there is nothing else. Never on the bare floor: with no place to sleep nothing changes and the bubble asks for a bed. */
 export function rest(state: World, actor: Actor, alone = false): Transition {
-  if (actor.resting) return asleep(state, actor, wake(actor));
+  if (actor.resting) return asleep(state, actor, risen(!!actor.seat && seatPiece(state, actor.seat, actor.room)?.kind === 'bed'));
   const seat = restSeat(state, actor, alone), point = seat && seatPoint(state, seat);
   if (point) return asleep(state, actor, { seat, x: point.x, y: point.y, resting: true });
   const rug = actor.kind === 'cat' ? state.layout.pieces.find(p => p.room === state.room && p.kind === 'rug') : undefined;

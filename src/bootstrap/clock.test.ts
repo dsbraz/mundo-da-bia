@@ -33,7 +33,7 @@ it('o tempo em Criar não conta: a vida pausa e volta de onde parou', () => {
   const clock = manualClock(), life = playTime(clock.port);
   clock.wait(20_000); life.mode(false);
   clock.wait(40_000); life.mode(true);
-  expect(life.take(clock.wait(10_000))).toEqual({ elapsed: 30_000, phase: 'manha' });
+  expect(life.take(clock.wait(10_000))).toEqual({ elapsed: 30_000, phase: 'manha', event: 'estrelas' });
   life.mode(false); life.mode(false);
   expect(life.take(clock.wait(30_000)).elapsed).toBe(0);
 });
@@ -51,7 +51,7 @@ it('uma aba escondida não acumula vida a cada tick: uma hora fora conta 60 s na
   const hidden = Array.from({ length: 120 }, () => life.take(clock.wait(30_000)).elapsed);
   expect(hidden.every(elapsed => elapsed === 0)).toBe(true);
   clock.hide(false);
-  expect(life.take(clock.wait(1000))).toEqual({ elapsed: 60_000, phase: 'manha' });
+  expect(life.take(clock.wait(1000))).toEqual({ elapsed: 60_000, phase: 'manha', event: 'estrelas' });
 });
 it('dormir a noite (W3L-15) leva à manhã seguinte: a fase volta a manha e o dia segue dali', () => {
   const clock = manualClock(), life = playTime(clock.port);
@@ -59,5 +59,10 @@ it('dormir a noite (W3L-15) leva à manhã seguinte: a fase volta a manha e o di
   life.morning();
   // 2026-11-12 is a night of stars: the day lasts 38 min.
   expect([life.phase(), life.played()]).toEqual(['manha', 38 * 60_000]);
-  expect(life.take(clock.wait(30_000))).toEqual({ elapsed: 30_000, phase: 'manha' });
+  expect(life.take(clock.wait(30_000))).toEqual({ elapsed: 30_000, phase: 'manha', event: 'estrelas' });
+});
+it('#40: cada passo leva o evento do dia ao live (numa noite de estrelas o sono da noite cresce mais devagar)', () => {
+  const clock = manualClock(), life = playTime(clock.port);
+  // 2026-11-12 is a night of stars.
+  expect(life.take(clock.wait(30_000)).event).toBe('estrelas');
 });

@@ -1,7 +1,7 @@
 import type { Actor, ActorId, CropId, Item, ItemId, Layout, Palette, Point, RoomId, RoomTemplate } from './types';
 import type { PlazaPlot, Progress, RecipeId } from './progress';
 import type { Ingredient, Stock, Utensil } from './ingredients';
-import type { Phase } from './clock';
+import type { Phase, TownEvent } from './clock';
 import type { Good } from './goods';
 import type { Game } from './tastes';
 export interface Outdoor { bench: ActorId | null; swing: ActorId | null; watered: boolean; mail: number[]; bells: number[] }
@@ -44,9 +44,10 @@ export type GardenAction =
   | { type: 'water-plot'; plot: PlazaPlot; now: number }
   | { type: 'harvest'; plot: PlazaPlot }
   | { type: 'rain'; now: number };
-/** Life goes on (§3.1): `elapsed` ms of session in Brincar since the last `live` (the domain counts at most 60 s), in day `phase`;
- *  boredom grows only for the `idle` (still and not playing; the domain cannot see who walks or plays). Never dispatched in Criar. */
-export type LiveAction = { type: 'live'; elapsed: number; phase: Phase; idle?: readonly ActorId[] };
+/** Life goes on (§3.1): `elapsed` ms of session in Brincar since the last `live` (the domain counts at most 60 s), in day `phase` of the
+ *  day's `event` (a night of stars is longer); boredom grows only for the `idle` (still and not playing; the domain cannot see who walks
+ *  or plays). Never dispatched in Criar. */
+export type LiveAction = { type: 'live'; elapsed: number; phase: Phase; event?: TownEvent; idle?: readonly ActorId[] };
 /** `actor` plays `game` (W3L-13): a game relieves boredom (never saved, like every need). */
 export type EnjoyAction = { type: 'enjoy'; actor: ActorId; game: Game };
 /** The night is slept through in `building` (W3L-15): whoever lies there in a bed or on a sofa wakes rested. */

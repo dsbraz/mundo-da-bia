@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ready, read, tray, closeTray, drag, tap, onPiece } from './helpers';
-test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar', async ({ page }) => {
+test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar (a sessão nova começa com todos acordados e sem barriga cheia)', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message)); await ready(page);
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Lanche', exact: true }).click(); await closeTray(page);
   await page.getByRole('button', { name: 'Comer', exact: true }).click(); expect((await read(page)).actors[0]!.fed).toBe(true);
@@ -9,7 +9,9 @@ test('alimenta humanos e gatos, veste, descansa e preserva ao recarregar', async
   await tray(page, 'Objetos'); await page.getByRole('button', { name: 'Comidinha de gato' }).click(); await closeTray(page);
   await page.getByRole('button', { name: 'Comer', exact: true }).click(); await page.getByRole('button', { name: 'Descansar', exact: true }).click();
   const state = await read(page); expect(state.actors[4]).toMatchObject({ fed: true, resting: true });
-  await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true'); expect(await read(page)).toEqual(state); expect(errors).toEqual([]);
+  // #26, #35, #38: sleep and a full belly are the session's; the look, the places and the rest of the house come back as they were.
+  await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
+  expect(await read(page)).toEqual({ ...state, actors: state.actors.map(a => ({ ...a, fed: false, resting: false })) }); expect(errors).toEqual([]);
 });
 test('arraste cancelado preserva posição, teclado move e dados inválidos recuperam', async ({ page }) => {
   await ready(page); const before = await read(page); await drag(page, [520, 420], [550, 430], true); expect(await read(page)).toEqual(before);

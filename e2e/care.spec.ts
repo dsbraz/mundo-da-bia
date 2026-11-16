@@ -20,10 +20,11 @@ test('pega roupa no armário e brinquedo na gaveta e entrega no colo', async ({ 
   await drag(page, await onPiece(page, 'wardrobe', 466, 364), [150, 350]);
   expect((await read(page)).items[3]!.holder).toBe('bia');
   await page.screenshot({ path: 'reports/care-lap.png' });
+  // #26, #35: a new session starts in the morning with everyone up: out of the bed, standing in front of it; the rest stays.
   const state = await read(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
-  expect(await read(page)).toEqual(state);
+  expect(await read(page)).toEqual({ ...state, actors: state.actors.map(a => a.id === 'bia' ? { ...a, resting: false, fed: false, seat: null, y: 530 } : a) });
 });
-test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar', async ({ page }) => {
+test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar (acordada: a sessão nova começa de manhã)', async ({ page }) => {
   let world = initialWorld(); world.actors[1]!.room = 'quarto'; world.actors[1]!.seat = null;
   world = transition(world, { type: 'dress', actor: 'bia', look: 'rumi' }).state;
   world = transition(world, { type: 'pick', actor: 'bia', item: world.items[3]!.id }).state;
@@ -41,6 +42,7 @@ test('transporta brinquedo no colo, deita com coberta e preserva ao recarregar',
   await page.getByRole('button', { name: 'Deitar', exact: true }).click();
   // With reduced motion the short walk to the pillow is slow, not instant: lying down happens when it arrives.
   await expect.poll(async () => (await read(page)).actors[0]).toMatchObject({ seat: '8.0', resting: true });
+  // #26, #35: a new session starts in the morning with everyone up: out of the bed, standing in front of it; the rest stays.
   const state = await read(page); await page.reload(); await expect(page.locator('canvas')).toHaveAttribute('data-ready', 'true');
-  expect(await read(page)).toEqual(state);
+  expect(await read(page)).toEqual({ ...state, actors: state.actors.map(a => a.id === 'bia' ? { ...a, resting: false, fed: false, seat: null, y: 530 } : a) });
 });

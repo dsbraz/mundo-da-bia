@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { point, readTown, ready } from './helpers';
+import { closeTray, point, readTown, ready, tray } from './helpers';
 import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood } from '../src/domain/neighborhood';
@@ -92,12 +92,17 @@ for (const reduced of [false, true]) test(`gato descansando fica enrolado: deita
   if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
   const world = initialWorld();
   // The grown-ups (W3L-24) keep their places in the bedroom.
-  const spots: Partial<Record<string, number>> = { bia: 100, luna: 170, leo: 880, rui: 930, mimi: 480, nino: 680, pipoca: 800 };
-  world.actors = world.actors.map(a => ({ ...a, x: spots[a.id] ?? a.x, y: a.kind === 'cat' ? 540 : 530, seat: null, resting: a.id === 'mimi' }));
+  // Luna and Léo take the sofa, so the Mimi resting on the rug curls up where she stands (a session starts with everyone up, #26).
+  const spots: Partial<Record<string, number>> = { bia: 100, rui: 930, mimi: 480, nino: 680, pipoca: 800 };
+  const sofa: Partial<Record<string, readonly [string, number]>> = { luna: ['2.0', 150], leo: ['2.1', 245] };
+  world.actors = world.actors.map(a => sofa[a.id] ? { ...a, room: 'sala', seat: sofa[a.id]![0] as '2.0', x: sofa[a.id]![1], y: 405 } : ({ ...a, x: spots[a.id] ?? a.x, y: a.kind === 'cat' ? 540 : 530, seat: null }));
   await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v2')) localStorage.setItem('mundo-da-bia:neighborhood:v2', value); }, encodeNeighborhood(migrateNeighborhood(initialAlbum(world))));
   await still(page);
   // Any key dismisses the ghost hand of the first opening, so nothing covers the cats.
   await page.keyboard.press('Shift'); await advance(page, 1000);
+  await tray(page, 'Turma'); await page.getByRole('button', { name: 'Mimi', exact: true }).click(); await closeTray(page);
+  await page.getByRole('button', { name: 'Descansar', exact: true }).click(); await advance(page, 1000);
+  expect((await readTown(page)).actors.find(a => a.id === 'mimi')).toMatchObject({ resting: true, seat: null, x: 480, y: 540 });
   await expect(page.locator('#first-touch')).toHaveCount(0);
   await expect(page.locator('canvas')).toHaveAttribute('data-idle', /curl/);
   const at = await point(page, 380, 420), end = await point(page, 580, 560);

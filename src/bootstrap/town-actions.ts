@@ -2,6 +2,8 @@ import { localWorld, neighborhoodAction, undoTo } from '../domain/neighborhood';
 import type { LiveAction, NeighborhoodAction, Neighborhood } from '../domain/neighborhood-types';
 import type { ActorId } from '../domain/types';
 import type { Game } from '../domain/tastes';
+import type { Phase } from '../domain/clock';
+import { wakeAll } from '../domain/needs';
 import { streetExit } from '../presentation/street-opening';
 import type { PlayScene } from '../presentation/scene';
 
@@ -35,7 +37,7 @@ function stances(town: Neighborhood): Map<ActorId, string> {
 export function townActions(deps: TownDeps) {
   let past: Neighborhood[] = [], future: Neighborhood[] = [];
   let opening: ReturnType<typeof streetExit> = { camera: 0, spans: [], people: [] };
-  let stood = new Map<ActorId, string>();
+  let stood = new Map<ActorId, string>(), lastPhase: Phase | undefined;
   function remember() { past = [...past.slice(-49), deps.town()]; future = []; }
   /** Changing mode starts a new history: undo is a Criar tool and never rewinds what was played (looks, places, hands, bags). */
   function forget() { past = []; future = []; }
@@ -83,14 +85,19 @@ export function townActions(deps: TownDeps) {
     const idle = life.idle ?? [...here].filter(([id, at]) => stood.get(id) === at && !busy.includes(id)).map(([id]) => id);
     stood = here;
     const lived = neighborhoodAction(deps.town(), { type: 'live', ...life, idle }); if (lived !== deps.town()) deps.feel(lived);
+    // The morning that comes on its own (#25): on the step that enters it, whoever still sleeps gets up (a nap by day is left alone).
+    if (life.phase === 'manha' && lastPhase && lastPhase !== 'manha') apply(wakeAll(deps.town()));
+    lastPhase = life.phase;
   }
   /** `actor` plays `game` (W3L-13): only the needs change, quietly. */
   function enjoy(actor: ActorId, game: Game) {
     const next = neighborhoodAction(deps.town(), { type: 'enjoy', actor, game }); if (next !== deps.town()) deps.feel(next);
   }
-  /** The night slept through in `building` (W3L-15): whoever slept has sleep 0 and wakes up, applied in full (world and scene) under the veil. */
+  /** The night slept through in `building` (W3L-15): whoever slept has sleep 0 and, like everyone still asleep anywhere (#25), wakes up,
+   *  applied in full (world and scene) under the veil. */
   function sleepThrough(building: number) {
-    apply(neighborhoodAction(deps.town(), { type: 'morning', building }));
+    apply(wakeAll(neighborhoodAction(deps.town(), { type: 'morning', building })));
+    lastPhase = 'manha';
   }
   return { dispatch, undo, remember, forget, preview, tick, apply, enjoy, sleepThrough, opening: () => opening, canUndo: () => past.length > 0, canRedo: () => future.length > 0 };
 }

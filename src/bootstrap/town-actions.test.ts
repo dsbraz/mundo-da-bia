@@ -96,3 +96,33 @@ it('trocar de modo esquece o desfazer do bairro: um snapshot de Criar não rebob
   actions.forget();
   expect([actions.canUndo(), actions.canRedo()]).toEqual([false, false]);
 });
+
+it('#25: a manhã que chega sozinha (o tick que entra em manha) levanta quem dorme; um cochilo de dia não é interrompido', () => {
+  const base = migrateNeighborhood(initialAlbum(initialWorld()));
+  const lying = (town: Neighborhood) => ({ ...town, actors: town.actors.map(a => a.id === 'luna' ? { ...a, seat: '2.0' as const, resting: true } : a) });
+  const { actions, deps, current } = setup(lying(base));
+  actions.tick(30_000, { elapsed: 30_000, phase: 'amanhecer' });
+  expect(current().actors.find(a => a.id === 'luna')!.resting).toBe(true);
+  actions.tick(60_000, { elapsed: 30_000, phase: 'manha' });
+  expect(current().actors.find(a => a.id === 'luna')).toMatchObject({ resting: false, seat: '2.0' });
+  expect(deps.refresh).toHaveBeenCalled();
+  deps.commit(lying(current()));
+  actions.tick(90_000, { elapsed: 30_000, phase: 'manha' });
+  expect(current().actors.find(a => a.id === 'luna')!.resting).toBe(true);
+});
+it('#25: depois da noite dormida o gato que dormia também levanta, como na manhã que chega sozinha', () => {
+  const base = migrateNeighborhood(initialAlbum(initialWorld()));
+  const { actions, current } = setup({ ...base, actors: base.actors.map(a => a.id === 'mimi' ? { ...a, seat: '2.0' as const, resting: true } : a) });
+  actions.sleepThrough(1);
+  expect(current().actors.find(a => a.id === 'mimi')!.resting).toBe(false);
+});
+it('#25: depois da noite pulada, o primeiro tick da manhã não acorda de novo quem deitou logo depois do bom dia', () => {
+  const base = migrateNeighborhood(initialAlbum(initialWorld()));
+  const lying = (town: Neighborhood) => ({ ...town, actors: town.actors.map(a => a.id === 'luna' ? { ...a, seat: '2.0' as const, resting: true } : a) });
+  const { actions, deps, current } = setup(base);
+  actions.tick(30_000, { elapsed: 30_000, phase: 'noite' });
+  actions.sleepThrough(1);
+  deps.commit(lying(current()));
+  actions.tick(60_000, { elapsed: 30_000, phase: 'manha' });
+  expect(current().actors.find(a => a.id === 'luna')!.resting).toBe(true);
+});
