@@ -55,13 +55,24 @@ describe('os profissionais de cada instituição (lote 7)', () => {
     expect(after.x).not.toBe(teacher.x);
     expect(overlap(box(after), rect({ ...pieceBounds.board, x: 160, y: board.y }))).toBe(0);
   });
-  it('lote 8A: ela recebe quem chega no cômodo de entrada, mesmo numa escola antiga de cômodos sem modelo', () => {
+  it('#37: cada profissional está num lugar só: no cômodo de trabalho; na entrada só quando o prédio não tem esse cômodo (escola antiga)', () => {
+    for (const [model, profession] of work) {
+      const town = built(model), rooms = Object.keys(town.buildings[1]!.layout.rooms) as RoomId[];
+      expect(rooms.filter(room => staffAt(town, at(town, room))?.profession === profession)).toHaveLength(1);
+    }
     const town = built('school'), entry = town.buildings[1]!.entry;
-    expect(staffAt(town, at(town, entry))).toMatchObject({ profession: 'teacher', room: entry });
+    expect(staffAt(town, at(town, entry))).toBeNull();
     const b = town.buildings[1]!, bare = Object.fromEntries(Object.entries(b.layout.rooms).map(([id, r]) => [id, { ...r, template: 'empty' as const }])) as typeof b.layout.rooms;
     const old = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, rooms: bare, pieces: [] } } : x) };
     expect(staffAt(old, at(old, entry))).toMatchObject({ profession: 'teacher', room: entry });
     expect(staffAt(old, at(old, roomOf(town, 'classroom')))).toBeNull();
+  });
+  it('#37: com duas salas de aula, a professora está só na primeira', () => {
+    const town = built('school'), b = town.buildings[1]!, library = roomOf(town, 'library'), classroom = roomOf(town, 'classroom');
+    const two = { ...town, buildings: town.buildings.map(x => x === b ? { ...b, layout: { ...b.layout, rooms: { ...b.layout.rooms, [library]: { ...b.layout.rooms[library]!, template: 'classroom' as const } } } } : x) };
+    const staffed = (Object.keys(b.layout.rooms) as RoomId[]).filter(room => staffAt(two, at(two, room)));
+    expect(staffed).toHaveLength(1);
+    expect(staffed[0]).toBe((Object.keys(b.layout.rooms) as RoomId[]).find(room => room === classroom || room === library));
   });
   it('trocado o cômodo de trabalho por outro, o profissional vai embora; sem a sala, também', () => {
     const town = built('school'), room = roomOf(town, 'classroom'), b = town.buildings[1]!;

@@ -26,6 +26,12 @@ export function portraitNeed(world: World, id: ActorId): Need | null {
   const actor = world.actors.find(a => a.id === id);
   return actor && actor.room !== world.room ? topNeed(actor)?.need ?? null : null;
 }
+/** The portrait's small bubble shown at `now`: it asks on the same one turn as every other bubble (lot 8E, #29), and only when it can
+ *  be seen (`shown`), so a hidden one never spends the turn. */
+export function portraitAsk(world: World, id: ActorId, now: number, shown = true): Need | null {
+  const need = shown ? portraitNeed(world, id) : null;
+  return need && mayAsk(`portrait:${id}:${need}`, now) ? need : null;
+}
 
 interface Deps {
   world: () => World; selected: () => ActorId; head: (id: ActorId) => Point | null; canvas: () => HTMLCanvasElement | null;
@@ -72,9 +78,10 @@ export function needBubbles(host: HTMLElement, deps: Deps) {
     paint(thought);
     if (navigator.webdriver) Object.assign(bubble.dataset, { actor: thought.actor, need: thought.need, band: thought.band });
   }
-  function portraits(world: World) {
+  function portraits(world: World, now: number) {
+    const quiet = !deps.playing() || !!host.querySelector('.missing-bubble:not(.thought)');
     host.querySelectorAll<HTMLElement>('button[data-actor]').forEach(button => {
-      const need = portraitNeed(world, button.dataset.actor as ActorId) ?? '';
+      const need = portraitAsk(world, button.dataset.actor as ActorId, now, !quiet && button.getClientRects().length > 0) ?? '';
       if ((button.dataset.need ?? '') === need) return;
       button.dataset.need = need; button.querySelector('.portrait-need')?.remove();
       if (!need) return;
@@ -84,7 +91,7 @@ export function needBubbles(host: HTMLElement, deps: Deps) {
   }
   function frame(now: number) {
     const world = deps.world();
-    show(thoughtOf(world, deps.selected()), now); portraits(world);
+    show(thoughtOf(world, deps.selected()), now); portraits(world, now);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

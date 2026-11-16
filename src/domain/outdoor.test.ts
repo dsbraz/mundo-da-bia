@@ -90,3 +90,32 @@ it('the plaza ball is added once', async () => {
   expect(plazaBall(once)).toBe(once);
   expect(plazaBall({ items: [{ ...once.items[0]!, kind: 'lanche' as const }] }).items).toHaveLength(2);
 });
+it('#34: na rua, quem come um prato perto do banco livre (na praça) senta nele antes; longe dele ou com ele ocupado come em pé', async () => {
+  const { benchMeal, outdoorPoints } = await import('./outdoor');
+  const { localWorld, storeWorld } = await import('./neighborhood');
+  const { transition } = await import('./world');
+  const { plazaWidth } = await import('./neighborhood-geometry');
+  const out = outside(), t = { ...out, actors: out.actors.map(a => ['luna', 'mimi'].includes(a.id) ? { ...a, location: { kind: 'street' as const }, x: 400, y: 520 } : a) };
+  const bia = t.actors.find(a => a.id === 'bia')!;
+  const dish: import('./neighborhood-types').NeighborhoodItem = { id: '1:prato', kind: 'prato', recipe: 'panqueca', room: 'sala', location: { kind: 'street' }, x: bia.x, y: bia.y, holder: 'bia', spot: 'floor' };
+  const fed = { ...t, items: [...t.items, dish] }, onFloor = { ...fed, items: fed.items.map(i => i.id === dish.id ? { ...i, holder: null } : i) };
+  expect(benchMeal(fed, { type: 'feed', actor: 'bia' })).toBe('bia');
+  expect(benchMeal(onFloor, { type: 'give', actor: 'luna', item: dish.id })).toBe('luna');
+  // Far from the plaza, with the bench taken, with no dish, for a cat, or indoors: nothing to sit on first.
+  const far = { ...fed, actors: fed.actors.map(a => a.id === 'bia' ? { ...a, x: plazaWidth + 100 } : a) };
+  expect(benchMeal(far, { type: 'feed', actor: 'bia' })).toBeNull();
+  expect(benchMeal({ ...fed, outdoor: { ...fed.outdoor, bench: 'luna' } }, { type: 'feed', actor: 'bia' })).toBeNull();
+  expect(benchMeal(t, { type: 'feed', actor: 'bia' })).toBeNull();
+  expect(benchMeal(onFloor, { type: 'give', actor: 'mimi', item: dish.id })).toBeNull();
+  const treat = { ...onFloor, items: onFloor.items.map(i => i.id === dish.id ? { ...i, recipe: 'petisco-de-gato' as const } : i) };
+  expect(benchMeal(treat, { type: 'give', actor: 'mimi', item: dish.id })).toBeNull();
+  expect(benchMeal(fed, { type: 'drop', actor: 'bia' })).toBeNull();
+  expect(benchMeal({ ...fed, location: { kind: 'interior', building: 1, room: 'sala' } }, { type: 'feed', actor: 'bia' })).toBeNull();
+  // Seated on the bench, she eats there and the bench stays hers.
+  const seated = neighborhoodAction(fed, { type: 'outdoor', actor: 'bia', target: 'bench' });
+  expect(benchMeal(seated, { type: 'feed', actor: 'bia' })).toBeNull();
+  const after = storeWorld(seated, transition(localWorld(seated), { type: 'feed', actor: 'bia' }).state);
+  expect(after.outdoor.bench).toBe('bia');
+  expect(after.actors.find(a => a.id === 'bia')).toMatchObject({ fed: true, ...outdoorPoints.bench });
+  expect(after.items.some(i => i.id === dish.id)).toBe(false);
+});

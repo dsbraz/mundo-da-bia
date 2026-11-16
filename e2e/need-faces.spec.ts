@@ -34,7 +34,7 @@ async function oneDrawnBubble(page: Page) {
   expect(await page.locator(':is(.missing-bubble, #cast, .hint-cast) :is(meter, progress, [role=progressbar], [role=meter])').count()).toBe(0);
 }
 
-test('13 min sem comer: a bolha de prato na Bia, uma só por cômodo, e a bolha pequena da Luna no retrato', async ({ page }) => {
+test('13 min sem comer: a bolha de prato na Bia, uma só por cômodo, e o retrato da Luna espera a vez', async ({ page }) => {
   test.setTimeout(240_000);
   await seed(page);
   // Lot 8E: the Bia asks from 6 min 40 s, but Léo's hunger took the room's turn at 5 min 30 s, and the next ask waits 8 min.
@@ -47,7 +47,8 @@ test('13 min sem comer: a bolha de prato na Bia, uma só por cômodo, e a bolha 
   await page.screenshot({ path: `${shots}/thought-plate-1024.png` });
   await page.setViewportSize({ width: 844, height: 390 }); await page.clock.runFor(200);
   await page.screenshot({ path: `${shots}/thought-plate-844.png` });
-  await expect(page.locator('#cast [data-actor=luna] .portrait-need')).toHaveAttribute('src', '/art/needs.svg#food');
+  // #29: the portraits ask on the same one turn (lot 8E): while the Bia's plate is up, Luna's portrait waits.
+  await expect(page.locator('#cast [data-actor=luna] .portrait-need')).toHaveCount(0);
   await expect(page.locator('#cast [data-actor=bia] .portrait-need')).toHaveCount(0);
   await tray(page); await page.clock.runFor(300);
   await page.screenshot({ path: `${shots}/turma-portrait-need-844.png` });

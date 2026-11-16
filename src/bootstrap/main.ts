@@ -62,7 +62,7 @@ import '../presentation/place-transition.css';
 import { kitchen } from './kitchen';
 import { gardenPlay } from './garden';
 import { marketPlay } from './market';
-import { schoolPlay } from './school';
+import { boardSide, schoolPlay } from './school';
 import { libraryPlay } from './library';
 import { readers } from '../domain/library';
 import { staffPlay } from './staff';
@@ -133,7 +133,7 @@ const enterDoor = doorWalk({ town: () => town, selected: () => selected, buildin
 // A kicked or thrown ball came to rest: whoever is selected played ball (W3L-13).
 scene.ballRest = (item, point) => { dispatch({ type: 'place', item, point }, false); townActs.enjoy(selected, 'bola'); };
 const garden = gardenPlay({ root, town: () => town, selected: () => selected, building: () => building, walker, now: () => realClock.now(), apply: next => townActs.apply(next), scene, feedback, enjoy: id => townActs.enjoy(id, 'regar') });
-const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden });
+const square = plaza({ town: () => town, selected: () => selected, walker, dispatch: townDispatch, refuse: feedback.refuse, push: rider => scene.outdoor.push(rider), garden, serve: action => dispatch(action, false) });
 const play = playActions({ root, state: () => state, selected: () => selected, choose: id => { selected = id; refresh(); }, light: id => { selected = id; stale = true; scene.choose(id); }, settle: () => { if (stale) refresh(); }, cancelGame, walker, dispatch, toggleWardrobe, refuse: feedback.refuse, bench: piece => cooking.open(piece), instead: item => shopping.instead(item), serve: action => dispatch(action, false), looks: openLooks, grimace: (id, mirror) => { scene.poke(id, mirrorFaces[id], ''); const span = mirrorSpan(state, id, mirror); if (span) view?.reveal(span); } });
 const outside = outdoorControls(root, square.use);
 const structure = structureControls(root, () => town, townDispatch, () => { if (!building) toggleBuild(); walker.cancel(); cancelInput(); shell.close(); });
@@ -182,7 +182,8 @@ function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback, perform: action => play.perform(action), scene,
   openMap: place => openMap(place, 'mercado'), hint: { seen: () => loadCheckoutHintSeen(), done: () => { saveCheckoutHintSeen(); } } });
-const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback });
+const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback,
+  walkToBoard: (piece, done) => { const point = boardSide(state, selected, piece); if (point) walker.start(point, done); return !!point; } });
 const books = libraryPlay({ town: () => town, selected: () => selected, apply: next => townActs.apply(next), feedback });
 const staffing = staffPlay({ state: () => state, scene, school: schooling, feedback });
 const remember = () => townActs.remember(), streetUndo = (forward: boolean) => townActs.undo(forward);
@@ -220,7 +221,7 @@ function refresh(then?: () => void) { stale = false; showTime(state.show); place
 /** A new action stops the game and the walk, or (a dish for a person) starts her walk to the meal seat instead: true then. */
 function walksFirst(action: Action, interrupt: boolean): boolean {
   if (!interrupt) return false;
-  if (play.sitToEat(action)) return true;
+  if (play.sitToEat(action) || square.sitToEat(action)) return true;
   cancelGame(); walker.cancel(); return false;
 }
 /** The market, the school and the bookcases take some taps over (a shelf, the checkout, the fridge with a bag, a board, a bookcase). */

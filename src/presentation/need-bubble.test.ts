@@ -1,7 +1,9 @@
 import { expect, it } from 'vitest';
 import { initialWorld } from '../domain/world';
 import type { ActorId, Needs, World } from '../domain/types';
-import { besideMenu, portraitNeed, thoughtIcon, thoughtOf } from './need-bubble';
+import { besideMenu, portraitAsk, portraitNeed, thoughtIcon, thoughtOf } from './need-bubble';
+import { askGap, askShow } from '../domain/asks';
+import { mayAsk } from './ask-gate';
 
 const needs = (fome: number, sono = 0, tedio = 0): Needs => ({ fome, sono, tedio, alegria: 0 });
 const feeling = (world: World, patch: Partial<Record<ActorId, Needs>>): World =>
@@ -33,6 +35,21 @@ it('no retrato da Turma, a bolha pequena é de quem pede algo noutro lugar', () 
   expect(portraitNeed(away, 'rui')).toBe('sono');
   expect(portraitNeed(world, 'luna')).toBeNull();
   expect(portraitNeed(away, 'bia')).toBeNull();
+});
+it('os retratos da Turma pedem na mesma vez única das bolhas (lote 8E): com três famintos noutro lugar, no máximo um selo, e só por um tempo (#29)', () => {
+  const world = feeling(initialWorld(), { luna: needs(69), leo: needs(69), rui: needs(69) });
+  const away = { ...world, actors: world.actors.map(a => ['luna', 'leo', 'rui'].includes(a.id) ? { ...a, room: 'quarto' as const } : a) };
+  const shown = (now: number) => (['luna', 'leo', 'rui'] as const).map(id => portraitAsk(away, id, now)).filter(Boolean);
+  const start = 1_000_000_000;
+  shown(start);
+  expect(shown(start + 16)).toEqual(['fome']);
+  expect(shown(start + askShow + 16)).toEqual([]);
+  expect(shown(start + askGap / 2)).toEqual([]);
+  // A portrait nobody sees (Criar, a refusal up, the strip hidden) never takes the turn: the next ask is still free for the room.
+  const later = start + askGap;
+  expect(portraitAsk(away, 'luna', later, false)).toBeNull();
+  expect(mayAsk('thought:bia:fome:pede', later)).toBe(false);
+  expect(mayAsk('thought:bia:fome:pede', later + 16)).toBe(true);
 });
 
 it('a bolha da selecionada não fica embaixo do menu dela: vai para o lado da cabeça, na altura dela (lote 6B), senão para o lado do menu', () => {

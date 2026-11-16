@@ -5,7 +5,7 @@ import { migrateNeighborhood } from '../src/domain/neighborhood';
 import { encodeNeighborhood } from '../src/persistence/neighborhood';
 import type { RecipeId } from '../src/domain/progress';
 import type { Piece, World } from '../src/domain/types';
-import { closeTray, drag, point, readTown, ready, tray } from './helpers';
+import { closeTray, drag, point, readTown, ready, tap, tray } from './helpers';
 
 const spots = { bia: 760, luna: 300, mimi: 480 } as Record<string, number>;
 const piece = (id: number, kind: Piece['kind'], x: number, y: number): Piece => ({ id, kind, room: 'sala', x, y, color: 'original', flipped: false });
@@ -106,4 +106,22 @@ test('pegar o ovo mexido pela bandeja e usar Comer: o botão mostra o prato, a B
   await eat.click();
   await expect.poll(() => dishes(page)).toEqual([]);
   expect((await actor(page, 'bia')).fed).toBe(true);
+});
+
+test('#34: na praça com o banco livre, Comer leva a Bia ao banco e ela come sentada nele', async ({ page }) => {
+  const town = migrateNeighborhood(initialAlbum(initialWorld()));
+  const street = { kind: 'street' as const };
+  const dish = { id: '20:prato' as const, kind: 'prato' as const, recipe: 'panqueca' as RecipeId, room: 'sala' as const, location: street, x: 420, y: 520, holder: 'bia' as const, spot: 'floor' as const };
+  await page.clock.install({ time: new Date('2026-01-01T09:00:00Z') });
+  await page.addInitScript(value => { if (!localStorage.getItem('mundo-da-bia:neighborhood:v3')) localStorage.setItem('mundo-da-bia:neighborhood:v3', value); },
+    encodeNeighborhood({ ...town, location: street, nextItem: 21, items: [...town.items, dish], actors: town.actors.map(a => a.id === 'bia' ? { ...a, location: street, x: 420, y: 520, seat: null } : a) }));
+  await page.setViewportSize({ width: 1280, height: 800 }); await ready(page);
+  // A touch on the Bia opens her actions.
+  await tap(page, 420, 400);
+  const eat = page.getByRole('button', { name: 'Comer', exact: true });
+  await expect(eat).toBeEnabled();
+  await eat.click();
+  await expect.poll(async () => { await page.clock.runFor(200); return (await readTown(page)).outdoor.bench; }).toBe('bia');
+  await expect.poll(() => dishes(page)).toEqual([]);
+  expect(await actor(page, 'bia')).toMatchObject({ fed: true, x: 180, y: 445 });
 });

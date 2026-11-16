@@ -25,8 +25,9 @@ export function nextTheme(drawings: readonly Keepsake[]): DrawingId {
   return nextKeepsake(drawings, 'desenho') as DrawingId;
 }
 /** Where the lesson is: a room of a building; `grownUps` is the hook for lot 5A's adults (a grown-up standing there teaches);
- *  `staffed`: the school's own teacher works there (lot 7), and she is the one who teaches. */
-export interface Classroom { building: number; room: RoomId; grownUps?: readonly ActorId[]; staffed?: boolean }
+ *  `staffed`: the school's own teacher works there (lot 7), and she is the one who teaches; `writer`: the selected character, who
+ *  writes at a board with no teacher (#30) when she is a person in the room and not a pupil at a desk. */
+export interface Classroom { building: number; room: RoomId; grownUps?: readonly ActorId[]; staffed?: boolean; writer?: ActorId }
 type Outcome = { kind: 'lesson'; subject: Subject; theme: Keepsake; pupils: ActorId[]; teacher: ActorId | 'teacher' | undefined } | { kind: 'missing'; need: 'seat'; want: 'school-desk' } | { kind: 'none' };
 export type Taught = { town: Neighborhood; outcome: Outcome };
 const inRoom = (actor: Resident, where: Classroom) =>
@@ -44,7 +45,8 @@ export function lesson(town: Neighborhood, where: Classroom, subject: Subject = 
   if (!layout?.pieces.some(p => p.room === where.room && p.kind === 'board')) return { town, outcome: { kind: 'none' } };
   const pupils = pupilsOf(town, where);
   if (!pupils.length) return { town, outcome: { kind: 'missing', need: 'seat', want: 'school-desk' } };
-  const theme = nextKeepsake(town.progress.drawings, subject), teacher = where.staffed ? 'teacher' : town.actors.find(a => where.grownUps?.includes(a.id) && !a.seat && inRoom(a, where))?.id;
+  const writer = town.actors.find(a => a.id === where.writer && a.kind === 'human' && inRoom(a, where) && !pupils.includes(a.id))?.id;
+  const theme = nextKeepsake(town.progress.drawings, subject), teacher = where.staffed ? 'teacher' : writer ?? town.actors.find(a => where.grownUps?.includes(a.id) && !a.seat && inRoom(a, where))?.id;
   const drawings = [...town.progress.drawings.filter(id => id !== theme), theme];
   const actors = town.actors.map(a => pupils.includes(a.id) ? { ...a, needs: relieve(needsOf(a), 'escola') } : a);
   return { town: { ...town, actors, progress: { ...town.progress, drawings } }, outcome: { kind: 'lesson', subject, theme, pupils, teacher } };

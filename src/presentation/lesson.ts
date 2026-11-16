@@ -12,7 +12,8 @@ export { handUp } from './lesson-class';
 export { lessonMs };
 /** How long the teacher takes to walk back to her place (or fade away) after the lesson. */
 const leaveMs = 800;
-type Current = { piece: number; theme: Keepsake; content: BoardContent; pupils: ActorId[]; start: number; done: boolean; from: Point | null | undefined; x: number | null };
+/** `writer`: the school's teacher, a character of the Turma at the board (#30), or nobody (the chalk alone). */
+type Current = { piece: number; theme: Keepsake; content: BoardContent; pupils: ActorId[]; writer: ActorId | 'teacher' | undefined; start: number; done: boolean; from: Point | null | undefined; x: number | null };
 /** The lesson (W3L-26, lot 8D): the teacher walks to the board and writes the chosen subject with her chalk, stroke by stroke, while
  *  the pupils copy it in their notebooks and raise their hands now and then. Never saved. */
 export function lessonArt(scene: Phaser.Scene) {
@@ -29,8 +30,8 @@ export function lessonArt(scene: Phaser.Scene) {
     active: () => !!current && !current.done,
     /** Whether the teacher is at the board (from her first step there until she is back): the school's teacher is not drawn twice. */
     away: () => !!current,
-    start(piece: number, theme: Keepsake, pupils: ActorId[], now: number) {
-      current = { piece, theme, content: boardContent(theme), pupils, start: now, done: false, from: undefined, x: null }; mark('lesson', `${theme}:drawing`);
+    start(piece: number, theme: Keepsake, pupils: ActorId[], now: number, writer: ActorId | 'teacher' | undefined) {
+      current = { piece, theme, content: boardContent(theme), pupils, writer, start: now, done: false, from: undefined, x: null }; mark('lesson', `${theme}:drawing`);
     },
     /** After every repaint: the board's chalk, the teacher and the notebooks again; away from that board the lesson is over. */
     paint(state: World, pieces: Map<number, Phaser.GameObjects.Container>) {
@@ -45,7 +46,7 @@ export function lessonArt(scene: Phaser.Scene) {
       }
       chalk = scene.add.graphics(); board.add(chalk);
       notes = scene.add.graphics();
-      writer.paint(true);
+      writer.paint(current.writer === 'teacher');
     },
     frame(now: number, figures: Phaser.GameObjects.Container[], reduced: boolean, staff: Point | null) {
       if (!current || !board?.scene || !chalk?.scene) return;
@@ -53,10 +54,15 @@ export function lessonArt(scene: Phaser.Scene) {
       if (cur.from === undefined) cur.from = staff && { x: staff.x, y: staff.y };
       const frame = lessonFrame(cur.content, Math.min(elapsed, writeWindow.end), reduced), shown = board;
       drawBoard(chalk, image, frame);
-      const pose = writerPose(cur, (p: Point) => shown.getWorldTransformMatrix().transformPoint(p.x, p.y) as Point, floor, elapsed, frame, reduced);
-      writer.frame(pose); mark('lessonWriter', `teacher:${pose.chalk ? 'writing' : 'standing'}`);
+      this.write(cur, (p: Point) => shown.getWorldTransformMatrix().transformPoint(p.x, p.y) as Point, figures, elapsed, frame, reduced);
       drawClass(notes, figures.filter(f => cur.pupils.includes(f.name as ActorId)), elapsed, !cur.done && elapsed > writeWindow.start, reduced);
       this.close(cur, elapsed, reduced);
+    },
+    /** Who writes this frame: the school's teacher (her own figure and arm), or a character of the Turma at the board (#30). */
+    write(cur: Current, toScene: (p: Point) => Point, figures: Phaser.GameObjects.Container[], elapsed: number, frame: BoardFrame, reduced: boolean) {
+      if (cur.writer !== 'teacher') { ownWriter(cur.writer, figures, elapsed, frame, mark); return; }
+      const pose = writerPose(cur, toScene, floor, elapsed, frame, reduced);
+      writer.frame(pose); mark('lessonWriter', `teacher:${pose.chalk ? 'writing' : 'standing'}`);
     },
     /** At 20 s the lesson is over (the pupils cheer); she walks back to her place, then the lesson is gone. */
     close(cur: Current, elapsed: number, reduced: boolean) {
@@ -64,6 +70,13 @@ export function lessonArt(scene: Phaser.Scene) {
       if (cur.done && elapsed >= lessonMs + (reduced ? 0 : leaveMs)) { end(true); writer.frame(null); notes?.clear(); }
     },
   };
+}
+/** A character of the Turma at the board (#30): she stands there with her arm up while the chalk writes; with nobody, the chalk alone. */
+function ownWriter(id: ActorId | undefined, figures: Phaser.GameObjects.Container[], elapsed: number, frame: BoardFrame, mark: (key: string, value: string) => void) {
+  if (!id) return;
+  const writing = !frame.done && elapsed >= writeWindow.start && frame.tip !== null;
+  figures.find(f => f.name === id)?.setData('arms', writing ? 1 : 0);
+  mark('lessonWriter', `${id}:${writing ? 'writing' : 'standing'}`);
 }
 /** Where her chalk is (board units): at the end of the band, still, with reduced motion; before she writes, where she will begin;
  *  once it is all written, a step past the end, so the class sees the whole board. */

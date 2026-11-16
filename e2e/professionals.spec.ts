@@ -3,6 +3,7 @@ import { initialWorld } from '../src/domain/world';
 import { initialAlbum } from '../src/domain/houses';
 import { migrateNeighborhood, neighborhoodAction } from '../src/domain/neighborhood';
 import type { Neighborhood } from '../src/domain/neighborhood-types';
+import { staffAt } from '../src/domain/staff';
 import { drag, readTown, swipe } from './helpers';
 import { openPro, proTown, tapStaff } from './pro-helpers';
 import { chooseSubject, openSchool, seatAt } from './school-helpers';
@@ -76,8 +77,8 @@ test('lote 7: levar a Bia pela beirada do cômodo dos bombeiros e deslizar de vo
   expect(errors).toEqual([]);
 });
 
-/** Lot 8A: whoever enters by the Map arrives in the entry room, and its professional is there and in view (also in an old building
- *  whose rooms have no template, from before the institution plans). */
+/** Lot 8A: whoever enters by the Map arrives in the entry room; its professional is there and in view when she works there (#37: she
+ *  is in one place only), also in an old building whose rooms have no template, from before the institution plans. */
 async function enterByMap(page: Page, town: Neighborhood) {
   await openPro(page, town);
   await page.locator('#map-toggle').click();
@@ -93,9 +94,11 @@ async function staffInView(page: Page, profession: string) {
 }
 const built = (model: Parameters<typeof proTown>[0]) => neighborhoodAction(migrateNeighborhood(initialAlbum(initialWorld())), { type: 'construct', plot: 1, model });
 for (const [model, profession] of [['school', 'teacher'], ['hospital', 'doctor'], ['fire-station', 'firefighter'], ['police', 'police'], ['sports-club', 'coach'], ['stadium', 'coach'], ['office', 'clerk']] as const) {
-  test(`lote 8A: entrando em ${model} pelo Mapa, ${profession} recebe à vista`, async ({ page }) => {
-    await enterByMap(page, built(model));
-    await staffInView(page, profession);
+  test(`lote 8A, #37: entrando em ${model} pelo Mapa, ${profession} está à vista só se trabalha na entrada (um lugar só)`, async ({ page }) => {
+    const town = built(model);
+    await enterByMap(page, town);
+    if (staffAt(town, { kind: 'interior', building: 2, room: town.buildings[1]!.entry })) await staffInView(page, profession);
+    else await expect(canvas(page)).toHaveAttribute('data-staff', '');
   });
 }
 test('lote 8A: numa escola antiga, de cômodos sem modelo, a professora recebe na entrada', async ({ page }) => {
