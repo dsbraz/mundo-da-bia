@@ -17,9 +17,20 @@ function clearPiece(state: World, piece: Piece): World {
   // Searched without the piece itself, so a spot still partly in the passage or against another piece never counts as free.
   const without = { ...room, layout: { ...room.layout, pieces: room.layout.pieces.filter(p => p.id !== piece.id) } };
   const apart = spaced(without);
-  const spot = freePlacement(without, piece, [piece.y], apart) ?? freePlacement(without, piece, undefined, apart)
-    ?? freePlacement(without, piece, [piece.y]) ?? freePlacement(without, piece);
-  return spot ? { ...editWorld(room, { type: 'move', id: piece.id, point: { x: spot.x, y: spot.y } }), room: state.room } : state;
+  const spot = freePlacement(without, piece, [piece.y], apart) ?? freePlacement(without, piece, undefined, apart);
+  return spot ? place(room, piece, spot, state) : lastResort(room, piece, state);
+}
+const place = (room: World, piece: Piece, spot: Piece, state: World): World =>
+  ({ ...editWorld(room, { type: 'move', id: piece.id, point: { x: spot.x, y: spot.y } }), room: state.room });
+/** With no spot apart, the nearest free one, as before: whoever stands in the room is set aside for the search (a piece is otherwise
+ *  never put over someone standing, W3L-17), and stays where she was. */
+function lastResort(room: World, piece: Piece, state: World): World {
+  const aside = { ...room, actors: room.actors.filter(a => a.room !== piece.room || a.seat) };
+  const without = { ...aside, layout: { ...aside.layout, pieces: aside.layout.pieces.filter(p => p.id !== piece.id) } };
+  const spot = freePlacement(without, piece, [piece.y]) ?? freePlacement(without, piece);
+  if (!spot) return state;
+  const moved = place(aside, piece, spot, state);
+  return { ...moved, actors: state.actors.map(a => moved.actors.find(m => m.id === a.id) ?? a) };
 }
 /** A spot that leaves a walkway (wider than the walker keeps from either piece) in front of and behind the piece, so with another piece
  *  it never closes the way to a passage, and that nobody stands on. */

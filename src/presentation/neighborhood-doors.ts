@@ -4,6 +4,8 @@ import type { Location, Neighborhood } from '../domain/neighborhood-types';
 import type { Point } from '../domain/types';
 import { sameLocation } from '../domain/location';
 import { streetArrival } from './street-opening';
+import { localWorld } from '../domain/neighborhood';
+import { standingSpot } from './walking-path';
 import { edges, passageDepth, passages, stairsDepth, type PassageKind, type Rect } from './room-passages';
 /** A way out of the place shown: a facade door, the "Rua" door, the floor's edge toward a side room, or stairs. `box`: drawn and touched there;
  *  `front`: where one stands to go through it; `sill`: where one vanishes into it and comes out of it. */
@@ -25,14 +27,18 @@ export const doorTo = (town: Neighborhood, to: Location): Door | undefined => do
 /** Whoever enters a place comes out of the door that leads back where they were: the "Rua" door from the street, the matching doorway
  *  or stairs from another room. Without one (the Map), a house opens by its "Rua" door and another room by its left side. */
 export function destinationPoint(town: Neighborhood, destination: Location): Point {
-  if (destination.kind === 'interior') {
-    const back = doorTo({ ...town, location: destination }, town.location);
-    if (back && back.kind !== 'door') return { x: back.front.x, y: Math.max(back.front.y, 480) };
-    return town.buildings.find(b => b.id === destination.building)?.entry === destination.room ? { x: interiorDoor, y: 480 } : { x: 160, y: 520 };
-  }
+  if (destination.kind === 'interior') return standingSpot(localWorld({ ...town, location: destination }), arrival(town, destination));
   const current = town.location;
   const building = current.kind === 'interior' ? town.buildings.find(b => b.id === current.building) : undefined;
   return { x: building ? streetArrival(town, building.plot) : 220, y: 520 };
+}
+/** Before stepping out of any piece there (W3L-17): a room upstairs reached by the Map comes out in front of its stairwell, never in it. */
+function arrival(town: Neighborhood, destination: Extract<Location, { kind: 'interior' }>): Point {
+  const back = doorTo({ ...town, location: destination }, town.location);
+  if (back && back.kind !== 'door') return { x: back.front.x, y: Math.max(back.front.y, 480) };
+  const building = town.buildings.find(b => b.id === destination.building);
+  if (building?.entry === destination.room) return { x: interiorDoor, y: 480 };
+  return (building && passages(building.layout, destination.room).find(p => p.kind === 'down'))?.front ?? { x: 160, y: 520 };
 }
 const inside = (box: Rect, point: Point, below = 0) => point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height + below;
 export function doorAt(town: Neighborhood, point: Point) {

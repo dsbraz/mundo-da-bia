@@ -4,7 +4,8 @@ import { initialAlbum } from '../domain/houses';
 import { migrateNeighborhood, neighborhoodAction } from '../domain/neighborhood';
 import { plotStart } from '../domain/neighborhood-geometry';
 import type { Neighborhood } from '../domain/neighborhood-types';
-import type { RoomId } from '../domain/types';
+import type { Piece, RoomId } from '../domain/types';
+import { footprint } from '../domain/placement';
 import { destinationPoint, doorAt, doorBox, doorDropAt, doorFront, doorStep, doors } from './neighborhood-doors';
 import { passages } from '../domain/passages';
 
@@ -85,5 +86,33 @@ describe('passagens entre cômodos', () => {
     // The flight takes whoever is dropped on its steps or at its foot.
     expect(doorDropAt(town, { x: 200, y: 460 })?.kind).toBe('up');
     expect(doorDropAt(town, { x: 260, y: 460 })).toBeUndefined();
+  });
+  it('#24: pelo Mapa (ou a seta do balão), o quarto de cima recebe quem chega diante do vão da escada, nunca dentro dele', () => {
+    const id = sala().buildings[0]!.id;
+    const built = neighborhoodAction(neighborhoodAction(sala(), { type: 'add-module', building: id, cell: 2, template: 'kitchen' }), { type: 'add-module', building: id, cell: 4, template: 'bedroom' });
+    const rooms = built.buildings[0]!.layout.rooms, ids = Object.keys(rooms) as RoomId[];
+    const kitchen = ids.find(r => rooms[r]!.cell === 2)!, upstairs = ids.find(r => rooms[r]!.cell === 4)!;
+    const point = destinationPoint(at(built, kitchen), where(built, upstairs));
+    const inside = passages(built.buildings[0]!.layout, upstairs).some(({ box: b }) => point.x >= b.x && point.x <= b.x + b.width && point.y >= b.y && point.y <= b.y + b.height);
+    expect(inside).toBe(false);
+    expect(point).toEqual({ x: 262, y: 520 });
+  });
+  it('#24: pelo Mapa, quem chega a um cômodo nunca fica em pé dentro de um móvel', () => {
+    const town = sala(), building = town.buildings[0]!;
+    const table: Piece = { id: 99, kind: 'table', room: 'quarto', color: 'original', flipped: false, x: 60, y: building.layout.pieces.find(p => p.kind === 'table')!.y };
+    const furnished = { ...town, buildings: [{ ...building, layout: { ...building.layout, pieces: [...building.layout.pieces, table] } }] };
+    const point = destinationPoint(street(furnished), where(furnished, 'quarto')), f = footprint(table)!;
+    expect(f.left <= 160 && 160 <= f.right && f.top <= 520 && 520 <= f.bottom).toBe(true);
+    expect(point.x >= f.left && point.x <= f.right && point.y >= f.top && point.y <= f.bottom).toBe(false);
+  });
+  it('#24: com um móvel diante do vão da escada, quem chega lá em cima sai do móvel sem cair no vão', () => {
+    const town = upstairs(), building = town.buildings[0]!;
+    // A bed, deep: its nearest free side is the left one, toward the well.
+    const bed: Piece = { id: 99, kind: 'bed', room: 'room-3', color: 'original', flipped: false, x: 240, y: 293 };
+    const furnished = { ...town, buildings: [{ ...building, layout: { ...building.layout, pieces: [...building.layout.pieces, bed] } }] };
+    const point = destinationPoint(street(furnished), where(furnished, 'room-3')), f = footprint(bed)!;
+    expect(f.left <= 262 && 262 <= f.right && f.top <= 520 && 520 <= f.bottom).toBe(true);
+    expect(point.x >= f.left && point.x <= f.right && point.y >= f.top && point.y <= f.bottom).toBe(false);
+    expect(passages(furnished.buildings[0]!.layout, 'room-3').some(({ box: b }) => point.x >= b.x && point.x <= b.x + b.width && point.y >= b.y && point.y <= b.y + b.height)).toBe(false);
   });
 });

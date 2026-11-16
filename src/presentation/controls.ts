@@ -17,7 +17,7 @@ import { masculine } from './actor-paint';
 import { adultStyle } from './outfit';
 import type { Action, Actor, ActorId, Point, World } from '../domain/types';
 import { uiText } from '../content/ui-text';
-import { onFloor } from './floor-band';
+import { trayDrop } from './drop-target';
 import { ringClearance } from './pose';
 
 function button(label: string, run: () => void, className = ''): HTMLButtonElement {
@@ -51,7 +51,7 @@ export function createControls(root: HTMLElement, dispatch: (action: Action) => 
   root.querySelector('#cast')!.append(...cast.map((card, i) => castCard(card, actorIds[i]!, () => name(actorIds[i]!))));
   cast.forEach((b, index) => trayDrag(b, () => roomWidth(getState()), p => {
     const actor = actorIds[index]!; select(actor); dispatch({ type: 'travel', actor, room: getState().room });
-    dispatch({ type: 'move', actor, point: onFloor(getState(), p) });
+    dispatch(trayDrop(getState(), actor, p));
   }, () => !building()));
   const wardrobe = lookIds.map(look => button(looks[look].name, () => dispatch({ type: 'dress', actor: selected, look })));
   wardrobe.forEach((b, index) => {
