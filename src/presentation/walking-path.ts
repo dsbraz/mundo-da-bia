@@ -3,6 +3,7 @@ import { roomWidth } from '../domain/geometry';
 import { footprint } from '../domain/placement';
 import { floorTop, walkable } from './floor-band';
 import { plazaObstacles } from './plaza-obstacles';
+import { passages } from '../domain/passages';
 export function walkingPath(world: World, start: Point, end: Point): Point[] | null {
   const blocks = furnitureBlocks(world);
   const free = (p: Point) => walkable(world, p) && !blocks.some(b => contains(b, p));
@@ -19,8 +20,9 @@ export function walkingPath(world: World, start: Point, end: Point): Point[] | n
 export function standingSpot(world: World, p: Point): Point {
   const onPiece = world.layout.pieces.some(piece => { const area = piece.room === world.room && footprint(piece); return !!area && contains(area, p); });
   if (p.y >= floorTop(world) && !onPiece) return p;
-  const blocks = furnitureBlocks(world);
-  return exitFrom(world, p, blocks, q => walkable(world, q) && !blocks.some(b => contains(b, q))) ?? p;
+  const blocks = furnitureBlocks(world), wells = passages(world.layout, world.room).map(({ box: b }) => ({ left: b.x, right: b.x + b.width, top: b.y, bottom: b.y + b.height }));
+  // Nor into the stairwell beside it (#24): the way up or down is taken on purpose, never by stepping out of a piece.
+  return exitFrom(world, p, blocks, q => walkable(world, q) && ![...blocks, ...wells].some(b => contains(b, q))) ?? p;
 }
 /** The first step out of a spot nobody should stand on: the wall (old saves) goes straight down to the floor, a piece's footprint to its nearest free side. */
 function exitFrom(world: World, start: Point, blocks: Block[], free: (p: Point) => boolean): Point | null {

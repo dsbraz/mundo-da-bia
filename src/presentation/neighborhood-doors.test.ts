@@ -105,4 +105,14 @@ describe('passagens entre cômodos', () => {
     expect(f.left <= 160 && 160 <= f.right && f.top <= 520 && 520 <= f.bottom).toBe(true);
     expect(point.x >= f.left && point.x <= f.right && point.y >= f.top && point.y <= f.bottom).toBe(false);
   });
+  it('#24: com um móvel diante do vão da escada, quem chega lá em cima sai do móvel sem cair no vão', () => {
+    const town = upstairs(), building = town.buildings[0]!;
+    // A bed, deep: its nearest free side is the left one, toward the well.
+    const bed: Piece = { id: 99, kind: 'bed', room: 'room-3', color: 'original', flipped: false, x: 240, y: 293 };
+    const furnished = { ...town, buildings: [{ ...building, layout: { ...building.layout, pieces: [...building.layout.pieces, bed] } }] };
+    const point = destinationPoint(street(furnished), where(furnished, 'room-3')), f = footprint(bed)!;
+    expect(f.left <= 262 && 262 <= f.right && f.top <= 520 && 520 <= f.bottom).toBe(true);
+    expect(point.x >= f.left && point.x <= f.right && point.y >= f.top && point.y <= f.bottom).toBe(false);
+    expect(passages(furnished.buildings[0]!.layout, 'room-3').some(({ box: b }) => point.x >= b.x && point.x <= b.x + b.width && point.y >= b.y && point.y <= b.y + b.height)).toBe(false);
+  });
 });
