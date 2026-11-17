@@ -13,7 +13,7 @@ import type { sceneFeedback } from './scene-feedback';
 interface SchoolDeps {
   /** The app root: its action ring is put away while the board is written, so it never covers the lesson. */
   root: HTMLElement;
-  town: () => Neighborhood; selected: () => ActorId;
+  town: () => Neighborhood; selected: () => ActorId; building: () => boolean;
   /** Commits a neighborhood changed by the lesson (saved and drawn), outside the undo history, like the market. */
   apply: (town: Neighborhood) => void;
   scene: Pick<PlayScene, 'lessons' | 'poke'>;
@@ -49,7 +49,7 @@ export function schoolPlay(deps: SchoolDeps) {
   };
   const boardAt = (id: number): Classroom | null => {
     const where = deps.town().location;
-    if (where.kind !== 'interior') return null;
+    if (deps.building() || where.kind !== 'interior') return null;
     const piece = deps.town().buildings.find(b => b.id === where.building)?.layout.pieces.find(p => p.id === id && p.room === where.room);
     return piece?.kind === 'board' ? { building: where.building, room: where.room, grownUps: adultIds, staffed: staffAt(deps.town(), where)?.profession === 'teacher', writer: deps.selected() } : null;
   };
@@ -70,6 +70,7 @@ export function schoolPlay(deps: SchoolDeps) {
   }
   const chooser = subjectChooser(deps.root, { choose });
   return {
+    cancel() { board = null; chooser.close(); deps.scene.lessons.cancel(); },
     /** The teacher tapped (lot 7): the same as tapping her board. */
     teach(): boolean { const piece = roomBoard(); return !!piece && this.intercept({ type: 'use', id: piece.id }); },
     /** A tap on a board: the subjects are offered (a tap while they are, or while the lesson is written, changes nothing). A lesson's

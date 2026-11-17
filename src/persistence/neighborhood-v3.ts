@@ -41,9 +41,13 @@ export function knownTown(value: unknown): unknown {
 function knownBuilding(value: unknown): unknown {
   if (!record(value) || !record(value.layout)) return value;
   const { rooms, pieces } = value.layout;
-  return stocked({ ...value, model: member(buildingModels, value.model) ? value.model : 'house',
+  return stocked({ ...value, name: knownMarketName(value.name), model: member(buildingModels, value.model) ? value.model : 'house',
     layout: { ...value.layout, rooms: record(rooms) ? Object.fromEntries(Object.entries(rooms).map(([id, room]) => [id, knownTemplate(room)])) : rooms,
       pieces: Array.isArray(pieces) ? pieces.filter(p => !record(p) || member(pieceKinds, p.kind)).map(knownPiece) : pieces } });
+}
+/** Older builds appended " Novo" past the save's name limit; keep that market and its contents. */
+function knownMarketName(name: unknown): unknown {
+  return typeof name === 'string' && /^Mercado(?: Novo){9,}$/.test(name) ? 'Mercado Novo' : name;
 }
 function knownTemplate(room: unknown): unknown {
   return record(room) && !member(roomTemplates, room.template) ? { ...room, template: 'empty' } : room;

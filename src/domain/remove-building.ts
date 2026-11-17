@@ -8,7 +8,8 @@ export function removeBuilding(town: Neighborhood, id: number): Neighborhood {
   const outside = { location: { kind: 'street' as const }, room: 'sala' as const, x: plotStart(building.plot) + 220, y: 520 };
   const actors = town.actors.map((a, index) => inside(a.location)
     ? { ...a, ...outside, x: Math.min(outside.x - 90 + index * 30, streetWidth(town.plots) - 60), resting: false, seat: null } : a);
-  const items = town.items.map(i => {
+  // Unpaid groceries belong to the removed market; paid bags and personal objects stay with the family.
+  const items = town.items.filter(i => !inside(i.location) || i.kind !== 'sacola' || i.paid).map(i => {
     if (!inside(i.location)) return i;
     const holder = actors.find(a => a.id === i.holder);
     return { ...i, ...outside, x: holder?.x ?? outside.x, spot: 'floor' as const };

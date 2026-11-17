@@ -1,6 +1,8 @@
 import type { EditAction, Point, World } from '../domain/types';
+import { onFloor } from '../presentation/floor-band';
+import { standingSpot, walkingPath } from '../presentation/walking-path';
 interface Keyboard {
-  building: () => boolean; state: () => World; piece: () => number | null; actor: () => Point;
+  building: () => boolean; state: () => World; piece: () => number | null; actor: () => Point & { seat?: string | null };
   edit: (action: EditAction) => void; move: (point: Point) => void; stopWalk: () => void;
 }
 const offsets: Record<string, [number, number]> = { ArrowLeft: [-20, 0], ArrowRight: [20, 0], ArrowUp: [0, -20], ArrowDown: [0, 20] };
@@ -18,7 +20,9 @@ export function bindKeyboard(root: HTMLElement, deps: Keyboard) {
     }
     if (!offset) return;
     event.preventDefault(); deps.stopWalk();
-    const actor = deps.actor();
-    deps.move({ x: actor.x + offset[0], y: actor.y + offset[1] });
+    const actor = deps.actor(), world = deps.state();
+    const start = actor.seat ? standingSpot(world, onFloor(world, actor)) : actor;
+    const point = onFloor(world, { x: start.x + offset[0], y: start.y + offset[1] });
+    if (walkingPath(world, start, point)?.length === 1) deps.move(point);
   });
 }

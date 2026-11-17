@@ -97,7 +97,10 @@ function adopted(active: Active, point: Point) {
   if (!active.actor && active.near && moved(active, point)) active.actor = active.near;
   return !!active.actor;
 }
-function dropActor(active: Active, point: Point, actions: Actions) { return !!active.actor && moved(active, point) && !!actions.drop?.(active.actor, point); }
+function dropActor(active: Active, point: Point, actions: Actions) {
+  const feet = onFloor(actions.world(), { x: point.x + active.offset.x, y: point.y + active.offset.y });
+  return !!active.actor && moved(active, point) && !!actions.drop?.(active.actor, feet);
+}
 
 function backgroundTap(active: Active, point: Point) { return !active.claimed && !active.actor && !active.item && Math.hypot(point.x - active.start.x, point.y - active.start.y) < 12; }
 

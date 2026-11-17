@@ -28,6 +28,8 @@ export function lessonArt(scene: Phaser.Scene) {
     /** Called when the lesson is over: the pupils cheer, and its paper goes into a hand. */
     finished: (() => {}) as (pupils: ActorId[], theme: Keepsake) => void,
     active: () => !!current && !current.done,
+    /** Leaving play ends the lesson without a delayed paper or chalk in the editor. */
+    cancel() { end(); chalk?.clear(); notes?.clear(); image?.setVisible(false); writer.frame(null); },
     /** Whether the teacher is at the board (from her first step there until she is back): the school's teacher is not drawn twice. */
     away: () => !!current,
     start(piece: number, theme: Keepsake, pupils: ActorId[], now: number, writer: ActorId | 'teacher' | undefined) {

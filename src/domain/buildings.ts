@@ -20,9 +20,7 @@ const marketNames = ['Mercado', 'Mercado da Praça', 'Mercado do Sol', 'Mercado 
   'Mercadinho', 'Mercado do Rio', 'Mercado das Frutas'];
 function marketName(town: Neighborhood): string {
   const taken = (name: string) => town.buildings.some(b => b.name === name);
-  let name = marketNames.find(candidate => !taken(candidate)) ?? 'Mercado Novo';
-  while (taken(name)) name += ' Novo';
-  return name;
+  return marketNames.find(candidate => !taken(candidate)) ?? 'Mercado Novo';
 }
 /** A new building of `model`: the house as it starts, an institution's plan, or two bare rooms. */
 function startWorld(model: BuildingModel) {

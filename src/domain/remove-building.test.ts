@@ -4,6 +4,21 @@ import { initialWorld, transition } from './world';
 import { migrateNeighborhood, neighborhoodAction } from './neighborhood';
 import { decodeNeighborhood, encodeNeighborhood } from '../persistence/neighborhood';
 import { streetWidth } from './neighborhood-geometry';
+import { buy, checkout, unpaidExit } from './market';
+
+it.each([false, true])('excluir mercado devolve compras não pagas e preserva as pagas: pago=%s', paid => {
+  let town = neighborhoodAction(migrateNeighborhood(initialAlbum(initialWorld())), { type: 'construct', plot: 1, model: 'shop', plan: 'market' });
+  town = neighborhoodAction(town, { type: 'transport', actor: 'bia', location: { kind: 'interior', building: 2, room: 'sala' }, point: { x: 500, y: 520 } });
+  const shelf = town.buildings[1]!.layout.pieces.find(p => p.kind === 'market-shelf')!;
+  town = buy(town, { actor: 'bia', piece: shelf.id, good: 'pao' }).town;
+  if (paid) town = checkout(town, 'bia').town;
+  const bag = town.items.find(i => i.kind === 'sacola')!;
+  const next = neighborhoodAction(town, { type: 'remove-building', building: 2 });
+  expect(next.items.some(i => i.id === bag.id)).toBe(paid);
+  expect(unpaidExit(next, { type: 'transport', actor: 'bia', location: { kind: 'interior', building: 1, room: 'sala' }, point: { x: 500, y: 520 } })).toBeNull();
+  expect(decodeNeighborhood(encodeNeighborhood(next))).toEqual(next);
+  expect(town.items).toContainEqual(bag);
+});
 
 it('excluir uma casa libera o terreno e preserva a turma e seus objetos na rua', () => {
   const world = transition(initialWorld(), { type: 'pick', actor: 'bia', item: 'microfone' }).state;

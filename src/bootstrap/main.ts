@@ -153,7 +153,7 @@ function newMorning(starts: boolean) { const next = starts ? morningFood(town) :
 /** #41: a grown-up home from work with no groceries shrugs and says why. */
 function early(before: Neighborhood, after: Neighborhood) { cutShort(before, after, life.phase()).forEach(({ id, why }) => { const line = shiftCutLine(why, nameOf(after.actors.find(a => a.id === id)!)); scene.poke(id, 'shrug', line); feedback.announce(line); }); }
 function toggleBuild() {
-  cancelGame();
+  cancelGame(); schooling.cancel();
   constructing = false;
   closeWardrobe(); walker.cancel(); cancelTrayDrag(); cancelInput(); building = !building; life.mode(!building); selectedPiece = null; edits = history(state); townActs.forget(); root.querySelector('#undo-toast')?.remove();
   shell.close();
@@ -188,7 +188,7 @@ function townDispatch(action: NeighborhoodAction) { if (!shopping.blocks(action)
 const cooking = kitchen({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback });
 const shopping = marketPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), feedback, perform: action => play.perform(action), scene,
   openMap: place => openMap(place, 'mercado'), hint: { seen: () => loadCheckoutHintSeen(), done: () => { saveCheckoutHintSeen(); } } });
-const schooling = schoolPlay({ root, town: () => town, selected: () => selected, apply: next => townActs.apply(next), scene, feedback,
+const schooling = schoolPlay({ root, town: () => town, selected: () => selected, building: () => building, apply: next => townActs.apply(next), scene, feedback,
   walkToBoard: (piece, done) => { const point = boardSide(state, selected, piece); if (point) walker.start(point, done); return !!point; } });
 const books = libraryPlay({ town: () => town, selected: () => selected, apply: next => townActs.apply(next), feedback });
 const staffing = staffPlay({ state: () => state, scene, school: schooling, feedback });
